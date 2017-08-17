@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+    
+<mapper namespace="com.chinaplus.web.com.service.CPCIFS01Service">
+
+    <select id="getSyncTimeData" resultType="com.chinaplus.web.com.entity.CPCIFS01Entity" parameterType="com.chinaplus.core.bean.BaseParam">
+        SELECT
+            A.OFFICE_ID AS officeId,
+            B.OFFICE_CODE AS officeCode,
+            A.BATCH_TYPE AS batchType,
+            A.IF_DATE_TIME AS ifDateTime,
+            A.STATUS AS ifBatchStatus
+        FROM
+            TNT_IF_BATCH A
+        LEFT JOIN TNM_OFFICE B ON A.OFFICE_ID = B.OFFICE_ID
+        ORDER BY
+            A.OFFICE_ID,
+            A.BATCH_TYPE
+    </select>
+    
+    <select id="getSsRdBatchResult" resultType="com.chinaplus.web.com.entity.CPCIFS01Entity" parameterType="com.chinaplus.core.bean.BaseParam">
+        SELECT
+            B.OFFICE_ID AS officeId,
+            B.BATCH_ID  AS batchId,
+            B.PROCESS_DATE AS processDate,
+            B.STATUS AS batchJobStatus,
+            D.TIME_ZONE AS timeZone
+        FROM
+            TNT_BATCH_JOB B
+        INNER JOIN
+            (SELECT
+                A.OFFICE_ID,
+                A.BATCH_ID,
+                MAX(A.PROCESS_DATE) AS PROCESS_DATE
+            FROM
+                TNT_BATCH_JOB A
+            WHERE
+                A.BATCH_ID = 'CPSRDB01'
+            OR  A.BATCH_ID = 'CPSSSB01'
+            GROUP BY
+                A.OFFICE_ID,
+                A.BATCH_ID
+            ) C ON B.OFFICE_ID = C.OFFICE_ID AND B.BATCH_ID = C.BATCH_ID AND B.PROCESS_DATE = C.PROCESS_DATE
+        LEFT JOIN TNM_OFFICE D ON B.OFFICE_ID = D.OFFICE_ID
+        ORDER BY
+            B.OFFICE_ID,
+            B.BATCH_ID
+    </select>
+</mapper>

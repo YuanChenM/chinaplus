@@ -1,0 +1,1303 @@
+<!--
+@screen CPOOFS01
+@author shi_yuxi
+-->
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.common.service.StockStatusService">
+    <sql id="ConstDef">
+        <bind name="ON_SHIPPING" value="@com.chinaplus.common.consts.CodeConst$AttachType@ON_SHIPPING" />
+        <bind name="INACTIVE_FLAG_ACTIVE" value="@com.chinaplus.common.consts.CodeConst$InactiveFlag@ACTIVE" />
+    </sql>
+        
+    <sql id="getAllColumns">
+         SELECT
+                A.STOCK_STATUS_ID AS stockStatusId
+              , A.STOCK_DATE AS stockDate
+              , A.PARTS_ID AS partsId
+              , B.TTC_PARTS_NO AS ttcPartsNo
+              , B.PARTS_NAME_EN AS partsNameEn
+              , B.PARTS_NAME_CN AS partsNameCn
+              , B.OLD_TTC_PARTS_NO AS oldPartsNo
+              , B.CUST_PARTS_NO AS custPartsNo
+              , B.CUST_BACK_NO AS custBackNo
+              , B.BUSINESS_TYPE AS businessType
+              , B.BUSINESS_PATTERN AS businessPattern
+              , B.PARTS_TYPE AS partsType
+              , B.CAR_MODEL AS carModel
+              , B.UOM_CODE AS uomCode
+              , D.REGION_CODE AS impCountry
+              , D.CUSTOMER_CODE AS customerCode
+              , E.REGION_CODE AS expCounty
+              , E.SUPPLIER_CODE AS supplierCode
+              , C.EXP_PARTS_ID AS expPartsId
+              , C.SUPP_PARTS_NO AS supplierPartsNo
+              , C.BUILDOUT_FLAG AS buildOutFlagOrg
+              , C.BUILDOUT_MONTH AS buildOutMonth
+              , C.LAST_PO_MONTH AS lastOrderMonth
+              , C.LAST_DELIVERY_MONTH AS lastDeliveryMonth
+              , C.INACTIVE_FLAG AS inActiveFlagOrg
+              , C.REMARK1 AS partsRemark
+              , G.IMP_STOCK_FLAG AS impStockFlag
+              , G.END_CFC_DATE AS endCfcDate
+              , G.END_PFC_DATE AS endPfcDate
+              , G.REMARK AS rundownRemark
+              , A.CUSTOMER_ID AS customerId
+              , A.SUPPLIER_ID AS supplierId
+              , A.EXP_PARTS_SET AS expPartsSet
+              , A.SPQ AS spq
+              , A.FORECAST_NUM AS forecastNum
+              , A.OS_CUST_STOCK_FLAG AS osCustStockFlag
+              , A.SA_CUST_STOCK_FLAG AS saCustStockFlag
+              , A.INVENTORY_BOX_FLAG AS inventoryBoxFlag
+              , A.MAX_STOCK AS maxStock
+              , A.MIN_STOCK AS minStock
+              , A.MAX_BOX AS maxBox
+              , A.MIN_BOX AS minBox
+              , A.ORDER_SAFETY_STOCK AS orderSafetyStock
+              , A.DELAY_ADJUSTMENT_PATTERN AS delayAdjustmentPattern
+              , A.OUTBOUND_FLUCTUATION AS outboundFluctuation
+              , A.EXP_PLAN_DELAY_QTY AS expPlanDelayQty
+              , A.EXP_PLAN_DELAY_MON_SEA AS expPlanDelayMonSea
+              , A.EXP_PLAN_DELAY_MON_AIR AS expPlanDelayMonAir
+              , A.EXP_PLAN_DELAY_ADD_SEA AS expPlanDelayAddSea
+              , A.EXP_PLAN_DELAY_ADD_AIR AS expPlanDelayAddAir
+              , A.EXP_FUTURE_PLAN_QTY AS expFuturePlanQty
+              , A.EXP_FUTURE_PLAN_MON_SEA AS expFuturePlanMonSea
+              , A.EXP_FUTURE_PLAN_MON_AIR AS expFuturePlanMonAir
+              , A.EXP_FUTURE_PLAN_ADD_SEA AS expFuturePlanAddSea
+              , A.EXP_FUTURE_PLAN_ADD_AIR AS expFuturePlanAddAir
+              , A.EXP_STOCK_QTY AS expStockQty
+              , A.EXP_ONSHIPPING_QTY AS expOnshippingQty
+              , NVL(A.IN_RACK_QTY, 0) AS inRackQty
+              , NVL(A.ECI_ONHOLD_QTY, 0) AS eciOnholdQty
+              , NVL(A.IMP_WHS_QTY, 0) AS impWhsQty
+              , NVL(A.PREPARED_OB_QTY, 0) AS preparedObQty
+              , A.CUST_STOCK_QTY AS custStockQty
+              , A.ENDING_STOCK_DATE AS endingStockDate
+              , A.ETD_DELAY_QTY AS etdDelayQty
+              , A.INBOUND_DELAY_QTY AS inboundDelayQty
+              , A.NG_ONHOLD_QTY AS ngOnholdQty
+              , A.LAST_OB_ACTUAL_DATE AS lastObActualDate
+              , A.STOCK_QTY_1A AS stockQty1a
+              , A.STOCK_DAYS_1A AS stockDays1a
+              , A.STOCK_BOXES_1A AS stockBoxes1a
+              , A.MIN_ALARM_1A AS minAlarm1a
+              , A.MAX_ALARM_1A AS maxAlarm1a
+              , A.NO_MASTER_1A AS noMaster1a
+              , A.NEXT_INBOUND_QTY AS nextInboundQty
+              , A.NEXT_INVOICE AS nextInvoice
+              , A.NEXT_INBOUND_DATE AS nextInboundDate
+              , A.STOCK_DAYS_PLAN_1A AS stockDaysPlan1a
+              , A.NO_MASTER_PLAN_1A AS noMasterPlan1a
+              , A.STOCK_QTY_1B AS stockQty1b
+              , A.STOCK_DAYS_1B AS stockDays1b
+              , A.STOCK_BOXES_1B AS stockBoxes1b
+              , A.MIN_ALARM_1B AS minAlarm1b
+              , A.MAX_ALARM_1B AS maxAlarm1b
+              , A.NO_MASTER_1B AS noMaster1b
+              , A.STOCK_DAYS_PLAN_1B AS stockDaysPlan1b
+              , A.NO_MASTER_PLAN_1B AS noMasterPlan1b
+              , A.END_DATE_TM AS endDateTm
+              , A.END_DATE_TM AS endDateTmComp
+              , A.SHORTAGE_DATE_TM AS shortageDateTm
+              , A.MIN_ALARM_TM AS minAlarmTm
+              , A.MAX_ALARM_TM AS maxAlarmTm
+              , A.MIN_STOCK_DAY_TM AS minStockDayTm
+              , A.MAX_STOCK_DAY_TM AS maxStockDayTm
+              , A.MIN_BOXES_TM AS minBoxesTm
+              , A.MAX_BOXES_TM AS maxBoxesTm
+              , A.NO_MASTER_MIN_TM AS noMasterMinTm
+              , A.NO_MASTER_MAX_TM AS noMasterMaxTm
+              , A.END_DATE_F1 AS endDateF1
+              , A.SHORTAGE_DATE_F1 AS shortageDateF1
+              , A.MIN_ALARM_F1 AS minAlarmF1
+              , A.MAX_ALARM_F1 AS maxAlarmF1
+              , A.MIN_STOCK_DAY_F1 AS minStockDayF1
+              , A.MAX_STOCK_DAY_F1 AS maxStockDayF1
+              , A.MIN_BOXES_F1 AS minBoxesF1
+              , A.MAX_BOXES_F1 AS maxBoxesF1
+              , A.NO_CFC_FLAG_F1 AS noCfcFlagF1
+              , A.NO_PFC_FLAG_F1 AS noPfcFlagF1
+              , A.NO_PFC_MIN_F1 AS noPfcMinF1
+              , A.NO_PFC_MAX_F1 AS noPfcMaxF1
+              , A.END_DATE_F2 AS endDateF2
+              , A.SHORTAGE_DATE_F2 AS shortageDateF2
+              , A.MIN_ALARM_F2 AS minAlarmF2
+              , A.MAX_ALARM_F2 AS maxAlarmF2
+              , A.MIN_STOCK_DAY_F2 AS minStockDayF2
+              , A.MAX_STOCK_DAY_F2 AS maxStockDayF2
+              , A.MIN_BOXES_F2 AS minBoxesF2
+              , A.MAX_BOXES_F2 AS maxBoxesF2
+              , A.NO_CFC_FLAG_F2 AS noCfcFlagF2
+              , A.NO_PFC_FLAG_F2 AS noPfcFlagF2
+              , A.NO_PFC_MIN_F2 AS noPfcMinF2
+              , A.NO_PFC_MAX_F2 AS noPfcMaxF2
+              , A.END_DATE_F3 AS endDateF3
+              , A.SHORTAGE_DATE_F3 AS shortageDateF3
+              , A.MIN_ALARM_F3 AS minAlarmF3
+              , A.MAX_ALARM_F3 AS maxAlarmF3
+              , A.MIN_STOCK_DAY_F3 AS minStockDayF3
+              , A.MAX_STOCK_DAY_F3 AS maxStockDayF3
+              , A.MIN_BOXES_F3 AS minBoxesF3
+              , A.MAX_BOXES_F3 AS maxBoxesF3
+              , A.NO_CFC_FLAG_F3 AS noCfcFlagF3
+              , A.NO_PFC_FLAG_F3 AS noPfcFlagF3
+              , A.NO_PFC_MIN_F3 AS noPfcMinF3
+              , A.NO_PFC_MAX_F3 AS noPfcMaxF3
+              , A.END_DATE_F4 AS endDateF4
+              , A.SHORTAGE_DATE_F4 AS shortageDateF4
+              , A.MIN_ALARM_F4 AS minAlarmF4
+              , A.MAX_ALARM_F4 AS maxAlarmF4
+              , A.MIN_STOCK_DAY_F4 AS minStockDayF4
+              , A.MAX_STOCK_DAY_F4 AS maxStockDayF4
+              , A.MIN_BOXES_F4 AS minBoxesF4
+              , A.MAX_BOXES_F4 AS maxBoxesF4
+              , A.NO_CFC_FLAG_F4 AS noCfcFlagF4
+              , A.NO_PFC_FLAG_F4 AS noPfcFlagF4
+              , A.NO_PFC_MIN_F4 AS noPfcMinF4
+              , A.NO_PFC_MAX_F4 AS noPfcMaxF4
+              , A.END_DATE_F5 AS endDateF5
+              , A.SHORTAGE_DATE_F5 AS shortageDateF5
+              , A.MIN_ALARM_F5 AS minAlarmF5
+              , A.MAX_ALARM_F5 AS maxAlarmF5
+              , A.MIN_STOCK_DAY_F5 AS minStockDayF5
+              , A.MAX_STOCK_DAY_F5 AS maxStockDayF5
+              , A.MIN_BOXES_F5 AS minBoxesF5
+              , A.MAX_BOXES_F5 AS maxBoxesF5
+              , A.NO_CFC_FLAG_F5 AS noCfcFlagF5
+              , A.NO_PFC_FLAG_F5 AS noPfcFlagF5
+              , A.NO_PFC_MIN_F5 AS noPfcMinF5
+              , A.NO_PFC_MAX_F5 AS noPfcMaxF5
+              , A.END_DATE_F6 AS endDateF6
+              , A.SHORTAGE_DATE_F6 AS shortageDateF6
+              , A.MIN_ALARM_F6 AS minAlarmF6
+              , A.MAX_ALARM_F6 AS maxAlarmF6
+              , A.MIN_STOCK_DAY_F6 AS minStockDayF6
+              , A.MAX_STOCK_DAY_F6 AS maxStockDayF6
+              , A.MIN_BOXES_F6 AS minBoxesF6
+              , A.MAX_BOXES_F6 AS maxBoxesF6
+              , A.NO_CFC_FLAG_F6 AS noCfcFlagF6
+              , A.NO_PFC_FLAG_F6 AS noPfcFlagF6
+              , A.NO_PFC_MIN_F6 AS noPfcMinF6
+              , A.NO_PFC_MAX_F6 AS noPfcMaxF6
+              , A.END_DATE_3 AS endDate3
+              , A.END_DATE_3 AS endDate3Comp
+              , A.SHORTAGE_DATE_3 AS shortageDate3
+              , A.STOCK_DAY_3 AS stockDay3
+              , A.SHORTAGE_ADD_ON_3 AS shortageAddOn3
+              , A.SAFETY_ALARM_3 AS safetyAlarm3
+              , A.SAFETY_ADD_ON_3 AS safetyAddOn3
+              , A.NO_MASTER_3 AS noMaster3
+              , A.OVER_RATIO_DATE_4 AS overRatioDate4
+              , A.FLUCTUATION_RATIO_4 AS fluctuationRatio4
+              , A.GAP_VALUE_4 AS gapValue4
+              , A.TOTAL_CFC_QTY_4 AS totalCfcQty4 
+              , F.DECIMAL_DIGITS AS digit 
+              , H.OFFICE_CODE AS impOfficeCode 
+              , DENSE_RANK() OVER (ORDER BY A.STOCK_STATUS_ID) AS rownumb
+    </sql>
+    
+    <!-- get Stock status list for screen -->
+    <sql id="getWhereInfo">
+           FROM TNR_STOCK_STATUS A
+          INNER JOIN 
+                TNM_PARTS_MASTER B
+             ON 
+                B.PARTS_ID = A.PARTS_ID
+          INNER JOIN 
+                TNM_EXP_PARTS C
+             ON 
+                C.PARTS_ID = A.PARTS_ID
+            AND 
+                C.SUPPLIER_ID = A.SUPPLIER_ID
+          INNER JOIN 
+                TNM_CUSTOMER D
+             ON 
+                D.CUSTOMER_ID = A.CUSTOMER_ID
+          INNER JOIN 
+                TNM_SUPPLIER E
+             ON 
+                E.SUPPLIER_ID = A.SUPPLIER_ID
+          INNER JOIN 
+                TNM_UOM F
+             ON 
+                F.UOM_CODE = B.UOM_CODE
+          INNER JOIN 
+                TNR_RD_MASTER G
+             ON 
+                G.PARTS_ID = A.PARTS_ID
+          INNER JOIN 
+                TNM_OFFICE H
+             ON 
+                H.OFFICE_ID = A.OFFICE_ID
+          <if test="swapData.userId != null" >
+          INNER JOIN 
+                TNM_EMAIL_ALERT TEA
+             ON 
+                TEA.CUSTOMER_ID = A.CUSTOMER_ID
+            AND 
+                TEA.ALERT_LEVEL >= A.ALERT_LEVEL
+            AND 
+                TEA.INACTIVE_FLAG = #{INACTIVE_FLAG_ACTIVE}
+            AND 
+                TEA.USER_ID = #{swapData.userId}
+          </if> 
+          WHERE 
+                A.OFFICE_ID = #{currentOfficeId}
+          <if test="swapData.BusinessPatternList != null and swapData.BusinessPatternList.size() > 0" >
+            AND
+                B.BUSINESS_PATTERN IN 
+                <foreach item="pattern" index="Index" collection="swapData.BusinessPatternList" open="(" separator="," close=")">  
+                    #{pattern}
+                </foreach>
+          </if>
+          <if test="swapData.stockStatusIds != null and swapData.stockStatusIds.size() > 0" >
+            AND
+                A.STOCK_STATUS_ID IN 
+                <foreach item="stockId" index="Index" collection="swapData.stockStatusIds" open="(" separator="," close=")">  
+                    #{stockId}
+                </foreach>
+          </if> 
+          <if test="filters.ttcPartsNo != null and filters.ttcPartsNo != ''" >
+            AND
+                B.TTC_PARTS_NO LIKE #{filters.ttcPartsNo} ESCAPE '!'
+          </if> 
+          <if test="filters.partsNameEn != null and filters.partsNameEn != ''" >
+            AND
+                B.PARTS_NAME_EN LIKE #{filters.partsNameEn} ESCAPE '!'
+          </if> 
+          <if test="filters.partsNameCn != null and filters.partsNameCn != ''" >
+            AND
+                B.PARTS_NAME_CN LIKE #{filters.partsNameCn} ESCAPE '!'
+          </if> 
+          <if test="filters.expCounty != null and filters.expCounty.size() > 0" >
+            AND
+                E.REGION_CODE IN 
+                <foreach item="country" index="Index" collection="filters.expCounty" open="(" separator="," close=")">  
+                    #{country}
+                </foreach>
+          </if> 
+          <if test="filters.supplierCode != null and filters.supplierCode.size() > 0" >
+            AND
+                E.SUPPLIER_ID IN 
+                <foreach item="supplier" index="Index" collection="filters.supplierCode" open="(" separator="," close=")">  
+                    #{supplier}
+                </foreach>
+          </if> 
+          <if test="filters.impCountry != null and filters.impCountry.size() > 0" >
+            AND
+                D.REGION_CODE IN 
+                <foreach item="country" index="Index" collection="filters.impCountry" open="(" separator="," close=")">  
+                    #{country}
+                </foreach>
+          </if> 
+          <if test="filters.customerCode != null and filters.customerCode.size() > 0" >
+            AND
+                D.CUSTOMER_ID IN 
+                <foreach item="customer" index="Index" collection="filters.customerCode" open="(" separator="," close=")">  
+                    #{customer}
+                </foreach>
+          </if> 
+          <if test="filters.oldPartsNo != null and filters.oldPartsNo != ''" >
+            AND
+                B.OLD_TTC_PARTS_NO LIKE #{filters.oldPartsNo} ESCAPE '!'
+          </if> 
+          <if test="filters.custPartsNo != null and filters.custPartsNo != ''" >
+            AND
+                B.CUST_PARTS_NO LIKE #{filters.custPartsNo} ESCAPE '!'
+          </if> 
+          <if test="filters.custBackNo != null and filters.custBackNo != ''" >
+            AND
+                B.CUST_BACK_NO LIKE #{filters.custBackNo} ESCAPE '!'
+          </if> 
+          <if test="filters.businessType != null and filters.businessType.size() > 0" >
+            AND
+                B.BUSINESS_TYPE IN 
+                <foreach item="type" index="Index" collection="filters.businessType" open="(" separator="," close=")">  
+                    #{type}
+                </foreach>
+          </if> 
+          <if test="filters.partsType != null and filters.partsType.size() > 0" >
+            AND
+                B.PARTS_TYPE IN 
+                <foreach item="type" index="Index" collection="filters.partsType" open="(" separator="," close=")">  
+                    #{type}
+                </foreach>
+          </if> 
+          <if test="filters.carModel != null and filters.carModel != ''" >
+            AND
+                B.CAR_MODEL LIKE #{filters.carModel} ESCAPE '!'
+          </if> 
+          <if test="filters.delayAdjustmentPattern != null and filters.delayAdjustmentPattern != ''" >
+            AND
+                A.DELAY_ADJUSTMENT_PATTERN = #{filters.delayAdjustmentPattern}
+          </if> 
+          <if test="filters.expBalanceQty != null and filters.expBalanceQty == 1" >
+            AND
+                (A.EXP_PLAN_DELAY_QTY = 0 OR A.EXP_PLAN_DELAY_QTY IS NULL)
+            AND 
+                (A.EXP_FUTURE_PLAN_QTY = 0 OR A.EXP_FUTURE_PLAN_QTY IS NULL)
+          </if> 
+          <if test="filters.expBalanceQty != null and filters.expBalanceQty == 2" >
+            AND
+                (A.EXP_FUTURE_PLAN_QTY > 0 OR  A.EXP_PLAN_DELAY_QTY > 0)
+          </if>
+          <if test="filters.expPlanDelayQty != null and filters.expPlanDelayQty == 1" >
+            AND
+                (A.EXP_PLAN_DELAY_QTY = 0 OR A.EXP_PLAN_DELAY_QTY IS NULL)
+          </if> 
+          <if test="filters.expPlanDelayQty != null and filters.expPlanDelayQty == 2" >
+            AND
+                A.EXP_PLAN_DELAY_QTY > 0
+          </if> 
+          <if test="filters.expFuturePlanQty != null and filters.expFuturePlanQty == 1" >
+            AND
+                (A.EXP_FUTURE_PLAN_QTY = 0 OR A.EXP_FUTURE_PLAN_QTY IS NULL)
+          </if> 
+          <if test="filters.expFuturePlanQty != null and filters.expFuturePlanQty == 2" >
+            AND
+                A.EXP_FUTURE_PLAN_QTY > 0
+          </if> 
+          <if test="filters.expStockQty != null and filters.expStockQty == 1" >
+            AND
+                (A.EXP_STOCK_QTY = 0 OR A.EXP_STOCK_QTY IS NULL)
+          </if> 
+          <if test="filters.expStockQty != null and filters.expStockQty == 2" >
+            AND
+                A.EXP_STOCK_QTY > 0
+          </if> 
+          <if test="filters.expOnshippingQty != null and filters.expOnshippingQty == 1" >
+            AND
+                (A.EXP_ONSHIPPING_QTY = 0 OR A.EXP_ONSHIPPING_QTY IS NULL)
+          </if> 
+          <if test="filters.expOnshippingQty != null and filters.expOnshippingQty == 2" >
+            AND
+                A.EXP_ONSHIPPING_QTY > 0
+          </if> 
+          <if test="filters.inRackQty != null and filters.inRackQty == 1" >
+            AND
+                (A.IN_RACK_QTY = 0 OR A.IN_RACK_QTY IS NULL)
+          </if> 
+          <if test="filters.inRackQty != null and filters.inRackQty == 2" >
+            AND
+                A.IN_RACK_QTY > 0
+          </if> 
+          <if test="filters.totalImportStockQty != null and filters.totalImportStockQty == 1" >
+            AND
+                (A.ECI_ONHOLD_QTY = 0 OR A.ECI_ONHOLD_QTY IS NULL)
+            AND
+                (A.IMP_WHS_QTY = 0 OR A.IMP_WHS_QTY IS NULL)
+            AND
+                (A.PREPARED_OB_QTY = 0 OR A.PREPARED_OB_QTY IS NULL)
+          </if> 
+          <if test="filters.totalImportStockQty != null and filters.totalImportStockQty == 2" >
+            AND
+                (A.ECI_ONHOLD_QTY > 0 OR A.IMP_WHS_QTY > 0 OR A.PREPARED_OB_QTY > 0)
+          </if> 
+          <if test="filters.eciOnholdQty != null and filters.eciOnholdQty == 1" >
+            AND
+                (A.ECI_ONHOLD_QTY = 0 OR A.ECI_ONHOLD_QTY IS NULL)
+          </if> 
+          <if test="filters.eciOnholdQty != null and filters.eciOnholdQty == 2" >
+            AND
+                A.ECI_ONHOLD_QTY > 0
+          </if> 
+          <if test="filters.impWhsQty != null and filters.impWhsQty == 1" >
+            AND
+                (A.IMP_WHS_QTY = 0 OR A.IMP_WHS_QTY IS NULL)
+          </if> 
+          <if test="filters.impWhsQty != null and filters.impWhsQty == 2" >
+            AND
+                A.IMP_WHS_QTY > 0
+          </if> 
+          <if test="filters.preparedObQty != null and filters.preparedObQty == 1" >
+            AND
+                (A.PREPARED_OB_QTY = 0 OR A.PREPARED_OB_QTY IS NULL)
+          </if>
+          <if test="filters.preparedObQty != null and filters.preparedObQty == 2" >
+            AND
+                A.PREPARED_OB_QTY > 0
+          </if> 
+          <if test="filters.custStockQty != null and filters.custStockQty == 1" >
+            AND
+                (A.CUST_STOCK_QTY = 0 OR A.CUST_STOCK_QTY IS NULL)
+          </if> 
+          <if test="filters.custStockQty != null and filters.custStockQty == 2" >
+            AND
+                A.CUST_STOCK_QTY > 0
+          </if> 
+          <if test="filters.endingStockDateFrom != null and filters.endingStockDateFrom != ''" >
+            AND
+                A.ENDING_STOCK_DATE <![CDATA[>=]]> #{filters.endingStockDateFrom}
+          </if>
+          <if test="filters.endingStockDateTo != null and filters.endingStockDateTo != ''" >
+            AND
+                A.ENDING_STOCK_DATE <![CDATA[<=]]> #{filters.endingStockDateTo}
+          </if>
+          <if test="filters.totalSupplyChainQty != null and filters.totalSupplyChainQty == 1" >
+            AND
+                (A.EXP_PLAN_DELAY_QTY = 0 OR A.EXP_PLAN_DELAY_QTY IS NULL)
+            AND 
+                (A.EXP_FUTURE_PLAN_QTY = 0 OR A.EXP_FUTURE_PLAN_QTY IS NULL)
+            AND
+                (A.EXP_STOCK_QTY = 0 OR A.EXP_STOCK_QTY IS NULL)
+            AND
+                (A.EXP_ONSHIPPING_QTY = 0 OR A.EXP_ONSHIPPING_QTY IS NULL)
+            AND
+                (A.IN_RACK_QTY = 0 OR A.IN_RACK_QTY IS NULL)
+            AND
+                (A.ECI_ONHOLD_QTY = 0 OR A.ECI_ONHOLD_QTY IS NULL)
+            AND
+                (A.IMP_WHS_QTY = 0 OR A.IMP_WHS_QTY IS NULL)
+            AND
+                (A.PREPARED_OB_QTY = 0 OR A.PREPARED_OB_QTY IS NULL)
+            AND
+                (A.CUST_STOCK_QTY = 0 OR A.CUST_STOCK_QTY IS NULL)
+          </if>
+          <if test="filters.totalSupplyChainQty != null and filters.totalSupplyChainQty == 2" >
+            AND
+                (A.EXP_PLAN_DELAY_QTY > 0 
+              OR A.EXP_FUTURE_PLAN_QTY > 0
+              OR A.EXP_STOCK_QTY > 0
+              OR A.EXP_ONSHIPPING_QTY > 0
+              OR A.IN_RACK_QTY > 0
+              OR A.ECI_ONHOLD_QTY > 0
+              OR A.IMP_WHS_QTY > 0
+              OR A.PREPARED_OB_QTY > 0
+              OR A.CUST_STOCK_QTY > 0)
+          </if>
+          <if test="filters.totalNotInRdQty != null and filters.totalNotInRdQty == 1" >
+            AND
+                (A.ETD_DELAY_QTY = 0 OR A.ETD_DELAY_QTY IS NULL)
+            AND
+                (A.INBOUND_DELAY_QTY = 0 OR A.INBOUND_DELAY_QTY IS NULL)
+            AND
+                (A.NG_ONHOLD_QTY = 0 OR A.NG_ONHOLD_QTY IS NULL)
+          </if> 
+          <if test="filters.totalNotInRdQty != null and filters.totalNotInRdQty == 2" >
+            AND
+                (A.ETD_DELAY_QTY > 0 OR A.INBOUND_DELAY_QTY > 0 OR A.NG_ONHOLD_QTY > 0)
+          </if> 
+          <if test="filters.etdDelayQty != null and filters.etdDelayQty == 1" >
+            AND
+                (A.ETD_DELAY_QTY = 0 OR A.ETD_DELAY_QTY IS NULL)
+          </if> 
+          <if test="filters.etdDelayQty != null and filters.etdDelayQty == 2" >
+            AND
+                A.ETD_DELAY_QTY > 0
+          </if> 
+          <if test="filters.inboundDelayQty != null and filters.inboundDelayQty == 1" >
+            AND
+                (A.INBOUND_DELAY_QTY = 0 OR A.INBOUND_DELAY_QTY IS NULL)
+          </if> 
+          <if test="filters.inboundDelayQty != null and filters.inboundDelayQty == 2" >
+            AND
+                A.INBOUND_DELAY_QTY > 0
+          </if> 
+          <if test="filters.ngOnholdQty != null and filters.ngOnholdQty == 1" >
+            AND
+                (A.NG_ONHOLD_QTY = 0 OR A.NG_ONHOLD_QTY IS NULL)
+          </if> 
+          <if test="filters.ngOnholdQty != null and filters.ngOnholdQty == 2" >
+            AND
+                A.NG_ONHOLD_QTY > 0
+          </if> 
+          
+          <if test="filters.stockQty1a != null and filters.stockQty1a == 1" >
+            AND
+                (A.STOCK_QTY_1A = 0 OR A.STOCK_QTY_1A IS NULL)
+          </if> 
+          <if test="filters.stockQty1a != null and filters.stockQty1a == 2" >
+            AND
+                A.STOCK_QTY_1A > 0
+          </if> 
+          <if test="filters.stockDays1aFrom != null and filters.stockDays1aFrom != ''" >
+            AND
+                A.STOCK_DAYS_1A <![CDATA[>=]]> #{filters.stockDays1aFrom}
+          </if> 
+          <if test="filters.stockDays1aTo != null and filters.stockDays1aTo != ''" >
+            AND
+                A.STOCK_DAYS_1A <![CDATA[<=]]> #{filters.stockDays1aTo}
+          </if>
+          <if test="filters.stockBoxes1aFrom != null and filters.stockBoxes1aFrom != ''" >
+            AND
+                A.STOCK_BOXES_1A <![CDATA[>=]]> #{filters.stockBoxes1aFrom}
+          </if> 
+          <if test="filters.stockBoxes1aTo != null and filters.stockBoxes1aTo != ''" >
+            AND
+                A.STOCK_BOXES_1A <![CDATA[<=]]> #{filters.stockBoxes1aTo}
+          </if>
+          <if test="filters.minAlarm1a != null and filters.minAlarm1a != ''" >
+            AND
+                A.MIN_ALARM_1A = #{filters.minAlarm1a}
+          </if> 
+          <if test="filters.maxAlarm1a != null and filters.maxAlarm1a != ''" >
+            AND
+                A.MAX_ALARM_1A = #{filters.maxAlarm1a}
+          </if> 
+          <if test="filters.nextInboundDateFrom != null and filters.nextInboundDateFrom != ''" >
+            AND
+                A.NEXT_INBOUND_DATE <![CDATA[>=]]> #{filters.nextInboundDateFrom}
+          </if>
+          <if test="filters.nextInboundDateTo != null and filters.nextInboundDateTo != ''" >
+            AND
+                A.NEXT_INBOUND_DATE <![CDATA[<=]]> #{filters.nextInboundDateTo}
+          </if>
+          <if test="filters.nextInboundQty != null and filters.nextInboundQty == 1" >
+            AND
+                (A.NEXT_INBOUND_QTY = 0 OR A.NEXT_INBOUND_QTY IS NULL)
+          </if> 
+          <if test="filters.nextInboundQty != null and filters.nextInboundQty == 2" >
+            AND
+                A.NEXT_INBOUND_QTY > 0
+          </if> 
+          <if test="filters.nextInvoice != null and filters.nextInvoice != ''" >
+            AND
+                A.NEXT_INVOICE LIKE #{filters.nextInvoice} ESCAPE '!'
+          </if> 
+          <if test="filters.stockDaysPlan1aFrom != null and filters.stockDaysPlan1aFrom != ''" >
+            AND
+                A.STOCK_DAYS_PLAN_1A <![CDATA[>=]]> #{filters.stockDaysPlan1aFrom}
+          </if> 
+          <if test="filters.stockDaysPlan1aTo != null and filters.stockDaysPlan1aTo != ''" >
+            AND
+                A.STOCK_DAYS_PLAN_1A <![CDATA[<=]]> #{filters.stockDaysPlan1aTo}
+          </if>
+          
+          <if test="filters.stockQty1b != null and filters.stockQty1b == 1" >
+            AND
+                (A.STOCK_QTY_1B = 0 OR A.STOCK_QTY_1B IS NULL)
+          </if> 
+          <if test="filters.stockQty1b != null and filters.stockQty1b == 2" >
+            AND
+                A.STOCK_QTY_1B > 0
+          </if> 
+          <if test="filters.stockDays1bFrom != null and filters.stockDays1bFrom != ''" >
+            AND
+                A.STOCK_DAYS_1B <![CDATA[>=]]> #{filters.stockDays1bFrom}
+          </if> 
+          <if test="filters.stockDays1bTo != null and filters.stockDays1bTo != ''" >
+            AND
+                A.STOCK_DAYS_1B <![CDATA[<=]]> #{filters.stockDays1bTo}
+          </if>
+          <if test="filters.stockBoxes1bFrom != null and filters.stockBoxes1bFrom != ''" >
+            AND
+                A.STOCK_BOXES_1B <![CDATA[>=]]> #{filters.stockBoxes1bFrom}
+          </if> 
+          <if test="filters.stockBoxes1bTo != null and filters.stockBoxes1bTo != ''" >
+            AND
+                A.STOCK_BOXES_1B <![CDATA[<=]]> #{filters.stockBoxes1bTo}
+          </if>
+          <if test="filters.minAlarm1b != null and filters.minAlarm1b != ''" >
+            AND
+                A.MIN_ALARM_1B = #{filters.minAlarm1b}
+          </if> 
+          <if test="filters.maxAlarm1b != null and filters.maxAlarm1b != ''" >
+            AND
+                A.MAX_ALARM_1B = #{filters.maxAlarm1b}
+          </if> 
+          <if test="filters.stockDaysPlan1bFrom != null and filters.stockDaysPlan1bFrom != ''" >
+            AND
+                A.STOCK_DAYS_PLAN_1B <![CDATA[>=]]> #{filters.stockDaysPlan1bFrom}
+          </if> 
+          <if test="filters.stockDaysPlan1bTo != null and filters.stockDaysPlan1bTo != ''" >
+            AND
+                A.STOCK_DAYS_PLAN_1B <![CDATA[<=]]> #{filters.stockDaysPlan1bTo}
+          </if>
+          <if test="filters.endDateTmFrom != null and filters.endDateTmFrom != ''" >
+            AND
+                A.END_DATE_TM <![CDATA[>=]]> #{filters.endDateTmFrom}
+          </if> 
+          <if test="filters.endDateTmTo != null and filters.endDateTmTo != ''" >
+            AND
+                A.END_DATE_TM <![CDATA[<=]]> #{filters.endDateTmTo}
+          </if> 
+          <if test="filters.shortageDateTmFrom != null and filters.shortageDateTmFrom != ''" >
+            AND
+                A.SHORTAGE_DATE_TM <![CDATA[>=]]> #{filters.shortageDateTmFrom}
+          </if> 
+          <if test="filters.shortageDateTmTo != null and filters.shortageDateTmTo != ''" >
+            AND
+                A.SHORTAGE_DATE_TM <![CDATA[<=]]> #{filters.shortageDateTmTo}
+          </if> 
+          <if test="filters.minAlarmTm != null and filters.minAlarmTm != ''" >
+            AND
+                A.MIN_ALARM_TM = #{filters.minAlarmTm}
+          </if> 
+          <if test="filters.maxAlarmTm != null and filters.maxAlarmTm != ''" >
+            AND
+                A.MAX_ALARM_TM = #{filters.maxAlarmTm}
+          </if>
+          <if test="filters.minStockDayTmFrom != null and filters.minStockDayTmFrom != ''" >
+            AND
+                A.MIN_STOCK_DAY_TM <![CDATA[>=]]> #{filters.minStockDayTmFrom}
+          </if> 
+          <if test="filters.minStockDayTmTo != null and filters.minStockDayTmTo != ''" >
+            AND
+                A.MIN_STOCK_DAY_TM <![CDATA[<=]]> #{filters.minStockDayTmTo}
+          </if> 
+          <if test="filters.maxStockDayTmFrom != null and filters.maxStockDayTmFrom != ''" >
+            AND
+                A.MAX_STOCK_DAY_TM <![CDATA[>=]]> #{filters.maxStockDayTmFrom}
+          </if> 
+          <if test="filters.maxStockDayTmTo != null and filters.maxStockDayTmTo != ''" >
+            AND
+                A.MAX_STOCK_DAY_TM <![CDATA[<=]]> #{filters.maxStockDayTmTo}
+          </if> 
+          <if test="filters.minBoxesTmFrom != null and filters.minBoxesTmFrom != ''" >
+            AND
+                A.MIN_BOXES_TM <![CDATA[>=]]> #{filters.minBoxesTmFrom}
+          </if> 
+          <if test="filters.minBoxesTmTo != null and filters.minBoxesTmTo != ''" >
+            AND
+                A.MIN_BOXES_TM <![CDATA[<=]]> #{filters.minBoxesTmTo}
+          </if> 
+          <if test="filters.maxBoxesTmFrom != null and filters.maxBoxesTmFrom != ''" >
+            AND
+                A.MIN_BOXES_TM <![CDATA[>=]]> #{filters.maxBoxesTmFrom}
+          </if> 
+          <if test="filters.maxBoxesTmTo != null and filters.maxBoxesTmTo != ''" >
+            AND
+                A.MAX_BOXES_TM <![CDATA[<=]]> #{filters.maxBoxesTmTo}
+          </if> 
+          <if test="filters.rundownRemark != null and filters.rundownRemark != ''" >
+            AND
+                G.REMARK LIKE #{filters.rundownRemark} ESCAPE '!'
+          </if> 
+          
+          <if test="filters.endDateF1From != null and filters.endDateF1From != ''" >
+            AND
+                A.END_DATE_F1 <![CDATA[>=]]> #{filters.endDateF1From}
+          </if> 
+          <if test="filters.endDateF1To != null and filters.endDateF1To != ''" >
+            AND
+                A.END_DATE_F1 <![CDATA[<=]]> #{filters.endDateF1To}
+          </if> 
+          <if test="filters.shortageDateF1From != null and filters.shortageDateF1From != ''" >
+            AND
+                A.SHORTAGE_DATE_F1 <![CDATA[>=]]> #{filters.shortageDateF1From}
+          </if> 
+          <if test="filters.shortageDateF1To != null and filters.shortageDateF1To != ''" >
+            AND
+                A.SHORTAGE_DATE_F1 <![CDATA[<=]]> #{filters.shortageDateF1To}
+          </if> 
+          <if test="filters.minAlarmF1 != null and filters.minAlarmF1 != ''" >
+            AND
+                A.MIN_ALARM_F1 = #{filters.minAlarmF1}
+          </if> 
+          <if test="filters.maxAlarmF1 != null and filters.maxAlarmF1 != ''" >
+            AND
+                A.MAX_ALARM_F1 = #{filters.maxAlarmF1}
+          </if>
+          <if test="filters.minStockDayF1From != null and filters.minStockDayF1From != ''" >
+            AND
+                A.MIN_STOCK_DAY_F1 <![CDATA[>=]]> #{filters.minStockDayF1From}
+          </if> 
+          <if test="filters.minStockDayF1To != null and filters.minStockDayF1To != ''" >
+            AND
+                A.MIN_STOCK_DAY_F1 <![CDATA[<=]]> #{filters.minStockDayF1To}
+          </if> 
+          <if test="filters.maxStockDayF1From != null and filters.maxStockDayF1From != ''" >
+            AND
+                A.MAX_STOCK_DAY_F1 <![CDATA[>=]]> #{filters.maxStockDayF1From}
+          </if> 
+          <if test="filters.maxStockDayF1To != null and filters.maxStockDayF1To != ''" >
+            AND
+                A.MAX_STOCK_DAY_F1 <![CDATA[<=]]> #{filters.maxStockDayF1To}
+          </if> 
+          <if test="filters.minBoxesF1From != null and filters.minBoxesF1From != ''" >
+            AND
+                A.MIN_BOXES_F1 <![CDATA[>=]]> #{filters.minBoxesF1From}
+          </if> 
+          <if test="filters.minBoxesF1To != null and filters.minBoxesF1To != ''" >
+            AND
+                A.MIN_BOXES_F1 <![CDATA[<=]]> #{filters.minBoxesF1To}
+          </if> 
+          <if test="filters.maxBoxesF1From != null and filters.maxBoxesF1From != ''" >
+            AND
+                A.MAX_BOXES_F1 <![CDATA[>=]]> #{filters.maxBoxesF1From}
+          </if> 
+          <if test="filters.maxBoxesF1To != null and filters.maxBoxesF1To != ''" >
+            AND
+                A.MAX_BOXES_F1 <![CDATA[<=]]> #{filters.maxBoxesF1To}
+          </if> 
+          
+          <if test="filters.endDateF2From != null and filters.endDateF2From != ''" >
+            AND
+                A.END_DATE_F2 <![CDATA[>=]]> #{filters.endDateF2From}
+          </if> 
+          <if test="filters.endDateF2To != null and filters.endDateF2To != ''" >
+            AND
+                A.END_DATE_F2 <![CDATA[<=]]> #{filters.endDateF2To}
+          </if> 
+          <if test="filters.shortageDateF2From != null and filters.shortageDateF2From != ''" >
+            AND
+                A.SHORTAGE_DATE_F2 <![CDATA[>=]]> #{filters.shortageDateF2From}
+          </if> 
+          <if test="filters.shortageDateF2To != null and filters.shortageDateF2To != ''" >
+            AND
+                A.SHORTAGE_DATE_F2 <![CDATA[<=]]> #{filters.shortageDateF2To}
+          </if> 
+          <if test="filters.minAlarmF2 != null and filters.minAlarmF2 != ''" >
+            AND
+                A.MIN_ALARM_F2 = #{filters.minAlarmF2}
+          </if> 
+          <if test="filters.maxAlarmF2 != null and filters.maxAlarmF2 != ''" >
+            AND
+                A.MAX_ALARM_F2 = #{filters.maxAlarmF2}
+          </if>
+          <if test="filters.minStockDayF2From != null and filters.minStockDayF2From != ''" >
+            AND
+                A.MIN_STOCK_DAY_F2 <![CDATA[>=]]> #{filters.minStockDayF2From}
+          </if> 
+          <if test="filters.minStockDayF2To != null and filters.minStockDayF2To != ''" >
+            AND
+                A.MIN_STOCK_DAY_F2 <![CDATA[<=]]> #{filters.minStockDayF2To}
+          </if> 
+          <if test="filters.maxStockDayF2From != null and filters.maxStockDayF2From != ''" >
+            AND
+                A.MAX_STOCK_DAY_F2 <![CDATA[>=]]> #{filters.maxStockDayF2From}
+          </if> 
+          <if test="filters.maxStockDayF2To != null and filters.maxStockDayF2To != ''" >
+            AND
+                A.MAX_STOCK_DAY_F2 <![CDATA[<=]]> #{filters.maxStockDayF2To}
+          </if> 
+          <if test="filters.minBoxesF2From != null and filters.minBoxesF2From != ''" >
+            AND
+                A.MIN_BOXES_F2 <![CDATA[>=]]> #{filters.minBoxesF2From}
+          </if> 
+          <if test="filters.minBoxesF2To != null and filters.minBoxesF2To != ''" >
+            AND
+                A.MIN_BOXES_F2 <![CDATA[<=]]> #{filters.minBoxesF2To}
+          </if> 
+          <if test="filters.maxBoxesF2From != null and filters.maxBoxesF2From != ''" >
+            AND
+                A.MAX_BOXES_F2 <![CDATA[>=]]> #{filters.maxBoxesF2From}
+          </if> 
+          <if test="filters.maxBoxesF2To != null and filters.maxBoxesF2To != ''" >
+            AND
+                A.MAX_BOXES_F2 <![CDATA[<=]]> #{filters.maxBoxesF2To}
+          </if> 
+          
+          <if test="filters.endDateF3From != null and filters.endDateF3From != ''" >
+            AND
+                A.END_DATE_F3 <![CDATA[>=]]> #{filters.endDateF3From}
+          </if> 
+          <if test="filters.endDateF3To != null and filters.endDateF3To != ''" >
+            AND
+                A.END_DATE_F3 <![CDATA[<=]]> #{filters.endDateF3To}
+          </if> 
+          <if test="filters.shortageDateF3From != null and filters.shortageDateF3From != ''" >
+            AND
+                A.SHORTAGE_DATE_F3 <![CDATA[>=]]> #{filters.shortageDateF3From}
+          </if> 
+          <if test="filters.shortageDateF3To != null and filters.shortageDateF3To != ''" >
+            AND
+                A.SHORTAGE_DATE_F3 <![CDATA[<=]]> #{filters.shortageDateF3To}
+          </if> 
+          <if test="filters.minAlarmF3 != null and filters.minAlarmF3 != ''" >
+            AND
+                A.MIN_ALARM_F3 = #{filters.minAlarmF3}
+          </if> 
+          <if test="filters.maxAlarmF3 != null and filters.maxAlarmF3 != ''" >
+            AND
+                A.MAX_ALARM_F3 = #{filters.maxAlarmF3}
+          </if>
+          <if test="filters.minStockDayF3From != null and filters.minStockDayF3From != ''" >
+            AND
+                A.MIN_STOCK_DAY_F3 <![CDATA[>=]]> #{filters.minStockDayF3From}
+          </if> 
+          <if test="filters.minStockDayF3To != null and filters.minStockDayF3To != ''" >
+            AND
+                A.MIN_STOCK_DAY_F3 <![CDATA[<=]]> #{filters.minStockDayF3To}
+          </if> 
+          <if test="filters.maxStockDayF3From != null and filters.maxStockDayF3From != ''" >
+            AND
+                A.MAX_STOCK_DAY_F3 <![CDATA[>=]]> #{filters.maxStockDayF3From}
+          </if> 
+          <if test="filters.maxStockDayF3To != null and filters.maxStockDayF3To != ''" >
+            AND
+                A.MAX_STOCK_DAY_F3 <![CDATA[<=]]> #{filters.maxStockDayF3To}
+          </if> 
+          <if test="filters.minBoxesF3From != null and filters.minBoxesF3From != ''" >
+            AND
+                A.MIN_BOXES_F3 <![CDATA[>=]]> #{filters.minBoxesF3From}
+          </if> 
+          <if test="filters.minBoxesF3To != null and filters.minBoxesF3To != ''" >
+            AND
+                A.MIN_BOXES_F3 <![CDATA[<=]]> #{filters.minBoxesF3To}
+          </if> 
+          <if test="filters.maxBoxesF3From != null and filters.maxBoxesF3From != ''" >
+            AND
+                A.MAX_BOXES_F3 <![CDATA[>=]]> #{filters.maxBoxesF3From}
+          </if> 
+          <if test="filters.maxBoxesF3To != null and filters.maxBoxesF3To != ''" >
+            AND
+                A.MAX_BOXES_F3 <![CDATA[<=]]> #{filters.maxBoxesF3To}
+          </if> 
+          
+          <if test="filters.endDateF4From != null and filters.endDateF4From != ''" >
+            AND
+                A.END_DATE_F4 <![CDATA[>=]]> #{filters.endDateF4From}
+          </if> 
+          <if test="filters.endDateF4To != null and filters.endDateF4To != ''" >
+            AND
+                A.END_DATE_F4 <![CDATA[<=]]> #{filters.endDateF4To}
+          </if> 
+          <if test="filters.shortageDateF4From != null and filters.shortageDateF4From != ''" >
+            AND
+                A.SHORTAGE_DATE_F4 <![CDATA[>=]]> #{filters.shortageDateF4From}
+          </if> 
+          <if test="filters.shortageDateF4To != null and filters.shortageDateF4To != ''" >
+            AND
+                A.SHORTAGE_DATE_F4 <![CDATA[<=]]> #{filters.shortageDateF4To}
+          </if> 
+          <if test="filters.minAlarmF4 != null and filters.minAlarmF4 != ''" >
+            AND
+                A.MIN_ALARM_F4 = #{filters.minAlarmF4}
+          </if> 
+          <if test="filters.maxAlarmF4 != null and filters.maxAlarmF4 != ''" >
+            AND
+                A.MAX_ALARM_F4 = #{filters.maxAlarmF4}
+          </if>
+          <if test="filters.minStockDayF4From != null and filters.minStockDayF4From != ''" >
+            AND
+                A.MIN_STOCK_DAY_F4 <![CDATA[>=]]> #{filters.minStockDayF4From}
+          </if> 
+          <if test="filters.minStockDayF4To != null and filters.minStockDayF4To != ''" >
+            AND
+                A.MIN_STOCK_DAY_F4 <![CDATA[<=]]> #{filters.minStockDayF4To}
+          </if> 
+          <if test="filters.maxStockDayF4From != null and filters.maxStockDayF4From != ''" >
+            AND
+                A.MAX_STOCK_DAY_F4 <![CDATA[>=]]> #{filters.maxStockDayF4From}
+          </if> 
+          <if test="filters.maxStockDayF4To != null and filters.maxStockDayF4To != ''" >
+            AND
+                A.MAX_STOCK_DAY_F4 <![CDATA[<=]]> #{filters.maxStockDayF4To}
+          </if> 
+          <if test="filters.minBoxesF4From != null and filters.minBoxesF4From != ''" >
+            AND
+                A.MIN_BOXES_F4 <![CDATA[>=]]> #{filters.minBoxesF4From}
+          </if> 
+          <if test="filters.minBoxesF4To != null and filters.minBoxesF4To != ''" >
+            AND
+                A.MIN_BOXES_F4 <![CDATA[<=]]> #{filters.minBoxesF4To}
+          </if> 
+          <if test="filters.maxBoxesF4From != null and filters.maxBoxesF4From != ''" >
+            AND
+                A.MAX_BOXES_F4 <![CDATA[>=]]> #{filters.maxBoxesF4From}
+          </if> 
+          <if test="filters.maxBoxesF4To != null and filters.maxBoxesF4To != ''" >
+            AND
+                A.MAX_BOXES_F4 <![CDATA[<=]]> #{filters.maxBoxesF4To}
+          </if> 
+          
+          <if test="filters.endDateF5From != null and filters.endDateF5From != ''" >
+            AND
+                A.END_DATE_F5 <![CDATA[>=]]> #{filters.endDateF5From}
+          </if> 
+          <if test="filters.endDateF5To != null and filters.endDateF5To != ''" >
+            AND
+                A.END_DATE_F5 <![CDATA[<=]]> #{filters.endDateF5To}
+          </if> 
+          <if test="filters.shortageDateF5From != null and filters.shortageDateF5From != ''" >
+            AND
+                A.SHORTAGE_DATE_F5 <![CDATA[>=]]> #{filters.shortageDateF5From}
+          </if> 
+          <if test="filters.shortageDateF5To != null and filters.shortageDateF5To != ''" >
+            AND
+                A.SHORTAGE_DATE_F5 <![CDATA[<=]]> #{filters.shortageDateF5To}
+          </if> 
+          <if test="filters.minAlarmF5 != null and filters.minAlarmF5 != ''" >
+            AND
+                A.MIN_ALARM_F5 = #{filters.minAlarmF5}
+          </if> 
+          <if test="filters.maxAlarmF5 != null and filters.maxAlarmF5 != ''" >
+            AND
+                A.MAX_ALARM_F5 = #{filters.maxAlarmF5}
+          </if>
+          <if test="filters.minStockDayF5From != null and filters.minStockDayF5From != ''" >
+            AND
+                A.MIN_STOCK_DAY_F5 <![CDATA[>=]]> #{filters.minStockDayF5From}
+          </if> 
+          <if test="filters.minStockDayF5To != null and filters.minStockDayF5To != ''" >
+            AND
+                A.MIN_STOCK_DAY_F5 <![CDATA[<=]]> #{filters.minStockDayF5To}
+          </if> 
+          <if test="filters.maxStockDayF5From != null and filters.maxStockDayF5From != ''" >
+            AND
+                A.MAX_STOCK_DAY_F5 <![CDATA[>=]]> #{filters.maxStockDayF5From}
+          </if> 
+          <if test="filters.maxStockDayF5To != null and filters.maxStockDayF5To != ''" >
+            AND
+                A.MAX_STOCK_DAY_F5 <![CDATA[<=]]> #{filters.maxStockDayF5To}
+          </if> 
+          <if test="filters.minBoxesF5From != null and filters.minBoxesF5From != ''" >
+            AND
+                A.MIN_BOXES_F5 <![CDATA[>=]]> #{filters.minBoxesF5From}
+          </if> 
+          <if test="filters.minBoxesF5To != null and filters.minBoxesF5To != ''" >
+            AND
+                A.MIN_BOXES_F5 <![CDATA[<=]]> #{filters.minBoxesF5To}
+          </if> 
+          <if test="filters.maxBoxesF5From != null and filters.maxBoxesF5From != ''" >
+            AND
+                A.MAX_BOXES_F5 <![CDATA[>=]]> #{filters.maxBoxesF5From}
+          </if> 
+          <if test="filters.maxBoxesF5To != null and filters.maxBoxesF5To != ''" >
+            AND
+                A.MAX_BOXES_F5 <![CDATA[<=]]> #{filters.maxBoxesF5To}
+          </if>
+          
+          <if test="filters.endDateF6From != null and filters.endDateF6From != ''" >
+            AND
+                A.END_DATE_F6 <![CDATA[>=]]> #{filters.endDateF6From}
+          </if> 
+          <if test="filters.endDateF6To != null and filters.endDateF6To != ''" >
+            AND
+                A.END_DATE_F6 <![CDATA[<=]]> #{filters.endDateF6To}
+          </if> 
+          <if test="filters.shortageDateF6From != null and filters.shortageDateF6From != ''" >
+            AND
+                A.SHORTAGE_DATE_F6 <![CDATA[>=]]> #{filters.shortageDateF6From}
+          </if> 
+          <if test="filters.shortageDateF6To != null and filters.shortageDateF6To != ''" >
+            AND
+                A.SHORTAGE_DATE_F6 <![CDATA[<=]]> #{filters.shortageDateF6To}
+          </if> 
+          <if test="filters.minAlarmF6 != null and filters.minAlarmF6 != ''" >
+            AND
+                A.MIN_ALARM_F6 = #{filters.minAlarmF6}
+          </if> 
+          <if test="filters.maxAlarmF6 != null and filters.maxAlarmF6 != ''" >
+            AND
+                A.MAX_ALARM_F6 = #{filters.maxAlarmF6}
+          </if>
+          <if test="filters.minStockDayF6From != null and filters.minStockDayF6From != ''" >
+            AND
+                A.MIN_STOCK_DAY_F6 <![CDATA[>=]]> #{filters.minStockDayF6From}
+          </if> 
+          <if test="filters.minStockDayF6To != null and filters.minStockDayF6To != ''" >
+            AND
+                A.MIN_STOCK_DAY_F6 <![CDATA[<=]]> #{filters.minStockDayF6To}
+          </if> 
+          <if test="filters.maxStockDayF6From != null and filters.maxStockDayF6From != ''" >
+            AND
+                A.MAX_STOCK_DAY_F6 <![CDATA[>=]]> #{filters.maxStockDayF6From}
+          </if> 
+          <if test="filters.maxStockDayF6To != null and filters.maxStockDayF6To != ''" >
+            AND
+                A.MAX_STOCK_DAY_F6 <![CDATA[<=]]> #{filters.maxStockDayF6To}
+          </if> 
+          <if test="filters.minBoxesF6From != null and filters.minBoxesF6From != ''" >
+            AND
+                A.MIN_BOXES_F6 <![CDATA[>=]]> #{filters.minBoxesF6From}
+          </if> 
+          <if test="filters.minBoxesF6To != null and filters.minBoxesF6To != ''" >
+            AND
+                A.MIN_BOXES_F6 <![CDATA[<=]]> #{filters.minBoxesF6To}
+          </if> 
+          <if test="filters.maxBoxesF6From != null and filters.maxBoxesF6From != ''" >
+            AND
+                A.MAX_BOXES_F6 <![CDATA[>=]]> #{filters.maxBoxesF6From}
+          </if> 
+          <if test="filters.maxBoxesF6To != null and filters.maxBoxesF6To != ''" >
+            AND
+                A.MAX_BOXES_F6 <![CDATA[<=]]> #{filters.maxBoxesF6To}
+          </if>
+          <if test="filters.endDate3From != null and filters.endDate3From != ''" >
+            AND
+                A.END_DATE_3 <![CDATA[>=]]> #{filters.endDate3From}
+          </if> 
+          <if test="filters.endDate3To != null and filters.endDate3To != ''" >
+            AND
+                A.END_DATE_3 <![CDATA[<=]]> #{filters.endDate3To}
+          </if> 
+          <if test="filters.shortageDateFrom != null and filters.shortageDateFrom != ''" >
+            AND
+                A.SHORTAGE_DATE_3 <![CDATA[>=]]> #{filters.shortageDateFrom}
+          </if> 
+          <if test="filters.shortageDateTo != null and filters.shortageDateTo != ''" >
+            AND
+                A.SHORTAGE_DATE_3 <![CDATA[<=]]> #{filters.shortageDateTo}
+          </if> 
+          <if test="filters.stockDay3From != null and filters.stockDay3From != ''" >
+            AND
+                A.STOCK_DAY_3 <![CDATA[>=]]> #{filters.stockDay3From}
+          </if> 
+          <if test="filters.stockDay3To != null and filters.stockDay3To != ''" >
+            AND
+                A.STOCK_DAY_3 <![CDATA[<=]]> #{filters.stockDay3To}
+          </if> 
+          <if test="filters.orderSafetyStockFrom != null and filters.orderSafetyStockFrom != ''" >
+            AND
+                A.ORDER_SAFETY_STOCK <![CDATA[>=]]> #{filters.orderSafetyStockFrom}
+          </if> 
+          <if test="filters.orderSafetyStockTo != null and filters.orderSafetyStockTo != ''" >
+            AND
+                A.ORDER_SAFETY_STOCK <![CDATA[<=]]> #{filters.orderSafetyStockTo}
+          </if> 
+          <if test="filters.safetyAlarm3 != null and filters.safetyAlarm3 != ''" >
+            AND
+                A.SAFETY_ALARM_3 = #{filters.safetyAlarm3}
+          </if>
+          <if test="filters.shortageAddOn3 != null and filters.shortageAddOn3 == 1" >
+            AND
+                (A.SHORTAGE_ADD_ON_3 = 0 OR A.SHORTAGE_ADD_ON_3 IS NULL)
+          </if> 
+          <if test="filters.shortageAddOn3 != null and filters.shortageAddOn3 == 2" >
+            AND
+                A.SHORTAGE_ADD_ON_3 > 0
+          </if>
+          <if test="filters.safetyAddOn3 != null and filters.safetyAddOn3 == 1" >
+            AND
+                (A.SAFETY_ADD_ON_3 = 0 OR A.SAFETY_ADD_ON_3 IS NULL)
+          </if> 
+          <if test="filters.safetyAddOn3 != null and filters.safetyAddOn3 == 2" >
+            AND
+                A.SAFETY_ADD_ON_3 > 0
+          </if>
+          <if test="filters.overRatioDate4From != null and filters.overRatioDate4From != ''" >
+            AND
+                A.OVER_RATIO_DATE_4 <![CDATA[>=]]> #{filters.overRatioDate4From}
+          </if> 
+          <if test="filters.overRatioDate4To != null and filters.overRatioDate4To != ''" >
+            AND
+                A.OVER_RATIO_DATE_4 <![CDATA[<=]]> #{filters.overRatioDate4To}
+          </if>
+           <if test="filters.fluctuationRatio4From != null and filters.fluctuationRatio4From != ''" >
+            AND
+                A.FLUCTUATION_RATIO_4 <![CDATA[>=]]> #{filters.fluctuationRatio4From}
+          </if> 
+          <if test="filters.fluctuationRatio4To != null and filters.fluctuationRatio4To != ''" >
+            AND
+                A.FLUCTUATION_RATIO_4 <![CDATA[<=]]> #{filters.fluctuationRatio4To}
+          </if>
+          <if test="filters.gapValue4 != null and filters.gapValue4 == 1" >
+            AND
+                (A.GAP_VALUE_4 = 0 OR A.GAP_VALUE_4 IS NULL)
+          </if> 
+          <if test="filters.gapValue4 != null and filters.gapValue4 == 2" >
+            AND
+                A.GAP_VALUE_4 > 0
+          </if>
+          <if test="filters.saCustStockFlag != null and filters.saCustStockFlag != ''" >
+            AND
+                A.SA_CUST_STOCK_FLAG = #{filters.saCustStockFlag}
+          </if>
+          <if test="filters.lastObActualDateFrom != null and filters.lastObActualDateFrom != ''" >
+            AND
+                A.LAST_OB_ACTUAL_DATE <![CDATA[>=]]> #{filters.lastObActualDateFrom}
+          </if>
+          <if test="filters.lastObActualDateTo != null and filters.lastObActualDateTo != ''" >
+            AND
+                A.LAST_OB_ACTUAL_DATE <![CDATA[<=]]> #{filters.lastObActualDateTo}
+          </if> 
+          <if test="(filters.buildOutFlag != null and filters.buildOutFlag != '')
+                     or (filters.buildOutMonthFrom != null and filters.buildOutMonthFrom != '')
+                     or (filters.buildOutMonthTo != null and filters.buildOutMonthTo != '')
+                     or (filters.lastOrderMonthFrom != null and filters.lastOrderMonthFrom != '')
+                     or (filters.lastOrderMonthTo != null and filters.lastOrderMonthTo != '')
+                     or (filters.lastDeliveryMonthFrom != null and filters.lastDeliveryMonthFrom != '')
+                     or (filters.lastDeliveryMonthTo != null and filters.lastDeliveryMonthTo != '')
+                     or (filters.inActiveFlag != null and filters.inActiveFlag != '')
+                     or (filters.supplierPartsNo != null and filters.supplierPartsNo != '')
+                     or (filters.partsRemark != null and filters.partsRemark != '')" >
+          AND EXISTS (
+                SELECT 
+                       1
+                  FROM 
+                       TNM_EXP_PARTS K1
+                 WHERE
+                       LOCATE(','||K1.EXP_PARTS_ID||',' ,A.EXP_PARTS_SET) > 0
+                   <if test="filters.buildOutFlag != null and filters.buildOutFlag != ''" >
+                   AND
+                       K1.BUILDOUT_FLAG = #{filters.buildOutFlag}
+                   </if> 
+                   <if test="filters.buildOutMonthFrom != null and filters.buildOutMonthFrom != ''" >
+                   AND
+                       K1.BUILDOUT_MONTH <![CDATA[>=]]> #{filters.buildOutMonthFrom}
+                   </if> 
+                   <if test="filters.buildOutMonthTo != null and filters.buildOutMonthTo != ''" >
+                   AND
+                       K1.BUILDOUT_MONTH <![CDATA[<=]]> #{filters.buildOutMonthTo}
+                   </if> 
+                   <if test="filters.lastOrderMonthFrom != null and filters.lastOrderMonthFrom != ''" >
+                   AND
+                       K1.LAST_PO_MONTH <![CDATA[>=]]> #{filters.lastOrderMonthFrom}
+                   </if> 
+                   <if test="filters.lastOrderMonthTo != null and filters.lastOrderMonthTo != ''" >
+                   AND
+                       K1.LAST_PO_MONTH <![CDATA[<=]]> #{filters.lastOrderMonthTo}
+                   </if> 
+                   <if test="filters.lastDeliveryMonthFrom != null and filters.lastDeliveryMonthFrom != ''" >
+                   AND
+                       K1.LAST_DELIVERY_MONTH <![CDATA[>=]]> #{filters.lastDeliveryMonthFrom}
+                   </if> 
+                   <if test="filters.lastDeliveryMonthTo != null and filters.lastDeliveryMonthTo != ''" >
+                   AND
+                       K1.LAST_DELIVERY_MONTH <![CDATA[<=]]> #{filters.lastDeliveryMonthTo}
+                   </if>  
+                   <if test="filters.inActiveFlag != null and filters.inActiveFlag != ''" >
+                   AND
+                       K1.INACTIVE_FLAG = #{filters.inActiveFlag}
+                   </if>  
+                   <if test="filters.supplierPartsNo != null and filters.supplierPartsNo != ''" >
+                   AND
+                       K1.SUPP_PARTS_NO LIKE #{filters.supplierPartsNo} ESCAPE '!'
+                   </if> 
+                   <if test="filters.partsRemark != null and filters.partsRemark != ''" >
+                   AND
+                       K1.REMARK1 LIKE #{filters.partsRemark} ESCAPE '!'
+                   </if>
+            )
+          </if>
+    </sql>
+    
+    <sql id="getPageingInfo">
+         WHERE <![CDATA[H.rownumb > #{start} AND H.rownumb <= #{end}]]>
+    </sql>
+        
+    <sql id="getOrderInfo">
+         ORDER BY
+               H.rownumb
+    </sql>
+    
+    <select id="findPageListCount" resultType="int" parameterType="com.chinaplus.core.bean.PageParam">
+         <include refid="ConstDef"/>
+         SELECT 
+                COUNT(DISTINCT A.STOCK_STATUS_ID) 
+         <include refid="getWhereInfo"/>
+    </select>
+       
+    <select id="findPageList" resultType="com.chinaplus.common.bean.TntStockStatusEx" parameterType="com.chinaplus.core.bean.PageParam">
+         <include refid="ConstDef"/>
+         SELECT 
+                *
+           FROM ( 
+                 <include refid="getAllColumns"/>
+                 <include refid="getWhereInfo"/>
+                ) H
+          <include refid="getPageingInfo"/>
+          <include refid="getOrderInfo"/>
+    </select>  
+           
+    <select id="findAllStockStatusList" resultType="com.chinaplus.common.bean.TntStockStatusEx" parameterType="com.chinaplus.core.bean.BaseParam">
+         <include refid="ConstDef"/>
+         SELECT 
+                *
+           FROM ( 
+                 <include refid="getAllColumns"/>
+                 <include refid="getWhereInfo"/>
+                ) H
+          <include refid="getOrderInfo"/>
+    </select>    
+               
+    <select id="findMaxForecastNum" resultType="java.lang.Integer" parameterType="com.chinaplus.core.bean.BaseParam">
+         <include refid="ConstDef"/>
+         SELECT 
+                MAX(A.FORECAST_NUM)
+           FROM 
+                TNR_STOCK_STATUS A
+          WHERE 
+                A.OFFICE_ID = #{currentOfficeId}
+            AND
+                A.STOCK_STATUS_ID IN 
+                    (SELECT 
+                            DISTINCT 
+                            A.STOCK_STATUS_ID 
+                     <include refid="getWhereInfo"/>)
+    </select>   
+                   
+    <select id="findOnShippingHeader" resultType="com.chinaplus.common.bean.TntRdDetailAttachEx" parameterType="com.chinaplus.core.bean.BaseParam">
+         <include refid="ConstDef"/>
+         SELECT 
+                DISTINCT
+                A.ETD AS etd
+              , A.ETA AS eta
+              , A.IMP_INB_PLAN_DATE AS impInbPlanDate
+           FROM 
+                TNR_RD_ATTACH_SHIPPING A
+          INNER JOIN 
+                TNR_STOCK_STATUS B
+             ON 
+                B.PARTS_ID = A.PARTS_ID
+            AND 
+                B.SUPPLIER_ID = A.SUPPLIER_ID
+          WHERE 
+                A.ATTACH_TYPE = #{ON_SHIPPING}
+            AND 
+                B.OFFICE_ID = #{currentOfficeId}
+            AND
+                B.STOCK_STATUS_ID IN 
+                    (SELECT 
+                            DISTINCT 
+                            A.STOCK_STATUS_ID 
+                     <include refid="getWhereInfo"/>)
+          ORDER BY 
+                A.ETD
+              , A.ETA
+              , A.IMP_INB_PLAN_DATE  
+    </select>   
+                       
+    <select id="findOnShippingList" resultType="com.chinaplus.common.bean.TntRdDetailAttachEx" parameterType="com.chinaplus.core.bean.BaseParam">
+         <include refid="ConstDef"/>
+         SELECT
+                B.STOCK_STATUS_ID AS stockStatusId
+              , A.PARTS_ID AS partsId
+              , A.SUPPLIER_ID AS supplierId
+              , A.ETD AS etd
+              , A.ETA AS eta
+              , A.IMP_INB_PLAN_DATE AS impInbPlanDate
+              , SUM(A.QTY) AS qty
+           FROM 
+                (SELECT DISTINCT
+                        RUNDOWN_DETAIL_ID
+                      , PARTS_ID
+                      , SUPPLIER_ID
+                      , ATTACH_TYPE
+                      , PFC_MONTH
+                      , IMP_PO_NO
+                      , ETD
+                      , ETA
+                      , IMP_INB_PLAN_DATE
+                      , QTY
+                      , INVOICE_NO
+                   FROM TNR_RD_ATTACH_SHIPPING) A
+          INNER JOIN 
+                TNR_STOCK_STATUS B
+             ON 
+                B.PARTS_ID = A.PARTS_ID
+            AND 
+                B.SUPPLIER_ID = A.SUPPLIER_ID
+          WHERE 
+                A.ATTACH_TYPE = #{ON_SHIPPING}
+            AND 
+                B.OFFICE_ID = #{currentOfficeId}
+            AND
+                B.STOCK_STATUS_ID IN 
+                    (SELECT 
+                            DISTINCT 
+                            A.STOCK_STATUS_ID 
+                     <include refid="getWhereInfo"/>)
+          GROUP BY 
+                B.STOCK_STATUS_ID
+              , A.PARTS_ID
+              , A.SUPPLIER_ID  
+              , A.ETD
+              , A.ETA
+              , A.IMP_INB_PLAN_DATE 
+          ORDER BY
+                B.STOCK_STATUS_ID
+              , A.PARTS_ID
+              , A.SUPPLIER_ID 
+              , A.ETD
+              , A.ETA
+              , A.IMP_INB_PLAN_DATE   
+    </select>   
+    
+</mapper>

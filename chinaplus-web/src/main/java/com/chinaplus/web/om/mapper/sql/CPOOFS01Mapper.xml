@@ -1,0 +1,95 @@
+<!--
+@screen CPOOFS01
+@author shi_yuxi
+-->
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.om.service.CPOOFS01Service">
+    <sql id="ConstDef">
+        <bind name="NORMAL" value="@com.chinaplus.common.consts.CodeConst$OrderForecastStatus@NORMAL" />
+    </sql>
+    <sql id="whereSql">
+        <if test="null != filters">
+            <if test="null != filters.orderForecastNo and '' != filters.orderForecastNo">
+                and A.PFC_NO LIKE #{filters.orderForecastNo} ESCAPE '!'
+            </if>
+            <if test="null != filters.impRegion and filters.impRegion.size()>0">
+                and A.IMP_REGION IN 
+                <foreach item="item" index="index" collection="filters.impRegion" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+            </if>
+            <if test="null != filters.customerCode and filters.customerCode.size()>0">
+                and A.CUSTOMER_ID IN 
+                <foreach item="item" index="index" collection="filters.customerCode" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+            </if>
+            <if test="null != filters.orderMonthFrom and '' != filters.orderMonthFrom">
+                and DATE(A.ORDER_MONTH) <![CDATA[>=]]> #{filters.createDateFrom}
+            </if>
+            <if test="null != filters.orderMonthTo and '' != filters.orderMonthTo">
+                and DATE (A.ORDER_MONTH) <![CDATA[<=]]> #{filters.orderMonthTo}
+            </if>
+            <if test="null != filters.uploadedBy and filters.uploadedBy.size()>0">
+                and A.UPLOADED_BY IN 
+                <foreach item="item" index="index" collection="filters.uploadedBy" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+            </if>
+            <if test="null != filters.uploadedDateFrom and '' != filters.uploadedDateFrom">
+                and DATE(A.UPLOADED_DATE) <![CDATA[>=]]> #{filters.uploadedDateFrom}
+            </if>
+            <if test="null != filters.uploadedDateTo and '' != filters.uploadedDateTo">
+                and DATE (A.UPLOADED_DATE) <![CDATA[<=]]> #{filters.uploadedDateTo}
+            </if>
+        </if>
+    </sql>
+    <select id="getAllList" parameterType="com.chinaplus.core.bean.BaseParam" 
+            resultType="com.chinaplus.web.om.entity.CPOOFS01Entity">
+            <include refid="ConstDef"/>
+            SELECT * FROM (
+                SELECT 
+                    A.PFC_ID AS orderForecastId
+                    ,A.PFC_NO AS orderForecastNo
+                    ,A.IMP_REGION AS impRegion
+                    ,B.CUSTOMER_CODE AS customerCode
+                    ,A.ORDER_MONTH AS orderMonth
+                    ,A.FIRST_FC_MONTH AS firstFcMonth
+                    ,A.LAST_FC_MONTH AS lastFcMonth
+                    ,A.REMARK AS remark
+                    ,U.LOGIN_ID AS uploadedBy
+                    ,A.UPLOADED_DATE AS uploadedDate
+                    ,ROWNUMBER() over(ORDER BY A.ORDER_MONTH DESC,A.PFC_NO DESC) as rownum
+                FROM TNT_PFC_MASTER A 
+                    INNER JOIN TNM_CUSTOMER B ON A.CUSTOMER_ID = B.CUSTOMER_ID
+                    INNER JOIN TNM_USER U ON A.UPLOADED_BY = U.USER_ID
+                WHERE 
+                    A.OFFICE_ID = #{currentOfficeId}
+                AND 
+                    A.STATUS = ${NORMAL}
+                <include refid="whereSql"/>
+                ORDER BY
+                    A.ORDER_MONTH DESC,
+                    A.PFC_NO DESC
+                )
+            WHERE
+            <include refid="com.chinaplus.const.pagingCondition" />
+    </select>
+    
+    <select id="getAllListCount" parameterType="com.chinaplus.core.bean.BaseParam" 
+            resultType="int">
+            <include refid="ConstDef"/>
+            SELECT
+                count(*)
+            FROM TNT_PFC_MASTER A 
+                INNER JOIN TNM_CUSTOMER B ON A.CUSTOMER_ID = B.CUSTOMER_ID
+            WHERE 
+                A.OFFICE_ID = #{currentOfficeId}
+            AND 
+                A.STATUS = ${NORMAL}
+            <include refid="whereSql"/>
+    </select>
+</mapper>

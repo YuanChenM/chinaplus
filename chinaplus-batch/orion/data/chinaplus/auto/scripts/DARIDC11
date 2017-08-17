@@ -1,0 +1,7 @@
+#!/bin/sh
+#copy ssms file from interfacepath to workingpath and backuppath
+
+/orion/data/chinaplus/auto/scripts/BASE/copyssmsfile.sh DARIDC11
+
+ret=$?
+exit ${ret} 

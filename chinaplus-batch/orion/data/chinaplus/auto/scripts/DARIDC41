@@ -1,0 +1,7 @@
+#!/bin/sh
+#copy ttlogix file from interfacepath to workingpath and backuppath
+
+/orion/data/chinaplus/auto/scripts/BASE/copyttlogixfile.sh DARIDC41 $1
+
+ret=$?
+exit ${ret} 

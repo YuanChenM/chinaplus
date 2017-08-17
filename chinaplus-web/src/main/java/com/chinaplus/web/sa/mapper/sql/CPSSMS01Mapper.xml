@@ -1,0 +1,157 @@
+<!--
+@screen CPSSMS01Service
+@author li_feng
+-->
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.sa.service.CPSSMS01Service">
+    <sql id="ConstDef">
+        <bind name="InactiveFlag_ACTIVE" value="@com.chinaplus.common.consts.CodeConst$InactiveFlag@ACTIVE" />
+        <bind name="Status_ACTIVE" value="@com.chinaplus.common.consts.CodeConst$User$Status@ACTIVE" />
+        
+    </sql>
+    
+    
+    <!-- get Role list -->
+    <sql id="getShippingStatusRevisonInfo">
+        FROM
+            TNT_SS_MASTER SS_MASTER
+            INNER JOIN TNT_ORDER ORDER ON ORDER.ORDER_ID = SS_MASTER.ORDER_ID AND ORDER.OFFICE_ID = SS_MASTER.OFFICE_ID
+            LEFT JOIN TNM_CUSTOMER CUSTOMER ON CUSTOMER.CUSTOMER_ID = ORDER.CUSTOMER_ID AND CUSTOMER.OFFICE_ID = ORDER.OFFICE_ID
+            LEFT JOIN TNM_USER TNM_USER ON SS_MASTER.UPLOADED_BY = TNM_USER.USER_ID
+            
+            LEFT JOIN (select SS_ID,TRANSPORT_MODE from TNT_SS_PLAN group by SS_ID, TRANSPORT_MODE) SS_PLAN_SEA ON SS_MASTER.SS_ID = SS_PLAN_SEA.SS_ID AND SS_PLAN_SEA.TRANSPORT_MODE = 1
+            LEFT JOIN (select SS_ID,TRANSPORT_MODE from TNT_SS_PLAN group by SS_ID, TRANSPORT_MODE) SS_PLAN_AIR ON SS_MASTER.SS_ID = SS_PLAN_AIR.SS_ID AND SS_PLAN_AIR.TRANSPORT_MODE = 2
+
+            LEFT JOIN TNF_ORDER_STATUS ORDER_STATUS ON ORDER_STATUS.IMP_PO_NO = ORDER.IMP_PO_NO AND ORDER_STATUS.CUSTOMER_ORDER_NO = ORDER.CUSTOMER_ORDER_NO
+            LEFT JOIN TNM_PARTS_MASTER PARTS_MASTER ON ORDER_STATUS.PARTS_ID = PARTS_MASTER.PARTS_ID AND ORDER.CUSTOMER_ID = PARTS_MASTER.CUSTOMER_ID
+            LEFT JOIN TNM_SUPPLIER SUPPLIER ON SUPPLIER.SUPPLIER_ID = ORDER_STATUS.SUPPLIER_ID
+            LEFT JOIN (SELECT SS_ID,TRANSPORT_MODE FROM TNT_SS_PLAN GROUP BY SS_ID, TRANSPORT_MODE) SS_PLAN_TM ON SS_MASTER.SS_ID = SS_PLAN_TM.SS_ID
+        WHERE
+            SS_MASTER.OFFICE_ID = #{currentOfficeId}
+        <if test="filters.ipoOrderNo != null and filters.ipoOrderNo != ''">
+            AND ORDER.IMP_PO_NO LIKE #{filters.ipoOrderNo} ESCAPE '!'
+        </if>
+        <if test="filters.customerOrderNo != null and filters.customerOrderNo != ''">
+            AND ORDER.CUSTOMER_ORDER_NO LIKE #{filters.customerOrderNo} ESCAPE '!'
+        </if>    
+            
+            
+        <if test="filters.expCountry != null and filters.expCountry.size() != 0">
+            AND ORDER.EXP_REGION IN
+            <foreach item="expCountryItem" index="expCountryIndex" collection="filters.expCountry" open="(" separator="," close=")">  
+                #{expCountryItem}
+            </foreach>
+        </if>
+        <if test="filters.ttcSupplierCode != null and filters.ttcSupplierCode.size() != 0">
+            AND SUPPLIER.SUPPLIER_CODE IN
+            <foreach item="ttcSupplierCodeItem" index="ttcSupplierCodeIndex" collection="filters.ttcSupplierCode" open="(" separator="," close=")">  
+                #{ttcSupplierCodeItem}
+            </foreach>
+        </if>
+        <if test="filters.ttcCustomerCode != null and filters.ttcCustomerCode.size() != 0">
+            AND CUSTOMER.CUSTOMER_ID IN
+            <foreach item="ttcCustomerCodeItem" index="ttcCustomerCodeIndex" collection="filters.ttcCustomerCode" open="(" separator="," close=")">  
+                #{ttcCustomerCodeItem}
+            </foreach>
+        </if>
+        <if test="filters.transportMode != null and filters.transportMode.size() != 0">
+            <if test="filters.transportMode.size() == 1">
+               <if test="swapData.transportMode == 1">
+                 AND SS_PLAN_SEA.TRANSPORT_MODE = 1
+               </if>
+               <if test="swapData.transportMode == 2">
+                 AND SS_PLAN_AIR.TRANSPORT_MODE = 2
+               </if>
+            </if>
+        </if>
+
+
+        <if test="filters.revisionReason != null and filters.revisionReason.size() != 0">
+            AND
+            <foreach item="revisionReasonItem" index="revisionReasonIndex" collection="filters.revisionReason" open="(" separator="OR" close=")">  
+                REASON_CODE_SET LIKE '%'||#{revisionReasonItem}||'%'
+            </foreach>
+        </if>   
+            
+        <if test="filters.uploadID != null and filters.uploadID.size() != 0">
+            AND UPLOADED_BY IN
+            <foreach item="uploadIDItem" index="uploadIDIndex" collection="filters.uploadID" open="(" separator="," close=")">  
+                #{uploadIDItem}
+            </foreach>
+        </if>
+        <if test="filters.uploadDateTimeFrom != null and filters.uploadDateTimeFrom != ''">
+            AND UPLOADED_DATE <![CDATA[>=]]> #{filters.uploadDateTimeFrom}
+        </if>
+        <if test="filters.uploadDateTimeTo != null and filters.uploadDateTimeTo != ''">
+            AND UPLOADED_DATE <![CDATA[<=]]> #{filters.uploadDateTimeTo}
+        </if>
+        
+    </sql>
+    
+    
+    <!-- <cache /> -->
+    <select id="findPageListCount" parameterType="com.chinaplus.core.bean.PageParam"
+        resultType="int">
+    	<include refid="ConstDef"/>
+        SELECT 
+                COUNT(DISTINCT SS_MASTER.SS_ID) 
+         <include refid="getShippingStatusRevisonInfo"/>
+    </select>
+    
+    
+    <!-- get all active suppliers -->
+    <select id="findPageList" resultType="com.chinaplus.web.sa.entity.CPSSMS01Entity" parameterType="com.chinaplus.core.bean.PageParam">
+        <include refid="ConstDef"/>
+        
+        SELECT
+        *
+        FROM (
+        
+            SELECT
+            
+                ORDER.IMP_PO_NO AS IPOORDERNO
+                ,ORDER.CUSTOMER_ORDER_NO AS CUSTOMERORDERNO
+        
+                <!-- ,(SELECT replace(replace(xml2clob(xmlagg(xmlelement(NAME TNM_REGION, REGION_CODE||','))),'<![CDATA[<]]> + A + <![CDATA[>]]>',''),'<![CDATA[</]]> + A + <![CDATA[>]]>','') AS REGION_NAME FROM TNM_REGION TNM_REGION WHERE REGION_CODE = 
+                ORDER.EXP_REGION AND TNM_REGION.INACTIVE_FLAG = ${InactiveFlag_ACTIVE}) AS EXPCOUNTRY
+        
+                ,(SELECT replace(replace(xml2clob(xmlagg(xmlelement(NAME TNM_SUPPLIER, SUPPLIER_CODE||','))),'<![CDATA[<]]> + A + <![CDATA[>]]>',''),'<![CDATA[</]]> + A + <![CDATA[>]]>','') AS SUPPLIER_CODE FROM TNM_SUPPLIER TNM_SUPPLIER WHERE REGION_CODE =   
+                ORDER.EXP_REGION AND SUPPLIER_ID IN (SELECT SUPPLIER_ID FROM TNF_ORDER_STATUS WHERE IMP_PO_NO = ORDER.IMP_PO_NO AND CUSTOMER_ORDER_NO = ORDER.CUSTOMER_ORDER_NO AND PARTS_ID = PARTS_MASTER.PARTS_ID)) 
+                AS TTCSUPPLIERCODE
+        
+               ,(SELECT replace(replace(xml2clob(xmlagg(xmlelement(NAME TNM_CODE_CATEGORY, CODE_NAME||','))),'<![CDATA[<]]> + A + <![CDATA[>]]>',''),'<![CDATA[</]]> + A + <![CDATA[>]]>','') AS CODE_NAME FROM TNM_CODE_CATEGORY CATEGORY 
+                WHERE CATEGORY.CODE_CATEGORY = 'TRANSPORT_MODE' AND CATEGORY.LANGUAGE_FLAG = #{swapData.language} AND CATEGORY.CODE_VALUE IN (SELECT TRANSPORT_MODE FROM TNT_SS_PLAN WHERE SS_ID = SS_MASTER.SS_ID)) AS TRANSPORTMODE
+                -->
+                ,ORDER.EXP_REGION AS EXPCOUNTRY
+                ,SUPPLIER.SUPPLIER_CODE AS TTCSUPPLIERCODE
+                ,SS_PLAN_TM.TRANSPORT_MODE AS TRANSPORTMODE
+                ,CUSTOMER.CUSTOMER_CODE AS TTCCUSTOMERCODE
+                ,SS_MASTER.REASON_CODE_SET AS REASONCODESET
+                ,SS_MASTER.REVISION_REASON AS REVISIONREASON
+                ,SS_MASTER.SS_ID AS SSID
+                ,TNM_USER.LOGIN_ID AS UPLOADID
+                ,SS_MASTER.UPLOADED_DATE AS UPLOADDATETIME
+                ,SS_MASTER.UPLOADED_FILE_NAME AS UPLOADEDFILENAME
+                ,DENSE_RANK() OVER (ORDER BY SS_MASTER.SS_ID) AS rownumb
+            <include refid="getShippingStatusRevisonInfo" />
+
+            ORDER BY
+                SS_MASTER.UPLOADED_DATE DESC) H
+        <include refid="getPageingInfo"/>
+        <include refid="getOrderInfo"/>
+        
+    </select>
+    
+    <sql id="getPageingInfo">
+         WHERE <![CDATA[H.rownumb > #{start} AND H.rownumb <= #{end}]]>
+    </sql>
+    
+    <sql id="getOrderInfo">
+         ORDER BY
+               H.rownumb DESC
+    </sql>
+    
+</mapper>

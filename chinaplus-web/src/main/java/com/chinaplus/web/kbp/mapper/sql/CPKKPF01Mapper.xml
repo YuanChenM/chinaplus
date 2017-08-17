@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.kbp.service.CPKKPF01Service">
+    <select id="findOfferCodeDateList" resultType="com.chinaplus.common.entity.TntSyncTime" parameterType="com.chinaplus.core.bean.BaseParam">
+        SELECT  
+            IF_DATE_TIME AS impSyncTime 
+        FROM  
+            TNT_IF_BATCH
+        WHERE        
+            OFFICE_ID = #{currentOfficeId}
+            AND BATCH_TYPE = 3
+    </select>
+    
+    <!-- Get Invoice Information -->
+    <select id="getInvoiceInfo" parameterType="com.chinaplus.web.kbp.entity.CPKKPF01Entity" resultType="com.chinaplus.web.kbp.entity.CPKKPF01Entity" flushCache="true">
+        SELECT
+            INVOICE_GROUP.INVOICE_GROUP_ID AS invoiceGroupId
+            , INVOICE_GROUP.TRANSPORT_MODE AS transportMode
+            , INVOICE_GROUP.ETD AS etd
+            , INVOICE_GROUP.ETA AS eta
+            , INVOICE_GROUP.IMP_INB_PLAN_DATE AS impInbPlanDate
+            , INVOICE.INVOICE_NO AS invoiceNo
+            , INVOICE.REVISION_VERSION AS revisionVersion
+            , INVOICE.REVISION_REASON AS revisionReason
+            , INVOICE.VANNING_DATE AS vanningDate
+            , INVOICE.ETD AS etdInvoice
+            , INVOICE.ETA AS etaInvoice
+            , INVOICE.IMP_INB_PLAN_DATE AS impInbPlanDateInvoice
+            , INVOICE.IMP_INB_ACTUAL_DATE AS impInbActualDateInvoice
+            , INVOICE_PARTS.PARTS_ID AS partsId
+            , COALESCE(INVOICE_PARTS.QTY, 0) AS qty
+            , (SELECT VANNING_DATE FROM TNT_INVOICE WHERE INVOICE_GROUP_ID = INVOICE_GROUP.INVOICE_GROUP_ID ORDER BY VANNING_DATE ASC FETCH FIRST 1 ROWS ONLY) AS firstInviceGroupBoxDate
+            , (SELECT SUM(QTY) FROM TNT_INVOICE_PARTS A 
+                INNER JOIN TNT_INVOICE B ON A.INVOICE_ID = B.INVOICE_ID AND B.INVOICE_GROUP_ID = INVOICE_GROUP.INVOICE_GROUP_ID 
+                INNER JOIN TNT_INVOICE_SUMMARY C ON C.INVOICE_SUMMARY_ID = B.INVOICE_SUMMARY_ID AND C.INVOICE_STATUS <![CDATA[<>]]> 99
+                WHERE A.PARTS_ID = INVOICE_PARTS.PARTS_ID) AS invoiceGroupTotalQty
+        FROM
+            TNT_INVOICE_GROUP INVOICE_GROUP
+            INNER JOIN 
+                TNT_INVOICE INVOICE ON INVOICE_GROUP.INVOICE_GROUP_ID = INVOICE.INVOICE_GROUP_ID AND INVOICE_GROUP.STATUS = 0
+            INNER JOIN 
+                TNT_INVOICE_SUMMARY INVOICE_SUMMARY ON INVOICE_SUMMARY.INVOICE_SUMMARY_ID = INVOICE.INVOICE_SUMMARY_ID AND INVOICE_SUMMARY.INVOICE_STATUS <![CDATA[<>]]> 99
+                AND (INVOICE_SUMMARY.NON_SHIPPING_ROUTE IS NULL OR INVOICE_SUMMARY.NON_SHIPPING_ROUTE = 2) AND (INVOICE_SUMMARY.UPLOAD_STATUS IS NULL OR INVOICE_SUMMARY.UPLOAD_STATUS = 2)
+            INNER JOIN 
+                TNT_INVOICE_PARTS INVOICE_PARTS ON INVOICE.INVOICE_ID = INVOICE_PARTS.INVOICE_ID
+            INNER JOIN 
+                TNT_KANBAN KANBAN ON INVOICE_GROUP.KANBAN_PLAN_NO = KANBAN.KANBAN_PLAN_NO
+        WHERE
+            KANBAN.KANBAN_ID = #{kanbanId}
+        ORDER BY
+            INVOICE_GROUP.ETD ASC
+            , INVOICE_GROUP.ETA ASC
+            , INVOICE_GROUP.IMP_INB_PLAN_DATE ASC
+            , INVOICE_GROUP.INVOICE_GROUP_ID ASC
+            , INVOICE.VANNING_DATE ASC
+            , INVOICE.ETD ASC
+            , INVOICE.ETA ASC
+            , INVOICE.IMP_INB_PLAN_DATE ASC
+            , INVOICE.INVOICE_NO ASC
+            , INVOICE.REVISION_VERSION ASC
+    </select>
+    
+    <!-- Get Shipping Plan Information -->
+    <select id="getShippingPlanInfo" parameterType="com.chinaplus.web.kbp.entity.CPKKPF01Entity" resultType="com.chinaplus.web.kbp.entity.CPKKPF01Entity" flushCache="true">
+        SELECT
+            KANBAN_SHIPPING.SHIPPING_UUID AS shippingUuid
+            , KANBAN_SHIPPING.KANBAN_SHIPPING_ID AS kanbanShippingId
+            , KANBAN_SHIPPING.NIRD_FLAG AS nirdFlag
+            , KANBAN_SHIPPING.TRANSPORT_MODE AS transportMode
+            , KANBAN_PLAN.ISSUE_REMARK AS issueRemark
+            , KANBAN_PLAN.DELIVERE_REMARK AS delivereRemark
+            , KANBAN_PLAN.VANNING_REMARK AS vanningRemark
+            , KANBAN_SHIPPING.ETD AS etd
+            , KANBAN_SHIPPING.ETA AS eta
+            , KANBAN_SHIPPING.IMP_INB_PLAN_DATE AS impInbPlanDate
+            , KANBAN_SHIPPING.ORIGINAL_VERSION AS originalVersion
+            , KANBAN_SHIPPING.REVISION_VERSION AS revisionVersion
+            , KANBAN_SHIPPING.REVISION_REASON AS revisionReason
+            , KANBAN_SHIPPING_PARTS.PARTS_ID AS partsId
+            , (CASE WHEN KANBAN_PARTS.STATUS = 9 THEN 0 ELSE COALESCE(KANBAN_SHIPPING_PARTS.QTY, 0) END) AS qty
+            , (SELECT VANNING_DATE FROM TNT_KANBAN_PLAN WHERE KANBAN_ID = KANBAN_SHIPPING.KANBAN_ID AND SHIPPING_UUID = KANBAN_SHIPPING.SHIPPING_UUID AND PLAN_TYPE = '2' ORDER BY VANNING_DATE DESC FETCH FIRST 1 ROWS ONLY) AS lastShippingPlanBoxDate
+        FROM
+            TNT_KANBAN_SHIPPING KANBAN_SHIPPING
+            INNER JOIN 
+                (SELECT KANBAN_ID, SHIPPING_UUID, ORIGINAL_VERSION, MAX(REVISION_VERSION) AS REVISION_VERSION FROM TNT_KANBAN_SHIPPING GROUP BY KANBAN_ID, SHIPPING_UUID, ORIGINAL_VERSION) KANBAN_SHIPPING_G 
+                ON KANBAN_SHIPPING.KANBAN_ID = KANBAN_SHIPPING_G.KANBAN_ID AND KANBAN_SHIPPING.SHIPPING_UUID = KANBAN_SHIPPING_G.SHIPPING_UUID AND COALESCE(KANBAN_SHIPPING.ORIGINAL_VERSION, 0) = COALESCE(KANBAN_SHIPPING_G.ORIGINAL_VERSION, 0) AND COALESCE(KANBAN_SHIPPING.REVISION_VERSION, 0) = COALESCE(KANBAN_SHIPPING_G.REVISION_VERSION, 0)
+            LEFT JOIN 
+                TNT_KANBAN_SHIPPING_PARTS KANBAN_SHIPPING_PARTS ON KANBAN_SHIPPING.KANBAN_SHIPPING_ID = KANBAN_SHIPPING_PARTS.KANBAN_SHIPPING_ID
+            LEFT JOIN 
+                TNT_KANBAN_PLAN KANBAN_PLAN ON KANBAN_SHIPPING.SHIPPING_UUID = KANBAN_PLAN.SHIPPING_UUID AND KANBAN_PLAN.PLAN_TYPE = '3'
+            LEFT JOIN 
+                TNT_KANBAN_PARTS KANBAN_PARTS ON KANBAN_PARTS.KANBAN_ID = KANBAN_SHIPPING.KANBAN_ID AND KANBAN_PARTS.PARTS_ID = KANBAN_SHIPPING_PARTS.PARTS_ID
+        WHERE
+            KANBAN_SHIPPING.KANBAN_ID = #{kanbanId}
+            AND KANBAN_SHIPPING.COMPLETED_FLAG = 0
+        ORDER BY
+            KANBAN_SHIPPING.NIRD_FLAG ASC
+            , KANBAN_SHIPPING.TRANSPORT_MODE ASC
+            , KANBAN_SHIPPING.ETD ASC
+            , KANBAN_SHIPPING.ETA ASC
+            , KANBAN_SHIPPING.IMP_INB_PLAN_DATE ASC
+            , KANBAN_SHIPPING.ORIGINAL_VERSION ASC
+            , KANBAN_SHIPPING.REVISION_VERSION ASC
+    </select>
+    
+    <!-- Get Parts Base Information -->
+    <select id="getPartsBaseInfo" parameterType="com.chinaplus.web.kbp.entity.CPKKPF01Entity" resultType="com.chinaplus.web.kbp.entity.CPKKPF01Entity" flushCache="true">
+        SELECT
+            PARTS_MASTER.PARTS_ID AS partsId
+            , PARTS_MASTER.TTC_PARTS_NO AS ttcPartsNo
+            , PARTS_MASTER.OLD_TTC_PARTS_NO AS oldTtcPartsNo
+            , PARTS_MASTER.CUSTOMER_CODE AS customerCode
+            , PARTS_MASTER.KANBAN_CUST_CODE AS expCustCode
+            , EXP_PARTS.SUPP_PARTS_NO AS suppPartsNo
+            , EXP_PARTS.TTC_SUPP_CODE AS ttcSuppCode
+            , KANBAN_PARTS.REMARK AS remark
+            , KANBAN_PARTS.SPQ AS spq
+            , COALESCE(KANBAN_PARTS.QTY, 0) AS qty
+            , COALESCE(KANBAN_PARTS.KANBAN_QTY, 0) AS kanbanQty
+            , KANBAN_PARTS.FC_QTY1 AS fcQty1
+            , KANBAN_PARTS.FC_QTY2 AS fcQty2
+            , KANBAN_PARTS.FC_QTY3 AS fcQty3
+            , KANBAN_PARTS.FC_QTY4 AS fcQty4
+            , KANBAN_PARTS.FC_QTY5 AS fcQty5
+            , KANBAN_PARTS.FC_QTY6 AS fcQty6
+            , PARTS_MASTER.FORECAST_NUM AS forecastNum
+            , (CASE WHEN EXP_PARTS.INACTIVE_FLAG = 0 THEN 'N' ELSE 'Y' END) AS inactiveFlag
+            , UOM.DECIMAL_DIGITS AS decimalDigits
+        FROM
+            TNT_KANBAN_PARTS KANBAN_PARTS
+            INNER JOIN 
+                TNM_PARTS_MASTER PARTS_MASTER ON PARTS_MASTER.PARTS_ID = KANBAN_PARTS.PARTS_ID
+            INNER JOIN 
+                TNM_EXP_PARTS EXP_PARTS ON KANBAN_PARTS.PARTS_ID = EXP_PARTS.PARTS_ID AND EXP_PARTS.SUPPLIER_ID = KANBAN_PARTS.SUPPLIER_ID
+            LEFT JOIN 
+                TNM_UOM UOM ON UOM.UOM_CODE = PARTS_MASTER.UOM_CODE
+        WHERE
+            KANBAN_PARTS.KANBAN_ID = #{kanbanId}
+        ORDER BY 
+            PARTS_MASTER.TTC_PARTS_NO ASC
+    </select>
+    
+    <!-- Get Parts Box Information -->
+    <select id="getPartsBoxInfo" parameterType="com.chinaplus.web.kbp.entity.CPKKPF01Entity" resultType="com.chinaplus.web.kbp.entity.CPKKPF01Entity" flushCache="true">
+        SELECT
+            KANBAN_PLAN.SHIPPING_UUID AS shippingUuid
+            , KANBAN_PLAN.KANBAN_PLAN_ID AS kanbanPlanId
+            , KANBAN_PLAN.PLAN_TYPE AS planType
+            , KANBAN_PLAN.ISSUED_DATE AS issuedDate
+            , KANBAN_PLAN.DELIVERED_DATE AS deliveredDate
+            , KANBAN_PLAN.VANNING_DATE AS vanningDate
+            , KANBAN_PLAN.REVISION_REASON AS revisionReason
+            , KANBAN_PLAN_PARTS.PARTS_ID AS partsId
+            , (CASE WHEN KANBAN_PARTS.STATUS = 9 THEN 0 ELSE COALESCE(KANBAN_PLAN_PARTS.KANBAN_QTY, 0) END) AS kanbanQty
+        FROM
+            TNT_KANBAN_PLAN KANBAN_PLAN
+            LEFT JOIN 
+                TNT_KANBAN_PLAN_PARTS KANBAN_PLAN_PARTS ON KANBAN_PLAN.KANBAN_PLAN_ID = KANBAN_PLAN_PARTS.KANBAN_PLAN_ID
+            LEFT JOIN 
+                TNT_KANBAN_PARTS KANBAN_PARTS ON KANBAN_PARTS.KANBAN_ID = KANBAN_PLAN.KANBAN_ID AND KANBAN_PARTS.PARTS_ID = KANBAN_PLAN_PARTS.PARTS_ID
+        WHERE
+            KANBAN_PLAN.KANBAN_ID = #{kanbanId}
+            AND KANBAN_PLAN.PLAN_TYPE <![CDATA[<>]]> '3'
+        ORDER BY
+            KANBAN_PLAN.SHIPPING_UUID ASC
+            , KANBAN_PLAN.PLAN_TYPE ASC
+            , KANBAN_PLAN.ISSUED_DATE ASC
+            , KANBAN_PLAN.DELIVERED_DATE ASC
+            , KANBAN_PLAN.VANNING_DATE ASC
+            , KANBAN_PLAN.REVISION_REASON ASC
+            , KANBAN_PLAN.KANBAN_PLAN_ID ASC
+    </select>
+    
+    <!-- Get Parts QTY Information -->
+    <select id="getPartsQtyInfo" parameterType="com.chinaplus.web.kbp.entity.CPKKPF01Entity" resultType="com.chinaplus.web.kbp.entity.CPKKPF01Entity" flushCache="true">
+        SELECT
+            KANBAN_PARTS.PARTS_ID AS partsId
+            , COALESCE(ORDER_STATUS.EXP_ONSHIPPING_QTY, 0) AS expOnShippingQty
+            , COALESCE(ORDER_STATUS.IN_RACK_QTY, 0) AS inRackQty
+            , COALESCE(ORDER_STATUS.IMP_STOCK_QTY, 0) AS impStockQty
+            , COALESCE(ORDER_STATUS.IMP_ADJUSTED_QTY, 0) AS impAdjustedQty
+            , COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) AS impDeliveredQty
+            , COALESCE(ORDER_STATUS.FORCE_COMPLETED_QTY, 0) AS forceCompletedQty
+            , COALESCE(ORDER_STATUS.TRANSFER_OUT_QTY, 0) AS transferOutQty
+            , CUSTOMER.CUSTOMER_CODE AS transferOutDetailCustomerCode
+            , COALESCE(TRANSFER_OUT.QTY, 0) AS transferOutDetailQty
+            , KANBAN_PARTS.STATUS AS status
+            , OFFICE.IMP_STOCK_FLAG AS impStockFlag
+        FROM
+            TNT_KANBAN KANBAN
+            INNER JOIN 
+                TNM_OFFICE OFFICE ON KANBAN.OFFICE_ID = OFFICE.OFFICE_ID
+            INNER JOIN 
+                TNT_KANBAN_PARTS KANBAN_PARTS ON KANBAN.KANBAN_ID = KANBAN_PARTS.KANBAN_ID
+            LEFT JOIN 
+                TNF_ORDER_STATUS ORDER_STATUS ON KANBAN.KANBAN_PLAN_NO = ORDER_STATUS.KANBAN_PLAN_NO AND KANBAN_PARTS.PARTS_ID = ORDER_STATUS.PARTS_ID
+            LEFT JOIN 
+                TNT_TRANSFER_OUT TRANSFER_OUT ON KANBAN.KANBAN_PLAN_NO = TRANSFER_OUT.KANBAN_PLAN_NO AND KANBAN_PARTS.PARTS_ID = TRANSFER_OUT.FROM_PARTS_ID
+            LEFT JOIN 
+                TNM_CUSTOMER CUSTOMER ON TRANSFER_OUT.TO_CUSTOMER_ID = CUSTOMER.CUSTOMER_ID
+        WHERE
+            KANBAN.KANBAN_ID = #{kanbanId}
+        ORDER BY
+            KANBAN_PARTS.PARTS_ID ASC
+    </select>
+</mapper>

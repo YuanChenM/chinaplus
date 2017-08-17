@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.mm.service.AisinCommonService">
+    
+   <sql id="ConstDef">
+        <bind name="AISIN_TTTJ" value="@com.chinaplus.common.consts.CodeConst$ShippingRouteType@AISIN_TTTJ" />
+        <bind name="Y" value="@com.chinaplus.common.consts.CodeConst$ActiveFlag@Y" />
+        <bind name="CALENDAR_PARTY" value="@com.chinaplus.common.consts.CodeConst$CodeMasterCategory@CALENDAR_PARTY" /> 
+        <bind name="SUPPLIER" value="@com.chinaplus.common.consts.CodeConst$CodeMasterCategory@SUPPLIER" />        
+   </sql>  
+    
+   <select id="getModList" resultType="com.chinaplus.web.mm.entity.AisinCommonEntity" parameterType="com.chinaplus.core.bean.BaseParam">
+     select 
+             DISTINCT
+             A.SHIPPING_ROUTE_CODE  AS shippingRouteCode,                  
+             B.SUPPLIER_ID AS  supplierId,
+             E.SUPPLIER_CODE AS supplierCode          
+     FROM  
+             TNM_SR_MASTER  A          
+             INNER JOIN  TNM_SR_DETAIL  B  ON  A.SR_ID = B.SR_ID 
+             INNER JOIN  TNM_SUPPLIER E  ON B.SUPPLIER_ID = E.SUPPLIER_ID             
+     WHERE
+         A.SHIPPING_ROUTE_TYPE = #{swapData.type}
+         AND  A.SHIPPING_ROUTE_CODE  IN     
+       <foreach collection="swapData.modlists" item="item" index="index" open="(" close=")" separator="," >
+            #{item.shippingRouteCode}
+       </foreach>   
+     ORDER  BY  A.SHIPPING_ROUTE_CODE 
+   </select> 
+   
+   <select id="getNewCalendarDateList" resultType="com.chinaplus.web.mm.entity.CalendarDateEntity" parameterType="com.chinaplus.core.bean.BaseParam"> 
+      <include refid="ConstDef"/>
+      SELECT 
+             C.CALENDAR_DATE AS CalendarDate,
+             E.SUPPLIER_ID   AS supplierId,
+             A.OFFICE_ID AS officeId           
+      FROM  
+             TNM_CALENDAR_MASTER A  
+             INNER JOIN  TNM_CALENDAR_PARTY  B   ON  A.CALENDAR_ID  =  B.CALENDAR_ID
+             INNER JOIN  TNM_CALENDAR_DETAIL C   ON  B.CALENDAR_ID  =  C.CALENDAR_ID
+             INNER JOIN  TNM_OFFICE  D  ON  A.OFFICE_ID = D.OFFICE_ID
+             INNER JOIN  TNM_SUPPLIER E  ON B.SUPPLIER_ID = E.SUPPLIER_ID
+    WHERE 
+             B.PARTY_TYPE =  #{swapData.partyType}   
+             AND (
+             <foreach collection="swapData.dataAllList" item="item" index="index" open="(" close=")" separator="or" >
+                   (
+                        E.SUPPLIER_ID = #{item.supplierId}
+                        AND D.OFFICE_ID = #{item.officeId}
+                   )
+             </foreach>  
+             )             
+             AND C.CALENDAR_YEAR = #{swapData.maxYear} 
+             AND C.WORKING_FLAG = ${Y}      
+     ORDER  BY  
+            A.OFFICE_ID, 
+            B.SUPPLIER_ID, 
+            C.CALENDAR_DATE
+   </select> 
+   
+   <select id="getCalendarDateList" resultType="com.chinaplus.web.mm.entity.CalendarDateEntity" parameterType="com.chinaplus.core.bean.BaseParam"> 
+      <include refid="ConstDef"/>
+      SELECT 
+             C.CALENDAR_DATE AS CalendarDate,
+             E.SUPPLIER_ID   AS supplierId,
+             A.OFFICE_ID AS officeId           
+      FROM  
+             TNM_CALENDAR_MASTER A  
+             INNER JOIN  TNM_CALENDAR_PARTY  B   ON  A.CALENDAR_ID  =  B.CALENDAR_ID
+             INNER JOIN  TNM_CALENDAR_DETAIL C   ON  B.CALENDAR_ID  =  C.CALENDAR_ID
+             INNER JOIN  TNM_OFFICE  D  ON  A.OFFICE_ID = D.OFFICE_ID
+             INNER JOIN  TNM_SUPPLIER E  ON B.SUPPLIER_ID = E.SUPPLIER_ID
+    WHERE 
+             B.PARTY_TYPE =  #{swapData.partyType}   
+             AND (
+             <foreach collection="swapData.dataAllList" item="item" index="index" open="(" close=")" separator="or" >
+                   (
+                        E.SUPPLIER_ID = #{item.supplierId}
+                        AND D.OFFICE_ID = #{item.officeId}
+                   )
+             </foreach>  
+             )             
+             AND C.CALENDAR_YEAR  <![CDATA[<=]]>  #{swapData.maxYear} 
+             AND C.CALENDAR_YEAR  <![CDATA[>=]]>  #{swapData.minYear} 
+             AND C.WORKING_FLAG = ${Y}      
+     ORDER  BY  
+            A.OFFICE_ID, 
+            B.SUPPLIER_ID, 
+            C.CALENDAR_DATE
+   </select> 
+ 
+   <select id="getModSFLDList" resultType="com.chinaplus.web.mm.entity.AisinCommonEntity" parameterType="com.chinaplus.core.bean.BaseParam"> 
+     select 
+             A.SR_ID AS srId, 
+             A.OFFICE_ID AS officeId, 
+             A.EXP_REGION AS expRegion,   
+             A.SHIPPING_ROUTE_CODE AS shippingRouteCode,
+             A.FROM_ETD AS firstEtd,
+             A.TO_ETD AS lastEtd,
+             A.DELIVERY_START_DATE AS deliveryStartDate,
+             A.EXP_VANNING_LEADTIME AS expVanningLeadtime,
+             A.ETD_WEEK AS etdWeek,
+             A.ETD_DAY AS etdDate,
+             A.DELIVERY_LEADTIME AS deliveryLeadtime,
+             A.VANNING_DAY AS vanningDay
+     FROM  
+             TNM_SR_MASTER  A
+     WHERE
+         A.INACTIVE_FLAG = 0 
+         AND   (    
+       <foreach collection="swapData.modlists" item="item" index="index" open="(" close=")" separator="or" >
+             A.SHIPPING_ROUTE_CODE =  #{item.shippingRouteCode}
+             AND A.FROM_ETD  =  #{item.firstEtd}
+             AND A.TO_ETD    =  #{item.lastEtd}
+       </foreach>
+         )   
+     ORDER  BY  A.SHIPPING_ROUTE_CODE,
+                A.FROM_ETD, 
+                A.TO_ETD,
+                A.DELIVERY_START_DATE,
+                A.VANNING_DAY
+   </select> 
+   
+   <select id="getTJSHList" resultType="com.chinaplus.web.mm.entity.AisinCommonEntity" parameterType="com.chinaplus.core.bean.BaseParam"> 
+        SELECT DISTINCT
+            A.SR_ID AS srId,                                            
+            A.SHIPPING_ROUTE_CODE AS shippingRouteCode,   
+            A.FROM_ETD AS firstEtd,
+            A.TO_ETD AS lastEtd,
+            A.VANNING_DAY AS vanningDay,
+            A.EXP_INBOUND_LEADTIME AS workingDays,
+            A.EXP_VANNING_LEADTIME AS expVanningLeadtime,
+            A.ETD_WEEK AS etdWeek,
+            A.ETD_DAY AS etdDate,
+            A.DELIVERY_LEADTIME AS deliveryLeadtime,
+            A.DELIVERY_START_DATE AS deliveryStartDate,
+            B.SUPPLIER_ID AS supplierId 
+        FROM                                               
+            TNM_SR_MASTER A
+        LEFT JOIN TNM_SR_DETAIL B ON A.SR_ID = B.SR_ID                                    
+        WHERE
+            A.SHIPPING_ROUTE_TYPE =  #{swapData.type}
+            AND A.INACTIVE_FLAG = 0
+            AND A.SHIPPING_ROUTE_CODE IN   
+           <foreach collection="swapData.changeLists" item="item" index="index" open="(" close=")" separator="," >
+                #{item.shippingRouteCode}
+           </foreach>
+   </select> 
+
+</mapper>

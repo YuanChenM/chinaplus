@@ -1,0 +1,136 @@
+/**
+ * Suppiler form Upload 
+ * 
+ * @screen VVPUS01
+ */
+VVPUS01 = {
+    id : chinaplus.screen.VVPUS01,
+    title : 'Suppiler form Upload',
+    xtype : 'form',
+    frame : true,
+    autoHeight : false,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    autoScroll : true,
+    fieldDefaults : {
+        labelAlign : 'right',
+        labelWidth : 70
+    },
+    items : [{
+                xtype : 'fileuploadfield',
+                fieldLabel : 'Supplier Profile',
+                buttonText : 'Browse...',
+                name : 'suppProfile',
+                width : 500,
+                labelWidth: 120,
+                labelStyle: 'text-align:left',
+                labelSeparator : '',
+                margin : '30 30 0 50',
+                editable : false,
+                fieldStyle : 'background:rgb(255,255,153)',
+                hideLabel : false,
+                autoFitErrors : false,
+                clearOnSubmit : false
+            }, {
+                xtype : 'fileuploadfield',
+                fieldLabel : 'Supporting Document',
+                buttonText : 'Browse...',
+                name : 'supportDoc1',
+                width : 500,
+                labelWidth: 120,
+                labelStyle: 'text-align:left',
+                labelSeparator : '',
+                margin : '10 30 0 50',
+                editable : false,
+                //fieldStyle : 'background:rgb(255,255,153)',
+                hideLabel : false,
+                autoFitErrors : false,
+                clearOnSubmit : false
+            }, {
+                xtype : 'fileuploadfield',
+                fieldLabel : 'Supporting Document',
+                buttonText : 'Browse...',
+                name : 'supportDoc2',
+                width : 500,
+                labelWidth: 120,
+                labelStyle: 'text-align:left',
+                labelSeparator : '',
+                margin : '10 30 0 50',
+                editable : false,
+                //fieldStyle : 'background:rgb(255,255,153)',
+                hideLabel : false,
+                autoFitErrors : false,
+                clearOnSubmit : false
+            }, {
+                xtype : 'fileuploadfield',
+                fieldLabel : 'Supporting Document',
+                buttonText : 'Browse...',
+                name : 'supportDoc3',
+                width : 500,
+                labelWidth: 120,
+                labelStyle: 'text-align:left',
+                labelSeparator : '',
+                margin : '10 30 0 50',
+                editable : false,
+                //fieldStyle : 'background:rgb(255,255,153)',
+                hideLabel : false,
+                autoFitErrors : false,
+                clearOnSubmit : false
+            }, {
+                xtype : 'fileuploadfield',
+                fieldLabel : 'Supporting Document',
+                buttonText : 'Browse...',
+                name : 'supportDoc4',
+                width : 500,
+                labelWidth: 120,
+                labelStyle: 'text-align:left',
+                labelSeparator : '',
+                margin : '10 30 0 50',
+                editable : false,
+                //fieldStyle : 'background:rgb(255,255,153)',
+                hideLabel : false,
+                autoFitErrors : false,
+                clearOnSubmit : false
+            }, {
+                xtype : 'fileuploadfield',
+                fieldLabel : 'Supporting Document',
+                buttonText : 'Browse...',
+                name : 'supportDoc5',
+                width : 500,
+                labelWidth: 120,
+                labelStyle: 'text-align:left',
+                labelSeparator : '',
+                margin : '10 30 0 50',
+                editable : false,
+                //fieldStyle : 'background:rgb(255,255,153)',
+                hideLabel : false,
+                autoFitErrors : false,
+                clearOnSubmit : false
+            }, {
+                xtype : 'button',
+                iconCls : 'btn-upload',
+                width : 135,
+                height : 25,
+                text : 'Upload',
+                margin : '50 0 0 50',
+                handler : function() {
+                    Ext.getCmp(chinaplus.screen.VVPUS01).uploadSupplementary();
+                }
+            }],
+
+    /**
+     * Upload invoice supplementary.
+     */
+    uploadSupplementary : function() {
+
+        var form = this.getForm();
+        var backFun = function(applicationData) {
+            if (applicationData.success || (applicationData.messageCodes != null && applicationData.messageCodes.length == 0)) {
+                TRF.util.showMessageBoxByMsgIdAndArgs('i1001');
+                Ext.getCmp(chinaplus.screen.VVPLS01).refreshData();
+                TRF.util.removeApplication(chinaplus.screen.VVPUS01);
+            }
+        }
+        TRF.util.uploadSubmit(form, backFun, chinaplus.screen.VVPUS01, 'vvp/VVPSDF11/upload', null);
+    }
+
+}

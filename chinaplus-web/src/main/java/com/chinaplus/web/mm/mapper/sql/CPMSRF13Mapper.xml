@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.mm.service.CPMSRF13Service">
+    
+    <sql id="ConstDef">
+        <bind name="AISIN_TTSH" value="@com.chinaplus.common.consts.CodeConst$ShippingRouteType@AISIN_TTSH" />
+    </sql>
+    
+   <select id="getNewShipRCodeFLV" resultType="com.chinaplus.web.mm.entity.CPMSRF13Entity" parameterType="com.chinaplus.core.bean.BaseParam"> 
+      select 
+             A.SHIPPING_ROUTE_CODE AS shippingRouteCode,
+             A.FROM_ETD AS firstEtd,
+             A.TO_ETD AS lastEtd,
+             A.VANNING_DAY AS vanningDate,
+             A.DELIVERY_START_DATE AS deliveryStartDate, 
+             A.SHIPPING_ROUTE_TYPE AS shippingRouteType
+     FROM  
+             TNM_SR_MASTER  A               
+     WHERE
+       A.SHIPPING_ROUTE_CODE  IN 
+       <foreach item="item" index="index" collection="swapData.newList" open="(" separator="," close=")">    
+             #{item.shippingRouteCode}
+       </foreach> 
+     ORDER  BY  A.SHIPPING_ROUTE_CODE 
+   </select>  
+
+   <select id="getModShipRCodeFLV" resultType="com.chinaplus.web.mm.entity.CPMSRF13Entity" parameterType="com.chinaplus.core.bean.BaseParam"> 
+     <include refid="ConstDef"/>
+      select 
+             A.SHIPPING_ROUTE_CODE AS shippingRouteCode,
+             A.FROM_ETD AS firstEtd,
+             A.TO_ETD AS lastEtd,
+             A.VANNING_DAY AS vanningDate,
+             A.DELIVERY_START_DATE AS deliveryStartDate,
+             
+             A.EXP_INBOUND_LEADTIME AS workingDays,    
+             A.EXP_VANNING_LEADTIME AS expVanningLeadtime,         
+             A.ETD_WEEK AS etdWeek,
+             A.ETD_DAY AS etdDate,
+             A.DELIVERY_LEADTIME AS deliveryLeadtime,
+             A.SR_ID  AS srId,
+             A.INACTIVE_FLAG AS discontinueIndicator        
+     FROM  
+             TNM_SR_MASTER  A               
+     WHERE
+         A.SHIPPING_ROUTE_TYPE = ${AISIN_TTSH}       
+         AND    (      
+       <foreach collection="swapData.modList" item="item" index="index" open="(" close=")" separator="or" >
+             (A.SHIPPING_ROUTE_CODE =  #{item.shippingRouteCode}
+             AND A.FROM_ETD  =  #{item.firstEtd}
+             AND A.TO_ETD    =  #{item.lastEtd}            
+             AND A.DELIVERY_START_DATE = #{item.deliveryStartDate}
+             AND A.VANNING_DAY IN
+            <foreach collection="item.vanningDateList" item="item" index="index" open="(" close=")" separator="," >
+                #{item}
+            </foreach>
+            )
+       </foreach>   
+       )
+     ORDER  BY  A.SHIPPING_ROUTE_CODE 
+   </select> 
+   
+   <select id="getAllShipRCodeWEI" resultType="com.chinaplus.web.mm.entity.CPMSRF13Entity" parameterType="com.chinaplus.core.bean.BaseParam"> 
+      <include refid="ConstDef"/>
+      select 
+             A.SHIPPING_ROUTE_CODE AS shippingRouteCode,
+             A.EXP_INBOUND_LEADTIME AS workingDays,
+             A.EXP_VANNING_LEADTIME AS expVanningLeadtime,
+             A.IMP_CC_LEADTIME AS   impCcLeadtime,
+             A.FROM_ETD AS firstEtd,
+             A.TO_ETD AS lastEtd,
+             A.INACTIVE_FLAG AS discontinueIndicator,
+             A.OFFICE_ID AS  officeId,
+             A.IMP_INBOUND_LEADTIME  AS impInboundLeadtime,
+             A.EXP_REGION AS expRegion
+     FROM  
+             TNM_SR_MASTER  A               
+     WHERE
+         A.SHIPPING_ROUTE_TYPE = ${AISIN_TTSH} 
+         AND A.SHIPPING_ROUTE_CODE  IN 
+       <foreach item="item" index="index" collection="swapData.allList" open="(" separator="," close=")">    
+             #{item.shippingRouteCode}
+       </foreach>   
+     ORDER  BY  A.SHIPPING_ROUTE_CODE 
+   </select> 
+   
+   <insert id="inertNewData" parameterType="com.chinaplus.web.mm.entity.CPMSRF13Entity">  
+      <include refid="ConstDef"/>
+     <selectKey keyProperty="srId" resultType="int"  order="BEFORE">
+            VALUES NEXTVAL FOR SEQ_TNM_SR_MASTER
+     </selectKey>
+      insert  into
+           TNM_SR_MASTER (
+                 SR_ID,
+                 SHIPPING_ROUTE_CODE,
+                 SHIPPING_ROUTE_TYPE,
+                 FROM_ETD,
+                 TO_ETD,   
+                 DELIVERY_START_DATE,             
+                 IMP_CC_LEADTIME,
+                 IMP_INBOUND_LEADTIME,
+                 EXP_INBOUND_LEADTIME,
+                 EXP_VANNING_LEADTIME,
+                 VANNING_DAY,
+                 ETD_WEEK,
+                 ETD_DAY,
+                 DELIVERY_LEADTIME,
+                 INACTIVE_FLAG,
+                 CREATED_BY,
+                 CREATED_DATE,
+                 UPDATED_BY,
+                 UPDATED_DATE,
+                 VERSION
+                 )
+           values 
+                  (
+                   #{srId},
+                   #{shippingRouteCode},
+                   ${AISIN_TTSH},
+                   #{firstEtd},
+                   #{lastEtd},  
+                   #{deliveryStartDate},               
+                   #{impCcLeadtime},
+                   #{impInboundLeadtime},
+                   #{workingDays},
+                   #{expVanningLeadtime},
+                   #{vanningDate},
+                   #{etdWeek},
+                   #{etdDate},
+                   #{deliveryLeadtime},
+                   #{discontinueIndicator},                                  
+                   #{createdBy},
+                   #{createdDate,jdbcType=TIMESTAMP},
+                   #{updatedBy},
+                   #{updatedDate,jdbcType=TIMESTAMP},
+                   1               
+                  )
+   </insert>
+   
+   <insert id="inertNewDataO" parameterType="com.chinaplus.web.mm.entity.CPMSRF13Entity">  
+      <include refid="ConstDef"/>
+     <selectKey keyProperty="srId" resultType="int"  order="BEFORE">
+            VALUES NEXTVAL FOR SEQ_TNM_SR_MASTER
+     </selectKey>
+      insert  into
+           TNM_SR_MASTER (
+                 SR_ID,
+                 SHIPPING_ROUTE_CODE,
+                 SHIPPING_ROUTE_TYPE,
+                 OFFICE_ID,
+                 EXP_REGION,
+                 FROM_ETD,
+                 TO_ETD,   
+                 DELIVERY_START_DATE,             
+                 IMP_CC_LEADTIME,
+                 IMP_INBOUND_LEADTIME,
+                 EXP_INBOUND_LEADTIME,
+                 EXP_VANNING_LEADTIME,
+                 VANNING_DAY,
+                 ETD_WEEK,
+                 ETD_DAY,
+                 DELIVERY_LEADTIME,
+                 INACTIVE_FLAG,
+                 CREATED_BY,
+                 CREATED_DATE,
+                 UPDATED_BY,
+                 UPDATED_DATE,
+                 VERSION
+                 )
+           values 
+                  (
+                   #{srId},
+                   #{shippingRouteCode},
+                   ${AISIN_TTSH},
+                   #{officeId},
+                   #{expRegion},
+                   #{firstEtd},
+                   #{lastEtd},  
+                   #{deliveryStartDate},               
+                   #{impCcLeadtime},
+                   #{impInboundLeadtime},
+                   #{workingDays},
+                   #{expVanningLeadtime},
+                   #{vanningDate},
+                   #{etdWeek},
+                   #{etdDate},
+                   #{deliveryLeadtime},
+                   #{discontinueIndicator},                                  
+                   #{createdBy},
+                   #{createdDate,jdbcType=TIMESTAMP},
+                   #{updatedBy},
+                   #{updatedDate,jdbcType=TIMESTAMP},
+                   1               
+                  )
+   </insert>
+   
+   <update id="updateModDetaiData" parameterType="com.chinaplus.web.mm.entity.CPMSRF13Entity"> 
+     <include refid="ConstDef"/>
+        UPDATE
+                TNM_SR_DETAIL
+        SET 
+                INACTIVE_FLAG = #{discontinueIndicator},
+                UPDATED_BY = #{updatedBy},
+                UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP},
+                VERSION = VERSION + 1 
+        WHERE 
+                SR_ID in 
+                    (
+                        SELECT 
+                            SR_ID 
+                        FROM 
+                            TNM_SR_MASTER 
+                        WHERE 
+                            SHIPPING_ROUTE_CODE  =   #{shippingRouteCode}
+                            AND  SHIPPING_ROUTE_TYPE  =  ${AISIN_TTSH}
+                            AND  FROM_ETD =  #{firstEtd}
+                            AND  TO_ETD  =  #{lastEtd}
+                            AND  VANNING_DAY = #{vanningDate}
+                            AND  DELIVERY_START_DATE = #{deliveryStartDate}
+                    )
+   </update>
+   
+   <update id="updateModData" parameterType="com.chinaplus.web.mm.entity.CPMSRF13Entity"> 
+     <include refid="ConstDef"/>
+          UPDATE
+                TNM_SR_MASTER
+          SET             
+                 IMP_CC_LEADTIME = #{impCcLeadtime},
+                 IMP_INBOUND_LEADTIME = #{impInboundLeadtime},
+                 EXP_INBOUND_LEADTIME = #{workingDays},
+                 EXP_VANNING_LEADTIME = #{expVanningLeadtime},               
+                 ETD_WEEK =  #{etdWeek},
+                 ETD_DAY = #{etdDate},
+                 DELIVERY_LEADTIME = #{deliveryLeadtime},
+                 INACTIVE_FLAG = #{discontinueIndicator},
+                 UPDATED_BY = #{updatedBy},
+                 UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP},
+                 VERSION = VERSION + 1 
+           WHERE  
+                 SHIPPING_ROUTE_CODE  =   #{shippingRouteCode}
+                 AND  SHIPPING_ROUTE_TYPE  =  ${AISIN_TTSH}
+                 AND  FROM_ETD =  #{firstEtd}
+                 AND  TO_ETD  =  #{lastEtd}
+                 AND  VANNING_DAY = #{vanningDate}
+                 AND  DELIVERY_START_DATE = #{deliveryStartDate}
+   </update>   
+           
+   <delete id="deleteDataList"  parameterType="com.chinaplus.core.bean.BaseParam">
+    <include refid="ConstDef"/>
+     DELETE  
+         FROM  
+              TNM_SR_DETAIL  
+     WHERE  
+         SR_ID IN (
+            SELECT 
+                SR_ID 
+            FROM 
+                TNM_SR_MASTER 
+            WHERE 
+                SHIPPING_ROUTE_TYPE  =  ${AISIN_TTSH}
+            AND 
+                <foreach collection="swapData.dataLists" item="item" index="index" open="(" close=")" separator="OR" >
+                    (SHIPPING_ROUTE_CODE = #{item.shippingRouteCode}
+                    AND FROM_ETD = #{item.firstEtd}
+                    AND TO_ETD = #{item.lastEtd}
+                    AND DELIVERY_START_DATE = #{item.deliveryStartDate})
+                </foreach>
+         )
+   </delete> 
+   
+   <insert id="insertDataList"  parameterType="com.chinaplus.web.mm.entity.AisinCommonEntity"> 
+     INSERT INTO  
+          TNM_SR_DETAIL
+            (  SR_DETAIL_ID,
+               SR_ID,
+               SUPPLIER_ID,                
+               LAST_VANNING,
+               KANBAN_ISSUE_DATE,
+               EXP_INBOUND_DATE,
+               ETD,
+               ETA,
+               INACTIVE_FLAG,
+               CREATED_BY,
+               CREATED_DATE,
+               UPDATED_BY,
+               UPDATED_DATE,
+               VERSION             
+            )
+          VALUES
+            (                     
+                NEXTVAL FOR  SEQ_TNM_SR_DETAIL,
+                #{srId},
+                #{supplierId},
+                #{lastVanning},
+                #{kanbanIssueDate},
+                #{expInboundDate},
+                #{etd},
+                #{eta},
+                #{inactiveFlag},              
+                #{createdBy},
+                #{createdDate,jdbcType=TIMESTAMP},
+                #{updatedBy},
+                #{updatedDate,jdbcType=TIMESTAMP},
+                 1  
+              )
+   </insert> 
+   
+</mapper>

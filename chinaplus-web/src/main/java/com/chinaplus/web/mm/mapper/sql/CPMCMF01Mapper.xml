@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chinaplus.web.mm.service.CPMCMF01Service">
+
+   <select id="getCalendar"  parameterType="com.chinaplus.core.bean.PageParam"
+        resultType="com.chinaplus.common.entity.TnmCalendarDetail">
+        Select  DISTINCT  
+            A.CALENDAR_DATE AS CALENDARDATE
+        From 
+            TNM_CALENDAR_DETAIL A
+        Where
+            A.CALENDAR_ID = #{swapData.calendarId}
+        AND
+            A.CALENDAR_YEAR = #{swapData.year}
+        AND
+            A.WORKING_FLAG = #{swapData.workingFlg}
+        Order By 
+            A.CALENDAR_DATE
+    </select>
+   
+</mapper>

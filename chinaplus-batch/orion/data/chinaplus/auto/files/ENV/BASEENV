@@ -1,0 +1,30 @@
+#Batch root directory
+BATCH_ROOT_DIR=/orion/data/chinaplus
+
+#Parameters directory
+PARS_FILE_DIR=$BATCH_ROOT_DIR/auto/files
+
+#Batch home directory
+BATCH_HOME_DIR=$BATCH_ROOT_DIR/batch
+
+#Batch log directory
+BATCH_LOG_DIR=$BATCH_HOME_DIR/logs
+
+#Batch Error log directory
+BATCH_ERROR_LOG_DIR=$BATCH_LOG_DIR/error
+
+#Batch Error log backup directory
+BATCH_ERROR_LOG_BAK_DIR=$BATCH_LOG_DIR/bak
+
+#JAR Path
+JAVA_JAR_PATH=$BATCH_ROOT_DIR/auto/jar
+
+#Batch JAR file for chinaplus
+BATCH_JAR_FILE=chinaplus-batch.jar
+
+#Return code respectively
+RET_OK_AAUTO=0
+RET_NG_AAUTO=1
+
+#java path
+JAVA_PATH=/opt/IBM/WebSphere/AppServer/java_1.7_64/bin/

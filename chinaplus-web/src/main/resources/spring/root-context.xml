@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:beans="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+    xmlns:p="http://www.springframework.org/schema/p" xmlns:cache="http://www.springframework.org/schema/cache"
+
+    xsi:schemaLocation="http://www.springframework.org/schema/beans   
+          http://www.springframework.org/schema/beans/spring-beans-4.1.xsd   
+          http://www.springframework.org/schema/context   
+          http://www.springframework.org/schema/context/spring-context-4.1.xsd   
+          http://www.springframework.org/schema/aop   
+          http://www.springframework.org/schema/aop/spring-aop-4.1.xsd   
+          http://www.springframework.org/schema/tx    
+          http://www.springframework.org/schema/tx/spring-tx-4.1.xsd
+          http://www.springframework.org/schema/cache 
+          http://www.springframework.org/schema/cache/spring-cache-4.1.xsd
+          http://www.springframework.org/schema/jdbc
+          http://www.springframework.org/schema/jdbc/spring-jdbc-4.1.xsd">
+
+
+    <!-- properties file -->
+    <!-- <context:property-placeholder location="classpath:config.properties"
+        file-encoding="utf-8" ignore-resource-not-found="false"
+        ignore-unresolvable="false" /> -->
+    <bean id="propertyConfigurer"
+        class="com.chinaplus.core.util.interceptor.PropertyPlaceholderConfigurerEx">
+        <property name="needEncrypt" value="false" />
+        <property name="encryptItems">
+            <list>
+                <value>db.url</value>
+                <value>db.username</value>
+                <value>db.userpwd</value>
+            </list>
+        </property>
+        <property name="locations">
+            <list>
+                <value>classpath:config/*.properties</value>
+            </list>
+        </property>
+    </bean>
+
+    <context:component-scan base-package="com.chinaplus"
+        use-default-filters="false">
+        <context:include-filter type="regex" expression="com.chinaplus.batch.*" />
+        <context:include-filter type="regex" expression="com.chinaplus.*.service.*Service" />
+        <context:include-filter type="regex" expression="com.chinaplus.core.base.BaseMybatisMapper" />
+        <context:include-filter type="regex" expression="com.chinaplus.core.base.BaseHibernateDao" />
+    </context:component-scan>
+
+    <context:annotation-config />
+
+    <!-- file upload -->
+    <beans:bean id="multipartResolver"
+        class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <beans:property name="maxUploadSize" value="104857600" />
+        <beans:property name="maxInMemorySize" value="4096" />
+        <beans:property name="defaultEncoding" value="UTF-8" />
+    </beans:bean>
+
+    <bean id="dataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
+        <property name="jndiName" value="java:comp/env/jdbc/chinaplusDS" />
+    </bean>
+    <beans:bean id="sessionFactory"
+        class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+        <beans:property name="dataSource" ref="dataSource" />
+        <beans:property name="packagesToScan">
+            <beans:list>
+                <beans:value>com.chinaplus.common.entity</beans:value>
+            </beans:list>
+        </beans:property>
+        <!-- <beans:property name="mappingLocations"> <beans:list> <beans:value>classpath:hibernate/**/*.hbm.xml</beans:value> 
+            </beans:list> </beans:property> -->
+        <beans:property name="hibernateProperties">
+            <beans:props>
+                <beans:prop key="hibernate.dialect">org.hibernate.dialect.DB2Dialect
+                </beans:prop>
+                <!-- <beans:prop key="current_session_context_class">thread</beans:prop> -->
+                <beans:prop key="hibernate.format_sql">false</beans:prop>
+                <beans:prop key="hibernate.show_sql">false</beans:prop>
+                <beans:prop key="hibernate.use_sql_comments">false</beans:prop>
+                <beans:prop key="hibernate.max_fetch_depth">3</beans:prop>
+                <beans:prop key="hibernate.jdbc.batch_size">20</beans:prop>
+                <beans:prop key="hibernate.jdbc.fetch_size">20</beans:prop>
+                <beans:prop key="hibernate.cache.use_query_cache">false</beans:prop>
+                <beans:prop key="hibernate.cache.use_second_level_cache">false</beans:prop>
+                <beans:prop key="connection.autocommit">false</beans:prop>
+            </beans:props>
+        </beans:property>
+    </beans:bean>
+
+    <beans:bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <beans:property name="dataSource" ref="dataSource" />
+        <beans:property name="configLocation" value="classpath:mybatis/mybatis-config.xml" />
+        <!-- <beans:property name="typeAliasesPackage" value="com.chinaplus.common.entity,com.chinaplus.web.warehouse.entity,com.chinaplus.web.order.entity,com.chinaplus.web.master.entity,com.chinaplus.web.manage.entity" /> -->
+        <beans:property name="mapperLocations" value="classpath*:com/chinaplus/**/mapper/sql/*Mapper.xml" />
+    </beans:bean>
+
+<!--     <beans:bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage"
+            value="com.chinaplus.common.mapper.sql;com.chinaplus.web.order.mapper.sql;com.chinaplus.web.master.mapper.sql;com.chinaplus.web.warehouse.mapper.sql;com.chinaplus.web.manage.mapper.sql" />
+    </beans:bean> -->
+
+    <beans:bean id="transactionManager"
+        class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+        <beans:property name="sessionFactory" ref="sessionFactory" />
+    </beans:bean>
+
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <tx:method name="get*" propagation="SUPPORTS" read-only="true" />
+            <tx:method name="do*" read-only="false" rollback-for="java.lang.Exception" />
+            <tx:method name="*" propagation="SUPPORTS" read-only="true" />
+        </tx:attributes>
+    </tx:advice>
+
+    <aop:config>
+        <aop:pointcut id="pc" expression="execution(* com.chinaplus..*Service.*(..))" />
+        <aop:advisor pointcut-ref="pc" advice-ref="txAdvice" />
+    </aop:config>
+</beans>

@@ -1,0 +1,547 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.mm.service.CPMPMS02Service">
+
+    <sql id="ConstDef">
+        <bind name="V_V" value="@com.chinaplus.common.consts.CodeConst$BusinessPattern@V_V" />  
+        <bind name="SHIPPING_ROUTE_TYPE" value="@com.chinaplus.common.consts.CodeConst$CodeMasterCategory@SHIPPING_ROUTE_TYPE" />
+        <bind name="CALENDAR_PARTY" value="@com.chinaplus.common.consts.CodeConst$CodeMasterCategory@CALENDAR_PARTY" />
+        <bind name="EXPORT_WH_CALENDER" value="@com.chinaplus.common.consts.CodeConst$CodeMasterCategory@EXPORT_WH_CALENDER" /> 
+        <bind name="BUSINESS_PATTERN" value="@com.chinaplus.common.consts.CodeConst$CodeMasterCategory@BUSINESS_PATTERN" />   
+    </sql> 
+
+   <select id="getOfficeCodeByIds" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+       SELECT   
+          A.OFFICE_ID AS id,
+          A.OFFICE_CODE  AS  text
+       FROM   
+           TNM_OFFICE A
+        ORDER  BY  A.OFFICE_CODE 
+   </select>
+
+   <select id="getCustomerCodeByIds" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+     SELECT  
+          DISTINCT 
+          A.CUSTOMER_CODE AS id,
+          A.CUSTOMER_CODE AS text
+     FROM   
+          TNM_CUSTOMER A              
+     <where> 
+        <if test="swapData.userOffIds != null  and swapData.userOffIds.size()>0" >
+              AND A.OFFICE_ID IN 
+              <foreach item="item" index="index" collection="swapData.userOffIds" open="(" separator="," close=")">  
+                #{item}
+             </foreach>
+         </if>
+     </where>
+      ORDER BY 
+            A.CUSTOMER_CODE 
+   </select>  
+   
+   <select id="getTccSupCode" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+       SELECT 
+          A.SUPPLIER_CODE AS id,
+          A.SUPPLIER_CODE AS text
+       FROM   
+           TNM_SUPPLIER A
+        ORDER BY A.SUPPLIER_CODE  
+   </select>
+   
+   <select id="getTccSupCodeByIds" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+     SELECT   
+          DISTINCT  
+          A.TTC_SUPP_CODE AS id,
+          A.TTC_SUPP_CODE AS text
+     FROM 
+          TNM_EXP_PARTS A
+          LEFT JOIN TNM_PARTS_MASTER B ON B.PARTS_ID = A.PARTS_ID
+          LEFT JOIN TNM_CUSTOMER C ON C.CUSTOMER_ID = B.CUSTOMER_ID 
+     WHERE
+          A.TTC_SUPP_CODE IS NOT NULL
+        <if test="swapData.businessPatten != null and swapData.businessPatten.size()>0" >
+             AND A.BUSINESS_PATTERN IN 
+            <foreach item="item" index="index" collection="swapData.businessPatten" open="(" separator="," close=")">  
+                #{item}
+            </foreach>
+        </if>          
+        <if test="swapData.userOffIds != null and swapData.userOffIds.size()>0" >
+             AND B.OFFICE_ID IN 
+            <foreach item="item" index="index" collection="swapData.userOffIds" open="(" separator="," close=")">  
+                #{item}
+            </foreach>
+        </if> 
+        <if test="swapData.ttcCustCd != null and swapData.ttcCustCd.size()>0" >
+             AND C.CUSTOMER_CODE IN 
+            <foreach item="item" index="index" collection="swapData.ttcCustCd" open="(" separator="," close=")">  
+                #{item}
+             </foreach>      
+        </if> 
+      ORDER  BY  A.TTC_SUPP_CODE 
+   </select>  
+     
+   <select id="getSsmsMainRouteCode" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+     <include refid="ConstDef"/>
+     SELECT   
+          DISTINCT 
+          A.SSMS_MAIN_ROUTE AS id,
+          A.SSMS_MAIN_ROUTE AS text
+     FROM 
+          TNM_EXP_PARTS A     
+     WHERE
+          A.BUSINESS_PATTERN = ${V_V}               
+     ORDER BY A.SSMS_MAIN_ROUTE 
+   </select> 
+   
+   <select id="getSsmsMainRouteCodeByIds" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+     <include refid="ConstDef"/>
+     SELECT   
+          DISTINCT 
+          A.SSMS_MAIN_ROUTE AS id,
+          A.SSMS_MAIN_ROUTE AS text
+     FROM 
+          TNM_EXP_PARTS A
+          LEFT JOIN TNM_PARTS_MASTER B ON A.PARTS_ID = B.PARTS_ID 
+          LEFT JOIN TNM_CUSTOMER C ON B.CUSTOMER_ID = C.CUSTOMER_ID         
+     <where>
+        <!-- A.BUSINESS_PATTERN = ${V_V} -->
+        <if test="swapData.userOffIds != null  and swapData.userOffIds.size()>0" >
+             B.OFFICE_ID IN 
+            <foreach item="item" index="index" collection="swapData.userOffIds" open="(" separator="," close=")">  
+                #{item}
+            </foreach>
+        </if>           
+        <if test="swapData.ttcCustCd != null  and swapData.ttcCustCd.size()>0" >
+             AND  C.CUSTOMER_CODE IN 
+            <foreach item="item" index="index" collection="swapData.ttcCustCd" open="(" separator="," close=")">  
+                #{item}
+             </foreach>      
+        </if> 
+        <if test="swapData.ttcSuppCd != null  and swapData.ttcSuppCd.size()>0" >
+             AND  A.TTC_SUPP_CODE IN 
+            <foreach item="item" index="index" collection="swapData.ttcSuppCd" open="(" separator="," close=")">  
+                #{item}
+             </foreach>      
+        </if>                   
+      </where>                 
+        ORDER  BY  A.SSMS_MAIN_ROUTE 
+   </select>  
+     
+    <select id="getSsmsSuppCode" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+     <include refid="ConstDef"/>
+     SELECT   
+          DISTINCT 
+          A.EXP_SUPP_CODE AS id,
+          A.EXP_SUPP_CODE  AS  text
+     FROM 
+          TNM_EXP_PARTS A          
+     WHERE
+         A.BUSINESS_PATTERN = ${V_V}               
+        ORDER  BY  A.EXP_SUPP_CODE 
+   </select> 
+   
+   <select id="getSsmsSuppCodeByIds" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+     <include refid="ConstDef"/>
+     SELECT   
+          DISTINCT 
+          A.EXP_SUPP_CODE AS id,
+          A.EXP_SUPP_CODE  AS  text
+     FROM 
+          TNM_EXP_PARTS A
+          LEFT JOIN TNM_PARTS_MASTER  B  ON  A.PARTS_ID = B.PARTS_ID 
+          LEFT JOIN TNM_CUSTOMER C ON  B.CUSTOMER_ID = C.CUSTOMER_ID            
+     <where>
+        <if test="swapData.userOffIds != null  and swapData.userOffIds.size()>0" >
+            B.OFFICE_ID IN 
+            <foreach item="item" index="index" collection="swapData.userOffIds" open="(" separator="," close=")">  
+                #{item}
+            </foreach>
+        </if> 
+        <if test="swapData.ttcCustCd != null  and swapData.ttcCustCd.size()>0" >
+             AND  C.CUSTOMER_CODE IN 
+            <foreach item="item" index="index" collection="swapData.ttcCustCd" open="(" separator="," close=")">  
+                #{item}
+             </foreach>      
+        </if>  
+        <if test="swapData.ttcSuppCd != null  and swapData.ttcSuppCd.size()>0" >
+             AND  A.TTC_SUPP_CODE IN 
+            <foreach item="item" index="index" collection="swapData.ttcSuppCd" open="(" separator="," close=")">  
+                #{item}
+             </foreach>      
+        </if>  
+        <if test="swapData.ssmsMainRoute != null  and swapData.ssmsMainRoute.size()>0" >
+             AND  A.SSMS_MAIN_ROUTE IN 
+            <foreach item="item" index="index" collection="swapData.ssmsMainRoute" open="(" separator="," close=")">  
+                #{item}
+             </foreach>      
+        </if>                 
+     </where>             
+        ORDER  BY  A.EXP_SUPP_CODE 
+   </select> 
+ 
+   <select id="getBusinessPatternByIds" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+     <include refid="ConstDef"/>
+     SELECT   
+          DISTINCT
+          A.CODE_VALUE   AS id,
+          A.CODE_NAME  AS  text
+     FROM 
+         TNM_CODE_CATEGORY A           
+     WHERE
+          A.LANGUAGE_FLAG  =  #{swapData.language}  
+          AND A.CODE_CATEGORY = #{BUSINESS_PATTERN}      
+      ORDER  BY  A.CODE_VALUE 
+   </select>  
+     
+    <select id="getShipRouteCode" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+     SELECT   
+          DISTINCT 
+          A.SHIPPING_ROUTE_CODE   AS id,
+          A.SHIPPING_ROUTE_CODE  AS  text
+     FROM  
+           TNM_SR_MASTER  A 
+     <where>
+          <if test="swapData.userOffIds != null  and swapData.userOffIds.size()>0" >
+                AND  (
+                <foreach item="item" index="index" collection="swapData.userOffIds" open="" separator="OR" close="">                      
+                     <if test="999 != item">
+                        A.OFFICE_ID = #{item}
+                     </if>  
+                     <if test="999 == item">
+                        A.OFFICE_ID IS  NULL
+                     </if> 
+                </foreach>
+                )
+        </if>
+        <if test="swapData.shipRouteTypes != null  and swapData.shipRouteTypes.size()>0" >
+          AND A.SHIPPING_ROUTE_TYPE  IN 
+            <foreach item="item" index="index" collection="swapData.shipRouteTypes" open="(" separator="," close=")">  
+                #{item}
+            </foreach> 
+        </if> 
+     </where>
+        ORDER  BY  A.SHIPPING_ROUTE_CODE 
+   </select>  
+   
+   <select id="getShipRouteType" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+     <include refid="ConstDef"/>
+     select   
+          A.CODE_VALUE   AS id,
+          A.CODE_NAME  AS  text
+     FROM  
+          TNM_CODE_CATEGORY  A 
+     where  
+          A.LANGUAGE_FLAG  =  #{swapData.language}     
+          AND   A.CODE_CATEGORY  =  #{SHIPPING_ROUTE_TYPE}    
+     ORDER  BY  A.CODE_VALUE 
+   </select>  
+   
+   <select id="getShipRouteTypeByCode" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+     <include refid="ConstDef"/>
+     SELECT   
+          DISTINCT
+          A.CODE_VALUE   AS id,
+          A.CODE_NAME  AS  text
+     FROM  
+           TNM_CODE_CATEGORY  A 
+           INNER  JOIN  TNM_SR_MASTER B  ON  A.CODE_VALUE =  B.SHIPPING_ROUTE_TYPE
+     WHERE  
+          A.LANGUAGE_FLAG  =  #{swapData.language}     
+          AND   A.CODE_CATEGORY  =  #{SHIPPING_ROUTE_TYPE} 
+          <if test="swapData.shipRouteCode != null  and swapData.shipRouteCode.size()>0" >
+          AND B.SHIPPING_ROUTE_CODE  IN
+           <foreach item="item" index="index" collection="swapData.shipRouteCode" open="(" separator="," close=")">  
+                #{item}
+           </foreach>   
+          </if> 
+          <if test="swapData.userOffIds != null  and swapData.userOffIds.size()>0" >
+                AND  (
+                <foreach item="item" index="index" collection="swapData.userOffIds" open="" separator="OR" close="">                      
+                     <if test="999 != item">
+                        B.OFFICE_ID = #{item}
+                     </if>  
+                     <if test="999 == item">
+                        B.OFFICE_ID IS  NULL
+                     </if> 
+                </foreach>
+                )
+        </if>  
+     ORDER  BY  A.CODE_VALUE 
+   </select>   
+      
+    <select id="getCountry" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">  
+         SELECT   
+              A.REGION_CODE   AS id,
+              A.REGION_CODE  AS  text
+         FROM  
+              TNM_REGION  A    
+         ORDER  BY  A.REGION_CODE 
+   </select>         
+   
+   <select id="getCalendarCode" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+     select   
+          A.CALENDAR_ID AS id,
+          A.CALENDAR_CODE  AS  text
+       FROM   
+           TNM_CALENDAR_MASTER A              
+        WHERE
+            A.OFFICE_ID IN 
+        <foreach item="item" index="index" collection="swapData.userOffIds" open="(" separator="," close=")">  
+            #{item}
+        </foreach>
+         <if test="swapData.country != null  and swapData.country != '' " >
+           AND   A.REGION_CODE =  #{swapData.country}   
+         </if>
+        ORDER  BY  A.CALENDAR_CODE 
+   </select>   
+   
+   <select id="getYear" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+     select 
+              DISTINCT 
+              A.CALENDAR_YEAR AS id,
+              A.CALENDAR_YEAR  AS  text
+     FROM  
+             TNM_CALENDAR_DETAIL A
+             INNER  JOIN  TNM_CALENDAR_MASTER B   ON  A.CALENDAR_ID=B.CALENDAR_ID
+     WHERE   
+             B.CALENDAR_ID  =     #{swapData.calendarCode}  
+             AND B.REGION_CODE  =   #{swapData.country}  
+     ORDER BY  A.CALENDAR_YEAR   DESC
+   </select>  
+    
+   <select id="getPartyVv" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">     
+       <include refid="ConstDef"/>
+      SELECT  *  FROM 
+        (   
+          SELECT      
+               A.CODE_VALUE AS id,
+               A.CODE_NAME AS  text,
+               ROWNUMBER() over(ORDER BY A.CODE_CATEGORY_ID) as rownum
+         FROM  
+              TNM_CODE_CATEGORY  A 
+         WHERE  
+               A.LANGUAGE_FLAG  =  #{swapData.language} 
+               AND A.CODE_CATEGORY  =  #{CALENDAR_PARTY}
+         ORDER  BY  A.CODE_VALUE      
+        ) 
+       WHERE  rownum  BETWEEN  2  AND  7
+    </select>   
+   
+    <select id="getPartyAisin" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">     
+       <include refid="ConstDef"/>
+      select  *  FROM 
+        (   
+          select      
+               A.CODE_VALUE AS id,
+               A.CODE_NAME AS  text,
+               ROWNUMBER() over(ORDER BY A.CODE_CATEGORY_ID) as rownum
+         FROM  
+              TNM_CODE_CATEGORY  A 
+         WHERE  
+               A.LANGUAGE_FLAG  =  #{swapData.language} 
+               AND A.CODE_CATEGORY  =  #{CALENDAR_PARTY}
+          ORDER  BY  A.CODE_VALUE     
+        ) 
+       WHERE  rownum  BETWEEN  1  AND  4
+    </select>  
+   
+    <select id="getPartyVvAisin" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">     
+      <include refid="ConstDef"/>
+      select  *  FROM 
+        (   
+          select      
+               A.CODE_VALUE AS id,
+               A.CODE_NAME AS  text,
+               ROWNUMBER() over(ORDER BY A.CODE_CATEGORY_ID) as rownum
+         FROM  
+              TNM_CODE_CATEGORY  A 
+         WHERE  
+               A.LANGUAGE_FLAG  =  #{swapData.language} 
+               AND  A.CODE_CATEGORY  =  #{CALENDAR_PARTY}
+          ORDER  BY  A.CODE_VALUE
+        ) 
+       WHERE  rownum  BETWEEN  1  AND  7
+    </select> 
+     
+    <select id="getPartyCodeSupp" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+      select   
+          distinct 
+          A.SUPPLIER_ID AS id,
+          A.SUPPLIER_CODE  AS  text
+       FROM   
+          TNM_SUPPLIER  A 
+          INNER JOIN   TNM_EXP_PARTS   C   ON   A.SUPPLIER_ID =  C.SUPPLIER_ID
+          INNER JOIN   TNM_PARTS_MASTER  B  ON   B.PARTS_ID = C.PARTS_ID           
+        WHERE     
+             B.OFFICE_ID IN 
+        <foreach item="item" index="index" collection="swapData.userOffIds" open="(" separator="," close=")">  
+            #{item}
+        </foreach>
+        ORDER  BY  A.SUPPLIER_CODE 
+   </select>   
+   
+   <select id="getPartyCodeTtcImpWah" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+      select   
+           A.WHS_ID AS id,
+           A.WHS_CODE  AS  text
+       FROM   
+           TNM_WAREHOUSE  A     
+        WHERE
+            A.REGION_CODE =  #{swapData.country}        
+        ORDER  BY  A.WHS_CODE 
+   </select>    
+ 
+   <select id="getPartyCodeTtcImpOff" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+      select   
+           A.OFFICE_ID AS id,
+           A.OFFICE_CODE  AS  text
+       FROM   
+           TNM_OFFICE  A     
+        WHERE        
+            A.REGION_CODE =  #{swapData.country} 
+            AND  A.OFFICE_ID IN 
+        <foreach item="item" index="index" collection="swapData.userOffIds" open="(" separator="," close=")">  
+            #{item}
+        </foreach>       
+        ORDER  BY  A.OFFICE_CODE 
+   </select>   
+   
+   <select id="getPartyCodeCust" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+      select   
+          A.CUSTOMER_ID  AS id,
+          A.CUSTOMER_CODE AS  text      
+       FROM   
+          TNM_CUSTOMER  A
+          INNER JOIN   TNM_OFFICE B ON  A.OFFICE_ID =B.OFFICE_ID     
+        WHERE     
+          A.REGION_CODE =  #{swapData.country}    
+          AND A.BUSINESS_PATTERN   IN
+            <foreach item="item" index="index" collection="swapData.busPatternList" open="(" separator="," close=")">  
+                #{item}
+            </foreach>               
+          AND  A.OFFICE_ID IN 
+            <foreach item="item" index="index" collection="swapData.userOffIds" open="(" separator="," close=")">  
+                #{item}
+            </foreach>       
+        ORDER  BY  A.CUSTOMER_CODE 
+   </select>   
+   
+   <select id="getPartyCodeExpWah" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+      <include refid="ConstDef"/>
+     select   
+          A.CODE_VALUE   AS id,
+          A.CODE_NAME  AS  text
+     FROM  
+          TNM_CODE_CATEGORY  A 
+     where  
+          A.LANGUAGE_FLAG  =  #{swapData.language}     
+          AND   A.CODE_CATEGORY  =  #{EXPORT_WH_CALENDER}     
+     ORDER  BY  A.CODE_VALUE 
+   </select>      
+   
+   <select id="getLogindDByIds" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+     select   
+          A.LOGIN_ID   AS id,
+          A.LOGIN_ID  AS  text
+     FROM 
+         TNM_USER A    
+         INNER JOIN   TNM_USER_OFFICE_ROLE B  ON  A.USER_ID =B.USER_ID    
+     <where>
+        <if test="swapData.userOffIds != null  and swapData.userOffIds.size()>0" >
+            B.OFFICE_ID  IN 
+            <foreach item="item" index="index" collection="swapData.userOffIds" open="(" separator="," close=")">  
+                #{item}
+            </foreach> 
+        </if>
+     </where>      
+     ORDER  BY  A.LOGIN_ID 
+   </select>  
+   
+   <select id="getAlertLevel" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+     select   
+           distinct 
+           A.ALERT_LEVEL  AS id,
+           A.ALERT_LEVEL  AS  text
+     FROM   
+          TNM_EMAIL_ALERT  A 
+          INNER JOIN      TNM_USER  B   ON  A.USER_ID = B.USER_ID
+          INNER JOIN      TNM_USER_OFFICE_ROLE  C  ON   B.USER_ID =C.USER_ID
+     <where>  
+        <if test="swapData.userOffIds != null and swapData.userOffIds.size()>0" >    
+            C.OFFICE_ID  IN 
+            <foreach item="item" index="index" collection="swapData.userOffIds" open="(" separator="," close=")">  
+                #{item}
+            </foreach> 
+        </if>
+        <if test="swapData.loginId != null and swapData.loginId.size()>0" > 
+            AND  B.LOGIN_ID  IN 
+            <foreach item="item" index="index" collection="swapData.loginId" open="(" separator="," close=")">  
+                #{item}
+             </foreach> 
+        </if>
+     </where>       
+     ORDER  BY  A.ALERT_LEVEL 
+   </select>  
+   
+   <select id="getEffFromEtd" resultType="com.chinaplus.web.mm.entity.CPMPMS02Entity"  parameterType="com.chinaplus.core.bean.BaseParam">
+     SELECT
+          MIN(A.FROM_ETD) as  effFromEtd
+     FROM   
+           TNM_SR_MASTER A
+     WHERE
+          A.SHIPPING_ROUTE_CODE  IN
+           <foreach item="item" index="index" collection="swapData.shipRouteCode" open="(" separator="," close=")">  
+                #{item}
+           </foreach> 
+    </select>
+    
+   <select id="getEffToEtd" resultType="com.chinaplus.web.mm.entity.CPMPMS02Entity"   parameterType="com.chinaplus.core.bean.BaseParam">
+     SELECT
+           MAX(A.TO_ETD) as  effTotd
+     FROM   
+           TNM_SR_MASTER A
+     WHERE
+          A.SHIPPING_ROUTE_CODE  IN
+           <foreach item="item" index="index" collection="swapData.shipRouteCode" open="(" separator="," close=")">  
+                #{item}
+           </foreach> 
+    </select>
+    
+    
+    <select id="getOrderMonthFrom" resultType="com.chinaplus.web.mm.entity.CPMPMS02Entity"  parameterType="com.chinaplus.core.bean.BaseParam">
+    SELECT
+           MIN(A.ORDER_MONTH)    as  orderMonthFrom 
+    FROM
+           TNM_KB_ISSUED_DATE    A
+           INNER JOIN TNM_CUSTOMER  B   ON  A.CUSTOMER_ID = B.CUSTOMER_ID   
+     WHERE
+          B.CUSTOMER_CODE  IN
+           <foreach item="item" index="index" collection="swapData.kbttcCustomerCode" open="(" separator="," close=")">  
+                #{item}
+           </foreach> 
+          AND   B.OFFICE_ID  IN  
+           <foreach item="item" index="index" collection="swapData.kbImpOfficeCode" open="(" separator="," close=")">  
+                #{item}
+           </foreach>         
+    </select>
+    
+    <select id="getOrderMonthTo" resultType="com.chinaplus.web.mm.entity.CPMPMS02Entity"  parameterType="com.chinaplus.core.bean.BaseParam">
+     SELECT
+           MAX(A.ORDER_MONTH)    as  orderMonthTo
+     FROM
+          TNM_KB_ISSUED_DATE    A
+           INNER JOIN TNM_CUSTOMER  B   ON  A.CUSTOMER_ID = B.CUSTOMER_ID   
+      WHERE
+          B.CUSTOMER_CODE  IN
+           <foreach item="item" index="index" collection="swapData.kbttcCustomerCode" open="(" separator="," close=")">  
+                #{item}
+           </foreach> 
+          AND   B.OFFICE_ID  IN  
+           <foreach item="item" index="index" collection="swapData.kbImpOfficeCode" open="(" separator="," close=")">  
+                #{item}
+           </foreach>         
+    </select>   
+    
+    
+</mapper>

@@ -1,0 +1,154 @@
+<!--
+@screen CPIIFB16
+@author yang_jia1
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.batch.interfaces.service.CPIIFB16Service">
+
+     <insert id="addTTLogicIPIf" parameterType="com.chinaplus.batch.interfaces.bean.ttlogic.InnerPackage">
+        INSERT INTO 
+            TNT_IF_IMP_IP( 
+                IF_IP_ID
+              , SEQ_NO
+              , ACTION_TYPE
+              , DATA_SOURCE
+              , OFFICE_CODE
+              , SOURCE_IP_NO
+              , PID_NO
+              , FROM_WHS_CODE
+              , WHS_TRANSFER_DATE
+              , WHS_CODE
+              , SUPPLIER_CODE
+              , FROM_CUSTOMER_CODE
+              , STOCK_TRANSFER_DATE
+              , WHS_CUSTOMER_CODE
+              , TTC_PARTS_NO
+              , QTY
+              , CUSTOMS_CLR_DATE
+              , INVOICE_NO
+              , CONTAINER_NO
+              , CUSTOMS_NO
+              , DEVANNED_JOB_NO
+              , DEVANNED_DATE
+              , DEVAN_INVOICE_NO
+              , MODULE_NO
+              , INB_JOB_NO
+              , INB_INVOICE_NO
+              , INB_MODULE_NO
+              , INB_TYPE
+              , INB_DATE
+              , OUTBOUND_NO
+              , OUTBOUND_TYPE
+              , OUTBOUND_PKG_NO
+              , DELIVERY_NOTE_NO
+              , OUTBOUND_DATETIME
+              , DISPATCHED_DATETIME
+              , ONHOLD_FLAG
+              , ONHOLD_DATE
+              , SA_DATE
+              , SA_QTY
+              , DECANT_DATE
+              , FROM_IP_NO
+              , STATUS
+              , PROCESS_DATE
+              , IF_DATE_TIME
+              , VALID_FLAG
+              , HANDLE_FLAG
+              , CREATED_BY
+              , CREATED_DATE
+              , UPDATED_BY
+              , UPDATED_DATE
+              , VERSION
+        ) VALUES (
+                #{ifIpId,jdbcType=INTEGER}
+              , #{sequenceNo,jdbcType=VARCHAR}
+              , #{actionType,jdbcType=INTEGER}
+              , #{dataSource,jdbcType=VARCHAR}
+              , #{impOffice,jdbcType=VARCHAR}
+              , #{sourceIPNo,jdbcType=VARCHAR}
+              , #{ttlogicPidNo,jdbcType=VARCHAR}
+              , #{fromWhCode,jdbcType=VARCHAR}
+              , #{warehouseTransferDate,jdbcType=VARCHAR}
+              , #{warehouseCode,jdbcType=VARCHAR}
+              , #{supplierCode,jdbcType=VARCHAR}
+              , #{fromCustomerCode,jdbcType=VARCHAR}
+              , #{stockTransferDate,jdbcType=VARCHAR}
+              , #{customerCode,jdbcType=VARCHAR}
+              , #{ttcPartsNo,jdbcType=VARCHAR}
+              , #{qty,jdbcType=VARCHAR}
+              , #{customsClearanceDate,jdbcType=VARCHAR}
+              , #{customsClearanceInvoiceNo,jdbcType=VARCHAR}
+              , #{containerNo,jdbcType=VARCHAR}
+              , #{customsNo,jdbcType=VARCHAR}
+              , #{devannedJobNo,jdbcType=VARCHAR}
+              , #{devannedDate,jdbcType=VARCHAR}
+              , #{devannedInvoiceNo,jdbcType=VARCHAR}
+              , #{moduleNo,jdbcType=VARCHAR}
+              , #{inboundJobNo,jdbcType=VARCHAR}
+              , #{inboundInvoiceNo,jdbcType=VARCHAR}
+              , #{inboundModuleNo,jdbcType=VARCHAR}
+              , #{inboundType,jdbcType=VARCHAR}
+              , #{inboundDate,jdbcType=VARCHAR}
+              , #{outboundNo,jdbcType=VARCHAR}
+              , #{outboundType,jdbcType=VARCHAR}
+              , #{outboundPackageNo,jdbcType=VARCHAR}
+              , #{deliveryNoteNo,jdbcType=VARCHAR}
+              , #{outboundDateTime,jdbcType=VARCHAR}
+              , #{dispatchedDateTime,jdbcType=VARCHAR}
+              , #{onholdFlag,jdbcType=VARCHAR}
+              , #{onholdDate,jdbcType=VARCHAR}
+              , #{stockAdjustmentDate,jdbcType=VARCHAR}
+              , #{stockAdjustmentQty,jdbcType=VARCHAR}
+              , #{decantDate,jdbcType=VARCHAR}
+              , #{fromIpNo,jdbcType=VARCHAR}
+              , #{status,jdbcType=VARCHAR}
+              , #{processDate,jdbcType=TIMESTAMP}
+              , #{ifDateTime,jdbcType=TIMESTAMP}
+              , #{validFlag,jdbcType=INTEGER}
+              , #{handleFlag,jdbcType=INTEGER}
+              , #{createdBy,jdbcType=INTEGER}
+              , #{createdDate,jdbcType=TIMESTAMP}
+              , #{updatedBy,jdbcType=INTEGER}
+              , #{updatedDate,jdbcType=TIMESTAMP}
+              , #{version,jdbcType=INTEGER}
+        )
+    </insert>
+    
+    <select id="getMaxIfIpId" resultType="java.lang.Integer">
+        SELECT MAX(IF_IP_ID) + 1 FROM TNT_IF_IMP_IP
+    </select>
+    
+    <select id="getSourceIpNo" resultType="com.chinaplus.batch.interfaces.bean.ttlogic.InnerPackage" parameterType="com.chinaplus.batch.interfaces.bean.ttlogic.InnerPackage">
+        SELECT SOURCE_IP_NO AS sourceIPNo
+             , PID_NO AS ttlogicPidNo
+          FROM TNT_IF_IMP_IP
+         WHERE PID_NO = #{ttlogicPidNo}
+    </select>
+    
+    <select id="getLastPidInformation" resultType="com.chinaplus.batch.interfaces.bean.ttlogic.InnerPackage" parameterType="com.chinaplus.batch.interfaces.bean.ttlogic.InnerPackage">
+        SELECT  SEQ_NO AS sequenceNo
+              , ACTION_TYPE AS actionType
+              , DATA_SOURCE AS dataSource
+              , OFFICE_CODE AS impOffice
+              , SOURCE_IP_NO AS sourceIPNo
+              , PID_NO AS ttlogicPidNo
+              , WHS_CODE AS warehouseCode
+              , SUPPLIER_CODE AS supplierCode
+              , WHS_CUSTOMER_CODE AS customerCode
+              , TTC_PARTS_NO AS ttcPartsNo
+              , QTY AS qty
+              , ONHOLD_FLAG AS onholdFlag
+              , STATUS AS status
+          FROM TNT_IF_IMP_IP
+         WHERE PID_NO = #{ttlogicPidNo}
+           AND IF_DATE_TIME <![CDATA[<=]]> #{ifDateTime}
+           AND PROCESS_DATE <![CDATA[<]]> #{processDate}
+         ORDER BY 
+               IF_DATE_TIME DESC
+             , PROCESS_DATE DESC
+         FETCH FIRST 1 ROWS ONLY
+    </select>
+    
+</mapper>

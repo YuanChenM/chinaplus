@@ -1,0 +1,140 @@
+<!--
+@screen CPIIFB01
+@author yang_jia1
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.batch.interfaces.service.CPIIFB03Service">
+    
+     <update id="modCustomerIfValidFlag" parameterType="com.chinaplus.batch.interfaces.bean.Customer">
+        UPDATE 
+            TNM_IF_CUSTOMER C
+        SET 
+            VALID_FLAG = 1
+        WHERE
+            IF_DATE_TIME = #{ifDateTime,jdbcType=TIMESTAMP}
+    </update>
+    
+    <select id="getCustomerIfList" parameterType="com.chinaplus.batch.interfaces.bean.Customer" resultType="com.chinaplus.batch.interfaces.bean.Customer">
+       SELECT
+             C.DATA_ID AS dataId
+           , C.EXP_CODE AS expCode
+           , C.VENDOR_ROUTE AS vendorRoute
+           , C.CUSTOMER_CODE AS customerCode
+           , C.CUSTOMER_NAME AS customerName
+           , C.IF_DATE_TIME AS ifDateTime
+           , C.VALID_FLAG AS validFlag
+           , C.HANDLE_FLAG AS handleFlag
+           , C.CREATED_BY AS createdBy
+           , C.CREATED_DATE AS createdDate
+           , C.UPDATED_BY AS updatedBy
+           , C.UPDATED_DATE AS updatedDate
+           , C.VERSION AS version
+           , C.IF_CUSTOMER_ID AS ifCustomerId
+       FROM
+           TNM_IF_CUSTOMER C
+       WHERE
+           C.IF_DATE_TIME <![CDATA[<=]]> #{ifDateTime,jdbcType=TIMESTAMP}
+       AND
+           C.HANDLE_FLAG IN 
+    <foreach item="param" index="index" collection="handleFlagParam" open="(" separator="," close=")">  
+            #{param}  
+    </foreach>
+       ORDER BY
+           C.IF_CUSTOMER_ID
+    </select>
+    
+    <select id="checkCustomerSSMSExist" parameterType="com.chinaplus.batch.interfaces.bean.Customer" resultType="com.chinaplus.batch.interfaces.bean.Customer">
+        SELECT 
+             SSMS_CUSTOMER_ID AS ssmsCustomerId
+           , VENDOR_ROUTE AS vendorRoute
+           , SSMS_CUSTOMER_CODE AS customerCode
+           , VENDOR_ROUTE_SET AS vendorRouteSet
+        FROM
+            TNM_SSMS_CUSTOMER 
+        WHERE
+            SSMS_CUSTOMER_CODE = #{customerCode,jdbcType=VARCHAR}
+        AND 
+            EXP_CODE = #{expCode,jdbcType=VARCHAR}
+    </select>
+    
+    <update id="modCustomerSSMS" parameterType="com.chinaplus.batch.interfaces.bean.Customer">
+        UPDATE 
+            TNM_SSMS_CUSTOMER
+        SET 
+              EXP_CODE = #{expCode,jdbcType=VARCHAR}
+            , SSMS_CUSTOMER_CODE = #{customerCode,jdbcType=VARCHAR}
+            , VENDOR_ROUTE = #{vendorRoute,jdbcType=VARCHAR}
+            , VENDOR_ROUTE_SET = #{vendorRouteSet,jdbcType=VARCHAR}
+            , SSMS_CUSTOMER_NAME = #{customerName,jdbcType=VARCHAR}
+            , VERSION = VERSION + 1
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+        WHERE
+            SSMS_CUSTOMER_CODE = #{customerCode,jdbcType=VARCHAR}
+        AND 
+            EXP_CODE = #{expCode,jdbcType=VARCHAR}
+    </update>
+    
+    <!-- 2016/07/22 shiyang add for Update TNM_EXP_PARTS.SSMS_VENDOR_ROUTE -->
+    <update id="modPartsSSMS" parameterType="com.chinaplus.batch.interfaces.bean.Parts">
+        UPDATE 
+            TNM_EXP_PARTS
+        SET
+            SSMS_VENDOR_ROUTE = #{vendorRoute, jdbcType=VARCHAR}
+            , UPDATED_DATE = #{updatedDate, jdbcType=TIMESTAMP}
+            , UPDATED_BY = #{updatedBy, jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+        WHERE
+            SSMS_CUST_CODE = #{customerCode, jdbcType=VARCHAR}
+            AND EXP_CODE = #{expCode, jdbcType=VARCHAR}
+    </update>
+    
+    <insert id="addCustomerSSMS" parameterType="com.chinaplus.batch.interfaces.bean.Customer">
+        INSERT 
+        INTO 
+        TNM_SSMS_CUSTOMER (
+              SSMS_CUSTOMER_ID
+            , EXP_CODE    
+            , SSMS_CUSTOMER_CODE  
+            , VENDOR_ROUTE    
+            , SSMS_CUSTOMER_NAME
+            , ORION_PLUS_FLAG
+            , VENDOR_ROUTE_SET
+            , CREATED_BY  
+            , CREATED_DATE    
+            , UPDATED_BY  
+            , UPDATED_DATE    
+            , VERSION
+        )
+        VALUES
+        (
+            SEQ_TNM_SSMS_CUSTOMER.NEXTVAL,
+            #{expCode,jdbcType=VARCHAR},
+            #{customerCode,jdbcType=VARCHAR},
+            #{vendorRoute,jdbcType=VARCHAR},
+            #{customerName,jdbcType=VARCHAR},
+            #{orionPlusFlag,jdbcType=INTEGER},
+            #{vendorRouteSet,jdbcType=VARCHAR},
+            #{createdBy,jdbcType=INTEGER},
+            #{createdDate,jdbcType=TIMESTAMP},
+            #{updatedBy,jdbcType=INTEGER},
+            #{updatedDate,jdbcType=TIMESTAMP},
+            #{version,jdbcType=INTEGER}
+        )
+    </insert>
+    
+    <update id="modCustomerIfHandleFlag" parameterType="com.chinaplus.batch.interfaces.bean.Customer">
+        UPDATE 
+            TNM_IF_CUSTOMER
+        SET 
+              HANDLE_FLAG = #{handleFlag,jdbcType=INTEGER}
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+        WHERE
+            IF_CUSTOMER_ID = #{ifCustomerId,jdbcType=INTEGER}
+    </update>
+    
+</mapper>

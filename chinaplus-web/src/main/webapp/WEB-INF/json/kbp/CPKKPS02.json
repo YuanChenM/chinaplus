@@ -1,0 +1,649 @@
+/**
+ * Kanban Plan Detailed Information Screen
+ * 
+ * @screen CPKKPS02
+ * @author shiyang
+ */
+CPKKPS02 = {
+    id : chinaplus.screen.CPKKPS02,
+    title : chinaplus.label.CPKKPS02_Label_PageTitle,
+    xtype : 'panel',
+    // autoScroll : true,
+    overflowY : 'auto',
+    minWidth : 600,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    border : false,
+    autoHeight : true,
+    closable : false,
+    // removeData : [],
+    items : [{
+                xtype : 'form',
+                frame : true,
+                border : false,
+                defaultType : 'textfield',
+                fieldDefaults : {
+                    labelAlign : 'right',
+                    width : 460,
+                    margin : '2',
+                    labelSeparator : ''
+                },
+                margin : '2 2 5 2',
+                items : [{
+                            margin : '10 0 0 0',
+                            xtype : 'textfield',
+                            msgTarget : 'side',
+                            fieldLabel : chinaplus.label.CPKKPS02_Label_KanbanId,
+                            autoFitErrors : false,
+                            allowBlank : false,
+                            hidden : true,
+                            id : chinaplus.screen.CPKKPS02 + '_kanbanId',
+                            name : 'kanbanId',
+                            style : 'width:50%;',
+                            listeners : {
+                                afterrender : function(o) {
+                                    if (!TRF.util.isDetailTabMode_New()) {
+                                        TRF.util.makeCmpReadOnly(o);
+                                    }
+                                }
+                            }
+                        }, {
+                            margin : '10 0 0 0',
+                            xtype : 'textfield',
+                            msgTarget : 'side',
+                            fieldLabel : chinaplus.label.CPKKPS02_Label_KanbanPlanNo,
+                            autoFitErrors : false,
+                            allowBlank : false,
+                            hidden : true,
+                            id : chinaplus.screen.CPKKPS02 + '_kanbanPlanNoHead',
+                            name : 'kanbanPlanNoHead',
+                            style : 'width:50%;',
+                            listeners : {
+                                afterrender : function(o) {
+                                    if (TRF.util.isDetailTabMode_View()) {
+                                        TRF.util.makeCmpReadOnly(o);
+                                    }
+                                }
+                            }
+                        }, {
+                            margin : '10 0 0 0',
+                            xtype : 'textfield',
+                            msgTarget : 'side',
+                            fieldLabel : chinaplus.label.CPKKPS02_Label_KanbanPlanNo,
+                            autoFitErrors : false,
+                            allowBlank : false,
+                            id : chinaplus.screen.CPKKPS02 + '_kanbanPlanNoHeadDisplay',
+                            name : 'kanbanPlanNoHeadDisplay',
+                            style : 'width:50%;',
+                            listeners : {
+                                afterrender : function(o) {
+                                    if (TRF.util.isDetailTabMode_View()) {
+                                        TRF.util.makeCmpReadOnly(o);
+                                    }
+                                }
+                            }
+                        }, {
+                            margin : '10 0 0 0',
+                            xtype : 'textfield',
+                            msgTarget : 'side',
+                            fieldLabel : chinaplus.label.CPKKPS02_Label_OrderMonth,
+                            autoFitErrors : false,
+                            allowBlank : false,
+                            id : chinaplus.screen.CPKKPS02 + '_orderMonth',
+                            name : 'orderMonth',
+                            style : 'width:50%;',
+                            listeners : {
+                                afterrender : function(o) {
+                                    if (TRF.util.isDetailTabMode_View()) {
+                                        TRF.util.makeCmpReadOnly(o);
+                                    }
+                                }
+                            }
+                        }, {
+                            margin : '10 0 0 0',
+                            xtype : 'textfield',
+                            msgTarget : 'side',
+                            fieldLabel : chinaplus.label.CPKKPS02_Label_CustomerCode,
+                            autoFitErrors : false,
+                            allowBlank : false,
+                            id : chinaplus.screen.CPKKPS02 + '_customerCode',
+                            name : 'customerCode',
+                            style : 'width:50%;',
+                            listeners : {
+                                afterrender : function(o) {
+                                    if (TRF.util.isDetailTabMode_View()) {
+                                        TRF.util.makeCmpReadOnly(o);
+                                    }
+                                }
+                            }
+                        }, {
+                            margin : '10 0 10 0',
+                            xtype : 'textfield',
+                            msgTarget : 'side',
+                            fieldLabel : chinaplus.label.CPKKPS02_Label_SupplierCode,
+                            autoFitErrors : false,
+                            allowBlank : false,
+                            id : chinaplus.screen.CPKKPS02 + '_supplierCode',
+                            name : 'supplierCode',
+                            style : 'width:50%;',
+                            listeners : {
+                                afterrender : function(o) {
+                                    if (TRF.util.isDetailTabMode_View()) {
+                                        TRF.util.makeCmpReadOnly(o);
+                                    }
+                                }
+                            }
+
+                        }]
+            }, {
+                xtype : 'form',
+                frame : true,
+                border : false,
+                defaultType : 'textfield',
+                fieldDefaults : {
+                    labelAlign : 'right',
+                    width : 460,
+                    labelSeparator : ''
+                },
+                margin : '10 2 5 2',
+                items : [{
+                            xtype : 'label',
+                            html : '<div style="height:30px; line-height:30px; padding-left: 10px;">' + chinaplus.label.CPKKPS02_Label_PartInfoTitle + '</div>'
+                        }, {
+                            xtype : 'grid',
+                            id : chinaplus.screen.CPKKPS02 + '_partInfoList',
+                            title : chinaplus.label.CPKKPS02_Label_PartInfoTitle,
+                            autoScroll : true,
+                            border : true,
+                            closable : false,
+                            enableColumnHide : false,
+                            enableColumnMove : false,
+                            qtip : true,
+                            columnLines : true,
+                            selModel : Ext.create('Ext.ux.selection.CheckBoxModel', {
+                                        checkOnly : true
+                                    }),
+                            viewConfig : {
+                                loadMask : false,
+                                getRowClass : function() {
+                                    return "vertical-align-row";
+                                }
+                            },
+                            plugins : [{
+                                        ptype : 'gridheaderfilters'
+                                    }, {
+                                        ptype : 'emptystoreview'
+                                    }, {
+                                        ptype : 'headerfiltertoolbar',
+                                        showMore : true,
+                                        pageSize : TRF.cnst.PAGE_SIZE_COMMON
+                                    }],
+                            header : false,
+                            headerPosition : 'bottom',
+                            columns : [{
+                                        xtype : 'gridcolumn',
+                                        text : '<div style="text-align:center">' + chinaplus.label.CPKKPS02_Grid_PartId + '</div>',
+                                        width : 200,
+                                        items : [{
+                                                    xtype : 'header',
+                                                    hidden : true
+                                                }],
+                                        dataIndex : 'kanbanPartsId',
+                                        sortable : false,
+                                        hidden : true,
+                                        filter : 'string'
+                                    }, {
+                                        xtype : 'gridcolumn',
+                                        text : '<div style="text-align:center">' + chinaplus.label.CPKKPS02_Grid_PartId + '</div>',
+                                        width : 200,
+                                        items : [{
+                                                    xtype : 'header',
+                                                    hidden : true
+                                                }],
+                                        dataIndex : 'partsId',
+                                        sortable : false,
+                                        hidden : true,
+                                        filter : 'string'
+                                    }, {
+                                        xtype : 'gridcolumn',
+                                        text : '<div style="text-align:center">' + chinaplus.label.CPKKPS02_Grid_PartNo + '</div>',
+                                        width : 200,
+                                        items : [{
+                                                    xtype : 'header',
+                                                    hidden : true
+                                                }],
+                                        dataIndex : 'ttcPartsNo',
+                                        sortable : false,
+                                        filter : 'string'
+                                    }, {
+                                        xtype : 'gridcolumn',
+                                        text : '<div style="text-align:center">' + chinaplus.label.CPKKPS02_Grid_PartOrderQty + '</div>',
+                                        width : 190,
+                                        items : [{
+                                                    xtype : 'header',
+                                                    hidden : true
+                                                }],
+                                        dataIndex : 'partsOrderQty',
+                                        sortable : false,
+                                        align : 'right',
+                                        renderer : function(v, p, record) {
+                                            return TRF.util.getDecimalFormatByDigits(v, record.data.decimalDigits);
+                                        }
+                                    }, {
+                                        xtype : 'gridcolumn',
+                                        text : '<div style="text-align:center">' + chinaplus.label.CPKKPS02_Grid_PartOnShippingQty + '</div>',
+                                        width : 190,
+                                        items : [{
+                                                    xtype : 'header',
+                                                    hidden : true
+                                                }],
+                                        dataIndex : 'partsOnShippingQty',
+                                        sortable : false,
+                                        align : 'right',
+                                        renderer : function(v, p, record) {
+                                            return TRF.util.getDecimalFormatByDigits(v, record.data.decimalDigits);
+                                        }
+                                    }, {
+                                        xtype : 'gridcolumn',
+                                        text : '<div style="text-align:center">' + chinaplus.label.CPKKPS02_Grid_PartInboundQty + '</div>',
+                                        width : 190,
+                                        items : [{
+                                                    xtype : 'header',
+                                                    hidden : true
+                                                }],
+                                        dataIndex : 'partsInboundQty',
+                                        sortable : false,
+                                        align : 'right',
+                                        renderer : function(v, p, record) {
+                                            return TRF.util.getDecimalFormatByDigits(v, record.data.decimalDigits);
+                                        }
+                                    }, {
+                                        xtype : 'gridcolumn',
+                                        text : '<div style="text-align:center">' + chinaplus.label.CPKKPS02_Grid_PartOrderBalance + '</div>',
+                                        width : 190,
+                                        items : [{
+                                                    xtype : 'header',
+                                                    hidden : true
+                                                }],
+                                        dataIndex : 'partsOrderBalance',
+                                        sortable : false,
+                                        align : 'right',
+                                        renderer : function(v, p, record) {
+                                            return TRF.util.getDecimalFormatByDigits(v, record.data.decimalDigits);
+                                        }
+                                    }, {
+                                        xtype : 'gridcolumn',
+                                        text : '<div style="text-align:center">' + chinaplus.label.CPKKPS02_Grid_PartStatus + '</div>',
+                                        width : 135,
+                                        items : [{
+                                                    xtype : 'header',
+                                                    hidden : true
+                                                }],
+                                        dataIndex : 'partsStatus',
+                                        sortable : false,
+                                        align : 'left',
+                                        filter : {
+                                            type : 'list',
+                                            multiSelect : true,
+                                            options : chinaplus.master.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_KanbanPartStatus)
+                                        },
+                                        renderer : function(v, p, record) {
+                                            return chinaplus.master.getMasterName(chinaplus.master.consts.TnmCodeCategory_KanbanPartStatus, v);
+                                        }
+                                    }],
+                            tbar : [{
+                                        text : chinaplus.label.CPKKPS02_Button_ForceComplete,
+                                        id : chinaplus.screen.CPKKPS02 + '_btnForceComplete',
+                                        iconCls : 'btn-save',
+                                        handler : function() {
+                                            CPKKPS02.forceComplete();
+                                        }
+                                    }],
+                            store : TRF.util.createStore(chinaplus.screen.CPKKPS02, 'kbp/CPKKPS02/loadPartInfoList', 'PartInfoList', chinaplus.screen.CPKKPS02
+                                            + '_partInfoListStore', {})
+                        }]
+            }, {
+                xtype : 'form',
+                frame : true,
+                border : false,
+                defaultType : 'textfield',
+                fieldDefaults : {
+                    labelAlign : 'right',
+                    width : 460,
+                    labelSeparator : ''
+                },
+                margin : '10 2 5 2',
+                items : [{
+                            xtype : 'label',
+                            html : '<div style="height:30px; line-height:30px; padding-left: 10px;">' + chinaplus.label.CPKKPS02_Label_UploadInfoTitle + '</div>'
+                        }, {
+                            xtype : 'grid',
+                            id : chinaplus.screen.CPKKPS02 + '_uploadInfoList',
+                            title : chinaplus.label.CPKKPS02_Label_UploadInfoTitle,
+                            autoScroll : true,
+                            border : true,
+                            closable : false,
+                            enableColumnHide : false,
+                            enableColumnMove : false,
+                            qtip : true,
+                            columnLines : true,
+                            selModel : Ext.create('Ext.ux.selection.CheckBoxModel', {
+                                        checkOnly : true
+                                    }),
+                            viewConfig : {
+                                loadMask : false,
+                                getRowClass : function() {
+                                    return "vertical-align-row";
+                                }
+                            },
+                            plugins : [{
+                                        ptype : 'gridheaderfilters'
+                                    }, {
+                                        ptype : 'emptystoreview'
+                                    }, {
+                                        ptype : 'headerfiltertoolbar',
+                                        showMore : true,
+                                        pageSize : TRF.cnst.PAGE_SIZE_COMMON
+                                    }],
+                            header : false,
+                            headerPosition : 'bottom',
+                            columns : [{
+                                        xtype : 'gridcolumn',
+                                        text : '<div style="text-align:center">' + chinaplus.label.CPKKPS02_Grid_KanbanPlanNo + '</div>',
+                                        width : 200,
+                                        items : [{
+                                                    xtype : 'header',
+                                                    hidden : true
+                                                }],
+                                        dataIndex : 'kanbanIdUpload',
+                                        hidden : true,
+                                        sortable : false,
+                                        filter : 'string'
+                                    }, {
+                                        xtype : 'gridcolumn',
+                                        text : '<div style="text-align:center">' + chinaplus.label.CPKKPS02_Grid_KanbanPlanNo + '</div>',
+                                        width : 200,
+                                        items : [{
+                                                    xtype : 'header',
+                                                    hidden : true
+                                                }],
+                                        dataIndex : 'kanbanPlanNoDisplay',
+                                        sortable : false,
+                                        filter : 'string'
+                                    }, {
+                                        xtype : 'gridcolumn',
+                                        text : '<div style="text-align:center">' + chinaplus.label.CPKKPS02_Grid_TransportMode + '</div>',
+                                        width : 90,
+                                        items : [{
+                                                    xtype : 'header',
+                                                    hidden : true
+                                                }],
+                                        dataIndex : 'transportMode',
+                                        sortable : false,
+                                        filter : {
+                                            type : 'list',
+                                            options : chinaplus.master.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_TransportMode)
+                                        }
+                                    }, {
+                                        xtype : 'gridcolumn',
+                                        text : '<div style="text-align:center">' + chinaplus.label.CPKKPS02_Grid_TotalOrderQty + '</div>',
+                                        width : 150,
+                                        items : [{
+                                                    xtype : 'header',
+                                                    hidden : true
+                                                }],
+                                        dataIndex : 'totalOrderQty',
+                                        sortable : false,
+                                        align : 'right',
+                                        renderer : function(v, p, record) {
+                                            return TRF.util.getDecimalFormatByDigits(v, 3);
+                                        }
+                                    }, {
+                                        xtype : 'gridcolumn',
+                                        text : '<div style="text-align:center">' + chinaplus.label.CPKKPS02_Grid_TotalOnShippingQty + '</div>',
+                                        width : 150,
+                                        items : [{
+                                                    xtype : 'header',
+                                                    hidden : true
+                                                }],
+                                        dataIndex : 'totalOnShippingQty',
+                                        sortable : false,
+                                        align : 'right',
+                                        renderer : function(v, p, record) {
+                                            return TRF.util.getDecimalFormatByDigits(v, 3);
+                                        }
+                                    }, {
+                                        xtype : 'gridcolumn',
+                                        text : '<div style="text-align:center">' + chinaplus.label.CPKKPS02_Grid_TotalInboundQty + '</div>',
+                                        width : 150,
+                                        items : [{
+                                                    xtype : 'header',
+                                                    hidden : true
+                                                }],
+                                        dataIndex : 'totalInboundQty',
+                                        sortable : false,
+                                        align : 'right',
+                                        renderer : function(v, p, record) {
+                                            return TRF.util.getDecimalFormatByDigits(v, 3);
+                                        }
+                                    }, {
+                                        xtype : 'gridcolumn',
+                                        text : '<div style="text-align:center">' + chinaplus.label.CPKKPS02_Grid_TotalOrderBalance + '</div>',
+                                        width : 150,
+                                        items : [{
+                                                    xtype : 'header',
+                                                    hidden : true
+                                                }],
+                                        dataIndex : 'totalBalanceQty',
+                                        sortable : false,
+                                        align : 'right',
+                                        renderer : function(v, p, record) {
+                                            return TRF.util.getDecimalFormatByDigits(v, 3);
+                                        }
+                                    }, {
+                                        xtype : 'gridcolumn',
+                                        text : '<div style="text-align:center">' + chinaplus.label.CPKKPS02_Grid_ReasonforChange + '</div>',
+                                        width : 200,
+                                        items : [{
+                                                    xtype : 'header',
+                                                    hidden : true
+                                                }],
+                                        dataIndex : 'revisionReason',
+                                        sortable : false
+                                        ,
+                                    }, {
+                                        xtype : 'gridcolumn',
+                                        text : '<div style="text-align:center">' + chinaplus.label.CPKKPS02_Grid_Status + '</div>',
+                                        width : 80,
+                                        items : [{
+                                                    xtype : 'header',
+                                                    hidden : true
+                                                }],
+                                        dataIndex : 'status',
+                                        sortable : false,
+                                        align : 'left',
+                                        filter : {
+                                            type : 'list',
+                                            options : chinaplus.master.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_KanbanStatus)
+                                        },
+                                        renderer : function(v, p, record) {
+                                            return chinaplus.master.getMasterName(chinaplus.master.consts.TnmCodeCategory_KanbanStatus, v);
+                                        }
+                                    }, {
+                                        xtype : 'gridcolumn',
+                                        text : '<div style="text-align:center">' + chinaplus.label.CPKKPS02_Grid_UploadFileType + '</div>',
+                                        width : 120,
+                                        items : [{
+                                                    xtype : 'header',
+                                                    hidden : true
+                                                }],
+                                        dataIndex : 'uploadFileType',
+                                        sortable : false,
+                                        align : 'left',
+                                        filter : {
+                                            type : 'list',
+                                            options : chinaplus.master.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_KbUploadFileType)
+                                        },
+                                        renderer : function(v, p, record) {
+                                            return chinaplus.master.getMasterName(chinaplus.master.consts.TnmCodeCategory_KbUploadFileType, v);
+                                        }
+                                    }, {
+                                        xtype : 'gridcolumn',
+                                        text : '<div style="text-align:center">' + chinaplus.label.CPKKPS02_Grid_UploadID + '</div>',
+                                        width : 100,
+                                        items : [{
+                                                    xtype : 'header',
+                                                    hidden : true
+                                                }],
+                                        dataIndex : 'uploadId',
+                                        sortable : false,
+                                        filter : {
+                                            type : 'list',
+                                            multiSelect : true,
+                                            optionsStore : TRF.util.createStore(chinaplus.screen.CPKKPS02, 'common/loadOfficeUsers', 'Combo', chinaplus.screen.CPKKPS02
+                                                            + '_userStore')
+                                        }
+                                    }, {
+                                        xtype : 'gridcolumn',
+                                        text : '<div style="text-align:center">' + chinaplus.label.CPKKPS02_Grid_UploadTime + '</div>',
+                                        width : 140,
+                                        items : [{
+                                                    xtype : 'header',
+                                                    hidden : true
+                                                }],
+                                        dataIndex : 'lastUploadTime',
+                                        sortable : false,
+                                        align : 'center',
+                                        filter : 'date',
+                                        filterPlugins : [{
+                                                    ptype : 'datePickerClear'
+                                                }]
+                                    }],
+                            tbar : [{
+                                        text : chinaplus.label.CPKKPS02_Button_Download,
+                                        id : chinaplus.screen.CPKKPS02 + '_btnDownload',
+                                        iconCls : 'btn-download',
+                                        handler : function() {
+                                            CPKKPS02.downloadHistory();
+                                        }
+                                    }],
+                            store : TRF.util.createStore(chinaplus.screen.CPKKPS02, 'kbp/CPKKPS02/loadUploadInfoList', 'UploadInfoList', chinaplus.screen.CPKKPS02
+                                            + '_uploadInfoListStore', {})
+                        }]
+            }],
+
+    needConfirmChange : !TRF.util.isDetailTabMode_View(),
+
+    /**
+     * initialize
+     */
+    initialize : function(params) {
+
+        // Load KanbanInfo
+        var backFun = function(applicationData) {
+            if (applicationData.success) {
+                Ext.getCmp(chinaplus.screen.CPKKPS02 + '_kanbanId').setValue(params['kanbanId']);
+                Ext.getCmp(chinaplus.screen.CPKKPS02 + '_kanbanPlanNoHead').setValue(params['kanbanPlanNo']);
+                Ext.getCmp(chinaplus.screen.CPKKPS02 + '_kanbanPlanNoHeadDisplay').setValue(params['kanbanPlanNoDisplay']);
+                Ext.getCmp(chinaplus.screen.CPKKPS02 + '_orderMonth').setValue(applicationData.result.orderMonth);
+                Ext.getCmp(chinaplus.screen.CPKKPS02 + '_customerCode').setValue(applicationData.result.customerCode);
+                Ext.getCmp(chinaplus.screen.CPKKPS02 + '_supplierCode').setValue(applicationData.result.supplierCode);
+            }
+        };
+        var selectedDatas = new Array();
+        selectedDatas[0] = {
+            'kanbanId' : params['kanbanId']
+        };
+        var paramsKanbanInfo = {};
+        paramsKanbanInfo[TRF.cnst.DATAS] = selectedDatas;
+        TRF.util.ajaxSubmit(backFun, chinaplus.screen.CPKKPS02, 'kbp/CPKKPS02/loadKanbanInfo', null, paramsKanbanInfo);
+
+        // Load _partInfoList
+        var gridPartInfoList = Ext.getCmp(chinaplus.screen.CPKKPS02 + '_partInfoList');
+        var gridPartInfoListParam = {
+            kanbanId : params['kanbanId']
+        };
+        TRF.util.loadStore(gridPartInfoList.store, gridPartInfoListParam);
+
+        // Load _uploadInfoList
+        var gridUploadInfoList = Ext.getCmp(chinaplus.screen.CPKKPS02 + '_uploadInfoList');
+        var gridUploadInfoListParam = {
+            kanbanPlanNo : params['kanbanPlanNo']
+        };
+        TRF.util.loadStore(gridUploadInfoList.store, gridUploadInfoListParam);
+
+        this.doLayout();
+        TRF.util.addFieldTipToPanel(this);
+        TRF.util.addGridTip(gridPartInfoList);
+        TRF.util.addGridTip(gridUploadInfoList);
+    },
+
+    /**
+     * btn[Force Complete on order balance] click
+     */
+    forceComplete : function() {
+        // If there is no record is selected in screen, show warning message,
+        // action end.
+        var selectionArray = Ext.getCmp(chinaplus.screen.CPKKPS02 + '_partInfoList').getSelection();
+        if (selectionArray.length == 0) {
+            TRF.util.showMessageBoxByMsgIdAndArgs('w1011');
+            return;
+        }
+
+        // Show confirm message, if user click 'No', action end.
+        var me = this;
+        var conMsg = TRF.util.getMessage('c1001', [chinaplus.label.CPKKPS02_Button_ForceComplete]);
+        TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_QUESTION, conMsg, [conMsg], function(btn) {
+                    if (btn == 'yes') {
+                        var selectedDatas = new Array();
+                        for (var i = 0; i < selectionArray.length; i++) {
+                            selectedDatas[i] = {
+                                'kanbanId' : Ext.getCmp(chinaplus.screen.CPKKPS02 + '_kanbanId').getValue(),
+                                'kanbanPlanNo' : Ext.getCmp(chinaplus.screen.CPKKPS02 + '_kanbanPlanNoHead').getValue(),
+                                'kanbanPartsId' : selectionArray[i].data.kanbanPartsId,
+                                'partsId' : selectionArray[i].data.partsId,
+                                'partsStatus' : selectionArray[i].data.partsStatus
+                            };
+                        }
+
+                        var params = {};
+                        params[TRF.cnst.DATAS] = selectedDatas;
+
+                        var backFun = function(applicationData) {
+                            if (applicationData.success) {
+                                var lsMsgs = TRF.util.getMessage('i1004', [chinaplus.label.CPKKPS02_Button_ForceComplete]);
+                                TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_INFO, lsMsgs, lsMsgs, function() {
+                                            Ext.getCmp(chinaplus.screen.CPKKPS02 + '_partInfoList').store.reload();
+                                        });
+                            }
+                        };
+
+                        // Submit
+                        TRF.util.ajaxSubmit(backFun, chinaplus.screen.CPKKPS02, 'kbp/CPKKPS02/forceComplete', null, params);
+                    }
+                });
+    },
+
+    /**
+     * btn[Download] click
+     */
+    downloadHistory : function() {
+        // If there is no record is selected in screen, show warning message,
+        // action end.
+        var selectionArray = Ext.getCmp(chinaplus.screen.CPKKPS02 + '_uploadInfoList').getSelection();
+        if (selectionArray.length == 0) {
+            TRF.util.showMessageBoxByMsgIdAndArgs('w1011');
+            return;
+        }
+
+        // Do download file
+        var selectedDatas = [];
+        for (var i = 0; i < selectionArray.length; i++) {
+            selectedDatas.push(selectionArray[i].data.kanbanIdUpload + "#%!" + Ext.getCmp(chinaplus.screen.CPKKPS02 + '_kanbanPlanNoHead').getValue() + "#%!"
+                    + selectionArray[i].data.kanbanPlanNoDisplay);
+        }
+        var params = {};
+        params[TRF.cnst.SELECTEDDATAS] = selectedDatas;
+
+        TRF.util.downloadSubmit(null, chinaplus.screen.CPKKPS02, "kbp/CPKKPS02/downloadHistoryCheck", params, "kbp/CPKKPS02/download");
+    }
+}

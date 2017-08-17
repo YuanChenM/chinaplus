@@ -1,0 +1,844 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.mm.service.CPMPMF01Service">
+    
+    <sql id="ConstDef">
+        <bind name="VV" value="@com.chinaplus.common.consts.CodeConst$ShippingRouteType@VV" />
+        <bind name="BUSINESS_PATTERN" value="@com.chinaplus.common.consts.CodeConst$CodeMasterCategory@BUSINESS_PATTERN" />
+        <bind name="PARTS_TYPE" value="@com.chinaplus.common.consts.CodeConst$CodeMasterCategory@PARTS_TYPE" />
+        <bind name="BUILD_OUT_INDICATOR" value="@com.chinaplus.common.consts.CodeConst$CodeMasterCategory@BUILD_OUT_INDICATOR" />
+        <bind name="PARTS_STATUS" value="@com.chinaplus.common.consts.CodeConst$CodeMasterCategory@PARTS_STATUS" />
+        <bind name="ENGLISH" value="@com.chinaplus.common.consts.CodeConst$CategoryLanguage@ENGLISH" />     
+        <bind name="V_V" value="@com.chinaplus.common.consts.CodeConst$BusinessPattern@V_V" />
+        <bind name="AISIN" value="@com.chinaplus.common.consts.CodeConst$BusinessPattern@AISIN" />  
+        <bind name="COMPLETED" value="@com.chinaplus.common.consts.CodeConst$PartsStatus@COMPLETED" />
+    </sql>
+    
+    <sql id="getCPMPMF01EntityListVV">
+      FROM 
+            TNM_EXP_PARTS A
+            LEFT JOIN  TNM_PARTS_MASTER   B   ON  A.PARTS_ID = B.PARTS_ID
+            LEFT JOIN  TNM_OFFICE C   ON  A.OFFICE_ID = C.OFFICE_ID
+            LEFT JOIN TNM_CUSTOMER  D  ON  B.CUSTOMER_ID = D.CUSTOMER_ID
+            LEFT JOIN TNM_SUPPLIER  E  ON  A.SUPPLIER_ID = E.SUPPLIER_ID  
+            INNER  JOIN  TNM_USER  F  ON  A.CREATED_BY  =  F.USER_ID
+            INNER  JOIN  TNM_USER  G  ON  A.UPDATED_BY  =  G.USER_ID
+        <where>
+              A.BUSINESS_PATTERN = ${V_V}
+            <if test="filters.businessPattern != null">
+                AND A.BUSINESS_PATTERN = #{filters.businessPattern}
+            </if> 
+            <if test="filters.ttcPartNo != null">
+                AND A.TTC_PARTS_NO LIKE #{filters.ttcPartNo} ESCAPE '!'
+            </if>   
+            <if test="filters.partsDesEnglish != null">
+                AND A.TTC_PARTS_NAME LIKE #{filters.partsDesEnglish} ESCAPE '!'
+            </if>            
+            <if test="filters.partsDesChinese != null">
+                AND B.PARTS_NAME_CN LIKE #{filters.partsDesChinese} ESCAPE '!'
+            </if>            
+            <if test="filters.oldTTCPartNo != null">
+                AND B.OLD_TTC_PARTS_NO LIKE #{filters.oldTTCPartNo} ESCAPE '!'
+            </if>   
+            <if test="filters.ssmsSuppCd != null">
+                AND A.EXP_SUPP_CODE LIKE #{filters.ssmsSuppCd} ESCAPE '!'
+            </if>            
+            <if test="filters.suppPartNo != null">
+                AND A.SUPP_PARTS_NO LIKE #{filters.suppPartNo} ESCAPE '!'
+            </if>              
+            <if test="filters.ssmskbCustCd != null">
+                AND ( A.SSMS_CUST_CODE LIKE #{filters.ssmskbCustCd} ESCAPE '!'
+                OR B.KANBAN_CUST_CODE LIKE #{filters.ssmskbCustCd} ESCAPE '!' )
+            </if>   
+            <if test="filters.custPartNo != null">
+                AND A.CUST_PARTS_NO LIKE #{filters.custPartNo} ESCAPE '!'
+            </if>            
+            <if test="filters.westCustCd != null">
+                AND A.WEST_CUST_CODE LIKE #{filters.westCustCd} ESCAPE '!'
+            </if>              
+            <if test="filters.westPartNo != null">
+                AND A.WEST_PARTS_NO LIKE #{filters.westPartNo} ESCAPE '!'
+            </if>   
+            <if test="filters.carModel != null">
+                AND B.CAR_MODEL LIKE #{filters.carModel} ESCAPE '!'
+            </if>            
+            <if test="filters.createdBy != null">
+                AND F.LOGIN_ID  LIKE #{filters.createdBy} ESCAPE '!'
+            </if>              
+            <if test="filters.lastModifiedBy != null">
+                AND G.LOGIN_ID LIKE #{filters.lastModifiedBy} ESCAPE '!'
+            </if>             
+                       
+           <if test="filters.createdDateFrom != null and filters.createdDateFrom != ''">
+              AND A.CREATED_DATE <![CDATA[>=]]> #{filters.createdDateFrom}
+           </if>
+            <if test="filters.createdDateTo != null and filters.createdDateTo != ''">
+              AND A.CREATED_DATE <![CDATA[<=]]> #{filters.createdDateTo}
+           </if>
+           <if test="filters.lastModifiedDateFrom != null and filters.lastModifiedDateFrom != ''">
+              AND A.UPDATED_DATE <![CDATA[>=]]> #{filters.lastModifiedDateFrom}
+           </if>
+            <if test="filters.lastModifiedDateTo != null and filters.lastModifiedDateTo != ''">
+             AND  A.UPDATED_DATE <![CDATA[<=]]> #{filters.lastModifiedDateTo}
+           </if> 
+                                      
+            <if test="filters.buildOutIndicator != null">
+                AND A.BUILDOUT_FLAG = #{filters.buildOutIndicator}
+            </if>                  
+           <if test="null != filters.discontIndicator and filters.discontIndicator.size()>0">
+                AND  (
+                <foreach item="item" index="index" collection="filters.discontIndicator" open="" separator="OR" close="">                      
+                     <if test="'Blank' != item">
+                        A.INACTIVE_FLAG = #{item}
+                     </if>  
+                     <if test="'Blank' == item">
+                        A.INACTIVE_FLAG IS  NULL
+                     </if> 
+                </foreach>
+                )
+            </if>  
+            
+            <if test="null != filters.exportCountry and filters.exportCountry.size()>0">
+                AND A.EXP_REGION IN 
+                <foreach item="item" index="index" collection="filters.exportCountry" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+            </if>  
+            <if test="null != filters.ttcSuppCd and filters.ttcSuppCd.size()>0">
+                AND A.TTC_SUPP_CODE IN 
+                <foreach item="item" index="index" collection="filters.ttcSuppCd" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+            </if>             
+            
+            <if test="null != filters.ssmsMainRoute and filters.ssmsMainRoute.size()>0">
+                AND  (
+                <foreach item="item" index="index" collection="filters.ssmsMainRoute" open="" separator="OR" close="">                      
+                     <if test="'Blank' != item">
+                        A.SSMS_MAIN_ROUTE = #{item}
+                     </if>  
+                     <if test="'Blank' == item">
+                        A.SSMS_MAIN_ROUTE IS  NULL
+                     </if> 
+                </foreach>
+                )
+            </if>                         
+            <if test="null != filters.ssmsVendorRoute and filters.ssmsVendorRoute.size()>0">
+                AND  (
+                <foreach item="item" index="index" collection="filters.ssmsVendorRoute" open="" separator="OR" close="">                      
+                     <if test="'Blank' != item">
+                        A.SSMS_VENDOR_ROUTE = #{item}
+                     </if>  
+                     <if test="'Blank' == item">
+                        A.SSMS_VENDOR_ROUTE IS  NULL
+                     </if> 
+                </foreach>
+                )
+            </if>                                             
+           <if test="null != filters.impOfficeCode and filters.impOfficeCode.size()>0">
+                AND  (
+                <foreach item="item" index="index" collection="filters.impOfficeCode" open="" separator="OR" close="">                      
+                     <if test="'Blank' != item">
+                        A.OFFICE_ID = #{item}
+                     </if>  
+                     <if test="'Blank' == item">
+                        A.OFFICE_ID IS  NULL
+                     </if> 
+                </foreach>
+                )
+            </if>            
+            <if test="null != filters.ttcCustCd and filters.ttcCustCd.size()>0">
+                AND  (
+                <foreach item="item" index="index" collection="filters.ttcCustCd" open="" separator="OR" close="">                      
+                     <if test="'Blank' != item">
+                        B.CUSTOMER_CODE = #{item}
+                     </if>  
+                     <if test="'Blank' == item">
+                        B.CUSTOMER_CODE IS  NULL
+                     </if> 
+                </foreach>
+                )
+            </if>             
+           <if test="null != filters.mailInvCustCd and filters.mailInvCustCd.size()>0">
+                AND  (
+                <foreach item="item" index="index" collection="filters.mailInvCustCd" open="" separator="OR" close="">                      
+                     <if test="'Blank' != item">
+                        B.INV_CUST_CODE LIKE  '%' || #{item} || '%'
+                     </if>  
+                     <if test="'Blank' == item">
+                        B.INV_CUST_CODE IS  NULL
+                     </if> 
+                </foreach>
+                )
+            </if>           
+            <if test="null != filters.ttcImpWHCd and filters.ttcImpWHCd.size()>0">
+                AND  (
+                <foreach item="item" index="index" collection="filters.ttcImpWHCd" open="" separator="OR" close="">                      
+                     <if test="'Blank' != item">
+                        B.IMP_WHS_CODE = #{item}
+                     </if>  
+                     <if test="'Blank' == item">
+                        B.IMP_WHS_CODE IS  NULL
+                     </if> 
+                </foreach>
+                )
+            </if>                        
+            <if test="null != filters.partType and filters.partType.size()>0">
+                AND  (
+                <foreach item="item" index="index" collection="filters.partType" open="" separator="OR" close="">                      
+                     <if test="'Blank' != item">
+                        B.PARTS_TYPE = #{item}
+                     </if>  
+                     <if test="'Blank' == item">
+                        B.PARTS_TYPE IS  NULL
+                     </if> 
+                </foreach>
+                )
+           </if>            
+           <if test="null != filters.partStatus and filters.partStatus.size()>0">
+                AND  (
+                <foreach item="item" index="index" collection="filters.partStatus" open="" separator="OR" close="">                      
+                     <if test="'Blank' != item">
+                        A.PARTS_STATUS = #{item}
+                     </if>  
+                     <if test="'Blank' == item">
+                        A.PARTS_STATUS IS  NULL
+                     </if> 
+                </foreach>
+                )
+            </if>           
+        </where>
+    </sql>
+    
+    <sql id="getCPMPMF01EntityListAISIN">
+      FROM 
+            TNM_EXP_PARTS A
+            LEFT JOIN  TNM_PARTS_MASTER   B   ON  A.PARTS_ID = B.PARTS_ID
+            LEFT JOIN  TNM_OFFICE C   ON  A.OFFICE_ID = C.OFFICE_ID
+            LEFT JOIN TNM_CUSTOMER  D  ON  B.CUSTOMER_ID = D.CUSTOMER_ID
+            LEFT JOIN TNM_SUPPLIER  E  ON  A.SUPPLIER_ID = E.SUPPLIER_ID  
+            INNER  JOIN  TNM_USER  F  ON  A.CREATED_BY  =  F.USER_ID
+            INNER  JOIN  TNM_USER  G  ON  A.UPDATED_BY  =  G.USER_ID
+        <where>
+              A.BUSINESS_PATTERN = ${AISIN}
+            <if test="filters.businessPattern != null">
+                AND A.BUSINESS_PATTERN = #{filters.businessPattern}
+            </if>   
+            <if test="filters.ttcPartNo != null">
+                AND A.TTC_PARTS_NO LIKE #{filters.ttcPartNo} ESCAPE '!'
+            </if>   
+            <if test="filters.partsDesEnglish != null">
+                AND A.TTC_PARTS_NAME LIKE #{filters.partsDesEnglish} ESCAPE '!'
+            </if>            
+            <if test="filters.partsDesChinese != null">
+                AND B.PARTS_NAME_CN LIKE #{filters.partsDesChinese} ESCAPE '!'
+            </if>            
+            <if test="filters.oldTTCPartNo != null">
+                AND B.OLD_TTC_PARTS_NO LIKE #{filters.oldTTCPartNo} ESCAPE '!'
+            </if>   
+            <if test="filters.ssmsSuppCd != null">
+                AND A.EXP_SUPP_CODE LIKE #{filters.ssmsSuppCd} ESCAPE '!'
+            </if>            
+            <if test="filters.suppPartNo != null">
+                AND A.SUPP_PARTS_NO LIKE #{filters.suppPartNo} ESCAPE '!'
+            </if>              
+            <if test="filters.ssmskbCustCd != null">
+                AND ( A.SSMS_CUST_CODE LIKE #{filters.ssmskbCustCd} ESCAPE '!'
+                OR B.KANBAN_CUST_CODE LIKE #{filters.ssmskbCustCd} ESCAPE '!' )
+            </if>   
+            <if test="filters.custPartNo != null">
+                AND A.CUST_PARTS_NO LIKE #{filters.custPartNo} ESCAPE '!'
+            </if>            
+            <if test="filters.westCustCd != null">
+                AND A.WEST_CUST_CODE LIKE #{filters.westCustCd} ESCAPE '!'
+            </if>              
+            <if test="filters.westPartNo != null">
+                AND A.WEST_PARTS_NO LIKE #{filters.westPartNo} ESCAPE '!'
+            </if>   
+            <if test="filters.carModel != null">
+                AND B.CAR_MODEL LIKE #{filters.carModel} ESCAPE '!'
+            </if>            
+            <if test="filters.createdBy != null">
+                AND F.LOGIN_ID  LIKE #{filters.createdBy} ESCAPE '!'
+            </if>              
+            <if test="filters.lastModifiedBy != null">
+                AND G.LOGIN_ID LIKE #{filters.lastModifiedBy} ESCAPE '!'
+            </if>             
+                       
+           <if test="filters.createdDateFrom != null and filters.createdDateFrom != ''">
+              AND A.CREATED_DATE <![CDATA[>=]]> #{filters.createdDateFrom}
+           </if>
+            <if test="filters.createdDateTo != null and filters.createdDateTo != ''">
+              AND A.CREATED_DATE <![CDATA[<=]]> #{filters.createdDateTo}
+           </if>
+           <if test="filters.lastModifiedDateFrom != null and filters.lastModifiedDateFrom != ''">
+              AND A.UPDATED_DATE <![CDATA[>=]]> #{filters.lastModifiedDateFrom}
+           </if>
+            <if test="filters.lastModifiedDateTo != null and filters.lastModifiedDateTo != ''">
+             AND  A.UPDATED_DATE <![CDATA[<=]]> #{filters.lastModifiedDateTo}
+           </if> 
+                                      
+            <if test="filters.buildOutIndicator != null">
+                AND A.BUILDOUT_FLAG = #{filters.buildOutIndicator}
+            </if>                  
+           <if test="null != filters.discontIndicator and filters.discontIndicator.size()>0">
+                AND  (
+                <foreach item="item" index="index" collection="filters.discontIndicator" open="" separator="OR" close="">                      
+                     <if test="'Blank' != item">
+                        A.INACTIVE_FLAG = #{item}
+                     </if>  
+                     <if test="'Blank' == item">
+                        A.INACTIVE_FLAG IS  NULL
+                     </if> 
+                </foreach>
+                )
+            </if>
+            
+            <if test="null != filters.exportCountry and filters.exportCountry.size()>0">
+                AND A.EXP_REGION IN 
+                <foreach item="item" index="index" collection="filters.exportCountry" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+            </if>  
+            <if test="null != filters.ttcSuppCd and filters.ttcSuppCd.size()>0">
+                AND A.TTC_SUPP_CODE IN 
+                <foreach item="item" index="index" collection="filters.ttcSuppCd" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+            </if>             
+            
+            <if test="null != filters.ssmsMainRoute and filters.ssmsMainRoute.size()>0">
+                AND  (
+                <foreach item="item" index="index" collection="filters.ssmsMainRoute" open="" separator="OR" close="">                      
+                     <if test="'Blank' != item">
+                        A.SSMS_MAIN_ROUTE = #{item}
+                     </if>  
+                     <if test="'Blank' == item">
+                        A.SSMS_MAIN_ROUTE IS  NULL
+                     </if> 
+                </foreach>
+                )
+            </if>                         
+            <if test="null != filters.ssmsVendorRoute and filters.ssmsVendorRoute.size()>0">
+                AND  (
+                <foreach item="item" index="index" collection="filters.ssmsVendorRoute" open="" separator="OR" close="">                      
+                     <if test="'Blank' != item">
+                        A.SSMS_VENDOR_ROUTE = #{item}
+                     </if>  
+                     <if test="'Blank' == item">
+                        A.SSMS_VENDOR_ROUTE IS  NULL
+                     </if> 
+                </foreach>
+                )
+            </if>                                             
+           <if test="null != filters.impOfficeCode and filters.impOfficeCode.size()>0">
+                AND  (
+                <foreach item="item" index="index" collection="filters.impOfficeCode" open="" separator="OR" close="">                      
+                     <if test="'Blank' != item">
+                        A.OFFICE_ID = #{item}
+                     </if>  
+                     <if test="'Blank' == item">
+                        A.OFFICE_ID IS  NULL
+                     </if> 
+                </foreach>
+                )
+            </if>            
+            <if test="null != filters.ttcCustCd and filters.ttcCustCd.size()>0">
+                AND  (
+                <foreach item="item" index="index" collection="filters.ttcCustCd" open="" separator="OR" close="">                      
+                     <if test="'Blank' != item">
+                        B.CUSTOMER_CODE = #{item}
+                     </if>  
+                     <if test="'Blank' == item">
+                        B.CUSTOMER_CODE IS  NULL
+                     </if> 
+                </foreach>
+                )
+            </if>             
+           <if test="null != filters.mailInvCustCd and filters.mailInvCustCd.size()>0">
+                AND  (
+                <foreach item="item" index="index" collection="filters.mailInvCustCd" open="" separator="OR" close="">                      
+                     <if test="'Blank' != item">
+                        B.INV_CUST_CODE LIKE  '%' || #{item} || '%'
+                     </if>  
+                     <if test="'Blank' == item">
+                        B.INV_CUST_CODE IS  NULL
+                     </if> 
+                </foreach>
+                )
+            </if>           
+            <if test="null != filters.ttcImpWHCd and filters.ttcImpWHCd.size()>0">
+                AND  (
+                <foreach item="item" index="index" collection="filters.ttcImpWHCd" open="" separator="OR" close="">                      
+                     <if test="'Blank' != item">
+                        B.IMP_WHS_CODE = #{item}
+                     </if>  
+                     <if test="'Blank' == item">
+                        B.IMP_WHS_CODE IS  NULL
+                     </if> 
+                </foreach>
+                )
+            </if>                        
+            <if test="null != filters.partType and filters.partType.size()>0">
+                AND  (
+                <foreach item="item" index="index" collection="filters.partType" open="" separator="OR" close="">                      
+                     <if test="'Blank' != item">
+                        B.PARTS_TYPE = #{item}
+                     </if>  
+                     <if test="'Blank' == item">
+                        B.PARTS_TYPE IS  NULL
+                     </if> 
+                </foreach>
+                )
+           </if>            
+           <if test="null != filters.partStatus and filters.partStatus.size()>0">
+                AND  (
+                <foreach item="item" index="index" collection="filters.partStatus" open="" separator="OR" close="">                      
+                     <if test="'Blank' != item">
+                        A.PARTS_STATUS IS NULL
+                     </if>  
+                     <if test="'Blank' == item">
+                        A.PARTS_STATUS = ${COMPLETED}
+                     </if> 
+                </foreach>
+                )
+            </if>           
+        </where>
+    </sql>
+    
+   <select id="getCpmpmf01EntityListFPCondition" resultType="com.chinaplus.web.mm.entity.CPMPMF01Entity" parameterType="com.chinaplus.core.bean.BaseParam"> 
+     <include refid="ConstDef"/>
+      SELECT 
+            A.TTC_PARTS_NO AS  ttcPartsNo,
+            A.TTC_PARTS_NAME  AS  ttcPartsName,
+            B.PARTS_NAME_CN  AS  partsNameCn,
+            B.OLD_TTC_PARTS_NO  AS  oldTtcPartsNo,
+            A.EXP_UOM_CODE  AS  expUomCode,
+              
+            A.EXP_REGION  AS  expRegion,                     
+            A.TTC_SUPP_CODE  AS  ttcSuppCode,                        
+            A.SSMS_MAIN_ROUTE  AS  ssmsMainRoute,                      
+            A.SSMS_VENDOR_ROUTE  AS  ssmsVendorRoute,                        
+            A.EXP_SUPP_CODE  AS  expSuppCode,  
+                                  
+            E.SUPPLIER_NAME  AS  supplierName,                        
+            A.SUPP_PARTS_NO  AS  suppPartsNo,                        
+            C.REGION_CODE  AS  impRegion,                       
+            C.OFFICE_CODE  AS  officeCode,                      
+            B.CUSTOMER_CODE   AS  customerCode, 
+                              
+           <if test="swapData.type == 1 " >
+                A.SSMS_CUST_CODE  AS  expCustCode,   
+           </if>
+           <if test="swapData.type == 2 " >
+                B.KANBAN_CUST_CODE  AS  expCustCode,   
+           </if>                         
+            D.CUSTOMER_NAME  AS  customerName,                        
+            A.CUST_PARTS_NO  AS  custPartsNo,                        
+            B.CUST_BACK_NO  AS  custBackNo,                     
+            A.WEST_CUST_CODE  AS  westCustCode,
+                                   
+            A.WEST_PARTS_NO  AS  westPartsNo,                    
+            B.INV_CUST_CODE  AS  invCustCode,                        
+            B.IMP_WHS_CODE  AS  impWhsCode,                     
+            A.ORDER_LOT  AS  orderLot,                        
+            A.SRBQ  AS  srbq, 
+                                
+            A.SPQ  AS  spq,                      
+            B.SPQ_M3  AS  spqM3,                       
+            A.BUSINESS_PATTERN  AS  businessPattern,                     
+            B.BUSINESS_TYPE  AS  businessType,                        
+            B.PARTS_TYPE  AS  partsType,  
+                                 
+            B.CAR_MODEL  AS  carModel,                   
+            B.ORDER_DAY  AS  orderDay,                   
+            B.TARGET_MONTH   AS  targetMonth,                   
+            B.FORECAST_NUM   AS  forecastNum,                   
+            B.ORDER_FC_TYPE  AS  orderFcType, 
+                              
+            B.EXP_CALENDAR_CODE   AS  expCalendarCode,                   
+            B.OS_CUST_STOCK_FLAG  AS  osCustStockFlag,                       
+            B.SA_CUST_STOCK_FLAG  AS  saCustStockFlag,                   
+            B.INVENTORY_BOX_FLAG  AS  inventoryBoxFlag,                       
+            B.MIN_STOCK  AS  minStock,  
+                             
+            B.MAX_STOCK  AS  maxStock,                   
+            B.MIN_BOX  AS  minBox,                   
+            B.MAX_BOX  AS  maxBox,                   
+            B.ORDER_SAFETY_STOCK  AS  orderSafetyStock,                       
+            B.RUNDOWN_SAFETY_STOCK  AS  rundownSafetyStock, 
+                                
+            B.OUTBOUND_FLUCTUATION  AS  outboundFluctuation,                     
+            B.SIMULATION_END_DATE_PATTERN  AS  simulationEndDatePattern,                      
+            A.SHIPPING_ROUTE_CODE  AS  shippingRouteCode,                   
+            A.DELAY_ADJUSTMENT_PATTERN  AS  delayAdjustmentPattern,                     
+            A.AIR_ETD_LEADTIME  AS  airEtdLeadtime, 
+                                
+            A.AIR_ETA_LEADTIME AS  airEtaLeadtime,                   
+            A.AIR_INBOUND_LEADTIME  AS  airInboundLeadtime,                     
+            A.SEA_ETA_LEADTIME AS  seaEtaLeadtime,                   
+            A.SEA_INBOUND_LEADTIME AS  seaInboundLeadtime,                   
+            B.ALLOCATION_FC_TYPE  AS  allocationFcType, 
+                              
+            B.CFC_ADJUSTMENT_TYPE1  AS  cfcAdjustmentType1,                   
+            B.CFC_ADJUSTMENT_TYPE2  AS  cfcAdjustmentType2,                   
+            A.REMARK1  AS  remark1,                   
+            A.REMARK2  AS  remark2,                   
+            A.REMARK3  AS  remark3,   
+                            
+            A.BUILDOUT_FLAG   AS  buildoutFlag,               
+            A.BUILDOUT_MONTH  AS  buildoutMonth,                   
+            A.LAST_PO_MONTH   AS  lastPoMonth,               
+            A.LAST_DELIVERY_MONTH    AS  lastDeliveryMonth,                   
+            A.PARTS_STATUS    AS  partsStatus,               
+            A.INACTIVE_FLAG   AS     inactiveFlag            
+    
+    <if test="swapData.type == 1 " >
+        <include refid="getCPMPMF01EntityListVV" />
+    </if> 
+    <if test="swapData.type == 2 " >
+        <include refid="getCPMPMF01EntityListAISIN" />
+    </if>           
+     <if test="swapData.type == 1 " >
+       ORDER BY C.OFFICE_CODE,                                   
+                B.CUSTOMER_CODE,                                 
+                A.TTC_PARTS_NO,                                  
+                A.TTC_SUPP_CODE,                                 
+                A.SSMS_CUST_CODE,                                 
+                A.SSMS_MAIN_ROUTE,                                   
+                A.EXP_SUPP_CODE  
+     </if>                
+     <if test="swapData.type == 2 " >
+       ORDER BY C.OFFICE_CODE,                                   
+                B.CUSTOMER_CODE,                                 
+                B.KANBAN_CUST_CODE,                                 
+                B.TTC_PARTS_NO,                                  
+                A.CUST_PARTS_NO,                                 
+                A.TTC_SUPP_CODE,                                
+                A.SUPP_PARTS_NO                            
+     </if>                                        
+   </select>  
+     
+   <select id="getCpmpmf01EntityListFP" resultType="com.chinaplus.web.mm.entity.CPMPMF01Entity" parameterType="com.chinaplus.core.bean.BaseParam"> 
+      SELECT 
+            A.TTC_PARTS_NO AS  ttcPartsNo,
+            A.TTC_PARTS_NAME  AS  ttcPartsName,
+            B.PARTS_NAME_CN  AS  partsNameCn,
+            B.OLD_TTC_PARTS_NO  AS  oldTtcPartsNo,
+            A.EXP_UOM_CODE  AS  expUomCode,
+              
+            A.EXP_REGION  AS  expRegion,                     
+            A.TTC_SUPP_CODE  AS  ttcSuppCode,                        
+            A.SSMS_MAIN_ROUTE  AS  ssmsMainRoute,                      
+            A.SSMS_VENDOR_ROUTE  AS  ssmsVendorRoute,                        
+            A.EXP_SUPP_CODE  AS  expSuppCode,  
+                                  
+            E.SUPPLIER_NAME  AS  supplierName,                        
+            A.SUPP_PARTS_NO  AS  suppPartsNo,                        
+            C.REGION_CODE  AS  impRegion,                       
+            C.OFFICE_CODE  AS  officeCode,                      
+            B.CUSTOMER_CODE   AS  customerCode, 
+                              
+           <if test="swapData.type == 1 " >
+                A.SSMS_CUST_CODE  AS  expCustCode,   
+           </if>
+           <if test="swapData.type == 2 " >
+                B.KANBAN_CUST_CODE  AS  expCustCode,   
+           </if>                         
+            D.CUSTOMER_NAME  AS  customerName,                        
+            A.CUST_PARTS_NO  AS  custPartsNo,                        
+            B.CUST_BACK_NO  AS  custBackNo,                     
+            A.WEST_CUST_CODE  AS  westCustCode,
+                                   
+            A.WEST_PARTS_NO  AS  westPartsNo,                    
+            B.INV_CUST_CODE  AS  invCustCode,                        
+            B.IMP_WHS_CODE  AS  impWhsCode,                     
+            A.ORDER_LOT  AS  orderLot,                        
+            A.SRBQ  AS  srbq, 
+                                
+            A.SPQ  AS  spq,                      
+            B.SPQ_M3  AS  spqM3,                       
+            A.BUSINESS_PATTERN  AS  businessPattern,                     
+            B.BUSINESS_TYPE  AS  businessType,                        
+            B.PARTS_TYPE  AS  partsType,  
+                                 
+            B.CAR_MODEL  AS  carModel,                   
+            B.ORDER_DAY  AS  orderDay,                   
+            B.TARGET_MONTH   AS  targetMonth,                   
+            B.FORECAST_NUM   AS  forecastNum,                   
+            B.ORDER_FC_TYPE  AS  orderFcType, 
+                              
+            B.EXP_CALENDAR_CODE   AS  expCalendarCode,                   
+            B.OS_CUST_STOCK_FLAG  AS  osCustStockFlag,                       
+            B.SA_CUST_STOCK_FLAG  AS  saCustStockFlag,                   
+            B.INVENTORY_BOX_FLAG  AS  inventoryBoxFlag,                       
+            B.MIN_STOCK  AS  minStock,  
+                             
+            B.MAX_STOCK  AS  maxStock,                   
+            B.MIN_BOX  AS  minBox,                   
+            B.MAX_BOX  AS  maxBox,                   
+            B.ORDER_SAFETY_STOCK  AS  orderSafetyStock,                       
+            B.RUNDOWN_SAFETY_STOCK  AS  rundownSafetyStock, 
+                                
+            B.OUTBOUND_FLUCTUATION  AS  outboundFluctuation,                     
+            B.SIMULATION_END_DATE_PATTERN  AS  simulationEndDatePattern,                      
+            A.SHIPPING_ROUTE_CODE  AS  shippingRouteCode,                   
+            A.DELAY_ADJUSTMENT_PATTERN  AS  delayAdjustmentPattern,                     
+            A.AIR_ETD_LEADTIME  AS  airEtdLeadtime, 
+                                
+            A.AIR_ETA_LEADTIME AS  airEtaLeadtime,                   
+            A.AIR_INBOUND_LEADTIME  AS  airInboundLeadtime,                     
+            A.SEA_ETA_LEADTIME AS  seaEtaLeadtime,                   
+            A.SEA_INBOUND_LEADTIME AS  seaInboundLeadtime,                   
+            B.ALLOCATION_FC_TYPE  AS  allocationFcType, 
+                              
+            B.CFC_ADJUSTMENT_TYPE1  AS  cfcAdjustmentType1,                   
+            B.CFC_ADJUSTMENT_TYPE2  AS  cfcAdjustmentType2,                   
+            A.REMARK1  AS  remark1,                   
+            A.REMARK2  AS  remark2,                   
+            A.REMARK3  AS  remark3,   
+                            
+            A.BUILDOUT_FLAG   AS  buildoutFlag,               
+            A.BUILDOUT_MONTH  AS  buildoutMonth,                   
+            A.LAST_PO_MONTH   AS  lastPoMonth,               
+            A.LAST_DELIVERY_MONTH    AS  lastDeliveryMonth,                   
+            A.PARTS_STATUS    AS  partsStatus,               
+            A.INACTIVE_FLAG   AS     inactiveFlag            
+    
+     FROM 
+            TNM_EXP_PARTS A
+            LEFT JOIN  TNM_PARTS_MASTER   B   ON  A.PARTS_ID = B.PARTS_ID
+            LEFT JOIN TNM_OFFICE  C  ON  A.OFFICE_ID = C.OFFICE_ID
+            LEFT JOIN TNM_CUSTOMER  D  ON  B.CUSTOMER_ID = D.CUSTOMER_ID
+            LEFT JOIN TNM_SUPPLIER  E  ON  A.SUPPLIER_ID = E.SUPPLIER_ID              
+     WHERE        
+          A.BUSINESS_PATTERN  =  #{swapData.type}
+          AND  A.EXP_PARTS_ID   IN    
+          <foreach item="item" index="index" collection="swapData.dataLists" open="(" separator="," close=")">  
+                #{item.expPartsId}
+          </foreach> 
+     <if test="swapData.type == 1 " >
+       ORDER BY C.OFFICE_CODE,                                   
+                B.CUSTOMER_CODE,                                 
+                A.TTC_PARTS_NO,                                  
+                A.TTC_SUPP_CODE,                                 
+                A.SSMS_CUST_CODE,                                 
+                A.SSMS_MAIN_ROUTE,                                   
+                A.EXP_SUPP_CODE  
+     </if>                
+     <if test="swapData.type == 2 " >
+       ORDER BY C.OFFICE_CODE,                                   
+                B.CUSTOMER_CODE,                                 
+                B.KANBAN_CUST_CODE,                                 
+                B.TTC_PARTS_NO,                                  
+                A.CUST_PARTS_NO,                                 
+                A.TTC_SUPP_CODE,                                
+                A.SUPP_PARTS_NO                            
+     </if>                                        
+   </select>   
+   
+   <select id="getCpmpmf01EntityList" resultType="com.chinaplus.web.mm.entity.CPMPMF01Entity" parameterType="com.chinaplus.core.bean.BaseParam"> 
+      SELECT 
+            A.TTC_PARTS_NO AS  ttcPartsNo,
+            A.TTC_PARTS_NAME  AS  ttcPartsName,
+            B.PARTS_NAME_CN  AS  partsNameCn,
+            B.OLD_TTC_PARTS_NO  AS  oldTtcPartsNo,
+            A.EXP_UOM_CODE  AS  expUomCode,
+              
+            A.EXP_REGION  AS  expRegion,                     
+            A.TTC_SUPP_CODE  AS  ttcSuppCode,                        
+            A.SSMS_MAIN_ROUTE  AS  ssmsMainRoute,                      
+            A.SSMS_VENDOR_ROUTE  AS  ssmsVendorRoute,                        
+            A.EXP_SUPP_CODE  AS  expSuppCode,  
+                                  
+            E.SUPPLIER_NAME  AS  supplierName,                        
+            A.SUPP_PARTS_NO  AS  suppPartsNo,                        
+            C.REGION_CODE  AS  impRegion,                       
+            C.OFFICE_CODE  AS  officeCode,                      
+            B.CUSTOMER_CODE   AS  customerCode, 
+                              
+           <if test="swapData.type == 1 " >
+                A.SSMS_CUST_CODE  AS  expCustCode,   
+           </if>
+           <if test="swapData.type == 2 " >
+                B.KANBAN_CUST_CODE  AS  expCustCode,   
+           </if>                     
+            D.CUSTOMER_NAME  AS  customerName,                        
+            A.CUST_PARTS_NO  AS  custPartsNo,                        
+            B.CUST_BACK_NO  AS  custBackNo,                     
+            A.WEST_CUST_CODE  AS  westCustCode,
+                                   
+            A.WEST_PARTS_NO  AS  westPartsNo,                    
+            B.INV_CUST_CODE  AS  invCustCode,                        
+            B.IMP_WHS_CODE  AS  impWhsCode,                     
+            A.ORDER_LOT  AS  orderLot,                        
+            A.SRBQ  AS  srbq, 
+                                
+            A.SPQ  AS  spq,                      
+            B.SPQ_M3  AS  spqM3,                       
+            A.BUSINESS_PATTERN  AS  businessPattern,                     
+            B.BUSINESS_TYPE  AS  businessType,                        
+            B.PARTS_TYPE  AS  partsType,  
+                                 
+            B.CAR_MODEL  AS  carModel,                   
+            B.ORDER_DAY  AS  orderDay,                   
+            B.TARGET_MONTH   AS  targetMonth,                   
+            B.FORECAST_NUM   AS  forecastNum,                   
+            B.ORDER_FC_TYPE  AS  orderFcType, 
+                              
+            B.EXP_CALENDAR_CODE   AS  expCalendarCode,                   
+            B.OS_CUST_STOCK_FLAG  AS  osCustStockFlag,                       
+            B.SA_CUST_STOCK_FLAG  AS  saCustStockFlag,                   
+            B.INVENTORY_BOX_FLAG  AS  inventoryBoxFlag,                       
+            B.MIN_STOCK  AS  minStock,  
+                             
+            B.MAX_STOCK  AS  maxStock,                   
+            B.MIN_BOX  AS  minBox,                   
+            B.MAX_BOX  AS  maxBox,                   
+            B.ORDER_SAFETY_STOCK  AS  orderSafetyStock,                       
+            B.RUNDOWN_SAFETY_STOCK  AS  rundownSafetyStock, 
+                                
+            B.OUTBOUND_FLUCTUATION  AS  outboundFluctuation,                     
+            B.SIMULATION_END_DATE_PATTERN  AS  simulationEndDatePattern,                      
+            A.SHIPPING_ROUTE_CODE  AS  shippingRouteCode,                   
+            A.DELAY_ADJUSTMENT_PATTERN  AS  delayAdjustmentPattern,                     
+            A.AIR_ETD_LEADTIME  AS  airEtdLeadtime, 
+                                
+            A.AIR_ETA_LEADTIME AS  airEtaLeadtime,                   
+            A.AIR_INBOUND_LEADTIME  AS  airInboundLeadtime,                     
+            A.SEA_ETA_LEADTIME AS  seaEtaLeadtime,                   
+            A.SEA_INBOUND_LEADTIME AS  seaInboundLeadtime,                   
+            B.ALLOCATION_FC_TYPE  AS  allocationFcType, 
+                              
+            B.CFC_ADJUSTMENT_TYPE1  AS  cfcAdjustmentType1,                   
+            B.CFC_ADJUSTMENT_TYPE2  AS  cfcAdjustmentType2,                   
+            A.REMARK1  AS  remark1,                   
+            A.REMARK2  AS  remark2,                   
+            A.REMARK3  AS  remark3,   
+                            
+            A.BUILDOUT_FLAG   AS  buildoutFlag,               
+            A.BUILDOUT_MONTH  AS  buildoutMonth,                   
+            A.LAST_PO_MONTH   AS  lastPoMonth,               
+            A.LAST_DELIVERY_MONTH    AS  lastDeliveryMonth,                   
+            A.PARTS_STATUS    AS  partsStatus,               
+            A.INACTIVE_FLAG   AS     inactiveFlag            
+    
+     FROM 
+            TNM_EXP_PARTS A
+            LEFT JOIN  TNM_PARTS_MASTER   B   ON  A.PARTS_ID = B.PARTS_ID
+            LEFT JOIN TNM_OFFICE  C  ON  A.OFFICE_ID = C.OFFICE_ID
+            LEFT JOIN TNM_CUSTOMER  D  ON  B.CUSTOMER_ID = D.CUSTOMER_ID
+            LEFT JOIN TNM_SUPPLIER  E  ON  A.SUPPLIER_ID = E.SUPPLIER_ID              
+     WHERE              
+          A.BUSINESS_PATTERN = #{swapData.type}
+          <if test="null != swapData.businessPattern and swapData.businessPattern.size()>0">
+                AND A.BUSINESS_PATTERN IN 
+                <foreach item="item" index="index" collection="swapData.businessPattern" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+          </if> 
+          <if test="swapData.ttcPartsNo != null and swapData.ttcPartsNo != ''">
+                AND A.TTC_PARTS_NO LIKE #{swapData.ttcPartsNo} ||  '%'  ESCAPE '!'
+          </if>                    
+          <if test="null != swapData.officeCode and swapData.officeCode.size()>0">
+                AND C.OFFICE_ID IN 
+                <foreach item="item" index="index" collection="swapData.officeCode" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+          </if> 
+           
+          <if test="null != swapData.customerCode and swapData.customerCode.size()>0">
+                AND D.CUSTOMER_CODE IN 
+                <foreach item="item" index="index" collection="swapData.customerCode" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+          </if>      
+         <if test="null != swapData.ttcSuppCode and swapData.ttcSuppCode.size()>0">
+                AND A.TTC_SUPP_CODE IN 
+                <foreach item="item" index="index" collection="swapData.ttcSuppCode" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+          </if>       
+         <if test="swapData.expCustCode != null and swapData.expCustCode != ''">
+             <if test="swapData.type == 1 " >
+                AND A.SSMS_CUST_CODE LIKE #{swapData.expCustCode}  ||  '%'  ESCAPE '!'  
+             </if>
+             <if test="swapData.type == 2 " > 
+                AND B.KANBAN_CUST_CODE LIKE #{swapData.expCustCode}  ||  '%'  ESCAPE '!'
+             </if>                 
+         </if>       
+<!-- shiyang add start (for send mail in CPMSMS01) -->
+        <if test="null != swapData.expCustCodes and swapData.expCustCodes.size() > 0">
+            <if test="swapData.type == 1 " >
+            AND A.SSMS_CUST_CODE IN
+                <foreach item="item" index="index" collection="swapData.expCustCodes" open="(" separator="," close=")">  
+                    #{item}
+                </foreach>
+            </if>
+            <if test="swapData.type == 2 " >
+            AND B.KANBAN_CUST_CODE IN
+                <foreach item="item" index="index" collection="swapData.expCustCodes" open="(" separator="," close=")">  
+                    #{item}
+                </foreach>
+            </if>
+        </if>
+<!-- shiyang add end -->         
+         <if test="null != swapData.ssmsMainRoute and swapData.ssmsMainRoute.size()>0">
+                AND A.SSMS_MAIN_ROUTE IN 
+                <foreach item="item" index="index" collection="swapData.ssmsMainRoute" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+          </if>       
+         <if test="null != swapData.supplierCode and swapData.supplierCode.size()>0">
+                AND A.EXP_SUPP_CODE  IN 
+                <foreach item="item" index="index" collection="swapData.supplierCode" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+          </if>   
+          
+          <if test="swapData.custPartsNo != null and swapData.custPartsNo != ''">
+                AND A.CUST_PARTS_NO  LIKE #{swapData.custPartsNo}  ||  '%' ESCAPE '!'
+          </if>           
+          <if test="swapData.suppPartsNo != null and swapData.suppPartsNo != ''">
+                AND A.SUPP_PARTS_NO LIKE #{swapData.suppPartsNo}   ||  '%' ESCAPE '!'
+          </if>
+          <if test="swapData.checkPartType == 0 " >             
+              <if test="null != swapData.inactiveFlagYN and swapData.inactiveFlagYN.size()>0">
+                    AND A.INACTIVE_FLAG IN
+                  <foreach item="item" index="index" collection="swapData.inactiveFlagYN" open="(" separator="," close=")">  
+                      #{item}
+                  </foreach>
+              </if>
+              <if test="null != swapData.partsStatusList and swapData.partsStatusList.size()>0">
+                    AND A.PARTS_STATUS IN
+                  <foreach item="item" index="index" collection="swapData.partsStatusList" open="(" separator="," close=")">  
+                      #{item}
+                  </foreach>
+              </if>
+          </if>
+          <if test="swapData.checkPartType == 1 " >
+                    AND ((A.INACTIVE_FLAG = 0 AND A.PARTS_STATUS = 2) OR A.PARTS_STATUS = 3)
+          </if>
+     <if test="swapData.type == 1 " >
+       ORDER BY C.OFFICE_CODE,                                   
+                B.CUSTOMER_CODE,                                   
+                A.TTC_PARTS_NO,                                  
+                A.TTC_SUPP_CODE,                                 
+                A.SSMS_CUST_CODE,                                 
+                A.SSMS_MAIN_ROUTE,                                   
+                A.EXP_SUPP_CODE  
+     </if>                
+     <if test="swapData.type == 2 " >
+       ORDER BY C.OFFICE_CODE,                                   
+                B.CUSTOMER_CODE,                                 
+                B.KANBAN_CUST_CODE,                                 
+                B.TTC_PARTS_NO,                                  
+                A.CUST_PARTS_NO,                                 
+                A.TTC_SUPP_CODE,                                
+                A.SUPP_PARTS_NO                            
+     </if>                                        
+   </select> 
+    
+</mapper>

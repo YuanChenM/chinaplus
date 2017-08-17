@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.inv.service.CPVIVF02Service">
+    
+    <select id="findAllList" parameterType="com.chinaplus.web.inv.entity.CPVIVF02Entity" resultType="com.chinaplus.web.inv.entity.CPVIVF02Entity" flushCache="true">
+        SELECT
+            A.CONTAINER_NO AS containerNo,
+            A.SEAL_NO AS sealNo,
+            A.MODULE_NO AS moduleNo,
+            A.INVOICE_PARTS_NO AS partNo,
+            B.UOM_CODE AS uomCode,
+            A.QTY AS qty,
+            A.BUYING_PRICE AS price,
+            A.BUYING_CURRENCY AS currency
+        FROM
+            TNT_INVOICE_CONTAINER A
+        INNER JOIN
+            TNM_PARTS_MASTER B ON A.PARTS_ID = B.PARTS_ID
+        WHERE
+            A.INVOICE_SUMMARY_ID = #{invoiceSummaryId}
+        ORDER BY
+            A.CONTAINER_NO ASC,
+            A.SEAL_NO ASC,
+            A.MODULE_NO ASC,
+            A.INVOICE_PARTS_NO ASC
+    </select>
+    
+</mapper>

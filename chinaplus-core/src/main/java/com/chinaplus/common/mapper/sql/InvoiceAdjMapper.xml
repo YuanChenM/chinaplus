@@ -1,0 +1,499 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- CommonMapper.xml @screen common @author ma_b -->
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.common.service.InvoiceAdjService">
+
+    <sql id="ConstDef">
+        <bind name="CompletedFlag_NORMAL" value="@com.chinaplus.common.consts.CodeConst$CompletedFlag@NORMAL" />
+        <bind name="CompletedFlag_COMPLETED" value="@com.chinaplus.common.consts.CodeConst$CompletedFlag@COMPLETED" />
+    </sql>
+
+    <select id="queryInvoiceList" parameterType="com.chinaplus.core.bean.InvoiceAdjParam" resultType="com.chinaplus.common.entity.InvoiceAdjEntity">
+
+        SELECT DISTINCT
+          IVP.INVOICE_DETAIL_ID
+          , O.ORDER_ID AS orderId
+          , O.OFFICE_ID AS officeId
+          , O.IMP_PO_NO AS impPoNo
+          , O.CUSTOMER_ORDER_NO AS customerOrderNo
+          , O.CUSTOMER_ID AS customerId
+          , IVP.PARTS_ID AS partsId
+          , IVP.SUPPLIER_ID AS supplierId
+          , IVP.ORIGINAL_QTY AS qty
+          , EP.DELAY_ADJUSTMENT_PATTERN AS delayAdjustmentPattern
+          , IV.INVOICE_NO AS invoiceNo
+          , IV.ETD AS etd
+          , IV.ETA AS eta
+          , IV.CC_DATE AS impPlanCustomDate
+          , IV.IMP_INB_PLAN_DATE AS impPlanInboundDate
+          , EP.EXP_PARTS_ID AS expPartsId
+          , OS.ORDER_STATUS_ID AS orderStatusId
+          , OS.FORCE_COMPLETED_QTY AS forceCompletedQty
+          , IVS.TRANSPORT_MODE AS tansportMode
+          , SSM.SS_ID AS ssId
+        FROM
+          TNT_INVOICE_PARTS IVP
+          INNER JOIN TNM_PARTS_MASTER PM
+            ON PM.PARTS_ID = IVP.PARTS_ID
+          INNER JOIN TNT_INVOICE IV
+            ON IV.INVOICE_ID = IVP.INVOICE_ID
+          INNER JOIN TNT_INVOICE_SUMMARY IVS
+            ON IVS.INVOICE_SUMMARY_ID = IV.INVOICE_SUMMARY_ID
+          INNER JOIN TNT_INVOICE IVE
+            ON IVE.INVOICE_SUMMARY_ID = IVS.INVOICE_SUMMARY_ID
+            AND IVE.INVOICE_ID = IVP.INVOICE_ID
+            AND IVE.REVISION_VERSION = (
+              SELECT
+                MIN(REVISION_VERSION)
+              FROM
+                TNT_INVOICE
+              WHERE
+                INVOICE_SUMMARY_ID = IVS.INVOICE_SUMMARY_ID
+            )
+          INNER JOIN TNT_ORDER O
+            ON O.IMP_PO_NO = IVP.IMP_PO_NO
+            AND O.CUSTOMER_ORDER_NO = IVP.CUSTOMER_ORDER_NO
+            AND O.CUSTOMER_ID = PM.CUSTOMER_ID
+          INNER JOIN TNT_ORDER_DETAIL OD
+            ON OD.ORDER_ID = O.ORDER_ID
+            AND OD.PARTS_ID = IVP.PARTS_ID
+            AND OD.EXP_PO_NO = IVP.EXP_PO_NO
+          INNER JOIN TNM_EXP_PARTS EP
+            ON EP.EXP_PARTS_ID = OD.EXP_PARTS_ID
+          INNER JOIN TNF_ORDER_STATUS OS
+            ON OS.IMP_PO_NO = IVP.IMP_PO_NO
+            AND OS.CUSTOMER_ORDER_NO = IVP.CUSTOMER_ORDER_NO
+            AND OS.EXP_PO_NO = IVP.EXP_PO_NO
+            AND OS.PARTS_ID = IVP.PARTS_ID
+            AND OS.SUPPLIER_ID = IVP.SUPPLIER_ID
+          INNER JOIN TNT_SS_MASTER SSM
+            ON SSM.ORDER_ID = O.ORDER_ID
+            AND SSM.OFFICE_ID = O.OFFICE_ID
+            AND SSM.REVISION_VERSION = (
+              SELECT
+                MAX(REVISION_VERSION)
+              FROM
+                TNT_SS_MASTER
+              WHERE
+                ORDER_ID = O.ORDER_ID
+                AND OFFICE_ID = O.OFFICE_ID
+            )
+         WHERE 1 = 1
+         <if test = "invoiceIdList != null and invoiceIdList.size() > 0">
+            AND IV.INVOICE_ID
+                IN
+            <foreach item="invoiceId" index="index" collection="invoiceIdList" open="(" separator="," close=")">
+                #{invoiceId}
+            </foreach>
+          </if>
+          <if test = "processDateTime != null">
+            AND IVP.UPDATED_DATE = #{processDateTime,jdbcType=TIMESTAMP}
+          </if>
+         ORDER BY
+           O.ORDER_ID
+           , IV.ETD
+           , IV.INVOICE_NO
+
+    </select>
+
+    <select id="queryAllOrderList" parameterType="com.chinaplus.core.bean.InvoiceAdjParam" resultType="com.chinaplus.common.entity.InvoiceAdjEntity">
+
+        <include refid="ConstDef"/>
+        SELECT DISTINCT
+          O.ORDER_ID AS orderId
+          , O.OFFICE_ID AS officeId
+          , O.IMP_PO_NO AS impPoNo
+          , O.CUSTOMER_ORDER_NO AS customerOrderNo
+          , O.CUSTOMER_ID AS customerId
+        FROM
+          TNT_ORDER O
+          INNER JOIN TNT_SS_MASTER SSM
+            ON SSM.ORDER_ID = O.ORDER_ID
+            AND SSM.OFFICE_ID = O.OFFICE_ID
+            AND SSM.REVISION_VERSION = (
+              SELECT
+                MAX(M.REVISION_VERSION)
+              FROM
+                TNT_SS_MASTER M
+              WHERE
+                M.ORDER_ID = SSM.ORDER_ID
+                AND M.OFFICE_ID = SSM.OFFICE_ID
+            )
+          INNER JOIN TNT_SS_PLAN SSPL
+            ON SSPL.SS_ID = SSM.SS_ID
+        WHERE
+          O.OFFICE_ID = #{officeId,jdbcType=INTEGER}
+          AND SSPL.COMPLETED_FLAG = #{CompletedFlag_NORMAL}
+          AND SSPL.ETD <![CDATA[<]]> #{currSysDate, jdbcType=DATE}
+
+    </select>
+
+    <select id="getAllOrderPartsForDailyBatch" parameterType="com.chinaplus.common.entity.InvoiceAdjEntity" resultType="com.chinaplus.common.entity.InvoiceAdjEntity">
+
+        SELECT DISTINCT
+          O.ORDER_ID AS orderId
+          , O.OFFICE_ID AS officeId
+          , O.IMP_PO_NO AS impPoNo
+          , O.CUSTOMER_ORDER_NO AS customerOrderNo
+          , OS.PARTS_ID AS partsId
+          , OS.SUPPLIER_ID AS supplierId
+          , 0 AS qty
+          , EP.DELAY_ADJUSTMENT_PATTERN AS delayAdjustmentPattern
+          , NULL AS etd
+          , NULL AS eta
+          , NULL AS impPlanCustomDate
+          , NULL AS impPlanInboundDate
+          , EP.EXP_PARTS_ID AS expPartsId
+          , OS.ORDER_STATUS_ID AS orderStatusId
+          , OS.FORCE_COMPLETED_QTY AS forceCompletedQty
+          , NULL AS tansportMode
+          , SSM.SS_ID AS ssId
+        FROM
+          TNF_ORDER_STATUS OS
+          INNER JOIN TNT_ORDER O
+            ON O.IMP_PO_NO = OS.IMP_PO_NO
+            AND O.CUSTOMER_ORDER_NO = OS.CUSTOMER_ORDER_NO
+            AND O.CUSTOMER_ID = #{customerId, jdbcType=INTEGER}
+          INNER JOIN (
+            SELECT
+              D.ORDER_ID
+              , D.EXP_PARTS_ID
+              , D.PARTS_ID
+              , D.EXP_PO_NO
+            FROM
+              TNT_ORDER_DETAIL D
+            GROUP BY
+              D.ORDER_ID
+              , D.EXP_PARTS_ID
+              , D.PARTS_ID
+              , D.EXP_PO_NO
+          ) OD
+            ON OD.ORDER_ID = O.ORDER_ID
+            AND OD.PARTS_ID = OS.PARTS_ID
+            AND OD.EXP_PO_NO = OS.EXP_PO_NO
+          INNER JOIN TNM_EXP_PARTS EP
+            ON EP.EXP_PARTS_ID = OD.EXP_PARTS_ID
+            AND EP.SUPPLIER_ID = OS.SUPPLIER_ID
+          INNER JOIN TNT_SS_MASTER SSM
+            ON SSM.ORDER_ID = O.ORDER_ID
+            AND SSM.OFFICE_ID = O.OFFICE_ID
+            AND SSM.REVISION_VERSION = (
+              SELECT
+                MAX(M.REVISION_VERSION)
+              FROM
+                TNT_SS_MASTER M
+              WHERE
+                M.ORDER_ID = SSM.ORDER_ID
+                AND M.OFFICE_ID = SSM.OFFICE_ID
+            )
+        WHERE
+          OS.IMP_PO_NO = #{impPoNo,jdbcType=VARCHAR}
+          AND OS.CUSTOMER_ORDER_NO = #{customerOrderNo,jdbcType=VARCHAR}
+        ORDER BY
+          OS.ORDER_STATUS_ID
+          , OS.PARTS_ID
+          , OS.FORCE_COMPLETED_QTY
+
+    </select>
+
+    <select id="getPlanPartsList" parameterType="com.chinaplus.core.bean.InvoiceAdjParam" resultType="com.chinaplus.common.entity.InvoiceAdjEntity">
+        <include refid="ConstDef"/>
+        SELECT
+          SM.ORDER_ID AS orderId
+          , SM.OFFICE_ID AS officeId
+          , SM.SS_ID AS ssId
+          , SPT.SS_PARTS_ID AS ssPartsId
+          , SPL.SS_PLAN_ID AS ssPlanId
+          , SPL.ETD AS etd
+          , SPL.ETA AS eta
+          , SPL.CC_DATE AS impPlanCustomDate
+          , SPL.IMP_INB_PLAN_DATE AS impPlanInboundDate
+          , SPL.TRANSPORT_MODE AS tansportMode
+          , SPT.PARTS_ID AS partsId
+          , SPT.ORDER_STATUS_ID AS orderStatusId
+          , SPT.QTY AS qty
+          , SPL.ORIGINAL_VERSION AS originalVersion
+          , SPL.REVISION_VERSION AS revisionVersion
+          , SPL.NIRD_FLAG AS nirdFlag
+        FROM
+          TNT_SS_PARTS SPT
+          INNER JOIN TNT_SS_PLAN SPL
+            ON SPL.SS_PLAN_ID = SPT.SS_PLAN_ID
+          INNER JOIN TNT_SS_MASTER SM
+            ON SM.SS_ID = SPL.SS_ID
+            AND SM.REVISION_VERSION = (
+              SELECT
+                MAX(M.REVISION_VERSION)
+              FROM
+                TNT_SS_MASTER M
+              WHERE
+                M.ORDER_ID = SM.ORDER_ID
+                AND M.OFFICE_ID = SM.OFFICE_ID
+            )
+          INNER JOIN TNF_ORDER_STATUS OS
+            ON OS.ORDER_STATUS_ID = SPT.ORDER_STATUS_ID
+            AND OS.PARTS_ID = SPT.PARTS_ID
+        WHERE
+          SM.ORDER_ID = #{orderId,jdbcType=INTEGER}
+          AND SM.OFFICE_ID = #{officeId,jdbcType=INTEGER}
+          AND SPL.COMPLETED_FLAG = #{CompletedFlag_NORMAL}
+          AND SPL.TRANSPORT_MODE = #{tansportMode,jdbcType=INTEGER}
+          AND (OS.FORCE_COMPLETED_QTY = 0
+           OR OS.FORCE_COMPLETED_QTY IS NULL)
+        ORDER BY
+          SPL.ETD
+          , SPL.ETA
+          , SPL.CC_DATE
+          , SPL.IMP_INB_PLAN_DATE
+          , SPT.PARTS_ID
+          , SPT.ORDER_STATUS_ID
+
+    </select>
+
+    <select id="getAllOrderParts" parameterType="com.chinaplus.common.entity.InvoiceAdjEntity" resultType="com.chinaplus.common.entity.InvoiceAdjEntity">
+
+        SELECT
+          OS.ORDER_STATUS_ID AS orderStatusId
+          , OS.PARTS_ID AS partsId
+          , OS.FORCE_COMPLETED_QTY AS forceCompletedQty
+          , EP.DELAY_ADJUSTMENT_PATTERN AS delayAdjustmentPattern
+          , EP.EXP_PARTS_ID AS expPartsId
+          , OD.TRANSPORT_MODE AS tansportMode
+          , SSM.SS_ID AS ssId
+        FROM
+          TNF_ORDER_STATUS OS
+          INNER JOIN TNT_ORDER O
+            ON O.IMP_PO_NO = OS.IMP_PO_NO
+            AND O.CUSTOMER_ORDER_NO = OS.CUSTOMER_ORDER_NO
+          INNER JOIN TNT_ORDER_DETAIL OD
+            ON OD.ORDER_ID = O.ORDER_ID
+            AND OD.PARTS_ID = OS.PARTS_ID
+            AND OD.EXP_PO_NO = OS.EXP_PO_NO
+          INNER JOIN TNM_EXP_PARTS EP
+            ON EP.EXP_PARTS_ID = OD.EXP_PARTS_ID
+          INNER JOIN TNT_SS_MASTER SSM
+            ON SSM.ORDER_ID = O.ORDER_ID
+            AND SSM.OFFICE_ID = O.OFFICE_ID
+            AND SSM.REVISION_VERSION = (
+              SELECT
+                MAX(M.REVISION_VERSION)
+              FROM
+                TNT_SS_MASTER M
+              WHERE
+                M.ORDER_ID = SSM.ORDER_ID
+                AND M.OFFICE_ID = SSM.OFFICE_ID
+            )
+        WHERE
+          OS.IMP_PO_NO = #{impPoNo,jdbcType=VARCHAR}
+          AND OS.CUSTOMER_ORDER_NO = #{customerOrderNo,jdbcType=VARCHAR}
+          AND O.CUSTOMER_ID = #{customerId, jdbcType=INTEGER}
+        GROUP BY
+          OS.ORDER_STATUS_ID
+          , OS.PARTS_ID
+          , OS.FORCE_COMPLETED_QTY
+          , EP.DELAY_ADJUSTMENT_PATTERN
+          , EP.EXP_PARTS_ID
+          , OD.TRANSPORT_MODE
+          , SSM.SS_ID
+        ORDER BY
+          OS.ORDER_STATUS_ID
+          , OS.PARTS_ID
+          , OS.FORCE_COMPLETED_QTY
+
+    </select>
+    
+    <select id="getAllPartsOfPlan" parameterType="com.chinaplus.common.entity.TntSsPart" resultType="com.chinaplus.common.entity.TntSsPart">
+    
+        SELECT
+          SPT.SS_PARTS_ID AS ssPartsId
+          , SPT.SS_PLAN_ID AS ssPlanId
+          , SPT.ORDER_STATUS_ID AS orderStatusId
+          , SPT.PARTS_ID AS partsId
+          , SPT.QTY AS qty
+          , SPT.CREATED_BY AS createdBy
+          , SPT.CREATED_DATE AS createdDate
+          , SPT.UPDATED_BY AS updatedBy
+          , SPT.UPDATED_DATE AS updatedDate
+          , SPT.VERSION AS version
+        FROM
+          TNT_SS_PARTS SPT
+          INNER JOIN TNF_ORDER_STATUS OS
+            ON OS.ORDER_STATUS_ID = SPT.ORDER_STATUS_ID
+            AND OS.PARTS_ID = SPT.PARTS_ID
+        WHERE
+          SPT.SS_PLAN_ID = #{ssPlanId, jdbcType=INTEGER}
+          AND (OS.FORCE_COMPLETED_QTY = 0
+           OR OS.FORCE_COMPLETED_QTY IS NULL)
+    
+    </select>
+
+    <update id="updateTntSsPlan" parameterType="com.chinaplus.common.entity.TntSsPlan">
+
+        UPDATE
+            TNT_SS_PLAN
+        SET
+              UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+            , COMPLETED_FLAG = #{completedFlag,jdbcType=INTEGER}
+        WHERE
+            SS_PLAN_ID = #{ssPlanId,jdbcType=INTEGER}
+
+    </update>
+
+    <insert id="insertTntSsPlan" parameterType="com.chinaplus.common.entity.TntSsPlan">
+        INSERT
+        INTO
+        TNT_SS_PLAN (
+              SS_PLAN_ID
+            , SS_ID
+            , TRANSPORT_MODE
+            , ETD
+            , ETA
+            , CC_DATE
+            , IMP_INB_PLAN_DATE
+            , ORIGINAL_VERSION
+            , REVISION_VERSION
+            , REVISION_REASON
+            , NIRD_FLAG
+            , COMPLETED_FLAG
+            , CREATED_BY
+            , CREATED_DATE
+            , UPDATED_BY
+            , UPDATED_DATE
+            , VERSION
+        )
+        VALUES
+        (
+            #{ssPlanId,jdbcType=INTEGER},
+            #{ssId,jdbcType=INTEGER},
+            #{transportMode,jdbcType=INTEGER},
+            #{etd,jdbcType=DATE},
+            #{eta,jdbcType=DATE},
+            #{ccDate,jdbcType=DATE},
+            #{impInbPlanDate,jdbcType=DATE},
+            #{originalVersion,jdbcType=INTEGER},
+            #{revisionVersion,jdbcType=INTEGER},
+            #{revisionReason,jdbcType=VARCHAR},
+            #{nirdFlag,jdbcType=INTEGER},
+            #{completedFlag,jdbcType=INTEGER},
+            #{createdBy,jdbcType=INTEGER},
+            #{createdDate,jdbcType=TIMESTAMP},
+            #{updatedBy,jdbcType=INTEGER},
+            #{updatedDate,jdbcType=TIMESTAMP},
+            1
+        )
+    </insert>
+
+    <insert id="insertSsParts" parameterType="com.chinaplus.common.entity.TntSsPart">
+        INSERT
+        INTO
+        TNT_SS_PARTS (
+               SS_PARTS_ID
+             , SS_PLAN_ID
+             , ORDER_STATUS_ID
+             , PARTS_ID
+             , QTY
+             , CREATED_BY
+             , CREATED_DATE
+             , UPDATED_BY
+             , UPDATED_DATE
+             , VERSION
+        )
+        VALUES
+        (
+            SEQ_TNT_SS_PARTS.NEXTVAL,
+            #{ssPlanId,jdbcType=INTEGER},
+            #{orderStatusId,jdbcType=INTEGER},
+            #{partsId,jdbcType=INTEGER},
+            #{qty,jdbcType=DECIMAL},
+            #{createdBy,jdbcType=INTEGER},
+            #{createdDate,jdbcType=TIMESTAMP},
+            #{updatedBy,jdbcType=INTEGER},
+            #{updatedDate,jdbcType=TIMESTAMP},
+            1
+        )
+    </insert>
+
+    <update id="updateSsParts" parameterType="com.chinaplus.common.entity.TntSsPart">
+
+        UPDATE
+            TNT_SS_PARTS
+        SET
+              UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+            , QTY = #{qty,jdbcType=INTEGER}
+        WHERE
+            SS_PARTS_ID = #{ssPartsId,jdbcType=INTEGER}
+
+    </update>
+    
+    <select id="getExistParts" parameterType="com.chinaplus.common.entity.TntSsPart" resultType="com.chinaplus.common.entity.TntSsPart">
+    
+        SELECT
+          SS_PARTS_ID AS ssPartsId
+          , QTY AS qty
+        FROM
+          TNT_SS_PARTS TSP
+        WHERE
+          TSP.SS_PLAN_ID = #{ssPlanId, jdbcType=INTEGER}
+          AND TSP.ORDER_STATUS_ID = #{orderStatusId, jdbcType=INTEGER}
+          AND TSP.PARTS_ID = #{partsId, jdbcType=INTEGER}
+    
+    </select>
+    
+    <select id="getMaxPlanVersion" parameterType="com.chinaplus.common.entity.TntSsPlan" resultType="com.chinaplus.common.entity.TntSsPlan">
+    
+        SELECT
+          MAX(SP.ORIGINAL_VERSION) AS originalVersion
+        FROM
+          TNT_SS_PLAN SP
+        WHERE
+          SP.SS_ID = #{ssId,jdbcType=INTEGER}
+    
+    </select>
+    
+    <select id="checkExistsSamePlan" parameterType="com.chinaplus.common.entity.TntSsPlan" resultType="com.chinaplus.common.entity.TntSsPlan">
+    
+        <include refid="ConstDef"/>
+        SELECT
+          SS_PLAN_ID AS ssPlanId
+          , SS_ID AS ssId
+          , TRANSPORT_MODE AS transportMode
+          , ETD AS etd
+          , ETA AS eta
+          , CC_DATE AS ccDate
+          , IMP_INB_PLAN_DATE AS impInbPlanDate
+          , ORIGINAL_VERSION AS originalVersion
+          , REVISION_VERSION AS revisionVersion
+          , REVISION_REASON AS revisionReason
+          , NIRD_FLAG AS nirdFlag
+          , COMPLETED_FLAG AS completedFlag
+        FROM
+          TNT_SS_PLAN TSP
+        WHERE
+            TSP.SS_ID = #{ssId, jdbcType=INTEGER}
+            AND TSP.TRANSPORT_MODE = #{transportMode, jdbcType=INTEGER}
+            AND TSP.COMPLETED_FLAG = #{CompletedFlag_NORMAL}
+            AND TSP.ETD = #{etd, jdbcType=DATE}
+            AND TSP.ETA = #{eta, jdbcType=DATE}
+            <if test="null == ccDate">
+                AND TSP.CC_DATE IS NULL
+            </if>
+            <if test="null != ccDate">
+                AND TSP.CC_DATE = #{ccDate,jdbcType=DATE}
+            </if>
+            <if test="null == impInbPlanDate">
+                AND TSP.IMP_INB_PLAN_DATE IS NULL
+            </if>
+            <if test="null != impInbPlanDate">
+                AND TSP.IMP_INB_PLAN_DATE = #{impInbPlanDate,jdbcType=DATE}
+            </if>
+    
+    </select>
+
+</mapper>

@@ -1,0 +1,7 @@
+#!/bin/sh
+#Daily batch
+
+/orion/data/chinaplus/auto/scripts/BASE/dailybatch.sh DARIDC71 CPIIFB12,CPIIFB13,CPIIFB14 $1 $2
+
+ret=$?
+exit ${ret} 

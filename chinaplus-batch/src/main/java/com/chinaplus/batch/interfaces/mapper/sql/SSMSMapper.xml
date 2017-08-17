@@ -1,0 +1,172 @@
+<!--
+@screen CPIIFB01
+@author yang_jia1
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.chinaplus.batch.interfaces.service.CPIIFB01Service">
+    
+    <select id="queryBatchLogStatus" parameterType="com.chinaplus.batch.interfaces.bean.BatchLog" resultType="com.chinaplus.batch.interfaces.bean.BatchLog">
+        SELECT
+          IF_DATE_TIME AS ifDateTime
+          , STATUS AS status
+        FROM 
+          TNT_IF_BATCH 
+        WHERE
+          BATCH_TYPE = #{batchType,jdbcType=INTEGER}
+    </select>
+    
+    <select id="queryIfDateTimes1" parameterType="com.chinaplus.batch.interfaces.bean.BatchLog" resultType="com.chinaplus.batch.interfaces.bean.BatchLog">
+       SELECT
+             DISTINCT(L.IF_DATE_TIME) as ifDateTime
+       FROM
+           TNT_IF_EXP_ORDER L
+       WHERE
+       <if test = "lastIsSuccess == 1">
+           L.IF_DATE_TIME >= #{ifDateTime,jdbcType=TIMESTAMP}
+       </if>
+       <if test = "lastIsSuccess == 2 or lastIsSuccess == 3">
+           L.IF_DATE_TIME > #{ifDateTime,jdbcType=TIMESTAMP}
+       </if>
+       ORDER BY
+           L.IF_DATE_TIME
+    </select>
+    
+    <select id="queryIfDateTimes2" parameterType="com.chinaplus.batch.interfaces.bean.BatchLog" resultType="com.chinaplus.batch.interfaces.bean.BatchLog">
+       SELECT
+             DISTINCT(L.IF_DATE_TIME) as ifDateTime
+       FROM
+           TNT_IF_CANCEL_ORDER L
+       WHERE
+       <if test = "lastIsSuccess == 1">
+           L.IF_DATE_TIME >= #{ifDateTime,jdbcType=TIMESTAMP}
+       </if>
+       <if test = "lastIsSuccess == 2 or lastIsSuccess == 3">
+           L.IF_DATE_TIME > #{ifDateTime,jdbcType=TIMESTAMP}
+       </if>
+       ORDER BY
+           L.IF_DATE_TIME
+    </select>
+    
+    <select id="queryIfDateTimes3" parameterType="com.chinaplus.batch.interfaces.bean.BatchLog" resultType="com.chinaplus.batch.interfaces.bean.BatchLog">
+      SELECT
+             DISTINCT(L.IF_DATE_TIME) as ifDateTime
+       FROM
+           TNT_IF_EXP_INBOUND L
+       WHERE
+       <if test = "lastIsSuccess == 1">
+           L.IF_DATE_TIME >= #{ifDateTime,jdbcType=TIMESTAMP}
+       </if>
+       <if test = "lastIsSuccess == 2 or lastIsSuccess == 3">
+           L.IF_DATE_TIME > #{ifDateTime,jdbcType=TIMESTAMP}
+       </if>
+       ORDER BY
+           L.IF_DATE_TIME
+    </select>
+    
+    <select id="queryIfDateTimes4" parameterType="com.chinaplus.batch.interfaces.bean.BatchLog" resultType="com.chinaplus.batch.interfaces.bean.BatchLog">
+      SELECT
+             DISTINCT(L.IF_DATE_TIME) as ifDateTime
+       FROM
+           TNT_IF_EXP_OUTBOUND L
+       WHERE
+       <if test = "lastIsSuccess == 1">
+           L.IF_DATE_TIME >= #{ifDateTime,jdbcType=TIMESTAMP}
+       </if>
+       <if test = "lastIsSuccess == 2 or lastIsSuccess == 3">
+           L.IF_DATE_TIME > #{ifDateTime,jdbcType=TIMESTAMP}
+       </if>
+       ORDER BY
+           L.IF_DATE_TIME
+    </select>
+    
+    <select id="queryIfDateTimes5" parameterType="com.chinaplus.batch.interfaces.bean.BatchLog" resultType="com.chinaplus.batch.interfaces.bean.BatchLog">
+       SELECT
+             DISTINCT(L.IF_DATE_TIME) as ifDateTime
+       FROM
+           TNT_IF_EXP_INVOICE L
+       WHERE
+       <if test = "lastIsSuccess == 1">
+           L.IF_DATE_TIME >= #{ifDateTime,jdbcType=TIMESTAMP}
+       </if>
+       <if test = "lastIsSuccess == 2 or lastIsSuccess == 3">
+           L.IF_DATE_TIME > #{ifDateTime,jdbcType=TIMESTAMP}
+       </if>
+       ORDER BY
+           L.IF_DATE_TIME
+    </select>
+    
+    <select id="queryIfDateTimes6" parameterType="com.chinaplus.batch.interfaces.bean.BatchLog" resultType="com.chinaplus.batch.interfaces.bean.BatchLog">
+       SELECT
+             DISTINCT(L.IF_DATE_TIME) as ifDateTime
+       FROM
+           TNM_IF_CUSTOMER L
+       WHERE
+           L.IF_DATE_TIME <![CDATA[<=]]> #{ifDateTime,jdbcType=TIMESTAMP}
+       AND
+           L.HANDLE_FLAG = 0
+       ORDER BY
+           L.IF_DATE_TIME
+    </select>
+    
+    <select id="queryIfDateTimes7" parameterType="com.chinaplus.batch.interfaces.bean.BatchLog" resultType="com.chinaplus.batch.interfaces.bean.BatchLog">
+       SELECT
+             DISTINCT(L.IF_DATE_TIME) as ifDateTime
+       FROM
+           TNM_IF_PARTS L
+       WHERE
+           L.IF_DATE_TIME <![CDATA[<=]]> #{ifDateTime,jdbcType=TIMESTAMP}
+       AND
+           L.HANDLE_FLAG = 0
+       ORDER BY
+           L.IF_DATE_TIME
+    </select>
+
+    <update id="modBatchLog" parameterType="com.chinaplus.batch.interfaces.bean.BatchLog">
+
+        UPDATE
+            TNT_IF_BATCH
+        SET
+              STATUS = #{status,jdbcType=INTEGER}
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+        WHERE
+            BATCH_TYPE = #{batchType,jdbcType=INTEGER}
+
+    </update>
+    
+    <insert id="addBatchLog" parameterType="com.chinaplus.batch.interfaces.bean.BatchLog">
+        INSERT
+        INTO
+            TNT_IF_BATCH(
+              IF_BATCH_ID
+            , BATCH_TYPE    
+            , BATCH_TYPE_NAME  
+            , IF_DATE_TIME    
+            , STATUS
+            , CREATED_BY  
+            , CREATED_DATE    
+            , UPDATED_BY  
+            , UPDATED_DATE
+            , VERSION    
+        )
+        VALUES
+        (
+            SEQ_TNT_IF_BATCH.NEXTVAL,
+            #{batchType,jdbcType=INTEGER},
+            #{batchTypeName,jdbcType=VARCHAR},
+            #{ifDateTime,jdbcType=TIMESTAMP},
+            #{status,jdbcType=INTEGER},
+            #{createdBy,jdbcType=INTEGER},
+            #{createdDate,jdbcType=TIMESTAMP},
+            #{updatedBy,jdbcType=INTEGER},
+            #{updatedDate,jdbcType=TIMESTAMP},
+            1
+        )
+    </insert>
+    
+    
+</mapper>

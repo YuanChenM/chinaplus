@@ -1,0 +1,692 @@
+/**
+ * @screen CPMPMS01 ----- Parts Master Screen
+ * @author zhang_chi
+ */
+CPMPMS01 = {
+    xtype : 'gridpanel',
+    id : chinaplus.screen.CPMPMS01,
+    title : chinaplus.label.CPMPMS01_Label_PageTitle,
+    autoScroll : true,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    border : true,
+    closable : false,
+    columnLines : true,
+    enableColumnHide : false,
+    enableColumnMove : false,
+    qtip : true,
+    selType : 'cellmodel',
+    selModel : Ext.create('Ext.ux.selection.CheckBoxModel', {
+                checkOnly : true
+            }),
+    viewConfig : {
+        loadMask : false
+    },
+    plugins : [{
+                ptype : 'gridheaderfilters',
+                allSingleFilter : false
+            }, {
+                ptype : 'emptystoreview'
+            }, {
+                ptype : 'headerfiltertoolbar',
+                showMore : true
+            }],
+    header : false,
+    headerPosition : 'bottom',
+    columns : [{
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMPMS01_Grid_TTCPartNo + '</div>',
+                align : 'left',
+                width : 130,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'ttcPartNo',
+                sortable : false,
+                filter : 'string'
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMPMS01_Grid_PartsDescriptionEn + '</div>',
+                align : 'left',
+                width : 180,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'partsDesEnglish',
+                sortable : false,
+                filter : 'string'
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMPMS01_Grid_PartsDescriptionCh + '</div>',
+                align : 'left',
+                width : 170,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'partsDesChinese',
+                sortable : false,
+                filter : 'string'
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMPMS01_Grid_OldTTCPartNo + '</div>',
+                align : 'left',
+                width : 120,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'oldTTCPartNo',
+                sortable : false,
+                filter : 'string'
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMPMS01_Grid_ExportCountry + '</div>',
+                align : 'center',
+                width : 105,
+                id : chinaplus.screen.CPMPMS01 + '_exportCountry',
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'exportCountry',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPMPMS01, 'mm/CPMPMS01/loadExportCountry', 'Combo', chinaplus.screen.CPMPMS01 + '_exportCountryStore'),
+                    listeners : {
+                        change : function(self, newValue, oldValue) {
+                            if (!Ext.isEmpty(newValue) || !Ext.isEmpty(oldValue)) {
+                                CPMPMS01.loadExportCountryChange(newValue);
+                            }
+                        }
+                    }
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMPMS01_Grid_TTCSuppCd + '</div>',
+                align : 'left',
+                width : 130,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'ttcSuppCd',
+                sortable : false,
+                id : chinaplus.screen.CPMPMS01 + '_ttcSuppCd',
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPMPMS01, 'mm/CPMPMS01/loadTccSupCode', 'Combo', chinaplus.screen.CPMPMS01 + '_ttcSuppCdStore'),
+                    listeners : {
+                        change : function(self, newValue, oldValue) {
+                            if (!Ext.isEmpty(newValue) || !Ext.isEmpty(oldValue)) {
+                                CPMPMS01.loadTtcSuppCdChange(newValue);
+                            }
+                        }
+                    }
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMPMS01_Grid_SSMSMainRoute + '</div>',
+                align : 'center',
+                width : 120,
+                id : chinaplus.screen.CPMPMS01 + '_ssmsMainRoute',
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'ssmsMainRoute',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPMPMS01, 'mm/CPMPMS01/loadSsmsMainRoute', 'Combo', chinaplus.screen.CPMPMS01 + '_ssmsMainRouteStore'),
+                    listeners : {
+                        change : function(self, newValue, oldValue) {
+                            if (!Ext.isEmpty(newValue) || !Ext.isEmpty(oldValue)) {
+                                CPMPMS01.loadSsmsMainRouteChange(newValue);
+                            }
+                        }
+                    }
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMPMS01_Grid_SSMSVendorRoute + '</div>',
+                align : 'center',
+                width : 130,
+                id : chinaplus.screen.CPMPMS01 + '_ssmsVendorRoute',
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'ssmsVendorRoute',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPMPMS01, 'mm/CPMPMS01/loadSSMSVendorRoute', 'Combo', chinaplus.screen.CPMPMS01 + '_ssmsVendorRouteStore')
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMPMS01_Grid_SSMSSuppCd + '</div>',
+                align : 'left',
+                width : 130,
+                id : chinaplus.screen.CPMPMS01 + '_ssmsSuppCd',
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'ssmsSuppCd',
+                sortable : false,
+                filter : 'string'
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMPMS01_Grid_SuppPartNo + '</div>',
+                align : 'left',
+                width : 140,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'suppPartNo',
+                sortable : false,
+                filter : 'string'
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMPMS01_Grid_ImpOfficeCode + '</div>',
+                align : 'left',
+                width : 130,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'impOfficeCode',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPMPMS01, 'mm/CPMPMS01/loadImpOfficeCode', 'Combo', chinaplus.screen.CPMPMS01 + '_impOfficeCodeStore'),
+                    listeners : {
+                        change : function(self, newValue, oldValue) {
+                            if (!Ext.isEmpty(newValue) || !Ext.isEmpty(oldValue)) {
+                                CPMPMS01.loadImpOfficeCodeChange(newValue);
+                            }
+                        }
+                    }
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMPMS01_Grid_TTCCustCd + '</div>',
+                align : 'left',
+                width : 130,
+                id : chinaplus.screen.CPMPMS01 + '_ttcCustCd',
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'ttcCustCd',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPMPMS01, 'mm/CPMPMS01/loadTtcCustomerCode', 'Combo', chinaplus.screen.CPMPMS01 + '_ttcCustCdStore'),
+                    listeners : {
+                        change : function(self, newValue, oldValue) {
+                            if (!Ext.isEmpty(newValue) || !Ext.isEmpty(oldValue)) {
+                                CPMPMS01.loadTtcCustCdChange(newValue);
+                            }
+                        }
+                    }
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMPMS01_Grid_SSMSKbCustCd + '</div>',
+                align : 'left',
+                width : 186,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'ssmskbCustCd',
+                sortable : false,
+                filter : 'string'
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMPMS01_Grid_SSMSKbSuppCd + '</div>',
+                align : 'left',
+                width : 120,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'custPartNo',
+                sortable : false,
+                filter : 'string'
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMPMS01_Grid_WESTCustCd + '</div>',
+                align : 'left',
+                width : 160,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'westCustCd',
+                sortable : false,
+                filter : 'string'
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMPMS01_Grid_WESTPartNo + '</div>',
+                align : 'left',
+                width : 130,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'westPartNo',
+                sortable : false,
+                filter : 'string'
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMPMS01_Grid_MailInvCustCd + '</div>',
+                align : 'left',
+                width : 170,
+                id : chinaplus.screen.CPMPMS01 + '_mailInvCustCd',
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'mailInvCustCd',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPMPMS01, 'mm/CPMPMS01/loadMailInvoiceCustomerCode', 'Combo', chinaplus.screen.CPMPMS01
+                                    + '_mailInvCustCdStore')
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMPMS01_Grid_TTCImpWHCd + '</div>',
+                align : 'left',
+                width : 180,
+                id : chinaplus.screen.CPMPMS01 + '_ttcImpWHCd',
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'ttcImpWHCd',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPMPMS01, 'mm/CPMPMS01/loadTtcImpWHCode', 'Combo', chinaplus.screen.CPMPMS01 + '_ttcImpWHCdStore')
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMPMS01_Grid_BusinessPattern + '</div>',
+                align : 'left',
+                width : 120,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'businessPattern',
+                sortable : false,
+                renderer : function(value) {
+                    return chinaplus.master.getMasterName(chinaplus.master.consts.TnmCodeCategory_BUSINESS_PATTERN, value);
+                },
+                filter : {
+                    type : 'list',
+                    multiSelect : false,
+                    options : chinaplus.master.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_BUSINESS_PATTERN)
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMPMS01_Grid_PartType + '</div>',
+                align : 'left',
+                width : 130,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'partType',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPMPMS01, 'mm/CPMPMS01/loadPartType', 'Combo', chinaplus.screen.CPMPMS01 + '_partTypeStore')
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMPMS01_Grid_CarModel + '</div>',
+                align : 'left',
+                width : 120,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'carModel',
+                sortable : false,
+                filter : 'string'
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMPMS01_Grid_BuildOutIndicator + '</div>',
+                align : 'center',
+                width : 120,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'buildOutIndicator',
+                sortable : false,
+                renderer : function(value) {
+                    return chinaplus.master.getMasterName(chinaplus.master.consts.TnmCodeCategory_BUILD_OUT_INDICATOR, value);
+                },
+                filter : {
+                    type : 'list',
+                    multiSelect : false,
+                    options : chinaplus.master.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_BUILD_OUT_INDICATOR)
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMPMS01_Grid_PartStatus + '</div>',
+                align : 'left',
+                width : 100,
+                id : chinaplus.screen.CPMPMS01 + '_partStatus',
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'partStatus',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPMPMS01, 'mm/CPMPMS01/loadPartStatus', 'Combo', chinaplus.screen.CPMPMS01 + '_partStatusStore')
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMPMS01_Grid_DiscontIndicator + '</div>',
+                align : 'center',
+                width : 130,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'discontIndicator',
+                sortable : false,
+                filter : 'string',
+                renderer : function(value) {
+                    return chinaplus.master.getMasterName(chinaplus.master.consts.TnmCodeCategory_DiscontinueIndicator, value);
+                },
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPMPMS01, 'mm/CPMPMS01/loadDiscontinueIndicator', 'Combo', chinaplus.screen.CPMPMS01
+                                    + '_discontinueIndicatorStore')
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMPMS01_Grid_CreatedDate + '</div>',
+                align : 'center',
+                width : 130,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'createdDate',
+                sortable : false,
+                filter : 'date',
+                filterPlugins : [{
+                            ptype : 'datePickerClear'
+                        }]
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMPMS01_Grid_CreatedBy + '</div>',
+                align : 'left',
+                width : 100,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'createdBy',
+                sortable : false,
+                filter : 'string'
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMPMS01_Grid_LastModifiedDate + '</div>',
+                align : 'center',
+                width : 130,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'lastModifiedDate',
+                sortable : false,
+                filter : 'date',
+                filterPlugins : [{
+                            ptype : 'datePickerClear'
+                        }]
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMPMS01_Grid_LastModifiedBy + '</div>',
+                align : 'left',
+                width : 100,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'lastModifiedBy',
+                sortable : false,
+                filter : 'string'
+            }],
+    tbar : [{
+                text : chinaplus.label.CPMPMS01_Button_DownloadPartsMaster,
+                iconCls : 'btn-download',
+                id : chinaplus.screen.CPMPMS01 + '_Button_CreateNew',
+                handler : function() {
+                    CPMPMS01.downloadFunc();
+                }
+            }],
+    store : TRF.util.createStore(chinaplus.screen.CPMPMS01, 'mm/CPMPMS01/getCPMPMS01EntityList', 'cpmpms01EntityList', chinaplus.screen.CPMPMS01 + '_cpmpms01EntityListStore'),
+
+    /**
+     * The initialize function.
+     * 
+     * @param params. the parameter object passed to this screen.
+     */
+    initialize : function() {
+
+        var vvFlag = TRF.core.vvAllFlag;
+        var aisinFlag = TRF.core.aisinAllFlag;
+
+        // if (aisinFlag == 'false') {
+        // Ext.getCmp(chinaplus.screen.CPMPMS01 + '_mailInvCustCd').hide();
+        // }
+        // if (vvFlag == 'false') {
+        // Ext.getCmp(chinaplus.screen.CPMPMS01 + '_ssmsMainRoute').hide();
+        // Ext.getCmp(chinaplus.screen.CPMPMS01 + '_ssmsVendorRoute').hide();
+        // Ext.getCmp(chinaplus.screen.CPMPMS01 + '_ssmsSuppCd').hide();
+        // Ext.getCmp(chinaplus.screen.CPMPMS01 + '_partStatus').hide();
+        // }
+
+        var businessPatternF = null;
+        if (aisinFlag == 'false' && vvFlag == 'true') {
+            businessPatternF = '1';
+            TRF.util.setDefaultValuesForToolBar(this, 'businessPattern', businessPatternF);
+        }
+        if (aisinFlag == 'true' && vvFlag == 'false') {
+            businessPatternF = '2';
+            TRF.util.setDefaultValuesForToolBar(this, 'businessPattern', businessPatternF);
+        }
+
+        var gridStore = this.store;
+        var me = this;
+        TRF.util.dataLoadStart(chinaplus.screen.CPMPMS01);
+        TRF.util.loadStore(gridStore, null, function() {
+                    TRF.util.dataLoadEnd(chinaplus.screen.CPMPMS01);
+                     gridStore.on('beforeload', function() {
+                         TRF.core.mask(TRF.core.maskMsg.load, null, me);
+                     });
+                     gridStore.on('load', function() {
+                         TRF.core.unmask(me);
+                     });
+                }, {
+                    filters : {
+                        discontIndicator : ['0', 'Blank'],
+                        businessPattern : businessPatternF,
+                        partStatus : ['1', '2', 'Blank']
+                    }
+                });
+
+        this.doLayout();
+        TRF.util.addGridTip(this);
+    },
+
+    /**
+     * afterInit
+     */
+    afterInit : function() {
+        TRF.util.setDefaultValuesForToolBar(this, 'discontIndicator', ['0', 'Blank']);
+        TRF.util.setDefaultValuesForToolBar(this, 'partStatus', ['1', '2', 'Blank']);
+    },
+
+    /**
+     * load ExportCountry Change
+     */
+    loadExportCountryChange : function(exportCountry) {
+
+        var exportCountryList = new Array();
+        if (exportCountry != '') {
+            exportCountryList = exportCountry.split(',');
+        }
+
+        var params = {
+            'exportCountry' : exportCountryList
+        };
+        TRF.util.setDefaultValuesForToolBar(Ext.getCmp(chinaplus.screen.CPMPMS01), 'ttcSuppCd', '');
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS01 + '_ttcSuppCdStore'), params, null);
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS01 + '_ssmsMainRouteStore'), params, null);
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS01 + '_ssmsVendorRouteStore'), params, null);
+    },
+
+    /**
+     * load ttcSuppCd Change
+     */
+    loadTtcSuppCdChange : function(ttcSuppCd) {
+
+        var list = TRF.util.getSelectedValuesForToolBar(Ext.getCmp(chinaplus.screen.CPMPMS01));
+        var exportCountry = list.exportCountry;
+        var ttcSuppCdList = new Array();
+        if (ttcSuppCd != '') {
+            ttcSuppCdList = ttcSuppCd.split(',');
+        }
+        var params = {
+            'exportCountry' : exportCountry,
+            'ttcSuppCd' : ttcSuppCdList
+        };
+        TRF.util.setDefaultValuesForToolBar(Ext.getCmp(chinaplus.screen.CPMPMS01), 'ssmsMainRoute', '');
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS01 + '_ssmsMainRouteStore'), params, null);
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS01 + '_ssmsVendorRouteStore'), params, null);
+    },
+
+    /**
+     * load ssmsMainRoute Change
+     */
+    loadSsmsMainRouteChange : function(ssmsMainRoute) {
+
+        var list = TRF.util.getSelectedValuesForToolBar(Ext.getCmp(chinaplus.screen.CPMPMS01));
+        var exportCountry = list.exportCountry;
+        var ttcSuppCd = list.ttcSuppCd;
+        var ssmsMainRouteList = new Array();
+        if (ssmsMainRoute != '') {
+            ssmsMainRouteList = ssmsMainRoute.split(',');
+        }
+        var params = {
+            'exportCountry' : exportCountry,
+            'ttcSuppCd' : ttcSuppCd,
+            'ssmsMainRoute' : ssmsMainRouteList
+        };
+        TRF.util.setDefaultValuesForToolBar(Ext.getCmp(chinaplus.screen.CPMPMS01), 'ssmsVendorRoute', '');
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS01 + '_ssmsVendorRouteStore'), params, null);
+    },
+
+    /**
+     * load impOfficeCode Change
+     */
+    loadImpOfficeCodeChange : function(impOfficeCode) {
+
+        var impOfficeCodeList = new Array();
+        if (impOfficeCode != '') {
+            impOfficeCodeList = impOfficeCode.split(',');
+        }
+        var params = {
+            'impOfficeCode' : impOfficeCodeList
+        };
+        TRF.util.setDefaultValuesForToolBar(Ext.getCmp(chinaplus.screen.CPMPMS01), 'ttcCustCd', '');
+        TRF.util.setDefaultValuesForToolBar(Ext.getCmp(chinaplus.screen.CPMPMS01), 'mailInvCustCd', '');
+        TRF.util.setDefaultValuesForToolBar(Ext.getCmp(chinaplus.screen.CPMPMS01), 'ttcImpWHCd', '');
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS01 + '_ttcCustCdStore'), params, null);
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS01 + '_mailInvCustCdStore'), params, null);
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS01 + '_ttcImpWHCdStore'), params, null);
+    },
+
+    /**
+     * load ttcCustCd Change
+     */
+    loadTtcCustCdChange : function(ttcCustCd) {
+
+        var list = TRF.util.getSelectedValuesForToolBar(Ext.getCmp(chinaplus.screen.CPMPMS01));
+        var impOfficeCode = list.impOfficeCode;
+        var ttcCustCdList = new Array();
+        if (ttcCustCd != '') {
+            ttcCustCdList = ttcCustCd.split(',');
+        }
+        var params = {
+            'impOfficeCode' : impOfficeCode,
+            'ttcCustCd' : ttcCustCdList
+        };
+        TRF.util.setDefaultValuesForToolBar(Ext.getCmp(chinaplus.screen.CPMPMS01), 'mailInvCustCd', '');
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS01 + '_mailInvCustCdStore'), params, null);
+    },
+
+    /**
+     * Parts Master Download
+     */
+    downloadFunc : function() {
+
+        // select check
+        var popMsg = TRF.util.getMessage('w1011');
+        var lsMsgs = [];
+        var selectionArray = Ext.getCmp(chinaplus.screen.CPMPMS01).getSelectionModel().getSelection();
+
+        // must select one
+        // if (selectionArray.length == 0) {
+        // Ext.Array.push(lsMsgs, popMsg);
+        // TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, popMsg,
+        // lsMsgs);
+        // return;
+        // }
+
+        // do selected data
+        var selectedDatas = new Array();
+        for (var i = 0; i < selectionArray.length; i++) {
+            // set into data
+            selectedDatas[i] = {
+                'expPartsId' : selectionArray[i].data.expPartsId
+            };
+        }
+
+        var params = {
+            'dataLists' : selectedDatas
+        };
+        var fcn = function() {
+        };
+
+        TRF.util.downloadSubmit(fcn, chinaplus.screen.CPMPMS01, "mm/CPMPMF01/downloadcheck", params, "mm/CPMPMF01/download", true);
+    }
+
+}

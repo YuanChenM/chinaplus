@@ -1,0 +1,426 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.kbp.service.CPKKPS02Service">
+    
+    <!-- Get Kanban Info SQL -->
+    <select id="getKanbanInfo" parameterType="com.chinaplus.core.bean.ObjectParam" resultType="com.chinaplus.web.kbp.entity.CPKKPS02Entity">
+        SELECT
+            KANBAN.KANBAN_ID AS kanbanId
+            , KANBAN.KANBAN_PLAN_NO AS kanbanPlanNo
+            , KANBAN.REVISION_VERSION AS revisionVersion
+            , KANBAN.ORDER_MONTH AS orderMonth
+            , CUSTOMER.CUSTOMER_CODE AS customerCode
+            , SUPPLIER.SUPPLIER_CODE AS supplierCode
+        FROM
+            TNT_KANBAN KANBAN
+            INNER JOIN TNM_CUSTOMER CUSTOMER ON CUSTOMER.CUSTOMER_ID = KANBAN.CUSTOMER_ID AND CUSTOMER.OFFICE_ID = KANBAN.OFFICE_ID 
+            INNER JOIN TNM_SUPPLIER SUPPLIER ON SUPPLIER.SUPPLIER_ID = KANBAN.SUPPLIER_ID 
+        WHERE
+            KANBAN.KANBAN_ID IN
+        <foreach item="kanban" index="kanbanIdIndex" collection="datas" open="(" separator="," close=")">  
+            #{kanban.kanbanId}
+        </foreach>
+    </select>
+    
+    <!-- Get Part Info SQL -->
+    <select id="findPartInfoPageListCount" parameterType="com.chinaplus.core.bean.PageParam" resultType="int" flushCache="true">
+        SELECT
+            COUNT(1) AS cnt
+        <include refid="fromSqlPartInfo" />
+    </select>
+    
+    <select id="findPartInfoPageList" parameterType="com.chinaplus.core.bean.PageParam" resultType="com.chinaplus.web.kbp.entity.CPKKPS02Entity" flushCache="true">
+        SELECT
+            *
+        FROM (
+            SELECT
+                KANBAN_PARTS.KANBAN_PARTS_ID AS kanbanPartsId
+                , KANBAN_PARTS.PARTS_ID AS partsId
+                , PARTS_MASTER.TTC_PARTS_NO AS ttcPartsNo
+                , COALESCE(KANBAN_PARTS.QTY, 0) AS partsOrderQty
+                , CASE WHEN OFFICE.IMP_STOCK_FLAG = 1 THEN COALESCE(ORDER_STATUS.EXP_ONSHIPPING_QTY, 0)
+                    ELSE COALESCE(ORDER_STATUS.EXP_ONSHIPPING_QTY, 0) + COALESCE(ORDER_STATUS.IN_RACK_QTY, 0)
+                    END AS partsOnShippingQty
+                , CASE WHEN OFFICE.IMP_STOCK_FLAG = 1 THEN COALESCE(ORDER_STATUS.IN_RACK_QTY, 0) + COALESCE(ORDER_STATUS.IMP_STOCK_QTY, 0) - COALESCE(ORDER_STATUS.IMP_ADJUSTED_QTY, 0) + COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) + COALESCE(ORDER_STATUS.TRANSFER_OUT_QTY, 0)
+                    ELSE COALESCE(ORDER_STATUS.IMP_STOCK_QTY, 0) - COALESCE(ORDER_STATUS.IMP_ADJUSTED_QTY, 0) + COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) + COALESCE(ORDER_STATUS.TRANSFER_OUT_QTY, 0)
+                    END AS partsInboundQty
+                , COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) AS partsOutboundQty
+                , CASE WHEN OFFICE.IMP_STOCK_FLAG = 1 THEN
+                        CASE WHEN (COALESCE(ORDER_STATUS.IN_RACK_QTY, 0) + COALESCE(ORDER_STATUS.IMP_STOCK_QTY, 0) - COALESCE(ORDER_STATUS.IMP_ADJUSTED_QTY, 0) + COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) + COALESCE(ORDER_STATUS.TRANSFER_OUT_QTY, 0)) > COALESCE(ORDER_STATUS.ORDER_QTY, 0) 
+                            THEN (COALESCE(ORDER_STATUS.ORDER_QTY, 0) - (COALESCE(ORDER_STATUS.IN_RACK_QTY, 0) + COALESCE(ORDER_STATUS.IMP_STOCK_QTY, 0) - COALESCE(ORDER_STATUS.IMP_ADJUSTED_QTY, 0) + COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) + COALESCE(ORDER_STATUS.TRANSFER_OUT_QTY, 0)))
+                        WHEN KANBAN_PARTS.STATUS = 9 THEN 0
+                        ELSE (COALESCE(ORDER_STATUS.ORDER_QTY, 0) - (COALESCE(ORDER_STATUS.IN_RACK_QTY, 0) + COALESCE(ORDER_STATUS.IMP_STOCK_QTY, 0) - COALESCE(ORDER_STATUS.IMP_ADJUSTED_QTY, 0) + COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) + COALESCE(ORDER_STATUS.TRANSFER_OUT_QTY, 0)))
+                        END
+                    ELSE
+                        CASE WHEN (COALESCE(ORDER_STATUS.IMP_STOCK_QTY, 0) - COALESCE(ORDER_STATUS.IMP_ADJUSTED_QTY, 0) + COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) + COALESCE(ORDER_STATUS.TRANSFER_OUT_QTY, 0)) > COALESCE(ORDER_STATUS.ORDER_QTY, 0) 
+                            THEN (COALESCE(ORDER_STATUS.ORDER_QTY, 0) - (COALESCE(ORDER_STATUS.IMP_STOCK_QTY, 0) - COALESCE(ORDER_STATUS.IMP_ADJUSTED_QTY, 0) + COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) + COALESCE(ORDER_STATUS.TRANSFER_OUT_QTY, 0)))
+                        WHEN KANBAN_PARTS.STATUS = 9 THEN 0
+                        ELSE (COALESCE(ORDER_STATUS.ORDER_QTY, 0) - (COALESCE(ORDER_STATUS.IMP_STOCK_QTY, 0) - COALESCE(ORDER_STATUS.IMP_ADJUSTED_QTY, 0) + COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) + COALESCE(ORDER_STATUS.TRANSFER_OUT_QTY, 0)))
+                        END
+                    END AS partsOrderBalance
+                , CASE WHEN OFFICE.IMP_STOCK_FLAG = 1 THEN
+                        CASE WHEN KANBAN_PARTS.STATUS = 9 THEN 9
+                        WHEN COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) >= COALESCE(ORDER_STATUS.ORDER_QTY, 0) THEN 3
+                        WHEN COALESCE(ORDER_STATUS.IN_RACK_QTY, 0) + COALESCE(ORDER_STATUS.IMP_STOCK_QTY, 0) - COALESCE(ORDER_STATUS.IMP_ADJUSTED_QTY, 0) + COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) + COALESCE(ORDER_STATUS.TRANSFER_OUT_QTY, 0) >= COALESCE(ORDER_STATUS.ORDER_QTY, 0) THEN 2
+                        ELSE 1 END
+                    ELSE
+                        CASE WHEN KANBAN_PARTS.STATUS = 9 THEN 9
+                        WHEN COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) >= COALESCE(ORDER_STATUS.ORDER_QTY, 0) THEN 3
+                        WHEN COALESCE(ORDER_STATUS.IMP_STOCK_QTY, 0) - COALESCE(ORDER_STATUS.IMP_ADJUSTED_QTY, 0) + COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) + COALESCE(ORDER_STATUS.TRANSFER_OUT_QTY, 0) >= COALESCE(ORDER_STATUS.ORDER_QTY, 0) THEN 2
+                        ELSE 1 END
+                    END AS partsStatus
+                , UOM.DECIMAL_DIGITS AS decimalDigits
+        , ROWNUMBER() over(<include refid="orderSqlPartInfo" />) AS rownum
+        <include refid="fromSqlPartInfo" />
+        <include refid="orderSqlPartInfo" />
+        ) 
+        WHERE
+        <include refid="com.chinaplus.const.pagingCondition" />
+    </select>
+    
+    <sql id="fromSqlPartInfo">
+        FROM
+            TNT_KANBAN_PARTS KANBAN_PARTS
+        INNER JOIN 
+            TNM_PARTS_MASTER PARTS_MASTER ON PARTS_MASTER.PARTS_ID = KANBAN_PARTS.PARTS_ID
+        INNER JOIN 
+            TNT_KANBAN KANBAN ON KANBAN.KANBAN_ID = KANBAN_PARTS.KANBAN_ID
+        INNER JOIN 
+            TNM_OFFICE OFFICE ON KANBAN.OFFICE_ID = OFFICE.OFFICE_ID
+        LEFT JOIN 
+            TNF_ORDER_STATUS ORDER_STATUS ON KANBAN.KANBAN_PLAN_NO = ORDER_STATUS.KANBAN_PLAN_NO AND KANBAN_PARTS.PARTS_ID = ORDER_STATUS.PARTS_ID
+        INNER JOIN 
+            TNM_UOM UOM ON UOM.UOM_CODE = PARTS_MASTER.UOM_CODE
+        WHERE
+            KANBAN_PARTS.KANBAN_ID = #{filters.kanbanId}
+        <if test="filters.ttcPartsNo != null and filters.ttcPartsNo != ''">
+            AND PARTS_MASTER.TTC_PARTS_NO LIKE #{filters.ttcPartsNo} ESCAPE '!'
+        </if>
+        <if test="filters.partsStatus != null and filters.partsStatus.size() != 0">
+            AND 
+            <foreach item="partsStatusItem" index="partsStatusIndex" collection="filters.partsStatus" open="(" separator="OR" close=")">  
+                <if test="partsStatusItem == 9">
+                    KANBAN_PARTS.STATUS = #{partsStatusItem}
+                </if>
+                <if test="partsStatusItem == 3">
+                    KANBAN_PARTS.STATUS <![CDATA[<>]]> 9 
+                    AND COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) >= COALESCE(ORDER_STATUS.ORDER_QTY, 0)
+                </if>
+                <if test="partsStatusItem == 2">
+                    KANBAN_PARTS.STATUS <![CDATA[<>]]> 9 
+                    AND COALESCE(ORDER_STATUS.IMP_STOCK_QTY, 0) - COALESCE(ORDER_STATUS.IMP_ADJUSTED_QTY, 0) + COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) + COALESCE(ORDER_STATUS.TRANSFER_OUT_QTY, 0) >= COALESCE(ORDER_STATUS.ORDER_QTY, 0)
+                    AND COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) <![CDATA[<]]> COALESCE(ORDER_STATUS.ORDER_QTY, 0)
+                </if>
+                <if test="partsStatusItem == 1">
+                    KANBAN_PARTS.STATUS <![CDATA[<>]]> 9 
+                    AND COALESCE(ORDER_STATUS.IMP_STOCK_QTY, 0) - COALESCE(ORDER_STATUS.IMP_ADJUSTED_QTY, 0) + COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) + COALESCE(ORDER_STATUS.TRANSFER_OUT_QTY, 0) <![CDATA[<]]> COALESCE(ORDER_STATUS.ORDER_QTY, 0) 
+                    AND COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) <![CDATA[<]]> COALESCE(ORDER_STATUS.ORDER_QTY, 0)
+                </if>
+            </foreach>
+        </if>
+    </sql>
+        
+    <sql id="orderSqlPartInfo">
+        ORDER BY
+            PARTS_MASTER.TTC_PARTS_NO ASC
+    </sql>
+    
+    <!-- Get Upload Info SQL -->
+    <select id="findUploadInfoPageListCount" parameterType="com.chinaplus.core.bean.PageParam" resultType="int" flushCache="true">
+        SELECT
+            COUNT(1) AS cnt
+        <include refid="selectSqlUploadInfo" />
+    </select>
+    
+    <select id="findUploadInfoPageList" parameterType="com.chinaplus.core.bean.PageParam" resultType="com.chinaplus.web.kbp.entity.CPKKPS02Entity" flushCache="true">
+        SELECT
+            *
+            <include refid="selectSqlUploadInfo" />
+        WHERE
+            <include refid="com.chinaplus.const.pagingCondition" />
+    </select>
+  
+    <sql id="selectSqlUploadInfo">
+        FROM 
+            (
+            SELECT
+                kanbanIdUpload
+                , kanbanPlanNo
+                , kanbanPlanNoDisplay
+                , transportMode
+                , seaFlag
+                , airFlag
+                , orderQty
+                , onShippingQty
+                , inboundQty
+                , orderBalance
+                , totalOrderQty
+                , totalOnShippingQty
+                , totalInboundQty
+                , totalBalanceQty
+                , uploadFileType
+                , revisionReason
+                , status
+                , uploadId
+                , lastUploadTime
+                , ROWNUMBER() over(ORDER BY lastUploadTime DESC) AS rownum
+            FROM
+                (
+                SELECT
+                    KANBAN.KANBAN_ID AS kanbanIdUpload
+                    , KANBAN.KANBAN_PLAN_NO AS kanbanPlanNo
+                    , (CASE WHEN KANBAN.REVISION_VERSION IS NULL THEN KANBAN.KANBAN_PLAN_NO ELSE KANBAN.KANBAN_PLAN_NO || '_R' || RIGHT(DIGITS(KANBAN.REVISION_VERSION), 2) END) AS kanbanPlanNoDisplay
+                    , (CASE WHEN KANBAN.SEA_FLAG = '1' AND KANBAN.AIR_FLAG = '1' THEN 'SEA,AIR' WHEN KANBAN.SEA_FLAG = '1' THEN 'SEA' WHEN KANBAN.AIR_FLAG = '1' THEN 'AIR' END) AS transportMode
+                    , COALESCE(KANBAN.SEA_FLAG, 0) AS seaFlag
+                    , COALESCE(KANBAN.AIR_FLAG, 0) AS airFlag
+                    , SUM(COALESCE(ORDER_STATUS.ORDER_QTY, 0)) AS orderQty
+                    , SUM(
+                        CASE WHEN OFFICE.IMP_STOCK_FLAG = 1 THEN COALESCE(ORDER_STATUS.EXP_ONSHIPPING_QTY, 0)
+                        ELSE COALESCE(ORDER_STATUS.EXP_ONSHIPPING_QTY, 0) + COALESCE(ORDER_STATUS.IN_RACK_QTY, 0)
+                        END) AS onShippingQty
+                    , SUM(
+                        CASE WHEN OFFICE.IMP_STOCK_FLAG = 1 THEN COALESCE(ORDER_STATUS.IN_RACK_QTY, 0) + COALESCE(ORDER_STATUS.IMP_STOCK_QTY, 0) - COALESCE(ORDER_STATUS.IMP_ADJUSTED_QTY, 0) + COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) + COALESCE(ORDER_STATUS.TRANSFER_OUT_QTY, 0)
+                        ELSE COALESCE(ORDER_STATUS.IMP_STOCK_QTY, 0) - COALESCE(ORDER_STATUS.IMP_ADJUSTED_QTY, 0) + COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) + COALESCE(ORDER_STATUS.TRANSFER_OUT_QTY, 0)
+                        END) AS inboundQty
+                    , SUM(
+                        CASE WHEN OFFICE.IMP_STOCK_FLAG = 1 THEN
+                            CASE WHEN (COALESCE(ORDER_STATUS.IN_RACK_QTY, 0) + COALESCE(ORDER_STATUS.IMP_STOCK_QTY, 0) - COALESCE(ORDER_STATUS.IMP_ADJUSTED_QTY, 0) + COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) + COALESCE(ORDER_STATUS.TRANSFER_OUT_QTY, 0)) > COALESCE(ORDER_STATUS.ORDER_QTY, 0) THEN 0
+                            WHEN KANBAN_PARTS.STATUS = 9 THEN 0
+                            ELSE (COALESCE(ORDER_STATUS.ORDER_QTY, 0) - (COALESCE(ORDER_STATUS.IN_RACK_QTY, 0) + COALESCE(ORDER_STATUS.IMP_STOCK_QTY, 0) - COALESCE(ORDER_STATUS.IMP_ADJUSTED_QTY, 0) + COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) + COALESCE(ORDER_STATUS.TRANSFER_OUT_QTY, 0)))
+                            END
+                        ELSE
+                            CASE WHEN (COALESCE(ORDER_STATUS.IMP_STOCK_QTY, 0) - COALESCE(ORDER_STATUS.IMP_ADJUSTED_QTY, 0) + COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) + COALESCE(ORDER_STATUS.TRANSFER_OUT_QTY, 0)) > COALESCE(ORDER_STATUS.ORDER_QTY, 0) THEN 0
+                            WHEN KANBAN_PARTS.STATUS = 9 THEN 0
+                            ELSE (COALESCE(ORDER_STATUS.ORDER_QTY, 0) - (COALESCE(ORDER_STATUS.IMP_STOCK_QTY, 0) - COALESCE(ORDER_STATUS.IMP_ADJUSTED_QTY, 0) + COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) + COALESCE(ORDER_STATUS.TRANSFER_OUT_QTY, 0)))
+                            END
+                        END) AS orderBalance
+                    , COALESCE(KANBAN.TOTAL_ORDER_QTY, 0) AS totalOrderQty
+                    , COALESCE(KANBAN.TOTAL_ONSHIPPING_QTY, 0) AS totalOnShippingQty
+                    , COALESCE(KANBAN.TOTAL_INBOUND_QTY, 0) AS totalInboundQty
+                    , COALESCE(KANBAN.TOTAL_BALANCE_QTY, 0) AS totalBalanceQty
+                    , KANBAN.UPLOAD_FILE_TYPE AS uploadFileType
+                    , COALESCE(KANBAN.REVISION_REASON, 'NA') AS revisionReason
+                    , KANBAN.STATUS AS status
+                    , USER.LOGIN_ID AS uploadId
+                    , KANBAN.UPLOADED_DATE AS lastUploadTime
+                <include refid="fromSqlUploadInfo" />
+                <include refid="groupSqlUploadInfo" />
+                <include refid="orderSqlUploadInfo" />
+                )
+            <if test="filters.kanbanPlanNoDisplay != null and filters.kanbanPlanNoDisplay != ''">
+            WHERE kanbanPlanNoDisplay LIKE #{filters.kanbanPlanNoDisplay} ESCAPE '!'
+            </if>
+            )
+    </sql>
+    
+    <sql id="fromSqlUploadInfo">
+        FROM
+            TNT_KANBAN KANBAN
+        INNER JOIN 
+            TNM_OFFICE OFFICE ON KANBAN.OFFICE_ID = OFFICE.OFFICE_ID
+        LEFT JOIN 
+            TNT_KANBAN_PARTS KANBAN_PARTS ON KANBAN_PARTS.KANBAN_ID = KANBAN.KANBAN_ID
+        LEFT JOIN 
+            TNF_ORDER_STATUS ORDER_STATUS ON ORDER_STATUS.KANBAN_PLAN_NO = KANBAN.KANBAN_PLAN_NO AND ORDER_STATUS.PARTS_ID = KANBAN_PARTS.PARTS_ID
+        LEFT JOIN 
+            TNM_USER USER ON USER.USER_ID = KANBAN.UPLOADED_BY
+        WHERE
+            KANBAN.KANBAN_PLAN_NO = #{filters.kanbanPlanNo}
+        <if test="filters.transportMode != null and filters.transportMode != ''">
+            <if test="filters.transportMode == 1">
+                AND KANBAN.SEA_FLAG = '1'
+            </if>
+            <if test="filters.transportMode == 2">
+                AND KANBAN.AIR_FLAG = '1'
+            </if>
+        </if>
+        <if test="filters.status != null and filters.status != ''">
+            AND KANBAN.STATUS = #{filters.status}
+        </if>
+        <if test="filters.uploadFileType != null and filters.uploadFileType != ''">
+            AND KANBAN.UPLOAD_FILE_TYPE = #{filters.uploadFileType}
+        </if>        
+        <if test="filters.uploadId != null and filters.uploadId.size() != 0">
+            AND KANBAN.UPLOADED_BY IN
+            <foreach item="uploadIdItem" index="uploadIdIndex" collection="filters.uploadId" open="(" separator="," close=")">  
+                #{uploadIdItem}
+            </foreach>
+        </if>
+        <if test="filters.lastUploadTimeFrom != null and filters.lastUploadTimeFrom != ''">
+            AND KANBAN.UPLOADED_DATE <![CDATA[>=]]> #{filters.lastUploadTimeFrom}
+        </if>
+        <if test="filters.lastUploadTimeTo != null and filters.lastUploadTimeTo != ''">
+            AND KANBAN.UPLOADED_DATE <![CDATA[<=]]> #{filters.lastUploadTimeTo}
+        </if>
+    </sql>
+    
+    <sql id="groupSqlUploadInfo">
+        GROUP BY
+            KANBAN.KANBAN_ID
+            , KANBAN.KANBAN_PLAN_NO
+            , KANBAN.REVISION_VERSION
+            , KANBAN.SEA_FLAG
+            , KANBAN.AIR_FLAG
+            , KANBAN.TOTAL_ORDER_QTY
+            , KANBAN.TOTAL_ONSHIPPING_QTY
+            , KANBAN.TOTAL_INBOUND_QTY
+            , KANBAN.TOTAL_BALANCE_QTY
+            , KANBAN.UPLOAD_FILE_TYPE
+            , KANBAN.REVISION_REASON
+            , KANBAN.STATUS
+            , USER.LOGIN_ID
+            , KANBAN.UPLOADED_DATE
+    </sql>
+    
+    <sql id="orderSqlUploadInfo">
+        ORDER BY
+            KANBAN.UPLOADED_DATE DESC
+    </sql>
+    
+    <!-- Check the Kanban plan is already cancelled or not. -->
+    <select id="getCancelledKanbanCount" parameterType="com.chinaplus.core.bean.BaseParam" resultType="int" flushCache="true">
+        SELECT
+            COUNT(1) AS COUNT
+        FROM
+            TNT_KANBAN KANBAN
+        WHERE
+            KANBAN.STATUS = '99'
+            AND KANBAN.KANBAN_ID IN 
+        <foreach item="kanban" index="kanbanIdIndex" collection="datas" open="(" separator="," close=")">  
+                #{kanban.kanbanId}
+        </foreach>
+    </select>
+    
+    <!-- Get Parts On Shipping Qty -->
+    <select id="getPartsOnShippingQty" parameterType="com.chinaplus.web.kbp.entity.CPKKPS02Entity" resultType="com.chinaplus.web.kbp.entity.CPKKPS02Entity" flushCache="true">
+        SELECT
+            CASE WHEN OFFICE.IMP_STOCK_FLAG = 1 THEN COALESCE(ORDER_STATUS.EXP_ONSHIPPING_QTY, 0)
+                ELSE COALESCE(ORDER_STATUS.EXP_ONSHIPPING_QTY, 0) + COALESCE(ORDER_STATUS.IN_RACK_QTY, 0)
+                END AS partsOnShippingQty
+        FROM
+            TNT_KANBAN_PARTS KANBAN_PARTS
+        INNER JOIN 
+            TNT_KANBAN KANBAN ON KANBAN.KANBAN_ID = KANBAN_PARTS.KANBAN_ID
+        INNER JOIN 
+            TNM_OFFICE OFFICE ON KANBAN.OFFICE_ID = OFFICE.OFFICE_ID
+        INNER JOIN 
+            TNF_ORDER_STATUS ORDER_STATUS ON ORDER_STATUS.KANBAN_PLAN_NO = KANBAN.KANBAN_PLAN_NO AND ORDER_STATUS.PARTS_ID = KANBAN_PARTS.PARTS_ID
+        WHERE
+            KANBAN.KANBAN_ID = #{kanbanId}
+            AND KANBAN_PARTS.KANBAN_PARTS_ID = #{kanbanPartsId}
+    </select>
+    
+    <!-- Update TNT_KANBAN_PARTS's status.  -->
+    <update id="updateKanbanPartsToForceCompleted" parameterType="com.chinaplus.core.bean.ObjectParam">
+        UPDATE 
+            TNT_KANBAN_PARTS 
+        SET 
+            STATUS = '9'
+            , UPDATED_DATE = #{swapData.UPDATE_DATE}
+            , UPDATED_BY = #{loginUserId}
+            , VERSION = VERSION + 1
+        WHERE
+            KANBAN_PARTS_ID IN
+        <foreach item="kanban" index="kanbanPartsIdIndex" collection="datas" open="(" separator="," close=")">  
+            #{kanban.kanbanPartsId}
+        </foreach>
+    </update>
+    
+    <!-- Delete from TNT_KANBAN_SHIPPING_PARTS. -->
+    <delete id="deleteKanbanShippingParts" parameterType="com.chinaplus.core.bean.ObjectParam">
+        DELETE FROM
+            TNT_KANBAN_SHIPPING_PARTS
+        WHERE
+            KANBAN_SHIPPING_ID IN (
+                SELECT
+                    KANBAN_SHIPPING_ID
+                FROM
+                    TNT_KANBAN_SHIPPING
+                WHERE
+                    NIRD_FLAG = '1'
+                    AND KANBAN_ID IN
+                <foreach item="kanban" index="kanbanIdIndex" collection="datas" open="(" separator="," close=")">  
+                    #{kanban.kanbanId}
+                </foreach>
+            )
+            AND PARTS_ID IN  
+        <foreach item="kanban" index="partsIdIndex" collection="datas" open="(" separator="," close=")">  
+                #{kanban.partsId}
+        </foreach>
+    </delete>
+    
+    <!-- Delete from TNT_KANBAN_SHIPPING. -->
+    <delete id="deleteKanbanShipping" parameterType="com.chinaplus.core.bean.ObjectParam">
+        DELETE FROM
+            TNT_KANBAN_SHIPPING A
+        WHERE
+            A.KANBAN_ID IN 
+        <foreach item="kanban" index="kanbanIdIndex" collection="datas" open="(" separator="," close=")">  
+            #{kanban.kanbanId}
+        </foreach>
+            AND A.NIRD_FLAG = '1'
+            AND NOT EXISTS (
+                SELECT
+                    1
+                FROM
+                    TNT_KANBAN_SHIPPING_PARTS B
+                WHERE
+                    A.KANBAN_SHIPPING_ID = B.KANBAN_SHIPPING_ID
+            )
+    </delete>
+    
+    <!-- Update Kanban shipping to completed. -->
+    <update id="updateKanbanShippingToCompleted" parameterType="com.chinaplus.core.bean.ObjectParam">
+        UPDATE
+            TNT_KANBAN_SHIPPING
+        SET
+            COMPLETED_FLAG = 1
+            , NIRD_FLAG = 0
+            , UPDATED_DATE = #{swapData.UPDATE_DATE}
+            , UPDATED_BY = #{loginUserId}
+            , VERSION = VERSION + 1
+        WHERE
+            KANBAN_SHIPPING_ID IN (
+                SELECT
+                    A.KANBAN_SHIPPING_ID
+                FROM
+                    TNT_KANBAN_SHIPPING A
+                WHERE
+                    A.KANBAN_ID IN
+                <foreach item="kanban" index="kanbanIdIndex" collection="datas" open="(" separator="," close=")">
+                    #{kanban.kanbanId}
+                </foreach>
+                    AND A.COMPLETED_FLAG = 0
+                    AND NOT EXISTS (
+                        SELECT 
+                            1
+                        FROM
+                            TNT_KANBAN_SHIPPING_PARTS B
+                        INNER JOIN TNT_KANBAN_PARTS C ON B.PARTS_ID = C.PARTS_ID AND C.KANBAN_ID IN
+                            <foreach item="kanban" index="kanbanIdIndex" collection="datas" open="(" separator="," close=")">
+                                #{kanban.kanbanId}
+                            </foreach>
+                        WHERE
+                            C.STATUS != 9
+                            AND B.QTY > 0
+                            AND B.KANBAN_SHIPPING_ID = A.KANBAN_SHIPPING_ID
+                    )
+            )
+    </update>
+    
+    <!-- Update TNF_ORDER_STATUS's FORCE_COMPLETED_QTY. -->
+    <update id="updateKanbanShippingForceCompletedQty" parameterType="com.chinaplus.web.kbp.entity.CPKKPS02Entity">
+        UPDATE
+            TNF_ORDER_STATUS
+        SET
+            FORCE_COMPLETED_QTY = COALESCE(ORDER_QTY, 0) - (COALESCE(IMP_STOCK_QTY, 0) - COALESCE(IMP_ADJUSTED_QTY, 0) + COALESCE(IMP_DELIVERED_QTY, 0) + COALESCE(TRANSFER_OUT_QTY, 0))
+            , UPDATED_DATE = #{updatedDate}
+            , UPDATED_BY = #{updatedBy}
+            , VERSION = VERSION + 1
+        WHERE
+            KANBAN_PLAN_NO = #{kanbanPlanNo}
+            AND PARTS_ID = #{partsId}
+    </update>
+</mapper>

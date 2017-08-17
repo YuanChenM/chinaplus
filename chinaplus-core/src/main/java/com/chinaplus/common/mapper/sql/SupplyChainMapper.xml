@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- CommonMapper.xml @screen common @author ma_b -->
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.common.service.SupplyChainService">
+    
+     <sql id="ConstDef">
+        <bind name="ACTIVE" value="@com.chinaplus.common.consts.CodeConst$InactiveFlag@ACTIVE" />
+    </sql>
+                  
+    <select id="getPartsInformation" parameterType="com.chinaplus.common.bean.SupplyChainEntity" resultType="com.chinaplus.common.bean.SupplyChainEntity">
+         SELECT 
+                B.OFFICE_ID AS officeId
+              , B.CUSTOMER_ID AS customerId
+              , B.PARTS_ID AS partsId
+              , A.SUPPLIER_ID AS supplierId
+              , D.WHS_ID AS impWhsId
+              , D.WHS_CODE AS impWhsCode
+              , C.IMP_STOCK_FLAG AS impStockFlag
+              , A.SHIPPING_ROUTE_CODE AS shippingRouteCode
+              , A.AIR_ETD_LEADTIME AS airEtdLt
+              , A.AIR_ETA_LEADTIME AS airEtaLt
+              , A.AIR_INBOUND_LEADTIME AS airInboundLt
+              , A.SEA_ETA_LEADTIME AS seaEtaLt
+              , A.SEA_INBOUND_LEADTIME AS seaInboundLt
+           FROM 
+                TNM_EXP_PARTS A
+          INNER JOIN 
+                TNM_PARTS_MASTER B 
+             ON 
+                B.PARTS_ID = A.PARTS_ID
+          INNER JOIN 
+                TNM_OFFICE C 
+             ON 
+                C.OFFICE_ID = B.OFFICE_ID
+          INNER JOIN 
+                TNM_WAREHOUSE D 
+             ON 
+                D.WHS_CODE = B.IMP_WHS_CODE
+          WHERE 
+                A.EXP_PARTS_ID = #{expPartsId}
+    </select>
+              
+    <select id="getCalendarList" parameterType="com.chinaplus.common.bean.TnmCalendarDetailEx" resultType="com.chinaplus.common.bean.TnmCalendarDetailEx">
+         <include refid="ConstDef"/>
+         SELECT
+                A.CALENDAR_ID AS calendarId
+              , B.CALENDAR_DATE AS calendarDate
+              , B.WORKING_FLAG AS workingFlag
+           FROM
+                TNM_CALENDAR_MASTER A 
+          INNER JOIN 
+                TNM_CALENDAR_DETAIL B 
+             ON 
+                B.CALENDAR_ID = A.CALENDAR_ID 
+          WHERE
+                A.INACTIVE_FLAG = #{ACTIVE}
+            AND 
+                B.CALENDAR_DATE > #{calendarDate}
+          <if test = "officeList != null and officeList.size() > 0">
+            AND
+                A.OFFICE_ID IN 
+                <foreach collection="officeList" item="item" index="index" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+          </if>
+          ORDER BY
+                A.CALENDAR_ID
+              , B.CALENDAR_DATE
+    </select>
+            
+    <select id="getCalendarPartyInfo" parameterType="com.chinaplus.common.bean.TnmCalendarPartyEx" resultType="com.chinaplus.common.bean.TnmCalendarPartyEx">
+         SELECT
+                A.CALENDAR_ID AS calendarId
+              , A.PARTY_TYPE AS partyType
+              , A.OFFICE_ID AS officeId
+              , A.SUPPLIER_ID AS supplierId
+              , A.CUSTOMER_ID AS customerId
+              , A.WHS_ID AS whsId
+           FROM
+                TNM_CALENDAR_PARTY A
+         <where>
+           <if test = "officeList != null and officeList.size() > 0">
+                A.OFFICE_ID IN 
+                <foreach collection="officeList" item="item" index="index" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+          </where>
+          ORDER BY
+                A.PARTY_TYPE
+              , A.OFFICE_ID
+              , A.CUSTOMER_ID
+              , A.WHS_ID
+              , A.SUPPLIER_ID
+    </select>
+                
+    <select id="getShippingRouteList" parameterType="com.chinaplus.common.bean.ShippingRouteInfoEntity" resultType="com.chinaplus.common.bean.ShippingRouteInfoEntity">
+         <include refid="ConstDef"/>
+         SELECT
+                A.SHIPPING_ROUTE_CODE AS shippingRouteCode
+              , A.IMP_CC_LEADTIME AS impCcLt
+              , A.IMP_INBOUND_LEADTIME AS impInboundLt
+              , B.DELIVERY_START AS deliveryStart
+              , B.DELIVERY_END AS deliveryEnd
+              , B.LAST_VANNING AS lastVanning
+              , B.KANBAN_ISSUE_DATE AS kanbanIssueDate
+              , B.EXP_INBOUND_DATE AS expInboundDate
+              , B.ETD AS etd
+              , B.ETA AS eta
+              , B.SUPPLIER_ID AS supplierId
+           FROM
+                TNM_SR_MASTER A
+          INNER JOIN 
+                TNM_SR_DETAIL B 
+             ON 
+                A.SR_ID = B.SR_ID 
+          WHERE 
+                A.INACTIVE_FLAG = #{ACTIVE}
+            AND 
+                B.INACTIVE_FLAG = #{ACTIVE}
+            <if test = "routeTypeList != null and routeTypeList.size() > 0">
+            AND 
+                A.SHIPPING_ROUTE_TYPE IN 
+                <foreach collection="routeTypeList" item="item" index="index" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test = "deliveryStart != null">
+            AND 
+                B.DELIVERY_END >= #{deliveryEnd} 
+            </if>
+            <if test = "etd != null">
+            AND 
+                B.ETD >= #{etd} 
+            </if>
+            <if test = "kanbanIssueDate != null">
+            AND 
+                B.KANBAN_ISSUE_DATE >= #{kanbanIssueDate} 
+            </if>
+            <if test = "expInboundDate != null">
+            AND 
+                B.EXP_INBOUND_DATE >= #{expInboundDate} 
+            </if>
+            <if test = "officeList != null and officeList.size() > 0">
+            AND 
+                A.OFFICE_ID IN 
+                <foreach collection="officeList" item="item" index="index" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+          ORDER BY
+                A.SHIPPING_ROUTE_CODE
+              , B.SUPPLIER_ID
+              , B.DELIVERY_START
+              , B.DELIVERY_END
+              , B.LAST_VANNING
+              , B.KANBAN_ISSUE_DATE
+              , B.EXP_INBOUND_DATE
+              , B.ETD
+              , B.ETA
+    </select>
+    
+</mapper>

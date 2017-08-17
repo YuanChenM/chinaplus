@@ -1,0 +1,334 @@
+/**
+ * @screen CPIIFS02 ----- Invoice List Screen
+ * @author zhang_chi
+ */
+CPIIFS02 = {
+	xtype : 'gridpanel',
+	id : chinaplus.screen.CPIIFS02,
+	title : chinaplus.label.CPIIFS02_Label_PageTitle,
+	autoScroll : true,
+	height : Ext.getCmp('tabpanelId').getHeight() - 30,
+	border : true,
+	closable : false,
+	columnLines : true,
+	enableColumnHide : false,
+	enableColumnMove : false,
+	qtip : true,
+	selType : 'cellmodel',
+	selModel : Ext.create('Ext.ux.selection.CheckBoxModel', {
+				checkOnly : true,
+				renderer : function( v, o, r){
+					if(r.data.status == '2'){
+						return '<div tabindex="-1" class="x-grid-row-checker" style="background-position:right bottom;" role="presentation" >&nbsp;</div>';
+					}
+					return '<div tabindex="-1" class="x-grid-row-checker" role="presentation" >&nbsp;</div>';
+				},
+				listeners : {
+					beforeSelect : function( obj, r){
+						if(r.data.status == '2'){
+							return false;
+						}
+						return true;
+					}
+				}
+			}),
+	viewConfig : {
+		loadMask : false
+	},
+	plugins : [{
+				ptype : 'gridheaderfilters',
+				allSingleFilter : false
+			}, {
+				ptype : 'emptystoreview'
+			}, {
+				ptype : 'headerfiltertoolbar',
+				showMore : true
+			}],
+	header : false,
+	headerPosition : 'bottom',
+	columns : [{
+		xtype : 'gridcolumn',
+		text : '<div style="text-align:center">'
+				+ chinaplus.label.CPIIFS02_Grid_ImpOffice + '</div>',
+		align : 'left',
+		width : 150,
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'officeCode',
+		sortable : false,
+		filter : {
+			type : 'list',
+			multiSelect : false,
+			optionsStore : TRF.util.createStore(chinaplus.screen.CPIIFS02,
+					'inf/CPIIFS02/loadOfficeCode', 'Combo',
+					chinaplus.screen.CPIIFS02 + '_officeCodeStore')
+		}
+	}, {
+		xtype : 'gridcolumn',
+		text : '<div style="text-align:center">'
+				+ chinaplus.label.CPIIFS02_Grid_TTLogixInvoiceNo + '</div>',
+		align : 'left',
+		width : 170,
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'wrongInvocie',
+		sortable : false,
+		filter : {
+			type : 'list',
+			multiSelect : true,
+			optionsStore : TRF.util.createStore(chinaplus.screen.CPIIFS02,
+					'inf/CPIIFS02/loadWrongInvocie', 'Combo',
+					chinaplus.screen.CPIIFS02 + '_wrongInvocieStore')
+		}
+	}, {
+		xtype : 'gridcolumn',
+		text : '<div style="text-align:center">'
+				+ chinaplus.label.CPIIFS02_Grid_SSMSInvoiceNo + '</div>',
+		align : 'left',
+		width : 170,
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'matchedInvocie',
+		sortable : false,
+		filter : {
+			type : 'list',
+			multiSelect : true,
+			optionsStore : TRF.util.createStore(chinaplus.screen.CPIIFS02,
+					'inf/CPIIFS02/loadMatchedInvoice', 'Combo',
+					chinaplus.screen.CPIIFS02 + '_matchedInvocieStore')
+		}
+	}, {
+		xtype : 'gridcolumn',
+		text : '<div style="text-align:center">'
+				+ chinaplus.label.CPIIFS02_Grid_BusinessPattern + '</div>',
+		align : 'left',
+		width : 120,
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'businessPattern',
+		sortable : false,
+		renderer : function(value) {
+			return chinaplus.master.getMasterName(
+					chinaplus.master.consts.TnmCodeCategory_BUSINESS_PATTERN,
+					value);
+		},
+		filter : {
+			type : 'list',
+			multiSelect : false,
+			options : chinaplus.master
+					.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_BUSINESS_PATTERN)
+		}
+	}, {
+		xtype : 'gridcolumn',
+		text : '<div style="text-align:center">'
+				+ chinaplus.label.CPIIFS02_Grid_MismatchDate + '</div>',
+		align : 'center',
+		width : 140,
+		id : chinaplus.screen.CPIIFS02 + '_mismatchDate',
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'mismatchDate',
+		sortable : false,
+		filter : 'date',
+		filterPlugins : [{
+					ptype : 'datePickerClear'
+				}]
+	}, {
+		xtype : 'gridcolumn',
+		text : '<div style="text-align:center">'
+				+ chinaplus.label.CPIIFS02_Grid_MatchedDate + '</div>',
+		align : 'center',
+		width : 140,
+		id : chinaplus.screen.CPIIFS02 + '_matchDate',
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'matchDate',
+		sortable : false,
+		filter : 'date',
+		filterPlugins : [{
+					ptype : 'datePickerClear'
+				}]
+	}, {
+		xtype : 'gridcolumn',
+		text : '<div style="text-align:center">'
+				+ chinaplus.label.CPIIFS02_Grid_Status + '</div>',
+		align : 'left',
+		width : 120,
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'status',
+		sortable : false,
+		renderer : function(value) {
+			return chinaplus.master.getMasterName(
+					chinaplus.master.consts.TnmCodeCategory_InvoiceMatchStatus,
+					value);
+		},
+		filter : {
+			type : 'list',
+			multiSelect : false,
+			options : chinaplus.master
+					.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_InvoiceMatchStatus),
+		}
+	}, {
+		xtype : 'gridcolumn',
+		text : '<div style="text-align:center">'
+				+ chinaplus.label.CPIIFS02_Grid_Operation + '</div>',
+		align : 'left',
+		width : 140,
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'matchInvoice',
+		sortable : false,
+		resizable : false,
+		//locked : true,
+		//filter : 'string',
+		renderer : function(v, p, record) {
+			var formatStr = '<a id="{1}" href="#" onclick="Ext.getCmp(chinaplus.screen.CPIIFS02).gotoDetailScreen({2}, \'{3}\', \'{4}\')">{0}</a>';
+			return Ext.String.format(formatStr, Ext.String.htmlEncode(v), record.data.wrongInvocie, 
+			             record.data.officeId, record.data.wrongInvocie, record.data.dspMismatchDate);
+		}
+	}],
+	tbar : [{
+				xtype : 'button',
+				text : chinaplus.label.CPIIFS02_Button_Match,
+				iconCls : 'btn-ok',
+				id : chinaplus.screen.CPIIFS02 + '_match',
+				handler : function() {
+					CPIIFS02.match();
+				}
+			}],
+	store : TRF.util.createStore(chinaplus.screen.CPIIFS02,
+			'inf/CPIIFS02/getCPIIFS02EntityList', 'CPIIFS02EntityList',
+			chinaplus.screen.CPIIFS02 + '_CPIIFS02EntityStore'),
+
+	/**
+	 * The initialize function.
+	 * 
+	 * @param params.
+	 *            the parameter object passed to this screen.
+	 */
+	initialize : function() {
+
+		TRF.util.setDefaultValuesForToolBar(this, 'status', '1');
+
+		var gridStore = this.store;
+		var me = this;
+
+		TRF.util.dataLoadStart(chinaplus.screen.CPIIFS02);
+		TRF.util.loadStore(gridStore, null, function() {
+					TRF.util.dataLoadEnd(chinaplus.screen.CPIIFS02);
+					gridStore.on('beforeload', function() {
+                         TRF.core.mask(TRF.core.maskMsg.load, null, me);
+                     });
+                     gridStore.on('load', function() {
+                         TRF.core.unmask(me);
+                     });
+				}, {
+					filters : {
+						status : '1'
+					}
+				});
+
+		this.doLayout();
+		TRF.util.addGridTip(this);
+	},
+
+	/**
+	 * match Data
+	 */
+	match : function() {
+		// select check
+        var popMsg = TRF.util.getMessage('w1011');
+        var lsMsgs = [];
+        
+        var selectionArray = Ext.getCmp(chinaplus.screen.CPIIFS02).getSelectionModel().getSelection();
+
+        // must select one
+        if (selectionArray.length == 0) {
+            Ext.Array.push(lsMsgs, popMsg);
+            TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, popMsg, lsMsgs);
+            return;
+        }
+        // do selected matched
+        var selectedDatas = new Array();
+        for (var i=0; i<selectionArray.length; i++) {
+            var status = selectionArray[i].data.status;
+            var matchedInvocie = selectionArray[i].data.matchedInvocie;
+            // check
+            if(status == chinaplus.consts.code.InvoiceMatchStatus.MATCHED) {
+                // show message
+                Ext.Array.push(lsMsgs, TRF.util.getMessage('w1040'));
+                popMsg = TRF.util.getMessage('w1040');
+	            TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, popMsg, lsMsgs);
+	            return;
+            } else if (matchedInvocie == null || matchedInvocie == ''){
+                // show message
+                Ext.Array.push(lsMsgs, TRF.util.getMessage('w1041'));
+                popMsg = TRF.util.getMessage('w1041');
+	            TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, popMsg, lsMsgs);
+	            return;
+            }  else {
+                // set into data
+                selectedDatas[i] = {
+                    'wrongInvocie':selectionArray[i].data.wrongInvocie,
+                    'officeCode':selectionArray[i].data.officeCode
+                };
+            }
+        }
+        if(lsMsgs.length > 0) {
+            return;
+        }
+
+        // match confirm
+        var me = this;
+        var confirmMsg = TRF.util.getMessage('c1001', [chinaplus.label.CPIIFS02_Button_Match]);
+        var confirmMsgL = [];
+        TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_QUESTION, confirmMsg, confirmMsgL,
+            function(btn){
+                if (btn == 'yes') {
+                    
+                    var params = {};
+                    params[TRF.cnst.DATAS] = selectedDatas;
+                    
+                    var backFun = function(applicationData) {
+                        if(applicationData.success){
+                            var lsMsgs = TRF.util.getMessage('i1004', ['CPIIFS02_Button_Match']);
+                            TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_INFO, lsMsgs, lsMsgs, function() { me.store.reload(); });
+                        }
+                    };
+                    // submit
+					TRF.util.actionSubmit(backFun, chinaplus.screen.CPIIFS02, "inf/CPIIFS02/matchInvoiceList", params);
+                    //TRF.util.ajaxSubmit(backFun, chinaplus.screen.CPIIFS02, "inf/CPIIFS02/matchInvoiceList", null, params);
+                    
+                }//end if
+            }
+        ); 
+	},
+	/** 
+	 * go detail screen.
+	 *
+	 * @param params.
+	 *            the parameter object passed to this screen.
+	 */
+	gotoDetailScreen : function(officeId, wrongInvocie, dataDate) {
+		var param = {'officeId' : officeId, 'wrongInvocie' : wrongInvocie, 'dataDate' : dataDate};
+		TRF.util.setDetailTabMode_View();
+		TRF.util.addApplication(chinaplus.screen.CPIIFS03, chinaplus.screen.CPIIFS03, true, param);
+	}
+}

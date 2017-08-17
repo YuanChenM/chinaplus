@@ -1,0 +1,32 @@
+.ux-companyCalendar-calendarYear{
+    width:1051px;
+    text-align:center;
+    font-family:Arial;
+    font-weight:bold;
+    background-color:#A9D0F5;
+    border:1px solid #000000;
+}
+.ux-companyCalendar-table{
+    width:1050px;
+    border-collapse:collapse;
+}
+.ux-companyCalendar-table th{
+    border:1px solid #000000;
+    background-color:#A9D0F5;
+    font-family:Arial;
+    font-weight:bold;
+    text-align:center;
+}
+.ux-companyCalendar-table td{
+    width:50px;
+    border:1px solid #000000;
+    text-align:center;
+}
+.ux-companyCalendar-weekend{
+    color:black;
+    background-color:#81F7F3;
+    border:1px solid #000000;
+    font-family:Arial;
+    font-weight:bold;
+    text-align:center;
+}

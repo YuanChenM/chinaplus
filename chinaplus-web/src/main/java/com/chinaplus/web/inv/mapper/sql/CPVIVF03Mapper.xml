@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.inv.service.CPVIVF03Service">
+    
+    <select id="findAllList" parameterType="com.chinaplus.core.bean.PageParam" resultType="com.chinaplus.web.inv.entity.CPVIVF03Entity" flushCache="true">
+        SELECT
+            D.TTC_PARTS_NO AS ttcPartNo,
+            F.SUPPLIER_CODE AS supplierCode,
+            D.PARTS_NAME_CN AS partsNameCn,
+            D.UOM_CODE AS uomCode,
+            C.IMP_PO_NO AS impOrderNo,
+            C.EXP_PO_NO AS expOrderNo,
+            C.CUSTOMER_ORDER_NO AS cusOrderNo,
+            E.CUSTOMER_CODE AS ttcCustomerCode,
+            (
+                COALESCE(C.ORDER_QTY, 0) - 
+                (COALESCE(C.EXP_ONSHIPPING_QTY, 0) +
+                COALESCE(C.IN_RACK_QTY, 0) +
+                (COALESCE(C.IMP_STOCK_QTY, 0) - COALESCE(C.IMP_ADJUSTED_QTY, 0)) +
+                COALESCE(C.IMP_DELIVERED_QTY, 0) +
+                COALESCE(C.TRANSFER_OUT_QTY, 0) +
+                COALESCE(C.CANCELLED_QTY, 0))
+            ) AS nonInvoicedQty
+        FROM
+            TNT_ORDER A
+        INNER JOIN
+            TNF_ORDER_STATUS C ON A.IMP_PO_NO = C.IMP_PO_NO AND A.CUSTOMER_ORDER_NO = C.CUSTOMER_ORDER_NO
+        INNER JOIN
+            TNM_PARTS_MASTER D ON C.PARTS_ID = D.PARTS_ID AND A.CUSTOMER_ID = D.CUSTOMER_ID
+        INNER JOIN
+            TNM_CUSTOMER E ON A.CUSTOMER_ID = E.CUSTOMER_ID
+        INNER JOIN
+            TNM_SUPPLIER F ON C.SUPPLIER_ID = F.SUPPLIER_ID
+        WHERE
+            A.ORDER_ID IN
+            <foreach item="selectedDataItem" index="selectedDataIndex" collection="selectedDatas" open="(" separator="," close=")">  
+                #{selectedDataItem}
+            </foreach>
+        ORDER BY
+            C.IMP_PO_NO ASC,
+            C.EXP_PO_NO ASC,
+            C.CUSTOMER_ORDER_NO ASC,
+            D.TTC_PARTS_NO ASC
+    </select>
+    
+</mapper>

@@ -1,0 +1,5 @@
+#Batch ID
+BATCH_ID=CPIIFB02
+
+#Log File
+BATCH_LOG_FILE=DARIDC61.log

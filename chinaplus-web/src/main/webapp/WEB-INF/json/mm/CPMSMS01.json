@@ -1,0 +1,169 @@
+/**
+ * Customer Data in SSMS & ORION PLUS Download/Upload Screen
+ * 
+ * @screen CPMSMS01
+ * @author zhang_chi
+ */
+CPMSMS01 = {
+    id : chinaplus.screen.CPMSMS01,
+    title : chinaplus.label.CPMSMS01_Label_PageTitle,
+    xtype : 'form',
+    overflowY:'auto',
+    minWidth:600,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    border : false,
+    autoHeight : true,
+    closable : false,
+    items : [
+        {
+        	xtype : 'container',
+            frame : true,
+            border : false,
+            defaultType : 'textfield',          
+            fieldDefaults: {                
+                width : 460,
+                margin : '2',
+                labelSeparator : ''
+            },
+            margin : '40 10 10 50',
+            items : [
+                    {
+                        xtype : 'textfield',
+                        maxLength : 50,
+                        msgTarget : 'side',   
+                        width : 460,               
+                        fieldLabel : chinaplus.label.CPMSMS01_Grid_SSMSCustomerCode,
+                        autoFitErrors: false,
+                        id : chinaplus.screen.CPMSMS01 + '_ssmsCustomerCode',
+                        name : 'ssmsCustomerCode',
+                        labelAlign: 'right',
+                        labelWidth : 130,
+                        labelSeparator : ''          
+                    },{
+                        xtype : 'checkcombo',
+                        fieldLabel : chinaplus.label.CPMSMS01_Grid_SSMSVendorRoute,
+                        id : chinaplus.screen.CPMSMS01 + '_vendorRoute',
+                        name : 'vendorRoute',
+                        addAllSelector : true,
+                        width : 460,
+                        msgTarget : 'side',
+                        multiSelect : true,
+                        store : TRF.util.createStore(
+                                chinaplus.screen.CPMSMS01, 'mm/CPMSMS01/loadVendorRoute', 'Combo',
+                                chinaplus.screen.CPMSMS01 + '_vendorRouteStore'),
+                        dispalyField : 'text',
+                        valueField : 'id',
+                        queryMode : 'local',
+                        forceSelection : true,
+                        autoFitErrors : false,
+                        labelAlign: 'right',
+                        labelWidth : 130,
+                        labelSeparator : ''   
+                    }]
+      },
+    
+    // row 2
+    {
+        height : 35,
+        xtype : 'container',
+        margin : '10 0 0 165',
+        items : [ {
+            xtype : 'button',
+            iconCls : 'btn-download',
+            width : 150,
+            height : 25,
+            text : chinaplus.label.CPMSMS01_Grid_Download,
+            margin : '3 0 0 20',
+            handler : function() {
+                Ext.getCmp(chinaplus.screen.CPMSMS01).btnDownloadAction();
+            }
+        } ]
+    } ,{
+        xtype : 'textfield',
+        fieldLabel : 'SourceScreen',
+        name : 'sourceScreenId',
+        tabIndex : -1,
+        hidden : true,
+        margin : '10 0 0 0',
+        hideLabel : true,
+        width : 400,
+        labelSeparator : '',
+        autoFitErrors : false
+    },{
+        xtype : 'fileuploadfield',
+        fieldLabel : chinaplus.label.CPMSMS01_Grid_Filename,
+        id : chinaplus.screen.CPMSMS01 + '_fileuploadfield',
+        labelAlign : 'right',
+        name : 'fileData',
+        margin : '10 0 0 80',
+        vtype : 'excel',
+        width : 490,
+        labelSeparator : '',
+        buttonText : chinaplus.label.CPMSMS01_Grid_Browse,
+        editable : false,
+        fieldStyle : 'background:rgb(255,255,153)',
+        hideLabel : false,
+        autoFitErrors : false,
+        buttonConfig : {
+            tabIndex : 0,
+            width : 75
+        }
+    }, {
+        height : 35,
+        xtype : 'container',
+        margin : '10 0 10 165',
+        items : [ {
+            xtype : 'button',
+            iconCls : 'btn-upload',
+            width : 150,
+            height : 25,
+            text : chinaplus.label.CPMSMS01_Grid_Upload,
+            id : chinaplus.screen.CPMSMS01 + '_btnUpload',
+            margin : '3 0 0 20',
+            handler : function() {
+                Ext.getCmp(chinaplus.screen.CPMSMS01).btnUploadAction();
+            }
+        } ]
+    }
+             
+    ],
+         
+    /**
+	 * initialize
+	 */
+    initialize : function() {
+          TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMSMS01 + '_vendorRouteStore')); 
+    },
+    
+    /**
+     * data  Download
+     */ 
+    btnDownloadAction : function() {  
+    
+        var ssmsCustomerCode = Ext.getCmp(chinaplus.screen.CPMSMS01 + '_ssmsCustomerCode').getValue();
+        var vendorRoute = Ext.getCmp(chinaplus.screen.CPMSMS01 + '_vendorRoute').getValue();
+        
+         var params = {
+            'ssmsCustomerCode' : ssmsCustomerCode,
+            'vendorRoute' : vendorRoute
+         };             
+         var fcn =  function (){     
+         
+         };                           
+         TRF.util.downloadSubmit(fcn, chinaplus.screen.CPMSMS01, 
+                         "mm/CPMSMF01/downloadcheck", params, "mm/CPMSMF01/download", false); 
+    },
+    
+    /**
+     * data  upload
+     */    
+    btnUploadAction : function() { 
+        var form = this.getForm();
+        var backFun = function(applicationData) {
+            if (applicationData.success || (null != applicationData.messageCodes && applicationData.messageCodes.length == 0)) {
+                TRF.util.showMessageBoxByMsgIdAndArgs('i1001');
+            }
+        }
+        TRF.util.uploadSubmit(form, backFun, chinaplus.screen.CPMSMS01, 'mm/CPMSMF11/upload', null);   
+    }
+}

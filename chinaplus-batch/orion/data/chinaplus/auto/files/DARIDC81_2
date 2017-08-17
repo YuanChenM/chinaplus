@@ -1,0 +1,5 @@
+#Batch ID
+BATCH_ID=CPSSSB01
+
+#Log File
+BATCH_LOG_FILE=DARIDC81.log

@@ -1,0 +1,3256 @@
+<!--
+@screen CPIIFB11
+@author liu_yinchuan
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chinaplus.batch.interfaces.service.CPIIFB11Service">
+    <sql id="ConstDef">
+        <bind name="PROCESS_SUCCESS" value="@com.chinaplus.common.consts.CodeConst$HandleFlag@PROCESS_SUCCESS" />
+        <bind name="CANCELLED" value="@com.chinaplus.common.consts.CodeConst$KanbanStatus@CANCELLED" />
+        <bind name="ORDER_CANCELLED" value="@com.chinaplus.common.consts.CodeConst$DisOrderStatus@CANCELLED" />
+        <bind name="NOT_APPROVED" value="@com.chinaplus.common.consts.CodeConst$InvoiceStatus@NOT_APPROVED" />
+        <bind name="INV_CANCELLED" value="@com.chinaplus.common.consts.CodeConst$InvoiceStatus@CANCELLED" />
+        <bind name="DONE" value="@com.chinaplus.common.consts.CodeConst$InvoiceUploadStatus@DONE" />
+        <bind name="Irregulars_DONE" value="@com.chinaplus.common.consts.CodeConst$InvoiceIrregularsStatus@DONE" />
+        <bind name="CUSTOMS_CLEARANCE" value="@com.chinaplus.common.consts.CodeConst$ActionType@CUSTOMS_CLEARANCE" />
+        <bind name="DEVANNED" value="@com.chinaplus.common.consts.CodeConst$ActionType@DEVANNED" />
+        <bind name="IMP_INBOUND" value="@com.chinaplus.common.consts.CodeConst$ActionType@IMP_INBOUND" />
+        <bind name="WHS_TRANSFER" value="@com.chinaplus.common.consts.CodeConst$ActionType@WHS_TRANSFER" />
+        <bind name="STOCK_TRANSFER" value="@com.chinaplus.common.consts.CodeConst$ActionType@STOCK_TRANSFER" />
+        <bind name="STOCK_ADJUST" value="@com.chinaplus.common.consts.CodeConst$ActionType@STOCK_ADJUST" />
+        <bind name="IMP_OUTBOUND" value="@com.chinaplus.common.consts.CodeConst$ActionType@IMP_OUTBOUND" />
+        <bind name="CANCEL_INVOICE" value="@com.chinaplus.common.consts.CodeConst$ActionType@CANCEL_INVOICE" />
+        <bind name="NG_ON_HOLD" value="@com.chinaplus.common.consts.CodeConst$OnHoldFlag@NG_ON_HOLD" />
+        <bind name="ECI_ON_HOLD" value="@com.chinaplus.common.consts.CodeConst$OnHoldFlag@ECI_ON_HOLD" />
+        <bind name="NORMAL" value="@com.chinaplus.common.consts.CodeConst$OnHoldFlag@NORMAL" />
+        <bind name="POSTRIFLAG_Y" value="@com.chinaplus.common.consts.CodeConst$PostRiFlag@Y" />
+        <bind name="AFTER_GR" value="@com.chinaplus.common.consts.CodeConst$PostRiFlag@AFTER_GR" />
+        <bind name="AFTER_GI" value="@com.chinaplus.common.consts.CodeConst$PostRiFlag@AFTER_GI" />
+        <bind name="WITH_CLEARANCE" value="@com.chinaplus.common.consts.CodeConst$ImpStockFlag@WITH_CLEARANCE" />
+        <bind name="WITHOUT_CLEARANCE" value="@com.chinaplus.common.consts.CodeConst$ImpStockFlag@WITHOUT_CLEARANCE" />
+        <bind name="PARTS_COMPLETED" value="@com.chinaplus.common.consts.CodeConst$PartsStatus@COMPLETED" />
+        <bind name="MATCHED" value="@com.chinaplus.common.consts.CodeConst$InvoiceMatchStatus@MATCHED" />
+        <bind name="IpKbDataType_CUSTOMS" value="@com.chinaplus.common.consts.CodeConst$IpKbDataType@CUSTOMS_CLEARANCE" />
+        <bind name="IpKbDataType_DEVANNED" value="@com.chinaplus.common.consts.CodeConst$IpKbDataType@DEVANNED" />
+        <bind name="IpKbDataType_OUTBOUND" value="@com.chinaplus.common.consts.CodeConst$IpKbDataType@OUTBOUND" />
+        <bind name="BusinessPattern_VV" value="@com.chinaplus.common.consts.CodeConst$BusinessPattern@V_V" />
+        <bind name="BusinessPattern_AISIN" value="@com.chinaplus.common.consts.CodeConst$BusinessPattern@AISIN" />
+        <bind name="InvoiceIssueType_SUP_WH" value="@com.chinaplus.common.consts.CodeConst$InvoiceIssueType@SUP_WH" />
+        <bind name="InvoiceGroupStatus_NORMAL" value="@com.chinaplus.common.consts.CodeConst$InvoiceGroupStatus@NORMAL" />
+        <bind name="IpStatus_IMP_INBOUND" value="@com.chinaplus.common.consts.CodeConst$IpStatus@IMP_INBOUND" />
+        <bind name="TransportMode_AIR" value="@com.chinaplus.common.consts.CodeConst$TransportMode@AIR" />
+        <bind name="DtStatus_CANCELL" value="@com.chinaplus.common.consts.CodeConst$DtStatus@CANCELL" />
+    </sql>
+    
+    <!-- Get latest time stamp -->
+    <select id="getLatestBatchTime" resultType="java.sql.Timestamp" parameterType="com.chinaplus.common.entity.TntBatchJob" >
+        SELECT
+               MAX(TJ.PROCESS_DATE) AS proDate
+          FROM 
+               TNT_BATCH_JOB TJ
+         WHERE 
+               TJ.BATCH_ID = #{batchId}
+           AND 
+               TJ.OFFICE_ID = #{officeId}
+           AND 
+               TJ.STATUS = #{status}
+    </select>
+    
+    <select id="getLastPartsStatusDate" resultType="java.util.Date" parameterType="com.chinaplus.batch.interfaces.bean.TnfExpPartsStatusEx" >
+        SELECT 
+               MAX(T.END_DATE) AS endDate
+          FROM 
+               TNF_EXP_PARTS_STATUS T
+         WHERE 
+               T.OFFICE_ID = #{officeId}
+    </select>
+    
+    <select id="getLastDateOfPartStatus" resultType="java.util.Date" parameterType="com.chinaplus.batch.interfaces.bean.TnfExpPartsStatusEx">
+        <include refid="ConstDef"/> 
+        SELECT
+               MIN(END_DATE) AS endDate
+         FROM
+              (SELECT
+                      DATE(A.IF_DATE_TIME) AS END_DATE 
+                 FROM
+                      TNT_IF_EXP_ORDER A
+                INNER JOIN 
+                      TNM_EXP_PARTS B 
+                   ON 
+                      B.SSMS_MAIN_ROUTE = A.MAIN_ROUTE 
+                  AND 
+                      B.EXP_CODE = A.EXP_CODE 
+                  AND 
+                      B.SSMS_CUST_CODE = A.SSMS_CUSTOMER_CODE 
+                  AND 
+                      B.EXP_SUPP_CODE = A.SSMS_SUPPLIER_CODE 
+                  AND 
+                      B.TTC_PARTS_NO = A.TTC_PARTS_NO 
+                  AND
+                      B.OFFICE_ID = #{officeId}
+                WHERE
+                      A.HANDLE_FLAG = #{PROCESS_SUCCESS} 
+                  <if test = "lastBatchTime != null" >
+                  AND 
+                      A.UPDATED_DATE > #{lastBatchTime}
+                  </if>
+                  AND 
+                      A.UPDATED_DATE <![CDATA[<=]]> #{currBatchTime}
+                      
+            UNION ALL 
+            
+              SELECT
+                     DATE (A.IF_DATE_TIME) AS END_DATE 
+                FROM
+                     TNT_IF_CANCEL_ORDER A
+               INNER JOIN 
+                     TNT_ORDER_DETAIL B
+                  ON 
+                     B.EXP_PO_NO = A.EXP_PO_NO
+                 AND 
+                     B.EXP_PO_ITEM_NO = A.EXP_PO_ITEM_NO
+                 AND 
+                     B.STATUS = #{ORDER_CANCELLED}
+               INNER JOIN 
+                     TNM_EXP_PARTS C
+                  ON 
+                     C.EXP_PARTS_ID = B.EXP_PARTS_ID
+                 AND 
+                     C.SSMS_MAIN_ROUTE = A.MAIN_ROUTE
+                 AND 
+                     C.TTC_PARTS_NO = A.PARTS_NO
+                 AND 
+                     C.SSMS_CUST_CODE = A.CUSTOMER_CODE
+                 AND 
+                     C.OFFICE_ID = #{officeId} 
+               WHERE
+                     A.HANDLE_FLAG = #{PROCESS_SUCCESS} 
+                <if test = "lastBatchTime != null" >
+                 AND A.UPDATED_DATE > #{lastBatchTime}
+                </if>
+                 AND A.UPDATED_DATE <![CDATA[<=]]> #{currBatchTime}
+                 
+            UNION ALL 
+
+              SELECT
+                     MIN(CASE WHEN TK.REVISION_VERSION IS NULL 
+                                THEN DATE(TKP.ISSUED_DATE)
+                              ELSE DATE(TK.UPLOADED_DATE) 
+                         END) AS END_DATE   
+                FROM
+                     TNT_KANBAN TK
+               INNER JOIN 
+                     TNT_KANBAN_PLAN  TKP
+                  ON 
+                     TKP.KANBAN_ID = TK.KANBAN_ID
+               WHERE
+                     TK.OFFICE_ID = #{officeId} 
+                 AND 
+                <if test = "lastBatchTime != null" >
+                     TK.UPLOADED_DATE > #{lastBatchTime}
+                 AND 
+                </if>
+                     TK.UPLOADED_DATE <![CDATA[<=]]> #{currBatchTime}
+                 
+            UNION ALL 
+
+              SELECT
+                     A.CANCELLED_DATE AS END_DATE 
+                FROM
+                     TNT_KANBAN A 
+               WHERE
+                     A.OFFICE_ID = #{officeId} 
+                 AND 
+                     A.CANCELLED_DATE IS NOT NULL
+                 AND
+                <if test = "lastBatchTime != null" >
+                     A.UPDATED_DATE > #{lastBatchTime}
+                 AND 
+                </if>
+                     A.UPDATED_DATE <![CDATA[<=]]> #{currBatchTime}
+            
+            UNION ALL
+            
+              SELECT
+                     DATE(A.FORCE_COMPLETED_DATE) AS END_DATE 
+                FROM 
+                     TNT_ORDER_DETAIL A
+               INNER JOIN 
+                     TNT_ORDER B
+                  ON 
+                     A.ORDER_ID = B.ORDER_ID 
+                 AND 
+                     B.OFFICE_ID = #{officeId} 
+               WHERE
+                <if test = "lastBatchTime != null" >
+                     A.UPDATED_DATE > #{lastBatchTime}
+                 AND 
+                </if>
+                     A.UPDATED_DATE <![CDATA[<=]]> #{currBatchTime} 
+                 AND 
+                     A.FORCE_COMPLETED_DATE IS NOT NULL
+            
+            UNION ALL
+            
+              SELECT
+                     DATE(A.FORCE_COMPLETED_DATE) AS END_DATE 
+                FROM 
+                     TNT_KANBAN_PARTS A
+               INNER JOIN 
+                     TNT_KANBAN B
+                  ON 
+                     A.KANBAN_ID = B.KANBAN_ID 
+                 AND 
+                     B.OFFICE_ID = #{officeId} 
+               WHERE
+                <if test = "lastBatchTime != null" >
+                     A.UPDATED_DATE > #{lastBatchTime}
+                 AND 
+                </if>
+                     A.UPDATED_DATE <![CDATA[<=]]> #{currBatchTime} 
+                 AND 
+                     A.FORCE_COMPLETED_DATE IS NOT NULL
+             
+            UNION ALL
+            
+              SELECT
+                     DATE(A.EXP_INB_PLAN_DATE) AS END_DATE 
+                FROM
+                     TNT_ORDER_DETAIL A
+               INNER JOIN 
+                     TNT_ORDER B
+                  ON 
+                     A.ORDER_ID = B.ORDER_ID 
+                 AND 
+                     B.OFFICE_ID = #{officeId} 
+               WHERE
+                <if test = "lastBatchTime != null" >
+                    A.UPDATED_DATE > #{lastBatchTime}
+                AND
+                </if>
+                    A.UPDATED_DATE <![CDATA[<=]]> #{currBatchTime}
+             
+            UNION ALL 
+              
+              SELECT
+                     DATE(B.EXP_INB_ACTUAL_DATE) AS END_DATE 
+                FROM
+                     TNT_IF_EXP_INBOUND A
+               INNER JOIN 
+                     TNT_EXP_DT B
+                  ON 
+                     B.DT_NO = A.DT_NO 
+               INNER JOIN 
+                     TNM_PARTS_MASTER C
+                  ON 
+                     C.PARTS_ID = B.PARTS_ID
+                 AND
+                     C.OFFICE_ID = #{officeId} 
+               WHERE
+                     A.HANDLE_FLAG = #{PROCESS_SUCCESS} 
+                <if test = "lastBatchTime != null" >
+                 AND 
+                     A.UPDATED_DATE > #{lastBatchTime}
+                </if>
+                 AND 
+                     A.UPDATED_DATE <![CDATA[<=]]> #{currBatchTime}
+
+            UNION ALL 
+            
+              SELECT
+                     DATE(UPLOADED_DATE) AS END_DATE 
+                FROM
+                     TNT_INVOICE_SUMMARY 
+               WHERE
+                     OFFICE_ID = #{officeId}  
+                 AND
+                 <if test = "lastBatchTime != null" >
+                     UPDATED_DATE > #{lastBatchTime}
+                 AND
+               </if>
+                     UPDATED_DATE <![CDATA[<=]]> #{currBatchTime}
+              
+            UNION ALL 
+            
+              SELECT
+                     GR_DATE AS END_DATE 
+                FROM
+                     TNT_INVOICE_SUMMARY 
+               WHERE
+                     OFFICE_ID = #{officeId}  
+                 AND
+                     POST_RI_FLAG > #{POSTRIFLAG_Y}  
+                 AND
+                 <if test = "lastBatchTime != null" >
+                     UPDATED_DATE > #{lastBatchTime}
+                 AND 
+                 </if>
+                     UPDATED_DATE <![CDATA[<=]]> #{currBatchTime}
+              
+            UNION ALL 
+              
+              SELECT
+                     DATE (A.PROCESS_DATE) AS END_DATE 
+                FROM
+                     TNT_IF_IMP_IP A
+               INNER JOIN 
+                     TNM_OFFICE B
+                  ON
+                     B.OFFICE_CODE = A.OFFICE_CODE
+               WHERE
+                     B.OFFICE_ID = #{officeId}  
+                 AND
+                     A.HANDLE_FLAG = #{PROCESS_SUCCESS} 
+                 AND 
+                     A.ACTION_TYPE IN (#{CUSTOMS_CLEARANCE}, #{DEVANNED}, #{IMP_INBOUND}) 
+                <if test = "lastBatchTime != null" >
+                 AND 
+                     A.UPDATED_DATE > #{lastBatchTime}
+                </if>
+                 AND 
+                     A.UPDATED_DATE <![CDATA[<=]]> #{currBatchTime}
+            )
+    </select>
+    
+    <select id="getExpBalanceformation" parameterType="com.chinaplus.batch.interfaces.bean.TnfExpPartsStatusEx" resultType="com.chinaplus.batch.interfaces.bean.TnfExpPartsStatusEx">
+         <include refid="ConstDef"/> 
+         SELECT
+                A.PARTS_ID AS partsId
+              , A.SUPPLIER_ID AS supplierId
+              , NVL(A.IMP_PO_NO, A.KANBAN_PLAN_NO) AS orderNo
+              , A.END_DATE AS endDate
+              , A.BUSINESS_PATTERN AS businessPattern
+              , B.OFFICE_ID AS officeId
+              , (A.ORDER_QTY - NVL(A.FORCE_COMPLETED_QTY, 0)) AS dayOrderQty
+              , (NVL(A.IMP_INBOUND_QTY, 0) - NVL(C.IMP_INBOUND_QTY, 0)) AS dayImpReceivedQty
+              , NVL(A.FORCE_COMPLETED_QTY, 0) AS foreCompletedQty
+           FROM
+                TNF_BALANCE_BY_DAY A
+          INNER JOIN 
+                TNM_PARTS_MASTER B
+             ON
+                B.PARTS_ID = A.PARTS_ID
+           LEFT JOIN 
+                TNF_BALANCE_BY_DAY C
+             ON 
+                C.PARTS_ID = A.PARTS_ID
+            AND 
+                C.SUPPLIER_ID = A.SUPPLIER_ID
+            AND 
+                (C.IMP_PO_NO = A.IMP_PO_NO
+             OR 
+                 C.KANBAN_PLAN_NO = A.KANBAN_PLAN_NO)
+            AND 
+                C.END_DATE = (A.END_DATE - 1 DAYS)
+          WHERE 
+                A.END_DATE >= #{lastEndDate}
+            AND 
+                A.END_DATE <![CDATA[<]]> #{endDate}
+            AND 
+                B.OFFICE_ID = #{officeId}
+          ORDER BY
+                partsId
+              , supplierId
+              , endDate
+              , orderNo
+    </select>
+    
+    <select id="getExpInboundPlanInformation" parameterType="com.chinaplus.batch.interfaces.bean.TnfExpPartsStatusEx" resultType="com.chinaplus.batch.interfaces.bean.TnfExpPartsStatusEx">
+         <include refid="ConstDef"/> 
+         SELECT
+                A.PARTS_ID AS partsId
+              , B.SUPPLIER_ID AS supplierId
+              , TR.IMP_PO_NO AS orderNo
+              , A.EXP_INB_PLAN_DATE AS endDate
+              , TR.BUSINESS_PATTERN AS businessPattern
+              , TR.OFFICE_ID AS officeId
+              , SUM(A.ORDER_QTY) AS dayExpPlanInboundQty 
+           FROM
+                TNT_ORDER_DETAIL A 
+          INNER JOIN 
+                TNT_ORDER TR
+             ON 
+                TR.ORDER_ID = A.ORDER_ID
+          INNER JOIN 
+                TNM_EXP_PARTS B 
+             ON 
+                B.EXP_PARTS_ID = A.EXP_PARTS_ID 
+            AND 
+                B.OFFICE_ID = #{officeId}
+          WHERE
+                A.EXP_INB_PLAN_DATE >= #{lastEndDate}
+            AND 
+                A.EXP_INB_PLAN_DATE <![CDATA[<]]> #{endDate}
+            AND 
+                A.STATUS <![CDATA[<]]> #{ORDER_CANCELLED}
+          GROUP BY
+                A.PARTS_ID
+              , B.SUPPLIER_ID
+              , A.EXP_INB_PLAN_DATE 
+              , TR.IMP_PO_NO
+              , TR.BUSINESS_PATTERN
+              , TR.OFFICE_ID
+          ORDER BY
+                A.PARTS_ID
+              , B.SUPPLIER_ID
+              , A.EXP_INB_PLAN_DATE
+              , TR.IMP_PO_NO
+    </select>
+    
+    <select id="getPreExpInboundPlanInformation" parameterType="com.chinaplus.batch.interfaces.bean.TnfExpPartsStatusEx" resultType="com.chinaplus.batch.interfaces.bean.TnfExpPartsStatusEx">
+         <include refid="ConstDef"/> 
+         SELECT
+                B.PARTS_ID AS partsId
+              , B.SUPPLIER_ID AS supplierId
+              , ALR.IMP_PO_NO AS orderNo
+              , B.BUSINESS_PATTERN AS businessPattern
+              , B.OFFICE_ID AS officeId
+              , SUM(ALR.ORDER_QTY) AS prePlanInboundQty
+           FROM
+                TNM_EXP_PARTS B 
+          INNER JOIN 
+                (SELECT TOD.EXP_PARTS_ID
+                      , TR.IMP_PO_NO
+                      , SUM(TOD.ORDER_QTY) AS ORDER_QTY
+                   FROM 
+                        TNT_ORDER_DETAIL TOD
+                  INNER JOIN 
+                        TNT_ORDER TR
+                     ON 
+                        TR.ORDER_ID = TOD.ORDER_ID
+                  WHERE 
+                        TOD.EXP_INB_PLAN_DATE <![CDATA[<]]> #{lastEndDate}
+                    AND 
+                        TOD.STATUS <![CDATA[<]]> #{ORDER_CANCELLED}
+                   GROUP BY 
+                        TOD.EXP_PARTS_ID
+                      , TR.IMP_PO_NO) ALR
+             ON 
+                ALR.EXP_PARTS_ID = B.EXP_PARTS_ID
+          WHERE 
+                B.OFFICE_ID = #{officeId}
+          GROUP BY
+                B.PARTS_ID
+              , B.SUPPLIER_ID
+              , ALR.IMP_PO_NO
+              , B.BUSINESS_PATTERN
+              , B.OFFICE_ID
+          ORDER BY
+                B.PARTS_ID
+              , B.SUPPLIER_ID
+              , ALR.IMP_PO_NO
+    </select>
+
+    <select id="getExpInboundInformation" parameterType="com.chinaplus.batch.interfaces.bean.TnfExpPartsStatusEx" resultType="com.chinaplus.batch.interfaces.bean.TnfExpPartsStatusEx">
+        <include refid="ConstDef"/> 
+        SELECT 
+               A.PARTS_ID AS partsId
+             , B.SUPPLIER_ID AS supplierId
+             , A.IMP_PO_NO AS orderNo
+             , A.EXP_INB_ACTUAL_DATE AS endDate
+             , TP.BUSINESS_PATTERN AS businessPattern
+             , TP.OFFICE_ID AS officeId
+             , SUM(A.QTY) AS dayExpInboundQty 
+          FROM 
+               TNT_EXP_DT A
+         INNER JOIN 
+               TNM_EXP_PARTS B
+            ON 
+               B.EXP_PARTS_ID = A.EXP_PARTS_ID
+           AND 
+               B.OFFICE_ID = #{officeId}
+         INNER JOIN 
+               TNM_PARTS_MASTER TP
+            ON 
+               TP.PARTS_ID = A.PARTS_ID
+         WHERE
+               A.EXP_INB_ACTUAL_DATE >= #{lastEndDate}
+           AND
+               A.EXP_INB_ACTUAL_DATE <![CDATA[<]]> #{endDate}
+           AND 
+               A.STATUS <![CDATA[<]]> #{DtStatus_CANCELL}
+         GROUP BY 
+               A.PARTS_ID
+             , B.SUPPLIER_ID
+             , A.EXP_INB_ACTUAL_DATE
+             , A.IMP_PO_NO
+             , TP.BUSINESS_PATTERN 
+             , TP.OFFICE_ID
+         ORDER BY 
+               A.PARTS_ID
+             , B.SUPPLIER_ID
+             , A.EXP_INB_ACTUAL_DATE
+             , A.IMP_PO_NO
+    </select>
+    
+    <select id="getPreExpInboundInformation" parameterType="com.chinaplus.batch.interfaces.bean.TnfExpPartsStatusEx" resultType="com.chinaplus.batch.interfaces.bean.TnfExpPartsStatusEx">
+        <include refid="ConstDef"/> 
+        SELECT 
+               TP.PARTS_ID AS partsId
+             , B.SUPPLIER_ID AS supplierId
+             , ALR.IMP_PO_NO AS orderNo
+             , TP.BUSINESS_PATTERN AS businessPattern
+             , TP.OFFICE_ID AS officeId
+             , SUM(ALR.QTY) AS preInboundQty
+          FROM 
+               TNM_EXP_PARTS B
+         INNER JOIN 
+               TNM_PARTS_MASTER TP
+            ON 
+               TP.PARTS_ID = B.PARTS_ID
+         INNER JOIN 
+               (SELECT
+                       EXP_PARTS_ID
+                     , IMP_PO_NO
+                     , SUM(QTY) AS QTY
+                  FROM 
+                       TNT_EXP_DT
+                 WHERE 
+                       EXP_INB_ACTUAL_DATE <![CDATA[<]]> #{lastEndDate}
+                   AND 
+                       STATUS <![CDATA[<]]> #{DtStatus_CANCELL}
+                 GROUP BY
+                       EXP_PARTS_ID
+                     , IMP_PO_NO) ALR
+            ON 
+               ALR.EXP_PARTS_ID = B.EXP_PARTS_ID
+         WHERE
+               B.OFFICE_ID = #{officeId}
+         GROUP BY 
+               TP.PARTS_ID
+             , B.SUPPLIER_ID
+             , ALR.IMP_PO_NO
+             , TP.BUSINESS_PATTERN 
+             , TP.OFFICE_ID
+         ORDER BY 
+               TP.PARTS_ID
+             , B.SUPPLIER_ID
+             , ALR.IMP_PO_NO
+    </select>
+    
+    <select id="getInvoiceInformation" parameterType="com.chinaplus.batch.interfaces.bean.TnfExpPartsStatusEx" resultType="com.chinaplus.batch.interfaces.bean.TnfExpPartsStatusEx">
+        <include refid="ConstDef"/> 
+        SELECT 
+               D.PARTS_ID AS partsId
+             , D.SUPPLIER_ID AS supplierId
+             , NVL(D.IMP_PO_NO, TIG.KANBAN_PLAN_NO) AS orderNo
+             , DATE(C.UPLOADED_DATE) AS endDate
+             , TP.BUSINESS_PATTERN AS businessPattern
+             , TP.OFFICE_ID AS officeId
+             , SUM(CASE WHEN C.ISSUE_TYPE = #{InvoiceIssueType_SUP_WH} THEN NVL(D.ORIGINAL_QTY, D.QTY) ELSE 0 END) AS dayDicReceivedQty
+             , SUM(NVL(D.ORIGINAL_QTY, D.QTY)) AS dayInvoiceQty
+          FROM 
+               (SELECT 
+                      INVOICE_SUMMARY_ID
+                    , INVOICE_GROUP_ID
+                    , MIN(INVOICE_ID) AS INVOICE_ID
+                 FROM 
+                      TNT_INVOICE
+                GROUP BY
+                      INVOICE_SUMMARY_ID
+                    , INVOICE_GROUP_ID) A
+         INNER JOIN 
+               TNT_INVOICE_SUMMARY C
+            ON 
+               C.INVOICE_SUMMARY_ID = A.INVOICE_SUMMARY_ID
+         INNER JOIN 
+               TNT_INVOICE_PARTS D
+            ON 
+               D.INVOICE_ID = A.INVOICE_ID
+         INNER JOIN 
+               TNM_PARTS_MASTER TP
+            ON 
+               TP.PARTS_ID = D.PARTS_ID
+          LEFT JOIN 
+               TNT_INVOICE_GROUP TIG
+            ON 
+               TIG.INVOICE_GROUP_ID = A.INVOICE_GROUP_ID
+           AND 
+               TIG.STATUS = #{InvoiceGroupStatus_NORMAL}
+         WHERE
+               C.UPLOADED_DATE >= #{lastEndDate} 
+           AND
+               C.UPLOADED_DATE <![CDATA[<]]> #{endDate}
+           AND
+               C.OFFICE_ID = #{officeId}
+           AND
+               C.INVOICE_STATUS <![CDATA[<]]> #{INV_CANCELLED}
+           AND 
+               C.INVOICE_STATUS > #{NOT_APPROVED}
+           AND 
+               (C.UPLOAD_STATUS = #{DONE} 
+            OR 
+                C.UPLOAD_STATUS IS NULL)
+           AND 
+               (C.NON_SHIPPING_ROUTE = #{Irregulars_DONE} 
+            OR 
+                C.NON_SHIPPING_ROUTE IS NULL)
+         GROUP BY 
+               D.PARTS_ID
+             , D.SUPPLIER_ID
+             , DATE(C.UPLOADED_DATE)
+             , TP.BUSINESS_PATTERN 
+             , TP.OFFICE_ID
+             , D.IMP_PO_NO
+             , TIG.KANBAN_PLAN_NO
+         ORDER BY 
+               D.PARTS_ID
+             , D.SUPPLIER_ID
+             , DATE(C.UPLOADED_DATE)
+             , orderNo
+    </select>
+    
+    <select id="getAreadyDirectInformation" parameterType="com.chinaplus.batch.interfaces.bean.TnfExpPartsStatusEx" resultType="com.chinaplus.batch.interfaces.bean.TnfExpPartsStatusEx">
+        <include refid="ConstDef"/> 
+        SELECT 
+               D.PARTS_ID AS partsId
+             , D.SUPPLIER_ID AS supplierId
+             , NVL(D.IMP_PO_NO, TIG.KANBAN_PLAN_NO) AS orderNo
+             , SUM(NVL(D.ORIGINAL_QTY, D.QTY)) AS preDicReceivedQty
+          FROM 
+               (SELECT 
+                      INVOICE_SUMMARY_ID
+                    , INVOICE_GROUP_ID
+                    , MIN(INVOICE_ID) AS INVOICE_ID
+                 FROM 
+                      TNT_INVOICE
+                GROUP BY
+                      INVOICE_SUMMARY_ID
+                    , INVOICE_GROUP_ID) A
+         INNER JOIN 
+               TNT_INVOICE_SUMMARY C
+            ON 
+               C.INVOICE_SUMMARY_ID = A.INVOICE_SUMMARY_ID
+         INNER JOIN 
+               TNT_INVOICE_PARTS D
+            ON 
+               D.INVOICE_ID = A.INVOICE_ID
+          LEFT JOIN 
+               TNT_INVOICE_GROUP TIG
+            ON 
+               TIG.INVOICE_GROUP_ID = A.INVOICE_GROUP_ID
+           AND 
+               TIG.STATUS = #{InvoiceGroupStatus_NORMAL}
+         WHERE
+               C.UPLOADED_DATE <![CDATA[<]]> #{lastEndDate} 
+           AND
+               C.OFFICE_ID = #{officeId}
+           AND
+               (C.ISSUE_TYPE = #{InvoiceIssueType_SUP_WH}
+            OR   
+                C.BUSINESS_PATTERN = #{BusinessPattern_AISIN})
+           AND
+               C.INVOICE_STATUS <![CDATA[<]]> #{INV_CANCELLED}
+           AND 
+               C.INVOICE_STATUS > #{NOT_APPROVED}
+           AND 
+               (C.UPLOAD_STATUS = #{DONE} 
+            OR 
+                C.UPLOAD_STATUS IS NULL)
+           AND 
+               (C.NON_SHIPPING_ROUTE = #{Irregulars_DONE} 
+            OR 
+                C.NON_SHIPPING_ROUTE IS NULL)
+         GROUP BY 
+               D.PARTS_ID
+             , D.SUPPLIER_ID
+             , D.IMP_PO_NO
+             , TIG.KANBAN_PLAN_NO
+         ORDER BY 
+               D.PARTS_ID
+             , D.SUPPLIER_ID
+             , orderNo
+    </select>
+     
+    <select id="getAreadyInvoiceformation" parameterType="com.chinaplus.batch.interfaces.bean.TnfExpPartsStatusEx" resultType="com.chinaplus.batch.interfaces.bean.TnfExpPartsStatusEx">
+        <include refid="ConstDef"/> 
+        SELECT 
+               D.PARTS_ID AS partsId
+             , D.SUPPLIER_ID AS supplierId
+             , NVL(D.IMP_PO_NO, TIG.KANBAN_PLAN_NO) AS orderNo
+             , SUM(NVL(D.ORIGINAL_QTY, D.QTY)) AS preInvoiceQty
+          FROM 
+               (SELECT 
+                      INVOICE_SUMMARY_ID
+                    , INVOICE_GROUP_ID
+                    , MIN(INVOICE_ID) AS INVOICE_ID
+                 FROM 
+                      TNT_INVOICE
+                GROUP BY
+                      INVOICE_SUMMARY_ID
+                    , INVOICE_GROUP_ID) A
+         INNER JOIN 
+               TNT_INVOICE_SUMMARY C
+            ON 
+               C.INVOICE_SUMMARY_ID = A.INVOICE_SUMMARY_ID
+         INNER JOIN 
+               TNT_INVOICE_PARTS D
+            ON 
+               D.INVOICE_ID = A.INVOICE_ID
+          LEFT JOIN 
+               TNT_INVOICE_GROUP TIG
+            ON 
+               TIG.INVOICE_GROUP_ID = A.INVOICE_GROUP_ID
+           AND 
+               TIG.STATUS = #{InvoiceGroupStatus_NORMAL}
+         WHERE
+               C.UPLOADED_DATE <![CDATA[<]]> #{lastEndDate} 
+           AND
+               C.OFFICE_ID = #{officeId}
+           AND
+               C.BUSINESS_PATTERN = #{BusinessPattern_VV}
+           AND
+               C.INVOICE_STATUS <![CDATA[<]]> #{INV_CANCELLED}
+           AND 
+               C.INVOICE_STATUS > #{NOT_APPROVED}
+           AND 
+               (C.UPLOAD_STATUS = #{DONE} 
+            OR 
+                C.UPLOAD_STATUS IS NULL)
+           AND 
+               (C.NON_SHIPPING_ROUTE = #{Irregulars_DONE} 
+            OR 
+                C.NON_SHIPPING_ROUTE IS NULL)
+         GROUP BY 
+               D.PARTS_ID
+             , D.SUPPLIER_ID
+             , D.IMP_PO_NO
+             , TIG.KANBAN_PLAN_NO
+         ORDER BY 
+               D.PARTS_ID
+             , D.SUPPLIER_ID
+             , orderNo
+    </select>
+     
+    <select id="getExistPartsStatusList" parameterType="com.chinaplus.batch.interfaces.bean.TnfExpPartsStatusEx" resultType="com.chinaplus.batch.interfaces.bean.TnfExpPartsStatusEx">
+         <include refid="ConstDef"/> 
+         SELECT
+                A.PARTS_ID AS partsId
+              , A.SUPPLIER_ID AS supplierId
+              , A.OFFICE_ID AS officeId
+              , A.BUSINESS_PATTERN AS businessPattern
+              , B.PARTS_STATUS_ID AS partsStatusId
+              , B.END_DATE AS endDate
+              , NVL(B.EXP_PLAN_DELAY_QTY, 0) AS expPlanDelayQty
+              , NVL(B.EXP_BALANCE_QTY, 0) AS expBalanceQty
+              , NVL(B.EXP_STOCK_QTY, 0) AS expStockQty
+              , NVL(B.EXP_ONSHIPPING_QTY, 0) AS expOnshippingQty
+              , NVL(B.DAY_ONSHIPPING_QTY, 0)  AS dayOnshippingQty
+              , B.CREATED_BY  AS createdBy
+              , B.CREATED_DATE  AS createdDate
+              , B.VERSION  AS version
+           FROM
+                (SELECT DISTINCT
+                        TEP.PARTS_ID
+                      , TEP.SUPPLIER_ID 
+                      , TP.OFFICE_ID
+                      , TP.BUSINESS_PATTERN
+                   FROM
+                        TNM_EXP_PARTS TEP 
+                  INNER JOIN 
+                        TNM_PARTS_MASTER TP
+                     ON
+                        TP.PARTS_ID = TEP.PARTS_ID
+                  WHERE
+                        TEP.PARTS_STATUS = #{PARTS_COMPLETED}
+                    AND
+                        TP.OFFICE_ID = #{officeId}
+                ) A 
+           LEFT JOIN 
+                TNF_EXP_PARTS_STATUS B 
+             ON 
+                B.PARTS_ID = A.PARTS_ID 
+            AND 
+                B.SUPPLIER_ID = A.SUPPLIER_ID
+            AND 
+                B.END_DATE >= #{lastEndDate}
+    </select>
+    
+    <select id="getLastDateOfImpStock" resultType="java.util.Date" parameterType="com.chinaplus.batch.interfaces.bean.TnfImpStockByDayEx">
+        <include refid="ConstDef"/> 
+        SELECT
+               MIN(END_DATE) AS endDate
+          FROM
+              (SELECT
+                      IMP_OB_ACTUAL_DATE AS END_DATE 
+                 FROM
+                      TNT_IP 
+                WHERE
+                      IMP_OB_ACTUAL_DATE IS NOT NULL
+                  AND 
+                      OFFICE_ID = #{officeId} 
+                  AND 
+                 <if test = "lastBatchTime != null" >
+                      UPDATED_DATE > #{lastBatchTime}
+                  AND 
+                 </if>
+                      UPDATED_DATE <![CDATA[<=]]> #{currBatchTime}
+              
+                UNION ALL 
+            
+              SELECT
+                     GR_DATE AS END_DATE 
+                FROM
+                     TNT_INVOICE_SUMMARY 
+               WHERE
+                     OFFICE_ID = #{officeId}  
+                 AND
+                     POST_RI_FLAG > #{POSTRIFLAG_Y}  
+                 AND
+                 <if test = "lastBatchTime != null" >
+                     UPDATED_DATE > #{lastBatchTime}
+                 AND 
+                 </if>
+                     UPDATED_DATE <![CDATA[<=]]> #{currBatchTime}
+              
+            UNION ALL 
+              
+              SELECT
+                     DATE (A.PROCESS_DATE) AS END_DATE 
+                FROM
+                     TNT_IF_IMP_IP A
+               INNER JOIN 
+                     TNM_OFFICE B
+                  ON
+                     B.OFFICE_CODE = A.OFFICE_CODE
+               WHERE
+                     B.OFFICE_ID = #{officeId}  
+                 AND
+                     A.HANDLE_FLAG = #{PROCESS_SUCCESS} 
+                <if test = "lastBatchTime != null" >
+                 AND 
+                     A.UPDATED_DATE > #{lastBatchTime}
+                </if>
+                 AND 
+                     A.UPDATED_DATE <![CDATA[<=]]> #{currBatchTime}
+            )
+    </select>
+    
+    <select id="getImpStockInformationListBefore" parameterType="com.chinaplus.batch.interfaces.bean.TnfImpStockByDayEx" resultType="com.chinaplus.batch.interfaces.bean.TnfImpStockByDayEx">
+        <include refid="ConstDef"/> 
+         SELECT partsId
+              , officeId
+              , supplierId 
+              , whsId
+              , businessPattern
+              , SUM(dayInRackQty) AS dayInRackQty
+              , SUM(dayImpStockQty) AS dayImpStockQty
+              , SUM(dayWhsStockQty) AS dayWhsStockQty
+              , SUM(dayNgQty) AS dayNgQty
+              , SUM(dayOnholdQty) AS dayOnholdQty
+              , SUM(dayInboundQty) AS dayInboundQty
+              , SUM(dayOutboundQty) AS dayOutboundQty 
+           FROM (<include refid="selectImpStockInfo"/>)
+          GROUP BY 
+                partsId
+              , officeId
+              , supplierId 
+              , whsId
+              , businessPattern
+          ORDER BY
+                partsId
+              , supplierId
+              , whsId
+    </select>
+    
+    <select id="getImpStockInformationList" parameterType="com.chinaplus.batch.interfaces.bean.TnfImpStockByDayEx" resultType="com.chinaplus.batch.interfaces.bean.TnfImpStockByDayEx">
+        <include refid="ConstDef"/> 
+        <include refid="selectImpStockInfo"/> 
+          ORDER BY
+                IMP.PARTS_ID
+              , IMP.SUPPLIER_ID
+              , IMP.WHS_ID
+              , IMP.END_DATE
+    </select>
+    
+    <sql id="selectImpStockInfo">
+         SELECT
+                IMP.PARTS_ID AS partsId
+              , TP.OFFICE_ID AS officeId
+              , IMP.SUPPLIER_ID AS supplierId
+              , IMP.WHS_ID AS whsId
+              , TP.BUSINESS_PATTERN AS businessPattern
+              , IMP.END_DATE AS endDate
+              , SUM(IMP.DAY_INT_RACK_QTY) AS dayInRackQty
+              , SUM(IMP.DAY_INBOUND_QTY + IMP.DAY_GR_QTY + IMP.DAY_ADJUST_QTY + IMP.DAY_TRANSFER_QTY - IMP.DAY_OUTBOUND_QTY) AS dayImpStockQty
+              , SUM(IMP.DAY_INBOUND_QTY + IMP.DAY_GR_QTY + IMP.DAY_ADJUST_QTY + IMP.DAY_TRANSFER_QTY - IMP.DAY_PRE_OB_QTY) AS dayWhsStockQty
+              , SUM(IMP.DAY_NG_QTY) AS dayNgQty
+              , SUM(IMP.DAY_ONHOLD_QTY) AS dayOnholdQty
+              , SUM(IMP.DAY_INBOUND_QTY) AS dayInboundQty
+              , SUM(IMP.DAY_OUTBOUND_QTY) AS dayOutboundQty 
+           FROM <!-- CUSTOM CLEARANCE -->
+                (<!--SELECT
+                        D.PARTS_ID
+                      , D.SUPPLIER_ID
+                      , TW.WHS_ID
+                      , C.IMP_CC_ACTUAL_DATE AS END_DATE
+                      , NVL(D.ORIGINAL_QTY, D.QTY) AS DAY_INT_RACK_QTY
+                      , 0 AS DAY_GR_QTY
+                      , 0 AS DAY_INBOUND_QTY
+                      , 0 AS DAY_NG_QTY
+                      , 0 AS DAY_ONHOLD_QTY
+                      , 0 AS DAY_PRE_OB_QTY
+                      , 0 AS DAY_OUTBOUND_QTY
+                      , 0 AS DAY_ADJUST_QTY
+                      , 0 AS DAY_TRANSFER_QTY 
+                   FROM
+                        (SELECT DISTINCT
+                                NVL(MI.INVOICE_NO, IFIP.INVOICE_NO) AS INVOICE_NO
+                              , IFIP.WHS_CODE
+                           FROM 
+                                TNT_IF_IMP_IP IFIP
+                           LEFT JOIN 
+                                TNT_MATCH_INVOICE MI
+                             ON 
+                                MI.WHS_INVOICE_NO = IFIP.INVOICE_NO
+                            AND 
+                                MI.STATUS = #{MATCHED}
+                            AND 
+                                IFIP.PROCESS_DATE >= #{lastEndDate}
+                            AND 
+                                IFIP.ACTION_TYPE = #{CUSTOMS_CLEARANCE} 
+                            AND 
+                                IFIP.HANDLE_FLAG = #{PROCESS_SUCCESS} 
+                        ) A 
+                  INNER JOIN 
+                        TNT_INVOICE_SUMMARY B 
+                     ON 
+                        B.INVOICE_NO = A.INVOICE_NO 
+                    AND 
+                        B.INVOICE_STATUS <![CDATA[<]]> #{INV_CANCELLED}
+                  INNER JOIN 
+                        (SELECT
+                                INVOICE_SUMMARY_ID
+                              , INVOICE_GROUP_ID
+                              , MIN(INVOICE_ID) AS INVOICE_ID 
+                           FROM
+                                TNT_INVOICE 
+                          GROUP BY
+                                INVOICE_SUMMARY_ID
+                              , INVOICE_GROUP_ID) TI 
+                     ON 
+                        TI.INVOICE_SUMMARY_ID = B.INVOICE_SUMMARY_ID 
+                  INNER JOIN 
+                        TNT_INVOICE C 
+                     ON 
+                        C.INVOICE_ID = TI.INVOICE_ID 
+                  INNER JOIN 
+                        TNT_INVOICE_PARTS D 
+                     ON 
+                        D.INVOICE_ID = C.INVOICE_ID 
+                  INNER JOIN 
+                        TNM_WAREHOUSE TW 
+                     ON 
+                        TW.WHS_CODE = A.WHS_CODE 
+                  WHERE
+                        C.OFFICE_ID = #{officeId} -->
+                        
+                 <!-- CUSTOM CLEARANCE FOR VV -->
+                 SELECT
+                        NVL(B.ORIGINAL_PARTS_ID, B.PARTS_ID) AS PARTS_ID
+                      , B.SUPPLIER_ID AS SUPPLIER_ID
+                      , TW.WHS_ID
+                      , B.CUSTOMS_CLR_DATE AS END_DATE
+                      , NVL(DECIMAL(INB.QTY), B.QTY) AS DAY_INT_RACK_QTY
+                      , 0 AS DAY_GR_QTY
+                      , 0 AS DAY_INBOUND_QTY
+                      , 0 AS DAY_NG_QTY
+                      , 0 AS DAY_ONHOLD_QTY
+                      , 0 AS DAY_PRE_OB_QTY
+                      , 0 AS DAY_OUTBOUND_QTY
+                      , 0 AS DAY_ADJUST_QTY
+                      , 0 AS DAY_TRANSFER_QTY 
+                   FROM
+                        (SELECT DISTINCT
+                                IFIP.CONTAINER_NO
+                              , IFIP.WHS_CODE
+                              , TIS.TRANSPORT_MODE 
+                              , TIS.INVOICE_NO AS INVOICE_NO
+                           FROM 
+                                TNT_IF_IMP_IP IFIP
+                          INNER JOIN 
+                                TNM_OFFICE TOF 
+                             ON 
+                                TOF.OFFICE_CODE = IFIP.OFFICE_CODE
+                           LEFT JOIN 
+                                TNT_MATCH_INVOICE MI
+                             ON 
+                                MI.WHS_INVOICE_NO = IFIP.INVOICE_NO
+                            AND 
+                                MI.STATUS = #{MATCHED}
+                           LEFT JOIN 
+                                TNT_INVOICE_SUMMARY TIS
+                             ON 
+                                (TIS.INVOICE_NO = IFIP.INVOICE_NO
+                             OR  
+                                 TIS.INVOICE_NO = MI.INVOICE_NO)
+                            AND 
+                                TIS.INVOICE_STATUS <![CDATA[<]]> ${INV_CANCELLED}
+                          WHERE
+                                TOF.OFFICE_ID = #{officeId}  
+                            AND 
+                                IFIP.PROCESS_DATE <![CDATA[<]]> #{endDate}
+                            AND 
+                                IFIP.PROCESS_DATE >= #{lastEndDate}
+                            AND 
+                                IFIP.ACTION_TYPE = #{CUSTOMS_CLEARANCE} 
+                            AND 
+                                IFIP.HANDLE_FLAG = #{PROCESS_SUCCESS}) A 
+                  INNER JOIN 
+                        TNT_IP B
+                     ON 
+                        B.INVOICE_NO = A.INVOICE_NO
+                    AND 
+                        (B.CONTAINER_NO = A.CONTAINER_NO
+                     OR 
+                         A.TRANSPORT_MODE = #{TransportMode_AIR})
+                    AND 
+                        B.BUSINESS_PATTERN = #{BusinessPattern_VV}
+                  INNER JOIN 
+                        TNM_WAREHOUSE TW 
+                     ON 
+                        TW.WHS_CODE = A.WHS_CODE 
+                   LEFT JOIN 
+                        TNT_IF_IMP_IP INB
+                     ON 
+                        INB.PID_NO = B.PID_NO
+                    AND 
+                        INB.ACTION_TYPE = #{IMP_INBOUND}
+                    AND 
+                        INB.HANDLE_FLAG = #{PROCESS_SUCCESS}
+                  WHERE 
+                        (B.PID_NO IS NULL AND INB.PID_NO IS NULL)
+                     OR 
+                        (B.PID_NO IS NOT NULL AND INB.PID_NO IS NOT NULL)
+                     
+                  UNION ALL
+                  
+                 <!-- CUSTOM CLEARANCE FOR AISIN -->
+                 SELECT
+                        TIK.PARTS_ID AS PARTS_ID
+                      , TIK.SUPPLIER_ID AS SUPPLIER_ID
+                      , TW.WHS_ID
+                      , DATE(IFIP.PROCESS_DATE) AS END_DATE
+                      , TIK.QTY AS DAY_INT_RACK_QTY
+                      , 0 AS DAY_GR_QTY
+                      , 0 AS DAY_INBOUND_QTY
+                      , 0 AS DAY_NG_QTY
+                      , 0 AS DAY_ONHOLD_QTY
+                      , 0 AS DAY_PRE_OB_QTY
+                      , 0 AS DAY_OUTBOUND_QTY
+                      , 0 AS DAY_ADJUST_QTY
+                      , 0 AS DAY_TRANSFER_QTY 
+                   FROM
+                        TNT_IP_KANBAN TIK
+                  INNER JOIN 
+                          (SELECT DISTINCT
+                                  TI.INVOICE_NO
+                                , TI.OFFICE_ID
+                                , TI.IMP_CC_ACTUAL_DATE 
+                             FROM 
+                                  TNT_INVOICE TI
+                            INNER JOIN 
+                                  TNT_INVOICE_SUMMARY TIS
+                               ON 
+                                  TIS.INVOICE_SUMMARY_ID = TI.INVOICE_SUMMARY_ID
+                              AND 
+                                  TIS.INVOICE_STATUS <![CDATA[<]]> #{INV_CANCELLED}
+                              AND 
+                                  TIS.OFFICE_ID = #{officeId}) TI
+                     ON 
+                        TI.INVOICE_NO = TIK.INVOICE_NO
+                  INNER JOIN 
+                        TNT_IF_IMP_IP IFIP
+                     ON 
+                        IFIP.IF_IP_ID = TIK.IF_IP_ID
+                  INNER JOIN 
+                        TNM_OFFICE TOF 
+                     ON 
+                        TOF.OFFICE_ID = TI.OFFICE_ID
+                    AND 
+                        TOF.OFFICE_CODE = IFIP.OFFICE_CODE
+                  INNER JOIN 
+                        TNM_WAREHOUSE TW 
+                     ON 
+                        TW.WHS_CODE = IFIP.WHS_CODE 
+                  WHERE
+                        IFIP.ACTION_TYPE = #{CUSTOMS_CLEARANCE} 
+                    AND
+                        IFIP.PROCESS_DATE >= #{lastEndDate}
+                    AND 
+                        IFIP.PROCESS_DATE <![CDATA[<]]> #{endDate}
+                                
+                  UNION ALL 
+                 
+                 <!-- POST GR/GI FOR GR -->
+                 SELECT
+                        C.PARTS_ID
+                      , C.SUPPLIER_ID
+                      , NULL AS WHS_ID
+                      , A.GR_DATE AS END_DATE
+                      , 0 AS DAY_INT_RACK_QTY
+                      , NVL(C.ORIGINAL_QTY, C.QTY) AS DAY_GR_QTY
+                      , 0 AS DAY_INBOUND_QTY
+                      , 0 AS DAY_NG_QTY
+                      , 0 AS DAY_ONHOLD_QTY
+                      , 0 AS DAY_PRE_OB_QTY
+                      , 0 AS DAY_OUTBOUND_QTY
+                      , 0 AS DAY_ADJUST_QTY
+                      , 0 AS DAY_TRANSFER_QTY 
+                   FROM
+                        TNT_INVOICE_SUMMARY A 
+                  INNER JOIN 
+                        (SELECT 
+                                INVOICE_SUMMARY_ID
+                              , INVOICE_GROUP_ID 
+                              , MIN(INVOICE_ID) AS INVOICE_ID
+                           FROM 
+                                TNT_INVOICE
+                          GROUP BY
+                                INVOICE_SUMMARY_ID
+                              , INVOICE_GROUP_ID) B 
+                     ON
+                        B.INVOICE_SUMMARY_ID = A.INVOICE_SUMMARY_ID 
+                  INNER JOIN 
+                        TNT_INVOICE_PARTS C 
+                     ON 
+                        C.INVOICE_ID = B.INVOICE_ID 
+                  WHERE
+                        A.OFFICE_ID = #{officeId}
+                    AND
+                        A.INVOICE_STATUS <![CDATA[<]]> #{INV_CANCELLED}
+                    AND 
+                        A.POST_RI_FLAG >= #{AFTER_GR} 
+                    AND
+                        A.GR_DATE >= #{lastEndDate}
+                    AND
+                        A.GR_DATE <![CDATA[<]]> #{endDate}
+                        
+                  UNION ALL 
+                  
+                  <!-- POST GR/GI FOR GI -->
+                 SELECT
+                        C.PARTS_ID
+                      , C.SUPPLIER_ID
+                      , NULL AS WHS_ID
+                      , A.GI_DATE AS END_DATE
+                      , 0 AS DAY_INT_RACK_QTY
+                      , 0 AS DAY_GR_QTY
+                      , 0 AS DAY_INBOUND_QTY
+                      , 0 AS DAY_NG_QTY
+                      , 0 AS DAY_ONHOLD_QTY
+                      , NVL(C.ORIGINAL_QTY, C.QTY) AS DAY_PRE_OB_QTY
+                      , NVL(C.ORIGINAL_QTY, C.QTY) AS DAY_OUTBOUND_QTY
+                      , 0 AS DAY_ADJUST_QTY
+                      , 0 AS DAY_TRANSFER_QTY 
+                   FROM
+                        TNT_INVOICE_SUMMARY A 
+                  INNER JOIN 
+                        (SELECT 
+                                INVOICE_SUMMARY_ID
+                              , INVOICE_GROUP_ID 
+                              , MIN(INVOICE_ID) AS INVOICE_ID
+                           FROM 
+                                TNT_INVOICE
+                          GROUP BY
+                                INVOICE_SUMMARY_ID
+                              , INVOICE_GROUP_ID) B 
+                     ON
+                        B.INVOICE_SUMMARY_ID = A.INVOICE_SUMMARY_ID 
+                  INNER JOIN 
+                        TNT_INVOICE_PARTS C 
+                     ON 
+                        C.INVOICE_ID = B.INVOICE_ID 
+                  WHERE
+                        A.OFFICE_ID = #{officeId}
+                    AND
+                        A.INVOICE_STATUS <![CDATA[<]]> #{INV_CANCELLED}
+                    AND 
+                        A.POST_RI_FLAG = #{AFTER_GI} 
+                    AND
+                        A.GI_DATE >= #{lastEndDate}
+                    AND
+                        A.GR_DATE <![CDATA[<]]> #{endDate}
+                        
+                  UNION ALL 
+                 
+                 <!-- DEVANNED FOR VV -->
+                 SELECT
+                        NVL(B.ORIGINAL_PARTS_ID, B.PARTS_ID) AS PARTS_ID
+                      , B.SUPPLIER_ID AS SUPPLIER_ID
+                      , TW.WHS_ID
+                      , B.DEVANNED_DATE AS END_DATE
+                      , (CASE WHEN B.CUSTOMS_CLR_DATE IS NULL THEN 0 ELSE 0 - NVL(DECIMAL(INB.QTY), B.QTY) END) AS DAY_INT_RACK_QTY
+                      , 0 AS DAY_GR_QTY
+                      , NVL(DECIMAL(INB.QTY), B.QTY) AS DAY_INBOUND_QTY
+                      , 0 AS DAY_NG_QTY
+                      , 0 AS DAY_ONHOLD_QTY
+                      , 0 AS DAY_PRE_OB_QTY
+                      , 0 AS DAY_OUTBOUND_QTY
+                      , 0 AS DAY_ADJUST_QTY
+                      , 0 AS DAY_TRANSFER_QTY 
+                   FROM
+                        (SELECT DISTINCT
+                                IFIP.MODULE_NO
+                              , IFIP.WHS_CODE
+                              , NVL(MI.INVOICE_NO, IFIP.DEVAN_INVOICE_NO) AS INVOICE_NO
+                           FROM 
+                                TNT_IF_IMP_IP IFIP
+                          INNER JOIN 
+                                TNM_OFFICE TOF 
+                             ON 
+                                TOF.OFFICE_CODE = IFIP.OFFICE_CODE
+                           LEFT JOIN 
+                                TNT_MATCH_INVOICE MI
+                             ON 
+                                MI.WHS_INVOICE_NO = IFIP.DEVAN_INVOICE_NO
+                            AND 
+                                MI.STATUS = #{MATCHED}
+                          WHERE
+                                TOF.OFFICE_ID = #{officeId}  
+                            AND 
+                                IFIP.PROCESS_DATE >= #{lastEndDate}
+                            AND
+                                IFIP.PROCESS_DATE <![CDATA[<]]> #{endDate}
+                            AND 
+                                IFIP.ACTION_TYPE = #{DEVANNED} 
+                            AND 
+                                IFIP.HANDLE_FLAG = #{PROCESS_SUCCESS}) A 
+                  INNER JOIN 
+                        TNT_IP B
+                     ON 
+                        B.INVOICE_NO = A.INVOICE_NO
+                    AND 
+                        B.MODULE_NO = A.MODULE_NO
+                    AND 
+                        B.BUSINESS_PATTERN = #{BusinessPattern_VV}
+                  INNER JOIN 
+                        TNM_WAREHOUSE TW 
+                     ON 
+                        TW.WHS_CODE = A.WHS_CODE 
+                   LEFT JOIN 
+                        TNT_IF_IMP_IP INB
+                     ON 
+                        INB.PID_NO = B.PID_NO
+                    AND 
+                        INB.ACTION_TYPE = #{IMP_INBOUND}
+                    AND 
+                        INB.HANDLE_FLAG = #{PROCESS_SUCCESS}
+                  WHERE 
+                        (B.PID_NO IS NULL AND INB.PID_NO IS NULL)
+                     OR 
+                        (B.PID_NO IS NOT NULL AND INB.PID_NO IS NOT NULL)
+                     
+                  UNION ALL
+                  
+                 <!-- DEVANNED FOR AISIN -->
+                 SELECT
+                        TIK.PARTS_ID AS PARTS_ID
+                      , TIK.SUPPLIER_ID AS SUPPLIER_ID
+                      , TW.WHS_ID
+                      , DATE(IFIP.PROCESS_DATE) AS END_DATE
+                      , (CASE WHEN TI.IMP_CC_ACTUAL_DATE IS NULL THEN 0 ELSE 0 - TIK.QTY END) AS DAY_INT_RACK_QTY
+                      , 0 AS DAY_GR_QTY
+                      , TIK.QTY AS DAY_INBOUND_QTY
+                      , 0 AS DAY_NG_QTY
+                      , 0 AS DAY_ONHOLD_QTY
+                      , 0 AS DAY_PRE_OB_QTY
+                      , 0 AS DAY_OUTBOUND_QTY
+                      , 0 AS DAY_ADJUST_QTY
+                      , 0 AS DAY_TRANSFER_QTY 
+                   FROM
+                        TNT_IP_KANBAN TIK
+                  INNER JOIN 
+                          (SELECT DISTINCT
+                                  TI.INVOICE_NO
+                                , TI.OFFICE_ID
+                                , TI.IMP_CC_ACTUAL_DATE 
+                             FROM 
+                                  TNT_INVOICE TI
+                            INNER JOIN 
+                                  TNT_INVOICE_SUMMARY TIS
+                               ON 
+                                  TIS.INVOICE_SUMMARY_ID = TI.INVOICE_SUMMARY_ID
+                              AND 
+                                  TIS.INVOICE_STATUS <![CDATA[<]]> #{INV_CANCELLED}
+                              AND 
+                                  TIS.OFFICE_ID = #{officeId}) TI
+                     ON 
+                        TI.INVOICE_NO = TIK.INVOICE_NO
+                  INNER JOIN 
+                        TNT_IF_IMP_IP IFIP
+                     ON 
+                        IFIP.IF_IP_ID = TIK.IF_IP_ID
+                  INNER JOIN 
+                        TNM_WAREHOUSE TW 
+                     ON 
+                        TW.WHS_CODE = IFIP.WHS_CODE 
+                  WHERE
+                        IFIP.ACTION_TYPE = #{DEVANNED} 
+                    AND
+                        IFIP.PROCESS_DATE >= #{lastEndDate}
+                    AND
+                        IFIP.PROCESS_DATE <![CDATA[<]]> #{endDate}
+                 
+                  UNION ALL 
+                
+                 <!-- INBOUND -->
+                 SELECT
+                        NVL(IP.ORIGINAL_PARTS_ID, IP.PARTS_ID) AS PARTS_ID
+                      , NVL(TIK.SUPPLIER_ID, IP.SUPPLIER_ID) AS SUPPLIER_ID
+                      , TW.WHS_ID
+                      , IP.IMP_INB_ACTUAL_DATE AS END_DATE
+                      , (CASE WHEN IP.CUSTOMS_CLR_DATE IS NULL THEN 0 ELSE 0 - NVL(TIK.QTY, DECIMAL(A.QTY)) END) AS DAY_INT_RACK_QTY
+                      , 0 AS DAY_GR_QTY
+                      , NVL(TIK.QTY, DECIMAL(A.QTY)) AS DAY_INBOUND_QTY
+                      , 0 AS DAY_NG_QTY
+                      , 0 AS DAY_ONHOLD_QTY
+                      , 0 AS DAY_PRE_OB_QTY
+                      , 0 AS DAY_OUTBOUND_QTY
+                      , 0 AS DAY_ADJUST_QTY
+                      , 0 AS DAY_TRANSFER_QTY 
+                   FROM
+                        TNT_IF_IMP_IP A 
+                  INNER JOIN 
+                        TNT_IP IP 
+                     ON 
+                        IP.PID_NO = A.PID_NO 
+                  INNER JOIN 
+                        TNM_WAREHOUSE TW 
+                     ON 
+                        TW.WHS_CODE = A.WHS_CODE 
+                   LEFT JOIN 
+                        TNT_IP_KANBAN TIK
+                     ON 
+                        TIK.IF_IP_ID = A.IF_IP_ID
+                  WHERE
+                        IP.DEVANNED_DATE IS NULL 
+                    AND 
+                        IP.OFFICE_ID = #{officeId} 
+                    AND 
+                        A.ACTION_TYPE = #{IMP_INBOUND} 
+                    AND 
+                        A.HANDLE_FLAG = #{PROCESS_SUCCESS} 
+                    AND 
+                        A.ONHOLD_FLAG IS NULL 
+                    AND
+                        A.PROCESS_DATE >= #{lastEndDate}
+                    AND
+                        A.PROCESS_DATE <![CDATA[<]]> #{endDate}
+
+                 UNION ALL 
+
+                 <!-- Cancel Invoice inbound -->
+                 SELECT
+                        NVL(TIK.PARTS_ID, IP.PARTS_ID) AS PARTS_ID
+                      , NVL(TIK.SUPPLIER_ID, IP.SUPPLIER_ID) AS SUPPLIER_ID
+                      , TW.WHS_ID
+                      , DATE(A.PROCESS_DATE) AS END_DATE
+                      , 0 AS DAY_INT_RACK_QTY
+                      , 0 AS DAY_GR_QTY
+                      , (0 - NVL(TIK.QTY, IP.QTY)) AS DAY_INBOUND_QTY
+                      , 0 AS DAY_NG_QTY
+                      , 0 AS DAY_ONHOLD_QTY
+                      , 0 AS DAY_PRE_OB_QTY
+                      , 0 AS DAY_OUTBOUND_QTY
+                      , 0 AS DAY_ADJUST_QTY
+                      , 0 AS DAY_TRANSFER_QTY 
+                   FROM
+                        TNT_IF_IMP_IP A 
+                  INNER JOIN 
+                        TNM_OFFICE TOF 
+                     ON 
+                        TOF.OFFICE_CODE = A.OFFICE_CODE 
+                  INNER JOIN 
+                        TNM_WAREHOUSE TW 
+                     ON 
+                        TW.WHS_CODE = A.WHS_CODE 
+                   LEFT JOIN 
+                        TNT_IP IP 
+                     ON 
+                        IP.IP_NO = A.SOURCE_IP_NO 
+                   LEFT JOIN 
+                        TNT_IP_KANBAN TIK
+                     ON 
+                        TIK.IF_IP_ID = A.IF_IP_ID
+                  WHERE
+                        TOF.OFFICE_ID = #{officeId} 
+                    AND 
+                        A.ACTION_TYPE = #{CANCEL_INVOICE} 
+                    AND 
+                        A.HANDLE_FLAG = #{PROCESS_SUCCESS} 
+                    AND
+                        A.PROCESS_DATE >= #{lastEndDate}
+                    AND
+                        A.PROCESS_DATE <![CDATA[<]]> #{endDate}
+                        
+                  UNION ALL 
+                
+                 <!-- ON-HOLD -->
+                 SELECT
+                        TP.PARTS_ID
+                      , NVL(TIK.SUPPLIER_ID, IP.SUPPLIER_ID) AS SUPPLIER_ID
+                      , TW.WHS_ID
+                      , DATE(A.PROCESS_DATE) AS END_DATE
+                      , 0 AS DAY_INT_RACK_QTY
+                      , 0 AS DAY_GR_QTY
+                      , 0 AS DAY_INBOUND_QTY
+                      , (CASE WHEN A.ONHOLD_FLAG = #{NG_ON_HOLD} THEN NVL(TIK.QTY, DECIMAL(A.QTY)) ELSE 0 END) AS DAY_NG_QTY
+                      , (CASE WHEN A.ONHOLD_FLAG = #{ECI_ON_HOLD} THEN NVL(TIK.QTY, DECIMAL(A.QTY)) ELSE 0 END) AS DAY_ONHOLD_QTY
+                      , 0 AS DAY_PRE_OB_QTY
+                      , 0 AS DAY_OUTBOUND_QTY
+                      , 0 AS DAY_ADJUST_QTY
+                      , 0 AS DAY_TRANSFER_QTY 
+                   FROM
+                        TNT_IF_IMP_IP A 
+                  INNER JOIN 
+                        TNT_IP IP 
+                     ON 
+                        IP.PID_NO = A.PID_NO 
+                  INNER JOIN 
+                        TNM_WAREHOUSE TW 
+                     ON 
+                        TW.WHS_CODE = A.WHS_CODE 
+                  INNER JOIN 
+                        TNM_WHS_CUSTOMER TWC 
+                     ON 
+                        TWC.WHS_CUSTOMER_CODE = A.WHS_CUSTOMER_CODE 
+                    AND 
+                        TWC.WHS_ID = TW.WHS_ID
+                  INNER JOIN 
+                        TNM_PARTS_MASTER OTP 
+                     ON 
+                        OTP.PARTS_ID = IP.PARTS_ID 
+                  INNER JOIN 
+                        TNM_PARTS_MASTER TP 
+                     ON 
+                        TP.TTC_PARTS_NO = OTP.TTC_PARTS_NO 
+                    AND 
+                        TP.CUSTOMER_ID = TWC.CUSTOMER_ID 
+                   LEFT JOIN
+                        TNT_IP_KANBAN TIK
+                     ON 
+                        TIK.IF_IP_ID = A.IF_IP_ID
+                  WHERE
+                        TP.OFFICE_ID = #{officeId} 
+                    AND 
+                        A.ONHOLD_FLAG IN (#{NG_ON_HOLD}, #{ECI_ON_HOLD}) 
+                    AND 
+                        A.HANDLE_FLAG = #{PROCESS_SUCCESS} 
+                    AND
+                        A.PROCESS_DATE >= #{lastEndDate}
+                    AND
+                        A.PROCESS_DATE <![CDATA[<]]> #{endDate}
+                    
+                  UNION ALL 
+                  
+                 <!-- RELEASE ON-HOLD --> 
+                 SELECT
+                        TP.PARTS_ID
+                      , NVL(TIK.SUPPLIER_ID, IFC.SUPPLIER_ID) AS SUPPLIER_ID
+                      , TW.WHS_ID
+                      , DATE(NC.PROCESS_DATE) AS END_DATE
+                      , 0 AS DAY_INT_RACK_QTY
+                      , 0 AS DAY_GR_QTY
+                      , 0 AS DAY_INBOUND_QTY
+                      , (CASE WHEN A.ONHOLD_FLAG = #{NG_ON_HOLD} THEN 0 - NVL(TIK.QTY, DECIMAL(A.QTY)) ELSE 0 END) AS DAY_NG_QTY
+                      , (CASE WHEN A.ONHOLD_FLAG = #{ECI_ON_HOLD} THEN 0 - NVL(TIK.QTY, DECIMAL(A.QTY)) ELSE 0 END) AS DAY_ONHOLD_QTY
+                      , 0 AS DAY_PRE_OB_QTY
+                      , 0 AS DAY_OUTBOUND_QTY
+                      , 0 AS DAY_ADJUST_QTY
+                      , 0 AS DAY_TRANSFER_QTY 
+                   FROM 
+                        (SELECT
+                                A.IF_IP_ID AS NEW_IF_IP_ID
+                              , IP.SUPPLIER_ID
+                              , OTP.TTC_PARTS_NO
+                              , MAX(B.PROCESS_DATE) AS PROCESS_DATE  
+                           FROM
+                                TNT_IF_IMP_IP A 
+                          INNER JOIN 
+                                TNT_IF_IMP_IP B 
+                             ON 
+                                B.PID_NO = A.PID_NO 
+                            AND
+                                B.HANDLE_FLAG = #{PROCESS_SUCCESS} 
+                            AND 
+                                B.PROCESS_DATE <![CDATA[<]]> A.PROCESS_DATE 
+                          INNER JOIN 
+                                TNT_IP IP 
+                             ON 
+                                IP.PID_NO = A.PID_NO 
+                          INNER JOIN 
+                                TNM_PARTS_MASTER OTP 
+                             ON 
+                                OTP.PARTS_ID = IP.PARTS_ID 
+                          WHERE 
+                                IP.OFFICE_ID = #{officeId} 
+                            AND 
+                                A.HANDLE_FLAG = #{PROCESS_SUCCESS} 
+                            AND
+                                A.PROCESS_DATE >= #{lastEndDate}
+                            AND
+                                A.PROCESS_DATE <![CDATA[<]]> #{endDate}
+                          GROUP BY
+                                A.IF_IP_ID
+                              , IP.SUPPLIER_ID
+                              , OTP.TTC_PARTS_NO) IFC
+                  INNER JOIN 
+                        TNT_IF_IMP_IP NC 
+                     ON 
+                        NC.IF_IP_ID = IFC.NEW_IF_IP_ID
+                  INNER JOIN 
+                        TNT_IF_IMP_IP A 
+                     ON 
+                        A.PID_NO = NC.PID_NO
+                    AND
+                        A.PROCESS_DATE = IFC.PROCESS_DATE
+                    AND 
+                        A.ONHOLD_FLAG IN (#{NG_ON_HOLD}, #{ECI_ON_HOLD}) 
+                  INNER JOIN 
+                        TNM_WAREHOUSE TW 
+                     ON 
+                        TW.WHS_CODE = A.WHS_CODE 
+                  INNER JOIN 
+                        TNM_WHS_CUSTOMER TWC 
+                     ON 
+                        TWC.WHS_CUSTOMER_CODE = A.WHS_CUSTOMER_CODE 
+                    AND 
+                        TWC.WHS_ID = TW.WHS_ID 
+                  INNER JOIN 
+                        TNM_PARTS_MASTER TP 
+                     ON 
+                        TP.TTC_PARTS_NO = IFC.TTC_PARTS_NO 
+                    AND 
+                        TP.CUSTOMER_ID = TWC.CUSTOMER_ID 
+                   LEFT JOIN
+                        TNT_IP_KANBAN TIK
+                     ON 
+                        TIK.IF_IP_ID = A.IF_IP_ID
+                         
+                  UNION ALL 
+                
+                 <!-- STOCK ADJUST --> 
+                 SELECT
+                        TP.PARTS_ID AS PARTS_ID
+                      , NVL(TIK.SUPPLIER_ID, IP.SUPPLIER_ID) AS SUPPLIER_ID
+                      , TW.WHS_ID
+                      , DATE(A.PROCESS_DATE) AS END_DATE
+                      , 0 AS DAY_INT_RACK_QTY
+                      , 0 AS DAY_GR_QTY
+                      , 0 AS DAY_INBOUND_QTY
+                      , 0 AS DAY_NG_QTY
+                      , 0 AS DAY_ONHOLD_QTY
+                      , 0 AS DAY_PRE_OB_QTY
+                      , 0 AS DAY_OUTBOUND_QTY
+                      , NVL(TIK.SA_QTY, DECIMAL(A.SA_QTY)) AS DAY_ADJUST_QTY
+                      , 0 AS DAY_TRANSFER_QTY  
+                   FROM
+                        TNT_IF_IMP_IP A 
+                  INNER JOIN 
+                        TNT_IP IP 
+                     ON 
+                        IP.PID_NO = A.PID_NO 
+                  INNER JOIN 
+                        TNM_WAREHOUSE TW 
+                     ON 
+                        TW.WHS_CODE = A.WHS_CODE 
+                  INNER JOIN 
+                        TNM_WHS_CUSTOMER TWC 
+                     ON 
+                        TWC.WHS_CUSTOMER_CODE = A.WHS_CUSTOMER_CODE 
+                    AND 
+                        TWC.WHS_ID = TW.WHS_ID 
+                  INNER JOIN 
+                        TNM_PARTS_MASTER OTP 
+                     ON 
+                        OTP.PARTS_ID = IP.PARTS_ID 
+                  INNER JOIN 
+                        TNM_PARTS_MASTER TP 
+                     ON 
+                        TP.TTC_PARTS_NO = OTP.TTC_PARTS_NO 
+                    AND 
+                        TP.CUSTOMER_ID = TWC.CUSTOMER_ID 
+                   LEFT JOIN 
+                        TNT_IP_KANBAN TIK
+                     ON 
+                        TIK.IF_IP_ID = A.IF_IP_ID
+                  WHERE
+                        TP.OFFICE_ID = #{officeId} 
+                    AND 
+                        A.ACTION_TYPE = #{STOCK_ADJUST} 
+                    AND 
+                        A.HANDLE_FLAG = #{PROCESS_SUCCESS} 
+                    AND
+                        A.PROCESS_DATE >= #{lastEndDate}
+                    AND
+                        A.PROCESS_DATE <![CDATA[<]]> #{endDate}
+                    
+                  UNION ALL
+                 
+                 <!-- TRANSFER TO -->
+                 SELECT
+                        TP.PARTS_ID
+                      , NVL(TIK.SUPPLIER_ID, IP.SUPPLIER_ID) AS SUPPLIER_ID
+                      , TW.WHS_ID
+                      , DATE(A.PROCESS_DATE) AS END_DATE
+                      , 0 AS DAY_INT_RACK_QTY
+                      , 0 AS DAY_GR_QTY
+                      , 0 AS DAY_INBOUND_QTY
+                      , 0 AS DAY_NG_QTY
+                      , 0 AS DAY_ONHOLD_QTY
+                      , 0 AS DAY_PRE_OB_QTY
+                      , 0 AS DAY_OUTBOUND_QTY
+                      , 0 AS DAY_ADJUST_QTY
+                      , NVL(TIK.QTY, DECIMAL(A.QTY)) AS DAY_TRANSFER_QTY 
+                   FROM
+                        TNT_IF_IMP_IP A 
+                  INNER JOIN 
+                        TNT_IP IP 
+                     ON 
+                        IP.PID_NO = A.PID_NO 
+                  INNER JOIN 
+                        TNM_WAREHOUSE TW 
+                     ON 
+                        TW.WHS_CODE = A.WHS_CODE 
+                  INNER JOIN 
+                        TNM_WHS_CUSTOMER TWC 
+                     ON 
+                        TWC.WHS_CUSTOMER_CODE = A.WHS_CUSTOMER_CODE 
+                    AND 
+                        TWC.WHS_ID = TW.WHS_ID 
+                  INNER JOIN 
+                        TNM_PARTS_MASTER OTP 
+                     ON 
+                        OTP.PARTS_ID = IP.PARTS_ID 
+                  INNER JOIN 
+                        TNM_PARTS_MASTER TP 
+                     ON 
+                        TP.TTC_PARTS_NO = OTP.TTC_PARTS_NO 
+                    AND 
+                        TP.CUSTOMER_ID = TWC.CUSTOMER_ID 
+                   LEFT JOIN
+                        TNT_IP_KANBAN TIK
+                     ON 
+                        TIK.IF_IP_ID = A.IF_IP_ID
+                  WHERE
+                        TP.OFFICE_ID = #{officeId} 
+                    AND 
+                        A.ACTION_TYPE IN (#{WHS_TRANSFER}, #{STOCK_TRANSFER}) 
+                    AND 
+                        A.ONHOLD_FLAG IS NULL 
+                    AND 
+                        A.HANDLE_FLAG = #{PROCESS_SUCCESS} 
+                    AND
+                        A.PROCESS_DATE >= #{lastEndDate}
+                    AND
+                        A.PROCESS_DATE <![CDATA[<]]> #{endDate}
+                        
+                  UNION ALL 
+                
+                 <!-- STOCK TRANSFER FROM-->
+                 SELECT
+                        TP.PARTS_ID
+                      , NVL(TIK.SUPPLIER_ID, IP.SUPPLIER_ID) AS SUPPLIER_ID
+                      , TW.WHS_ID
+                      , DATE(A.PROCESS_DATE) AS END_DATE
+                      , 0 AS DAY_INT_RACK_QTY
+                      , 0 AS DAY_GR_QTY
+                      , 0 AS DAY_INBOUND_QTY
+                      , 0 AS DAY_NG_QTY
+                      , 0 AS DAY_ONHOLD_QTY
+                      , 0 AS DAY_PRE_OB_QTY
+                      , 0 AS DAY_OUTBOUND_QTY
+                      , 0 AS DAY_ADJUST_QTY
+                      , (0 - NVL(TIK.QTY, DECIMAL(A.QTY))) AS DAY_TRANSFER_QTY 
+                   FROM
+                        TNT_IF_IMP_IP A 
+                  INNER JOIN 
+                        TNT_IP IP 
+                     ON  
+                        IP.PID_NO = A.PID_NO 
+                  INNER JOIN  
+                        TNM_WAREHOUSE TW 
+                     ON  
+                        TW.WHS_CODE = A.WHS_CODE 
+                  INNER JOIN  
+                        TNM_WHS_CUSTOMER TWC 
+                     ON  
+                        TWC.WHS_CUSTOMER_CODE = A.FROM_CUSTOMER_CODE 
+                    AND  
+                        TWC.WHS_ID = TW.WHS_ID 
+                  INNER JOIN 
+                        TNM_PARTS_MASTER OTP 
+                     ON 
+                        OTP.PARTS_ID = IP.PARTS_ID 
+                  INNER JOIN  
+                        TNM_PARTS_MASTER TP 
+                     ON  
+                        TP.TTC_PARTS_NO = OTP.TTC_PARTS_NO 
+                    AND  
+                        TP.CUSTOMER_ID = TWC.CUSTOMER_ID 
+                   LEFT JOIN
+                        TNT_IP_KANBAN TIK
+                     ON 
+                        TIK.IF_IP_ID = A.IF_IP_ID 
+                  WHERE
+                        TP.OFFICE_ID = #{officeId} 
+                    AND  
+                        A.ACTION_TYPE = #{STOCK_TRANSFER}
+                    AND  
+                        A.ONHOLD_FLAG IS NULL 
+                    AND  
+                        A.HANDLE_FLAG = #{PROCESS_SUCCESS} 
+                    AND
+                        A.PROCESS_DATE >= #{lastEndDate}
+                    AND
+                        A.PROCESS_DATE <![CDATA[<]]> #{endDate}
+                        
+                  UNION ALL 
+                
+                <!-- WHS TRANSFER FROM -->
+                 SELECT
+                        TP.PARTS_ID
+                      , NVL(TIK.SUPPLIER_ID, IP.SUPPLIER_ID) AS SUPPLIER_ID
+                      , TW.WHS_ID
+                      , DATE(A.PROCESS_DATE) AS END_DATE
+                      , 0 AS DAY_INT_RACK_QTY
+                      , 0 AS DAY_GR_QTY
+                      , 0 AS DAY_INBOUND_QTY
+                      , 0 AS DAY_NG_QTY
+                      , 0 AS DAY_ONHOLD_QTY
+                      , 0 AS DAY_PRE_OB_QTY
+                      , 0 AS DAY_OUTBOUND_QTY
+                      , 0 AS DAY_ADJUST_QTY
+                      , (0 - NVL(TIK.QTY, DECIMAL(A.QTY))) AS DAY_TRANSFER_QTY 
+                   FROM
+                        TNT_IF_IMP_IP A 
+                  INNER JOIN 
+                        TNT_IP IP 
+                     ON 
+                        IP.PID_NO = A.PID_NO 
+                  INNER JOIN 
+                        TNM_WAREHOUSE TW 
+                     ON 
+                        TW.WHS_CODE = A.FROM_WHS_CODE 
+                  INNER JOIN 
+                        TNM_WHS_CUSTOMER TWC 
+                     ON 
+                        TWC.WHS_CUSTOMER_CODE = A.WHS_CUSTOMER_CODE 
+                    AND 
+                        TWC.WHS_ID = TW.WHS_ID 
+                  INNER JOIN 
+                        TNM_PARTS_MASTER OTP 
+                     ON 
+                        OTP.PARTS_ID = IP.PARTS_ID 
+                  INNER JOIN 
+                        TNM_PARTS_MASTER TP 
+                     ON 
+                        TP.TTC_PARTS_NO = OTP.TTC_PARTS_NO 
+                    AND 
+                        TP.CUSTOMER_ID = TWC.CUSTOMER_ID
+                  LEFT JOIN
+                        TNT_IP_KANBAN TIK
+                     ON 
+                        TIK.IF_IP_ID = A.IF_IP_ID 
+                  WHERE
+                        TP.OFFICE_ID = #{officeId} 
+                    AND  
+                        A.ACTION_TYPE = #{WHS_TRANSFER}
+                    AND  
+                        A.HANDLE_FLAG = #{PROCESS_SUCCESS} 
+                    AND
+                        A.PROCESS_DATE >= #{lastEndDate}
+                    AND
+                        A.PROCESS_DATE <![CDATA[<]]> #{endDate}
+                        
+                  UNION ALL 
+
+                <!-- PREPARE OTUBOUND-->
+                 SELECT
+                        IP.PARTS_ID
+                      , NVL(TIK.SUPPLIER_ID, IP.SUPPLIER_ID) AS SUPPLIER_ID
+                      , IP.WHS_ID
+                      , DATE(A.PROCESS_DATE) AS END_DATE
+                      , 0 AS DAY_INT_RACK_QTY
+                      , 0 AS DAY_GR_QTY
+                      , 0 AS DAY_INBOUND_QTY
+                      , 0 AS DAY_NG_QTY
+                      , 0 AS DAY_ONHOLD_QTY
+                      , NVL(TIK.QTY, IP.QTY) AS DAY_PRE_OB_QTY
+                      , 0 AS DAY_OUTBOUND_QTY
+                      , 0 AS DAY_ADJUST_QTY
+                      , 0 AS DAY_TRANSFER_QTY 
+                   FROM
+                        TNT_IF_IMP_IP A 
+                  INNER JOIN 
+                        TNT_IP IP 
+                     ON 
+                        IP.PID_NO = A.PID_NO 
+                   LEFT JOIN
+                        TNT_IP_KANBAN TIK
+                     ON 
+                        TIK.IF_IP_ID = A.IF_IP_ID
+                  WHERE
+                        IP.OFFICE_ID = #{officeId} 
+                    AND  
+                        A.ACTION_TYPE = #{IMP_OUTBOUND}
+                    AND  
+                        A.HANDLE_FLAG = #{PROCESS_SUCCESS} 
+                    AND
+                        A.PROCESS_DATE >= #{lastEndDate}
+                    AND
+                        A.PROCESS_DATE <![CDATA[<]]> #{endDate}
+                        
+                  UNION ALL 
+
+                <!-- ACTUAL OUTBOUND -->
+                 SELECT
+                        IP.PARTS_ID
+                      , NVL(TIK.SUPPLIER_ID, IP.SUPPLIER_ID) AS SUPPLIER_ID
+                      , IP.WHS_ID
+                      , IP.IMP_OB_ACTUAL_DATE AS END_DATE
+                      , 0 AS DAY_INT_RACK_QTY
+                      , 0 AS DAY_GR_QTY
+                      , 0 AS DAY_INBOUND_QTY
+                      , 0 AS DAY_NG_QTY
+                      , 0 AS DAY_ONHOLD_QTY
+                      , 0 AS DAY_PRE_OB_QTY
+                      , NVL(TIK.QTY, IP.QTY) AS DAY_OUTBOUND_QTY
+                      , 0 AS DAY_ADJUST_QTY
+                      , 0 AS DAY_TRANSFER_QTY 
+                   FROM
+                        TNT_IP IP 
+                   LEFT JOIN
+                        TNT_IP_KANBAN TIK
+                     ON 
+                        TIK.PID_NO = IP.PID_NO
+                    AND 
+                        TIK.DATA_TYPE = #{IpKbDataType_OUTBOUND}
+                  WHERE
+                        IP.OFFICE_ID = #{officeId} 
+                    AND 
+                        IP.IMP_OB_ACTUAL_DATE >= #{lastEndDate}
+                    AND 
+                        IP.IMP_OB_ACTUAL_DATE <![CDATA[<]]> #{endDate}) IMP 
+          INNER JOIN 
+                TNM_PARTS_MASTER TP 
+             ON 
+                TP.PARTS_ID = IMP.PARTS_ID 
+            AND 
+                IMP.END_DATE IS NOT NULL
+          GROUP BY
+                IMP.PARTS_ID
+              , IMP.SUPPLIER_ID
+              , TP.OFFICE_ID
+              , IMP.WHS_ID
+              , IMP.END_DATE
+              , TP.BUSINESS_PATTERN
+    </sql>
+    
+    <select id="getAllExistImpStockList" resultType="com.chinaplus.batch.interfaces.bean.TnfImpStockByDayEx" parameterType="com.chinaplus.batch.interfaces.bean.TnfImpStockByDayEx" >
+         SELECT
+                T.STOCK_DAY_ID AS stockDayId
+              , T.OFFICE_ID AS officeId
+              , T.PARTS_ID AS partsId
+              , T.SUPPLIER_ID AS supplierId
+              , T.BUSINESS_PATTERN AS businessPattern
+              , T.WHS_ID AS whsId
+              , T.END_DATE AS endDate
+              , T.IMP_IN_RACK_QTY AS impInRackQty
+              , T.IMP_STOCK_QTY AS impStockQty
+              , T.SYSTEM_STOCK_QTY AS whsStockQty
+              , T.NG_QTY AS ngQty
+              , T.ONHOLD_QTY AS onholdQty
+              , T.CREATED_BY AS createdBy
+              , T.CREATED_DATE AS createdDate
+              , T.CREATED_BY AS version
+           FROM
+                TNF_IMP_STOCK_BY_DAY T 
+          WHERE
+                T.OFFICE_ID = #{officeId}
+            AND 
+                T.END_DATE >= #{lastEndDate}
+            AND 
+                T.END_DATE <![CDATA[<=]]> #{endDate}
+          ORDER BY
+                T.PARTS_ID
+              , T.SUPPLIER_ID
+              , T.WHS_ID
+              , T.END_DATE
+    </select>
+        
+    <select id="getLastImpStockDate" resultType="java.util.Date" parameterType="com.chinaplus.batch.interfaces.bean.TnfImpStockByDayEx" >
+        SELECT 
+               MAX(T.END_DATE) AS endDate
+          FROM 
+               TNF_IMP_STOCK_BY_DAY T
+         WHERE 
+               T.OFFICE_ID = #{officeId}
+    </select>
+      
+    <select id="getLastDateOfOrderBalance" resultType="java.util.Date" parameterType="com.chinaplus.batch.interfaces.bean.TnfBalanceByDayEx">
+        <include refid="ConstDef"/> 
+        SELECT
+               MIN(END_DATE) AS endDate
+         FROM
+              (SELECT
+                      DATE(A.IF_DATE_TIME) AS END_DATE 
+                 FROM
+                      TNT_IF_EXP_ORDER A
+                INNER JOIN 
+                      TNM_EXP_PARTS B 
+                   ON 
+                      B.SSMS_MAIN_ROUTE = A.MAIN_ROUTE 
+                  AND 
+                      B.EXP_CODE = A.EXP_CODE 
+                  AND 
+                      B.SSMS_CUST_CODE = A.SSMS_CUSTOMER_CODE 
+                  AND 
+                      B.EXP_SUPP_CODE = A.SSMS_SUPPLIER_CODE 
+                  AND 
+                      B.TTC_PARTS_NO = A.TTC_PARTS_NO 
+                  AND
+                      B.OFFICE_ID = #{officeId}
+                WHERE
+                      A.HANDLE_FLAG = #{PROCESS_SUCCESS} 
+                  <if test = "lastBatchTime != null" >
+                  AND 
+                      A.UPDATED_DATE > #{lastBatchTime}
+                  </if>
+                  AND 
+                      A.UPDATED_DATE <![CDATA[<=]]> #{currBatchTime}
+                      
+            UNION ALL 
+            
+              SELECT
+                     DATE (A.IF_DATE_TIME) AS END_DATE 
+                FROM
+                     TNT_IF_CANCEL_ORDER A
+               INNER JOIN 
+                     TNT_ORDER_DETAIL B
+                  ON 
+                     B.EXP_PO_NO = A.EXP_PO_NO
+                 AND 
+                     B.EXP_PO_ITEM_NO = A.EXP_PO_ITEM_NO
+                 AND 
+                     B.STATUS = #{ORDER_CANCELLED}
+               INNER JOIN 
+                     TNM_EXP_PARTS C
+                  ON 
+                     C.EXP_PARTS_ID = B.EXP_PARTS_ID
+                 AND 
+                     C.SSMS_MAIN_ROUTE = A.MAIN_ROUTE
+                 AND 
+                     C.TTC_PARTS_NO = A.PARTS_NO
+                 AND 
+                     C.SSMS_CUST_CODE = A.CUSTOMER_CODE
+                 AND 
+                     C.OFFICE_ID = #{officeId} 
+               WHERE
+                     A.HANDLE_FLAG = #{PROCESS_SUCCESS} 
+                <if test = "lastBatchTime != null" >
+                 AND A.UPDATED_DATE > #{lastBatchTime}
+                </if>
+                 AND A.UPDATED_DATE <![CDATA[<=]]> #{currBatchTime}
+
+            UNION ALL 
+            
+              SELECT
+                     MIN(CASE WHEN TK.REVISION_VERSION IS NULL 
+                                THEN TKP.ISSUED_DATE 
+                              ELSE DATE(TK.UPLOADED_DATE)
+                         END) AS END_DATE   
+                FROM
+                     TNT_KANBAN TK
+               INNER JOIN 
+                     TNT_KANBAN_PLAN  TKP
+                  ON 
+                     TKP.KANBAN_ID = TK.KANBAN_ID   
+               WHERE
+                     TK.OFFICE_ID = #{officeId} 
+                 AND 
+                <if test = "lastBatchTime != null" >
+                     TK.UPLOADED_DATE > #{lastBatchTime}
+                 AND 
+                </if>
+                     TK.UPLOADED_DATE <![CDATA[<=]]> #{currBatchTime}
+                 
+            UNION ALL 
+
+              SELECT
+                     A.CANCELLED_DATE AS END_DATE 
+                FROM
+                     TNT_KANBAN A 
+               WHERE
+                     A.OFFICE_ID = #{officeId} 
+                 AND 
+                     A.CANCELLED_DATE IS NOT NULL
+                 AND
+                <if test = "lastBatchTime != null" >
+                     A.UPDATED_DATE > #{lastBatchTime}
+                 AND 
+                </if>
+                     A.UPDATED_DATE <![CDATA[<=]]> #{currBatchTime}
+                 
+            UNION ALL 
+            
+             SELECT
+                     DATE(A.FORCE_COMPLETED_DATE) AS END_DATE 
+                FROM 
+                     TNT_ORDER_DETAIL A
+               INNER JOIN 
+                     TNT_ORDER B
+                  ON 
+                     A.ORDER_ID = B.ORDER_ID 
+                 AND 
+                     B.OFFICE_ID = #{officeId} 
+               WHERE
+                <if test = "lastBatchTime != null" >
+                     A.UPDATED_DATE > #{lastBatchTime}
+                 AND 
+                </if>
+                     A.UPDATED_DATE <![CDATA[<=]]> #{currBatchTime} 
+                 AND 
+                     A.FORCE_COMPLETED_DATE IS NOT NULL
+             
+            <!-- UNION ALL 
+            
+              SELECT
+                     DATE(UPLOADED_DATE) AS END_DATE 
+                FROM
+                     TNT_INVOICE_SUMMARY 
+               WHERE
+                     OFFICE_ID = #{officeId}  
+                 AND
+                 <if test = "lastBatchTime != null" >
+                     UPDATED_DATE > #{lastBatchTime}
+                 AND
+               </if>
+                     UPDATED_DATE <![CDATA[<=]]> #{currBatchTime} -->
+              
+            UNION ALL 
+            
+              SELECT
+                     GR_DATE AS END_DATE 
+                FROM
+                     TNT_INVOICE_SUMMARY 
+               WHERE
+                     OFFICE_ID = #{officeId}  
+                 AND
+                     POST_RI_FLAG > #{POSTRIFLAG_Y}  
+                 AND
+                 <if test = "lastBatchTime != null" >
+                     UPDATED_DATE > #{lastBatchTime}
+                 AND 
+                 </if>
+                     UPDATED_DATE <![CDATA[<=]]> #{currBatchTime}
+              
+            UNION ALL 
+              
+              SELECT
+                     DATE (A.PROCESS_DATE) AS END_DATE 
+                FROM
+                     TNT_IF_IMP_IP A
+               INNER JOIN 
+                     TNM_OFFICE B
+                  ON
+                     B.OFFICE_CODE = A.OFFICE_CODE
+               WHERE
+                     B.OFFICE_ID = #{officeId}  
+                 AND
+                     A.HANDLE_FLAG = #{PROCESS_SUCCESS} 
+                 AND 
+                     A.ACTION_TYPE IN (#{CUSTOMS_CLEARANCE}, #{DEVANNED}, #{IMP_INBOUND}) 
+                <if test = "lastBatchTime != null" >
+                 AND 
+                     A.UPDATED_DATE > #{lastBatchTime}
+                </if>
+                 AND 
+                     A.UPDATED_DATE <![CDATA[<=]]> #{currBatchTime}
+            )
+    </select>
+    
+    <select id="getVVOrderInfoByEachIPOBefore" parameterType="com.chinaplus.batch.interfaces.bean.TnfBalanceByDayEx" resultType="com.chinaplus.batch.interfaces.bean.TnfBalanceByDayEx">
+        <include refid="ConstDef"/> 
+         SELECT partsId
+              , supplierId
+              , impPoNo
+              , customerId
+              , businessPattern
+              , orderMonth
+              , SUM(dayOrderQty) AS dayOrderQty
+           FROM (<include refid="getVVOrderInfoByEachIPOSql"/> )
+          GROUP BY
+                partsId
+              , supplierId
+              , impPoNo
+              , customerId
+              , businessPattern
+              , orderMonth
+          ORDER BY
+                partsId
+              , supplierId
+              , impPoNo
+    </select>
+    <select id="getVVOrderInfoByEachIPO" parameterType="com.chinaplus.batch.interfaces.bean.TnfBalanceByDayEx" resultType="com.chinaplus.batch.interfaces.bean.TnfBalanceByDayEx">
+        <include refid="ConstDef"/> 
+        <include refid="getVVOrderInfoByEachIPOSql"/> 
+          ORDER BY
+                OD.PARTS_ID
+              , OD.SUPPLIER_ID
+              , OD.IMP_PO_NO
+              , OD.PRO_DATE
+    </select>
+    
+    <sql id="getVVOrderInfoByEachIPOSql">
+         SELECT
+                OD.PARTS_ID AS partsId
+              , OD.SUPPLIER_ID AS supplierId
+              , OD.PRO_DATE AS endDate
+              , OD.IMP_PO_NO AS impPoNo
+              , TP.CUSTOMER_ID AS customerId
+              , TP.BUSINESS_PATTERN AS businessPattern
+              , TOS.ORDER_MONTH AS orderMonth
+              , SUM(OD.QTY) AS dayOrderQty
+           FROM <!-- get normal order information -->
+                (SELECT
+                        B.PARTS_ID
+                      , B.SUPPLIER_ID
+                      , A.IMP_PO_NO
+                      , DATE (A.IF_DATE_TIME) AS PRO_DATE
+                      , CASE WHEN D.IF_ORDER_ID IS NULL THEN DECIMAL(A.ORDER_QTY) <!-- FIRST CREATE -->
+                             WHEN E.IF_ORDER_ID IS NOT NULL THEN DECIMAL(A.ORDER_QTY) <!-- RECREATE(AFTER CANCEL) --> 
+                             ELSE (DECIMAL(A.ORDER_QTY) - DECIMAL(D.ORDER_QTY))
+                        END AS QTY 
+                   FROM 
+                        TNT_IF_EXP_ORDER A 
+                  INNER JOIN 
+                        TNM_EXP_PARTS B 
+                     ON 
+                        B.SSMS_MAIN_ROUTE = A.MAIN_ROUTE 
+                    AND 
+                        B.EXP_CODE = A.EXP_CODE 
+                    AND 
+                        B.SSMS_CUST_CODE = A.SSMS_CUSTOMER_CODE 
+                    AND 
+                        B.EXP_SUPP_CODE = A.SSMS_SUPPLIER_CODE 
+                    AND 
+                        B.TTC_PARTS_NO = A.TTC_PARTS_NO 
+                    AND
+                        B.OFFICE_ID = #{officeId}
+                   LEFT JOIN ( <!-- get lastest order information -->
+                          SELECT
+                                 A.IF_ORDER_ID
+                               , MAX(B.IF_ORDER_ID) AS OLD_IF_ORDER_ID 
+                            FROM
+                                 TNT_IF_EXP_ORDER A 
+                           INNER JOIN 
+                                 TNT_IF_EXP_ORDER B
+                              ON 
+                                 B.EXP_PO_NO = A.EXP_PO_NO 
+                             AND 
+                                 B.EXP_PO_ITEM_NO = A.EXP_PO_ITEM_NO 
+                             AND 
+                                 B.IF_DATE_TIME <![CDATA[<]]> A.IF_DATE_TIME 
+                             AND 
+                                 B.HANDLE_FLAG = #{PROCESS_SUCCESS} 
+                           WHERE
+                                 A.IF_DATE_TIME >= #{lastEndDate}
+                             AND 
+                                 A.IF_DATE_TIME <![CDATA[<]]> #{endDate}
+                             AND
+                                 A.HANDLE_FLAG = #{PROCESS_SUCCESS} 
+                           GROUP BY
+                                 A.IF_ORDER_ID) C 
+                     ON 
+                        C.IF_ORDER_ID = A.IF_ORDER_ID 
+                   LEFT JOIN 
+                        TNT_IF_EXP_ORDER D 
+                     ON 
+                        D.IF_ORDER_ID = C.OLD_IF_ORDER_ID
+                   LEFT JOIN ( <!-- get order id which is the first one of order cancel -->
+                          SELECT
+                                 A.IF_CANCEL_ID
+                               , MIN(B.IF_ORDER_ID) AS IF_ORDER_ID 
+                            FROM
+                                 TNT_IF_CANCEL_ORDER A 
+                           INNER JOIN 
+                                 TNT_IF_EXP_ORDER B 
+                              ON 
+                                 B.EXP_PO_NO = A.EXP_PO_NO 
+                             AND 
+                                 B.EXP_PO_ITEM_NO = A.EXP_PO_ITEM_NO 
+                             AND
+                                 B.IF_DATE_TIME > A.IF_DATE_TIME 
+                             AND
+                                 B.HANDLE_FLAG = #{PROCESS_SUCCESS} 
+                             AND
+                                 B.IF_DATE_TIME >= #{lastEndDate}
+                             AND 
+                                 B.IF_DATE_TIME <![CDATA[<]]> #{endDate}
+                           WHERE
+                                 A.HANDLE_FLAG = #{PROCESS_SUCCESS} 
+                           GROUP BY
+                                 A.IF_CANCEL_ID) E 
+                     ON E.IF_ORDER_ID = A.IF_ORDER_ID 
+                  WHERE 
+                        A.IF_DATE_TIME >= #{lastEndDate}
+                    AND
+                        A.IF_DATE_TIME <![CDATA[<]]> #{endDate}
+                    AND
+                        A.HANDLE_FLAG = #{PROCESS_SUCCESS}
+                    AND 
+                        (D.IF_ORDER_ID IS NULL 
+                     OR  A.ORDER_QTY <![CDATA[<>]]> D.ORDER_QTY)
+            
+                UNION ALL
+                <!-- get order cancel information -->
+                SELECT
+                       D.PARTS_ID
+                     , D.SUPPLIER_ID
+                     , B.IMP_PO_NO
+                     , DATE (B.IF_DATE_TIME) AS PRO_DATE
+                     , (0 - DECIMAL(C.ORDER_QTY)) AS QTY 
+                  FROM
+                       (SELECT
+                               A.IF_CANCEL_ID
+                             , MAX(B.IF_ORDER_ID) AS IF_ORDER_ID 
+                          FROM
+                               TNT_IF_CANCEL_ORDER A 
+                         INNER JOIN 
+                               TNT_IF_EXP_ORDER B 
+                            ON 
+                               B.EXP_PO_NO = A.EXP_PO_NO 
+                           AND
+                               B.EXP_PO_ITEM_NO = A.EXP_PO_ITEM_NO 
+                           AND
+                               B.IF_DATE_TIME <![CDATA[<]]> A.IF_DATE_TIME 
+                           AND 
+                               B.HANDLE_FLAG = #{PROCESS_SUCCESS}
+                         WHERE
+                               A.IF_DATE_TIME >= #{lastEndDate}
+                           AND 
+                               A.IF_DATE_TIME <![CDATA[<]]> #{endDate}
+                           AND 
+                               A.HANDLE_FLAG = #{PROCESS_SUCCESS}
+                         GROUP BY
+                               A.IF_CANCEL_ID) A 
+                 INNER JOIN 
+                       TNT_IF_CANCEL_ORDER B 
+                    ON 
+                       B.IF_CANCEL_ID = A.IF_CANCEL_ID 
+                 INNER JOIN 
+                       TNT_IF_EXP_ORDER C 
+                    ON 
+                       C.IF_ORDER_ID = A.IF_ORDER_ID 
+                 INNER JOIN 
+                       TNM_EXP_PARTS D 
+                    ON 
+                       D.SSMS_MAIN_ROUTE = C.MAIN_ROUTE 
+                   AND
+                       D.SSMS_CUST_CODE = C.SSMS_CUSTOMER_CODE 
+                   AND 
+                       D.EXP_SUPP_CODE = C.SSMS_SUPPLIER_CODE 
+                   AND 
+                       D.TTC_PARTS_NO = C.TTC_PARTS_NO
+                   AND
+                       D.OFFICE_ID = #{officeId}) OD
+          INNER JOIN 
+                TNM_PARTS_MASTER TP
+             ON 
+                TP.PARTS_ID = OD.PARTS_ID
+          INNER JOIN 
+                (SELECT DISTINCT 
+                        IMP_PO_NO
+                      , KANBAN_PLAN_NO
+                      , ORDER_MONTH 
+                   FROM TNF_ORDER_STATUS
+                  WHERE IMP_PO_NO IS NOT NULL) TOS
+             ON 
+                TOS.IMP_PO_NO = OD.IMP_PO_NO
+          GROUP BY 
+                OD.PARTS_ID
+              , OD.SUPPLIER_ID
+              , OD.PRO_DATE
+              , OD.IMP_PO_NO
+              , TP.CUSTOMER_ID
+              , TP.BUSINESS_PATTERN 
+              , TOS.ORDER_MONTH
+    </sql>
+    
+    <select id="getKanbanInfoByKanbanNoBefore" parameterType="com.chinaplus.batch.interfaces.bean.TnfBalanceByDayEx" resultType="com.chinaplus.batch.interfaces.bean.TnfBalanceByDayEx">
+        <include refid="ConstDef"/> 
+         SELECT partsId
+              , supplierId
+              , kanbanPlanNo
+              , businessPattern
+              , customerId
+              , orderMonth
+              , SUM(dayOrderQty) AS dayOrderQty
+           FROM (<include refid="getKanbanInfoByKanbanNoSql"/>)
+          GROUP BY
+                partsId
+              , supplierId
+              , kanbanPlanNo
+              , businessPattern
+              , customerId
+              , orderMonth
+          ORDER BY
+                partsId
+              , supplierId
+              , kanbanPlanNo
+    </select>
+    
+    <select id="getKanbanInfoByKanbanNo" parameterType="com.chinaplus.batch.interfaces.bean.TnfBalanceByDayEx" resultType="com.chinaplus.batch.interfaces.bean.TnfBalanceByDayEx">
+        <include refid="ConstDef"/> 
+        <include refid="getKanbanInfoByKanbanNoSql"/> 
+          ORDER BY 
+                A.PARTS_ID
+              , A.SUPPLIER_ID
+              , A.KANBAN_PLAN_NO
+              , A.PRO_DATE
+    </select>
+    
+    <sql id="getKanbanInfoByKanbanNoSql">
+         SELECT
+                A.PARTS_ID AS partsId
+              , A.SUPPLIER_ID AS supplierId
+              , A.PRO_DATE AS endDate
+              , A.KANBAN_PLAN_NO AS kanbanPlanNo
+              , TP.BUSINESS_PATTERN AS businessPattern
+              , TP.CUSTOMER_ID AS customerId
+              , TOS.ORDER_MONTH AS orderMonth
+              , SUM(A.QTY) AS dayOrderQty
+           FROM 
+                (SELECT
+                        B.KANBAN_PLAN_NO
+                      , C.PARTS_ID
+                      , C.SUPPLIER_ID
+                      , A.PRO_DATE AS PRO_DATE
+                      , (NVL(C.QTY, 0) - NVL(E.QTY, 0)) AS QTY
+                   FROM 
+                        (SELECT
+                                A.KANBAN_ID
+                              , (CASE 
+                                      WHEN A.REVISION_VERSION IS NULL 
+                                        THEN DATE(TKP.ISSUED_DATE)
+                                      ELSE DATE(A.UPLOADED_DATE) 
+                                 END) AS PRO_DATE
+                              , MAX(B.KANBAN_ID) AS LAST_KANBAN_ID 
+                           FROM
+                                TNT_KANBAN A 
+                          INNER JOIN 
+                                  (SELECT 
+                                          KANBAN_ID
+                                        , MIN(ISSUED_DATE) AS ISSUED_DATE
+                                     FROM TNT_KANBAN_PLAN
+                                    GROUP BY 
+                                          KANBAN_ID) TKP
+                             ON 
+                                TKP.KANBAN_ID = A.KANBAN_ID
+                           LEFT JOIN 
+                                TNT_KANBAN B 
+                             ON 
+                                B.KANBAN_PLAN_NO = A.KANBAN_PLAN_NO 
+                            AND 
+                                B.UPLOADED_DATE <![CDATA[<]]> A.UPLOADED_DATE 
+                            AND 
+                                A.REVISION_VERSION IS NOT NULL
+                          WHERE 
+                                A.OFFICE_ID = #{officeId}
+                            AND
+                                ((A.REVISION_VERSION IS NOT NULL AND A.UPLOADED_DATE >= #{lastEndDate} AND A.UPLOADED_DATE <![CDATA[<]]> #{endDate})
+                             OR 
+                                 (A.REVISION_VERSION IS NULL AND TKP.ISSUED_DATE >= #{lastEndDate} AND TKP.ISSUED_DATE <![CDATA[<]]> #{endDate}))  
+                          GROUP BY
+                                A.KANBAN_ID
+                              , A.UPLOADED_DATE
+                              , TKP.ISSUED_DATE
+                              , A.REVISION_VERSION) A 
+                  INNER JOIN 
+                        TNT_KANBAN B 
+                     ON 
+                        B.KANBAN_ID = A.KANBAN_ID 
+                  INNER JOIN 
+                        TNT_KANBAN_PARTS C 
+                     ON 
+                        C.KANBAN_ID = A.KANBAN_ID 
+                   LEFT JOIN 
+                        TNT_KANBAN D 
+                     ON 
+                        D.KANBAN_ID = A.LAST_KANBAN_ID 
+                   LEFT JOIN 
+                        TNT_KANBAN_PARTS E 
+                     ON 
+                        E.KANBAN_ID = D.KANBAN_ID 
+                    AND 
+                        E.PARTS_ID = C.PARTS_ID
+                    AND 
+                        E.SUPPLIER_ID = C.SUPPLIER_ID
+                  WHERE 
+                        E.KANBAN_ID IS NULL
+                     OR
+                        C.QTY <![CDATA[<>]]> E.QTY
+
+                 UNION ALL 
+            
+                 SELECT
+                        A.KANBAN_PLAN_NO
+                      , B.PARTS_ID
+                      , B.SUPPLIER_ID
+                      , DATE(A.CANCELLED_DATE) AS PRO_DATE
+                      , SUM(0 - B.QTY) AS QTY 
+                   FROM 
+                        (SELECT
+                                B.KANBAN_PLAN_NO
+                              , A.CANCELLED_DATE
+                              , A.UPDATE_VERSION
+                              , MAX(A.KANBAN_ID) AS KANBAN_ID 
+                           FROM 
+                                (SELECT 
+                                        A.KANBAN_ID
+                                      , A.CANCELLED_DATE
+                                      , MAX(B.KANBAN_ID) AS UPDATE_VERSION
+                                   FROM 
+                                        TNT_KANBAN A
+                                  INNER JOIN 
+                                        TNT_KANBAN B
+                                     ON 
+                                        B.REVISION_VERSION IS NULL
+                                    AND 
+                                        B.UPLOADED_DATE <![CDATA[<=]]> A.UPLOADED_DATE
+                                    AND 
+                                        B.KANBAN_PLAN_NO = A.KANBAN_PLAN_NO
+                                  WHERE 
+                                        A.OFFICE_ID = #{officeId}
+                                    AND 
+                                        A.STATUS = #{CANCELLED} 
+                                    AND 
+                                        A.CANCELLED_DATE >= #{lastEndDate}
+                                    AND 
+                                        A.CANCELLED_DATE <![CDATA[<]]> #{endDate}
+                                  GROUP BY 
+                                        A.KANBAN_ID
+                                      , A.CANCELLED_DATE) A
+                          INNER JOIN 
+                                TNT_KANBAN B
+                             ON 
+                                B.KANBAN_ID = A.KANBAN_ID
+                          GROUP BY
+                                B.KANBAN_PLAN_NO
+                              , A.CANCELLED_DATE
+                              , A.UPDATE_VERSION) A 
+                  INNER JOIN 
+                        TNT_KANBAN_PARTS B 
+                     ON 
+                        B.KANBAN_ID = A.KANBAN_ID
+                  GROUP BY 
+                        A.KANBAN_PLAN_NO
+                      , B.PARTS_ID
+                      , B.SUPPLIER_ID
+                      , A.CANCELLED_DATE) A
+          INNER JOIN 
+                TNM_PARTS_MASTER TP
+             ON 
+                TP.PARTS_ID = A.PARTS_ID
+          INNER JOIN 
+                (SELECT DISTINCT 
+                        IMP_PO_NO
+                      , KANBAN_PLAN_NO
+                      , ORDER_MONTH 
+                   FROM TNF_ORDER_STATUS
+                  WHERE KANBAN_PLAN_NO IS NOT NULL) TOS
+             ON 
+                TOS.KANBAN_PLAN_NO = A.KANBAN_PLAN_NO
+          GROUP BY 
+                A.PARTS_ID
+              , A.SUPPLIER_ID
+              , A.PRO_DATE
+              , A.KANBAN_PLAN_NO
+              , TP.BUSINESS_PATTERN
+              , TP.CUSTOMER_ID
+              , TOS.ORDER_MONTH
+    </sql>
+    
+    <select id="getForceCompletedInfoListBefore" parameterType="com.chinaplus.batch.interfaces.bean.TnfBalanceByDayEx" resultType="com.chinaplus.batch.interfaces.bean.TnfBalanceByDayEx">
+        <include refid="ConstDef"/> 
+         SELECT partsId
+              , supplierId
+              , impPoNo
+              , kanbanPlanNo
+              , customerId
+              , businessPattern
+              , orderMonth
+              , SUM(forceCompletedQty) AS forceCompletedQty
+           FROM (<include refid="getForceCompletedInfoListSql"/>)
+          GROUP BY
+                partsId
+              , supplierId
+              , impPoNo
+              , kanbanPlanNo
+              , customerId
+              , businessPattern
+              , orderMonth
+          ORDER BY
+                partsId
+              , supplierId
+              , impPoNo
+              , kanbanPlanNo
+    </select>
+    
+    <select id="getForceCompletedInfoList" parameterType="com.chinaplus.batch.interfaces.bean.TnfBalanceByDayEx" resultType="com.chinaplus.batch.interfaces.bean.TnfBalanceByDayEx">
+        <include refid="ConstDef"/> 
+        <include refid="getForceCompletedInfoListSql"/>
+          ORDER BY
+                OD.PARTS_ID
+              , OD.SUPPLIER_ID
+              , OD.IMP_PO_NO
+              , OD.KANBAN_PLAN_NO
+              , OD.PRO_DATE  
+    </select>
+    
+    <sql id="getForceCompletedInfoListSql">
+         SELECT
+                OD.PARTS_ID AS partsId
+              , OD.SUPPLIER_ID AS supplierId
+              , OD.IMP_PO_NO AS impPoNo
+              , OD.KANBAN_PLAN_NO AS kanbanPlanNo
+              , OD.PRO_DATE AS endDate
+              , TP.CUSTOMER_ID AS customerId
+              , TP.BUSINESS_PATTERN AS businessPattern
+              , TOS.ORDER_MONTH AS orderMonth
+              , SUM(OD.QTY) AS forceCompletedQty
+           FROM 
+                (SELECT
+                        B.PARTS_ID
+                      , B.SUPPLIER_ID
+                      , C.IMP_PO_NO
+                      , C.KANBAN_PLAN_NO
+                      , DATE(A.FORCE_COMPLETED_DATE) AS PRO_DATE
+                      , C.FORCE_COMPLETED_QTY AS QTY
+                   FROM
+                        TNT_ORDER_DETAIL A
+                  INNER JOIN 
+                        TNM_EXP_PARTS B
+                     ON 
+                        B.EXP_PARTS_ID = A.EXP_PARTS_ID
+                  INNER JOIN 
+                        TNF_ORDER_STATUS C
+                     ON 
+                        C.EXP_PO_NO = A.EXP_PO_NO
+                    AND 
+                        C.PARTS_ID = A.PARTS_ID
+                    AND 
+                        C.SUPPLIER_ID = B.SUPPLIER_ID
+                  WHERE 
+                        B.OFFICE_ID = #{officeId}
+                    AND
+                        A.FORCE_COMPLETED_DATE >= #{lastEndDate}
+                    AND
+                        A.FORCE_COMPLETED_DATE <![CDATA[<]]> #{endDate}
+                   
+                  UNION ALL
+                  
+                 SELECT
+                        B.PARTS_ID
+                      , B.SUPPLIER_ID
+                      , C.IMP_PO_NO
+                      , C.KANBAN_PLAN_NO
+                      , DATE(B.FORCE_COMPLETED_DATE) AS PRO_DATE
+                      , C.FORCE_COMPLETED_QTY AS QTY
+                   FROM 
+                        (SELECT 
+                                OFFICE_ID
+                              , KANBAN_PLAN_NO
+                              , MAX(KANBAN_ID) AS KANBAN_ID
+                           FROM 
+                                TNT_KANBAN
+                          WHERE 
+                                STATUS <![CDATA[<]]> #{CANCELLED} 
+                            AND 
+                                OFFICE_ID = #{officeId}
+                          GROUP BY 
+                                OFFICE_ID
+                              , KANBAN_PLAN_NO) A
+                  INNER JOIN 
+                        TNT_KANBAN_PARTS B
+                     ON 
+                        B.KANBAN_ID = A.KANBAN_ID
+                  INNER JOIN 
+                        TNF_ORDER_STATUS C
+                     ON 
+                        C.KANBAN_PLAN_NO = A.KANBAN_PLAN_NO
+                    AND 
+                        C.PARTS_ID = B.PARTS_ID
+                    AND 
+                        C.SUPPLIER_ID = B.SUPPLIER_ID
+                  WHERE
+                        B.FORCE_COMPLETED_DATE >= #{lastEndDate}
+                    AND
+                        B.FORCE_COMPLETED_DATE <![CDATA[<]]> #{endDate}) OD
+          INNER JOIN 
+                TNM_PARTS_MASTER TP
+             ON 
+                TP.PARTS_ID = OD.PARTS_ID
+          INNER JOIN 
+                (SELECT DISTINCT 
+                        IMP_PO_NO
+                      , KANBAN_PLAN_NO
+                      , ORDER_MONTH 
+                   FROM TNF_ORDER_STATUS) TOS
+             ON 
+                TOS.IMP_PO_NO = OD.IMP_PO_NO
+             OR 
+                TOS.KANBAN_PLAN_NO = OD.KANBAN_PLAN_NO
+          GROUP BY 
+                OD.PARTS_ID
+              , OD.SUPPLIER_ID
+              , OD.IMP_PO_NO
+              , OD.KANBAN_PLAN_NO
+              , OD.PRO_DATE
+              , TP.CUSTOMER_ID
+              , TP.BUSINESS_PATTERN
+              , TOS.ORDER_MONTH
+    </sql>
+    
+    <select id="getImpRecevieInfoByOrderBefore" parameterType="com.chinaplus.batch.interfaces.bean.TnfBalanceByDayEx" resultType="com.chinaplus.batch.interfaces.bean.TnfBalanceByDayEx">
+        <include refid="ConstDef"/> 
+         SELECT partsId
+              , supplierId
+              , customerId
+              , businessPattern
+              , impPoNo
+              , kanbanPlanNo
+              , orderMonth
+              , SUM(dayReceivedQty) AS dayReceivedQty
+           FROM (<include refid="getImpRecevieInfoByOrderSql"/>)
+          GROUP BY
+                partsId
+              , supplierId
+              , customerId
+              , businessPattern
+              , impPoNo
+              , kanbanPlanNo
+              , orderMonth
+          ORDER BY
+                partsId
+              , supplierId
+              , impPoNo
+              , kanbanPlanNo
+    </select>   
+    
+    <select id="getImpRecevieInfoByOrder" parameterType="com.chinaplus.batch.interfaces.bean.TnfBalanceByDayEx" resultType="com.chinaplus.batch.interfaces.bean.TnfBalanceByDayEx">
+        <include refid="ConstDef"/> 
+        <include refid="getImpRecevieInfoByOrderSql"/> 
+          ORDER BY
+                IMP.PARTS_ID
+              , IMP.SUPPLIER_ID
+              , IMP.IMP_PO_NO
+              , IMP.KANBAN_PLAN_NO
+              , IMP.END_DATE
+    </select>
+    
+    <sql id="getImpRecevieInfoByOrderSql">
+         SELECT
+                IMP.PARTS_ID AS partsId
+              , IMP.SUPPLIER_ID AS supplierId
+              , TP.CUSTOMER_ID AS customerId
+              , TP.BUSINESS_PATTERN AS businessPattern
+              , IMP.END_DATE AS endDate
+              , IMP.IMP_PO_NO AS impPoNo
+              , IMP.KANBAN_PLAN_NO AS kanbanPlanNo
+              , TOS.ORDER_MONTH AS orderMonth
+              , SUM(IMP.QTY) AS dayReceivedQty
+           FROM <!-- POST GR/GI -->
+                (SELECT
+                        C.PARTS_ID
+                      , C.SUPPLIER_ID
+                      , C.IMP_PO_NO
+                      , TIG.KANBAN_PLAN_NO
+                      , DATE(A.GR_DATE) AS END_DATE
+                      , SUM(NVL(C.ORIGINAL_QTY, C.QTY)) AS QTY 
+                   FROM
+                        TNT_INVOICE_SUMMARY A 
+                  INNER JOIN 
+                        (SELECT 
+                                INVOICE_SUMMARY_ID
+                              , INVOICE_GROUP_ID
+                              , MIN(INVOICE_ID) AS INVOICE_ID
+                           FROM 
+                                TNT_INVOICE
+                          GROUP BY
+                                INVOICE_SUMMARY_ID
+                              , INVOICE_GROUP_ID) B 
+                     ON
+                        B.INVOICE_SUMMARY_ID = A.INVOICE_SUMMARY_ID 
+                  INNER JOIN 
+                        TNT_INVOICE_PARTS C 
+                     ON 
+                        C.INVOICE_ID = B.INVOICE_ID 
+                   LEFT JOIN 
+                        TNT_INVOICE_GROUP TIG
+                     ON 
+                        TIG.INVOICE_GROUP_ID = B.INVOICE_GROUP_ID
+                    AND 
+                        TIG.STATUS = #{InvoiceGroupStatus_NORMAL}
+                  WHERE
+                        A.OFFICE_ID = #{officeId}
+                    AND
+                        A.INVOICE_STATUS <![CDATA[<]]> #{INV_CANCELLED}
+                    AND 
+                        A.POST_RI_FLAG > #{POSTRIFLAG_Y} 
+                    AND
+                        A.GR_DATE >= #{lastEndDate}
+                    AND
+                        A.GR_DATE <![CDATA[<]]> #{endDate}
+                  GROUP BY
+                        C.PARTS_ID
+                      , C.SUPPLIER_ID
+                      , A.GR_DATE 
+                      , C.IMP_PO_NO
+                      , TIG.KANBAN_PLAN_NO
+                       
+                  UNION ALL 
+                  
+                 <!-- CUSTOM CLEARANCE -->
+                 <!-- SELECT
+                        D.PARTS_ID
+                      , D.SUPPLIER_ID
+                      , D.IMP_PO_NO
+                      , TIG.KANBAN_PLAN_NO
+                      , DATE(C.IMP_CC_ACTUAL_DATE) AS END_DATE
+                      , SUM(NVL(D.ORIGINAL_QTY, D.QTY)) AS QTY 
+                   FROM
+                        TNT_INVOICE_SUMMARY B 
+                  INNER JOIN 
+                        (SELECT 
+                                INVOICE_SUMMARY_ID
+                              , INVOICE_GROUP_ID
+                              , IMP_CC_ACTUAL_DATE
+                              , MIN(INVOICE_ID) AS INVOICE_ID
+                           FROM 
+                                TNT_INVOICE
+                          WHERE 
+                                IMP_CC_ACTUAL_DATE >= #{endDate}
+                          GROUP BY
+                                INVOICE_SUMMARY_ID
+                              , INVOICE_GROUP_ID
+                              , IMP_CC_ACTUAL_DATE) C 
+                     ON 
+                        C.INVOICE_SUMMARY_ID = B.INVOICE_SUMMARY_ID 
+                  INNER JOIN 
+                        TNT_INVOICE_PARTS D 
+                     ON 
+                        D.INVOICE_ID = C.INVOICE_ID 
+                  INNER JOIN 
+                        TNM_OFFICE TOF
+                     ON 
+                        TOF.OFFICE_ID = B.OFFICE_ID
+                   LEFT JOIN 
+                        TNT_INVOICE_GROUP TIG
+                     ON 
+                        TIG.INVOICE_GROUP_ID = C.INVOICE_GROUP_ID
+                  WHERE
+                        TOF.OFFICE_ID = #{officeId}
+                    AND 
+                        TOF.IMP_STOCK_FLAG = #{WITH_CLEARANCE} 
+                    AND
+                        B.INVOICE_STATUS <![CDATA[<]]> #{INV_CANCELLED}
+                  GROUP BY
+                        D.PARTS_ID
+                      , D.SUPPLIER_ID
+                      , C.IMP_CC_ACTUAL_DATE
+                      , D.IMP_PO_NO
+                      , TIG.KANBAN_PLAN_NO-->
+                      
+                 <!-- CUSTOM CLEARANCE FOR VV -->
+                 SELECT
+                        NVL(A.ORIGINAL_PARTS_ID, A.PARTS_ID) AS PARTS_ID
+                      , A.SUPPLIER_ID AS SUPPLIER_ID
+                      , A.IMP_PO_NO
+                      , A.KANBAN_PLAN_NO
+                      , A.CUSTOMS_CLR_DATE AS END_DATE
+                      , SUM(NVL(DECIMAL(IFIP.QTY), A.QTY)) AS QTY
+                   FROM
+                        TNT_IP A 
+                  INNER JOIN 
+                        TNM_OFFICE TOF 
+                     ON 
+                        TOF.OFFICE_ID = A.OFFICE_ID
+                   LEFT JOIN 
+                        TNT_IF_IMP_IP IFIP
+                     ON 
+                        IFIP.PID_NO = A.PID_NO
+                    AND 
+                        IFIP.ACTION_TYPE = #{IMP_INBOUND}
+                    AND 
+                        IFIP.HANDLE_FLAG = #{PROCESS_SUCCESS}
+                  WHERE 
+                        TOF.OFFICE_ID = #{officeId}
+                    AND 
+                        TOF.IMP_STOCK_FLAG = #{WITH_CLEARANCE} 
+                    AND
+                        A.BUSINESS_PATTERN = #{BusinessPattern_VV}
+                    AND 
+                        A.CUSTOMS_CLR_DATE >= #{lastEndDate}
+                    AND 
+                        A.CUSTOMS_CLR_DATE <![CDATA[<]]> #{endDate}
+                    AND 
+                        (IFIP.PID_NO IS NOT NULL 
+                     OR  
+                         A.STATUS <![CDATA[<]]> #{IpStatus_IMP_INBOUND})
+                  GROUP BY 
+                        A.ORIGINAL_PARTS_ID
+                      , A.PARTS_ID
+                      , A.SUPPLIER_ID
+                      , A.CUSTOMS_CLR_DATE
+                      , A.IMP_PO_NO
+                      , A.KANBAN_PLAN_NO
+                     
+                  UNION ALL
+                  
+                 <!-- CUSTOM CLEARANCE FOR AISIN -->
+                 SELECT
+                        TIK.PARTS_ID
+                      , TIK.SUPPLIER_ID
+                      , NULL AS IMP_PO_NO
+                      , TIK.KANBAN_PLAN_NO
+                      , DATE(IFIP.PROCESS_DATE) AS END_DATE
+                      , SUM(TIK.QTY) AS QTY 
+                   FROM
+                        TNT_IP_KANBAN TIK
+                  INNER JOIN 
+                          (SELECT DISTINCT
+                                  TI.INVOICE_NO
+                                , TI.OFFICE_ID
+                             FROM 
+                                  TNT_INVOICE TI
+                            INNER JOIN 
+                                  TNT_INVOICE_SUMMARY TIS
+                               ON 
+                                  TIS.INVOICE_SUMMARY_ID = TI.INVOICE_SUMMARY_ID
+                              AND 
+                                  TIS.INVOICE_STATUS <![CDATA[<]]> #{INV_CANCELLED}
+                              AND 
+                                  TIS.OFFICE_ID = #{officeId}) TI
+                     ON 
+                        TI.INVOICE_NO = TIK.INVOICE_NO
+                  INNER JOIN 
+                        TNT_IF_IMP_IP IFIP
+                     ON 
+                        IFIP.IF_IP_ID = TIK.IF_IP_ID
+                  INNER JOIN 
+                        TNM_OFFICE TOF 
+                     ON 
+                        TOF.OFFICE_ID = TI.OFFICE_ID
+                    AND 
+                        TOF.OFFICE_CODE = IFIP.OFFICE_CODE
+                  WHERE
+                        IFIP.PROCESS_DATE >= #{lastEndDate}
+                    AND 
+                        IFIP.PROCESS_DATE <![CDATA[<]]> #{endDate}
+                    AND
+                        TIK.DATA_TYPE = #{IpKbDataType_CUSTOMS}
+                    AND 
+                        TOF.IMP_STOCK_FLAG = #{WITH_CLEARANCE}
+                  GROUP BY
+                        TIK.PARTS_ID
+                      , TIK.SUPPLIER_ID
+                      , DATE(IFIP.PROCESS_DATE)
+                      , TIK.KANBAN_PLAN_NO
+                      
+                  UNION ALL
+
+                 <!-- DEVANNED WITH OUT CC FOR VV -->
+                 SELECT
+                        NVL(A.ORIGINAL_PARTS_ID, A.PARTS_ID) AS PARTS_ID
+                      , A.SUPPLIER_ID AS SUPPLIER_ID
+                      , A.IMP_PO_NO
+                      , A.KANBAN_PLAN_NO
+                      , DATE(A.DEVANNED_DATE) AS END_DATE
+                      , SUM(NVL(DECIMAL(IFIP.QTY), A.QTY)) AS QTY <!-- MUST GET ORIGINAL QTY(BEFORE STOCK AJUST) -->
+                   FROM
+                        TNT_IP A 
+                  INNER JOIN 
+                        TNM_OFFICE TOF 
+                     ON 
+                        TOF.OFFICE_ID = A.OFFICE_ID
+                   LEFT JOIN 
+                        TNT_IF_IMP_IP IFIP
+                     ON 
+                        IFIP.PID_NO = A.PID_NO
+                    AND 
+                        IFIP.ACTION_TYPE = #{IMP_INBOUND}
+                    AND 
+                        IFIP.HANDLE_FLAG = #{PROCESS_SUCCESS}
+                  WHERE 
+                        TOF.OFFICE_ID = #{officeId}
+                    AND
+                        A.BUSINESS_PATTERN = #{BusinessPattern_VV}
+                    AND 
+                        A.DEVANNED_DATE >= #{lastEndDate}
+                    AND 
+                        A.DEVANNED_DATE <![CDATA[<]]> #{endDate}
+                    AND 
+                        (TOF.IMP_STOCK_FLAG = #{WITHOUT_CLEARANCE}
+                     OR
+                         A.CUSTOMS_CLR_DATE IS NULL)
+                    AND 
+                        (IFIP.PID_NO IS NOT NULL 
+                     OR  
+                         A.STATUS <![CDATA[<]]> #{IpStatus_IMP_INBOUND})
+                  GROUP BY 
+                        A.ORIGINAL_PARTS_ID
+                      , A.PARTS_ID
+                      , A.SUPPLIER_ID
+                      , A.DEVANNED_DATE
+                      , A.IMP_PO_NO
+                      , A.KANBAN_PLAN_NO
+                  
+                  UNION ALL
+                  
+                 <!-- DEVANNED WITH OUT CC FOR AISIN -->
+                 SELECT
+                        TIK.PARTS_ID
+                      , TIK.SUPPLIER_ID
+                      , NULL AS IMP_PO_NO
+                      , TIK.KANBAN_PLAN_NO
+                      , DATE(IFIP.PROCESS_DATE) AS END_DATE
+                      , SUM(TIK.QTY) AS QTY 
+                   FROM
+                        TNT_IP_KANBAN TIK <!-- ALL IP WILL DO ALLOCATE, SO WE ONLY GET THEM FROM ALLOCATED TABLE -->
+                  INNER JOIN 
+                          (SELECT DISTINCT
+                                  TI.INVOICE_NO
+                                , TI.OFFICE_ID
+                                , TI.IMP_CC_ACTUAL_DATE 
+                             FROM 
+                                  TNT_INVOICE TI
+                            INNER JOIN 
+                                  TNT_INVOICE_SUMMARY TIS
+                               ON 
+                                  TIS.INVOICE_SUMMARY_ID = TI.INVOICE_SUMMARY_ID
+                              AND 
+                                  TIS.INVOICE_STATUS <![CDATA[<]]> #{INV_CANCELLED}
+                              AND 
+                                  TIS.OFFICE_ID = #{officeId}) TI
+                     ON 
+                        TI.INVOICE_NO = TIK.INVOICE_NO
+                  INNER JOIN 
+                        TNT_IF_IMP_IP IFIP
+                     ON 
+                        IFIP.IF_IP_ID = TIK.IF_IP_ID
+                  INNER JOIN 
+                        TNM_OFFICE TOF 
+                     ON 
+                        TOF.OFFICE_ID = TI.OFFICE_ID
+                    AND 
+                        TOF.OFFICE_CODE = IFIP.OFFICE_CODE
+                  WHERE
+                        IFIP.PROCESS_DATE >= #{lastEndDate}
+                    AND 
+                        IFIP.PROCESS_DATE <![CDATA[<]]> #{endDate}
+                    AND
+                        TIK.DATA_TYPE = #{IpKbDataType_DEVANNED}
+                    AND 
+                        (TOF.IMP_STOCK_FLAG = #{WITHOUT_CLEARANCE}
+                     OR 
+                         TI.IMP_CC_ACTUAL_DATE IS NULL)
+                  GROUP BY
+                        TIK.PARTS_ID
+                      , TIK.SUPPLIER_ID
+                      , DATE(IFIP.PROCESS_DATE)
+                      , TIK.KANBAN_PLAN_NO
+
+                  UNION ALL 
+                  
+                 <!-- INBOUND WITH OUT CC AND DEVAN -->   
+                 SELECT 
+                        NVL(A.ORIGINAL_PARTS_ID, A.PARTS_ID) AS PARTS_ID
+                      , NVL(TIK.SUPPLIER_ID, A.SUPPLIER_ID) AS SUPPLIER_ID
+                      , A.IMP_PO_NO
+                      , TIK.KANBAN_PLAN_NO
+                      , DATE(A.IMP_INB_ACTUAL_DATE) AS END_DATE
+                      , SUM(NVL(TIK.QTY, DECIMAL(IFIP.QTY))) AS QTY 
+                   FROM 
+                        TNT_IP A
+                  INNER JOIN 
+                        TNM_OFFICE TOF
+                     ON 
+                        TOF.OFFICE_ID = A.OFFICE_ID
+                  INNER JOIN 
+                        TNT_IF_IMP_IP IFIP
+                     ON 
+                        IFIP.PID_NO = A.PID_NO
+                    AND 
+                        IFIP.ACTION_TYPE = #{IMP_INBOUND}
+                    AND 
+                        IFIP.HANDLE_FLAG = #{PROCESS_SUCCESS}
+                   LEFT JOIN 
+                        TNT_IP_KANBAN TIK
+                     ON 
+                        TIK.IF_IP_ID = IFIP.IF_IP_ID
+                  WHERE
+                        TOF.OFFICE_ID = #{officeId}
+                    AND
+                        A.IMP_INB_ACTUAL_DATE >= #{lastEndDate}
+                    AND 
+                        A.IMP_INB_ACTUAL_DATE <![CDATA[<]]> #{endDate}
+                    AND 
+                        (TOF.IMP_STOCK_FLAG = #{WITHOUT_CLEARANCE}
+                     OR
+                         A.CUSTOMS_CLR_DATE IS NULL)
+                    AND 
+                        A.DEVANNED_DATE IS NULL
+                  GROUP BY
+                        A.PARTS_ID
+                      , A.ORIGINAL_PARTS_ID
+                      , A.SUPPLIER_ID
+                      , TIK.SUPPLIER_ID
+                      , A.IMP_INB_ACTUAL_DATE
+                      , A.IMP_PO_NO
+                      , TIK.KANBAN_PLAN_NO) IMP 
+          INNER JOIN 
+                TNM_PARTS_MASTER TP 
+             ON 
+                TP.PARTS_ID = IMP.PARTS_ID 
+          INNER JOIN 
+                (SELECT DISTINCT 
+                        IMP_PO_NO
+                      , KANBAN_PLAN_NO
+                      , ORDER_MONTH 
+                   FROM TNF_ORDER_STATUS) TOS
+             ON 
+                TOS.IMP_PO_NO = IMP.IMP_PO_NO
+             OR 
+                TOS.KANBAN_PLAN_NO = IMP.KANBAN_PLAN_NO
+          GROUP BY
+                IMP.PARTS_ID
+              , IMP.SUPPLIER_ID
+              , TP.CUSTOMER_ID
+              , TP.BUSINESS_PATTERN
+              , IMP.IMP_PO_NO
+              , IMP.KANBAN_PLAN_NO
+              , TOS.ORDER_MONTH
+              , IMP.END_DATE
+    </sql>
+        
+    <select id="getAllExistBalanceList" resultType="com.chinaplus.batch.interfaces.bean.TnfBalanceByDayEx" parameterType="com.chinaplus.batch.interfaces.bean.TnfBalanceByDayEx" >
+         SELECT
+                T.BALANCE_ID AS balanceId
+              , T.PARTS_ID AS partsId
+              , T.SUPPLIER_ID AS supplierId
+              , T.CUSTOMER_ID AS customerId
+              , T.BUSINESS_PATTERN AS businessPattern
+              , T.IMP_PO_NO AS impPoNo
+              , T.KANBAN_PLAN_NO AS kanbanPlanNo
+              , T.ORDER_MONTH AS orderMonth
+              , T.ORDER_QTY AS orderQty
+              , T.IMP_INBOUND_QTY AS impInboundQty
+              , T.FORCE_COMPLETED_QTY AS forceCompletedQty
+              , T.ORDER_BALANCE_QTY AS orderBalanceQty
+              , T.END_DATE AS endDate
+              , T.CREATED_BY AS createdBy
+              , T.CREATED_DATE AS createdDate
+              , T.CREATED_BY AS version
+           FROM
+                TNF_BALANCE_BY_DAY T 
+          INNER JOIN 
+                TNM_PARTS_MASTER TP
+             ON 
+                TP.PARTS_ID = T.PARTS_ID
+          WHERE
+                TP.OFFICE_ID = #{officeId}
+            AND 
+                T.END_DATE >= #{lastEndDate} 
+            AND 
+                T.END_DATE <![CDATA[<=]]> #{endDate}
+          ORDER BY
+                T.PARTS_ID
+              , T.SUPPLIER_ID
+              , T.IMP_PO_NO
+              , T.KANBAN_PLAN_NO
+              , T.END_DATE
+    </select>
+    
+    <select id="getLastBalanceDate" resultType="java.util.Date" parameterType="com.chinaplus.batch.interfaces.bean.TnfBalanceByDayEx" >
+        SELECT 
+               MAX(T.END_DATE) AS endDate
+          FROM 
+               TNF_BALANCE_BY_DAY T
+         INNER JOIN 
+               TNM_PARTS_MASTER TP
+            ON 
+               TP.PARTS_ID = T.PARTS_ID
+         WHERE 
+               TP.OFFICE_ID = #{officeId}
+    </select>
+    
+    <select id="getOrderBalanceByEndDate" parameterType="com.chinaplus.batch.interfaces.bean.TnfBalanceByDayEx" resultType="com.chinaplus.batch.interfaces.bean.TnfBalanceByDayEx">
+         SELECT A.IMP_PO_NO AS impPoNo
+              , A.KANBAN_PLAN_NO AS kanbanPlanNo
+              , A.ORDER_MONTH AS orderMonth
+              , A.PARTS_ID AS partsId
+              , A.CUSTOMER_ID AS customerId
+              , A.SUPPLIER_ID AS supplierId
+              , A.BUSINESS_PATTERN AS businessPattern
+              , A.ORDER_BALANCE_QTY AS orderBalanceQty
+              , A.ORDER_QTY AS orderQty
+              , A.IMP_INBOUND_QTY AS impInboundQty
+              , A.FORCE_COMPLETED_QTY AS forceCompletedQty
+              , A.END_DATE AS endDate
+           FROM
+                TNF_BALANCE_BY_DAY A
+          INNER JOIN 
+                TNM_PARTS_MASTER B
+             ON 
+                B.PARTS_ID = A.PARTS_ID
+          INNER JOIN ( 
+                  SELECT A.IMP_PO_NO
+                       , A.KANBAN_PLAN_NO
+                       , A.PARTS_ID
+                       , A.SUPPLIER_ID
+                       , MAX(A.END_DATE) AS END_DATE 
+                    FROM TNF_BALANCE_BY_DAY A 
+                   INNER JOIN TNM_PARTS_MASTER B 
+                      ON B.PARTS_ID = A.PARTS_ID 
+                   WHERE B.OFFICE_ID = #{officeId}
+                   GROUP BY
+                         A.IMP_PO_NO
+                       , A.KANBAN_PLAN_NO
+                       , A.PARTS_ID
+                       , A.SUPPLIER_ID) C 
+             ON (C.IMP_PO_NO = A.IMP_PO_NO OR C.KANBAN_PLAN_NO = A.KANBAN_PLAN_NO) 
+            AND C.PARTS_ID = A.PARTS_ID 
+            AND C.SUPPLIER_ID = A.SUPPLIER_ID 
+            AND C.END_DATE = A.END_DATE 
+          WHERE A.END_DATE <![CDATA[<]]> #{endDate}
+            AND B.OFFICE_ID = #{officeId}
+    </select>
+     
+    
+    <select id="getExistOrderBalanceOfLastEndDate" parameterType="com.chinaplus.batch.interfaces.bean.TnfBalanceByDayEx" resultType="com.chinaplus.batch.interfaces.bean.TnfBalanceByDayEx">
+         SELECT A.IMP_PO_NO AS impPoNo
+              , A.KANBAN_PLAN_NO AS kanbanPlanNo
+              , A.PARTS_ID AS partsId
+              , A.SUPPLIER_ID AS supplierId
+              , A.ORDER_QTY AS orderQty
+              , A.IMP_INBOUND_QTY AS impInboundQty
+              , A.FORCE_COMPLETED_QTY AS forceCompletedQty
+              , A.ORDER_BALANCE_QTY AS orderBalanceQty
+              , A.END_DATE AS endDate
+           FROM TNF_BALANCE_BY_DAY A
+          INNER JOIN TNM_PARTS_MASTER B
+             ON B.PARTS_ID = A.PARTS_ID
+          WHERE A.END_DATE = #{lastEndDate}
+            AND B.OFFICE_ID = #{officeId}
+    </select>
+     
+    <select id="getImpstockByEndDate" parameterType="com.chinaplus.batch.interfaces.bean.TnfImpStockByDayEx" resultType="com.chinaplus.common.entity.TnfImpStockByDay">
+         SELECT A.OFFICE_ID AS officeId
+              , A.WHS_ID AS whsId
+              , A.PARTS_ID AS partsId
+              , A.SUPPLIER_ID AS supplierId
+              , A.BUSINESS_PATTERN AS businessPattern
+              , A.IMP_IN_RACK_QTY AS impInRackQty
+              , A.IMP_STOCK_QTY AS impStockQty
+              , A.SYSTEM_STOCK_QTY AS whsStockQty
+              , A.NG_QTY AS ngQty
+              , A.ONHOLD_QTY AS onholdQty
+              , A.END_DATE AS endDate
+           FROM TNF_IMP_STOCK_BY_DAY A
+          INNER JOIN (
+                  SELECT WHS_ID
+                       , PARTS_ID
+                       , SUPPLIER_ID
+                       , MAX(END_DATE) AS END_DATE 
+                    FROM TNF_IMP_STOCK_BY_DAY 
+                   WHERE OFFICE_ID = #{officeId}
+                   GROUP BY 
+                         WHS_ID
+                       , PARTS_ID
+                       , SUPPLIER_ID) B 
+             ON A.WHS_ID = B.WHS_ID 
+            AND A.PARTS_ID = B.PARTS_ID 
+            AND A.SUPPLIER_ID = B.SUPPLIER_ID 
+            AND A.END_DATE = B.END_DATE 
+          WHERE A.END_DATE <![CDATA[<]]> #{endDate}
+            AND A.OFFICE_ID = #{officeId}
+    </select>
+    
+    <select id="getExistImpStockByEndDate" parameterType="com.chinaplus.batch.interfaces.bean.TnfImpStockByDayEx" resultType="com.chinaplus.common.entity.TnfImpStockByDay">
+         SELECT A.OFFICE_ID AS officeId
+              , A.WHS_ID AS whsId
+              , A.PARTS_ID AS partsId
+              , A.SUPPLIER_ID AS supplierId
+              , A.BUSINESS_PATTERN AS businessPattern
+              , A.IMP_IN_RACK_QTY AS impInRackQty
+              , A.IMP_STOCK_QTY AS impStockQty
+              , A.SYSTEM_STOCK_QTY AS whsStockQty
+              , A.NG_QTY AS ngQty
+              , A.ONHOLD_QTY AS onholdQty
+              , A.END_DATE AS endDate
+           FROM TNF_IMP_STOCK_BY_DAY A
+          WHERE A.END_DATE = #{lastEndDate}
+            AND A.OFFICE_ID = #{officeId}
+    </select>
+    
+    <select id="getMaxPartsStatusId" resultType="java.lang.Integer" parameterType="com.chinaplus.batch.interfaces.bean.TnfExpPartsStatusEx" flushCache="true">
+        SELECT 
+               MAX(T.PARTS_STATUS_ID) AS partsStatusId
+          FROM 
+               TNF_EXP_PARTS_STATUS T
+    </select>
+    
+    <select id="getMaxImpStockDayId" resultType="java.lang.Integer" parameterType="com.chinaplus.batch.interfaces.bean.TnfImpStockByDayEx" flushCache="true">
+        SELECT 
+               MAX(T.STOCK_DAY_ID) AS stockDayId
+          FROM 
+               TNF_IMP_STOCK_BY_DAY T
+    </select>
+            
+    <select id="getMaxBalanceByDayId" resultType="java.lang.Integer" parameterType="com.chinaplus.batch.interfaces.bean.TnfBalanceByDayEx" flushCache="true">
+        SELECT 
+               MAX(T.BALANCE_ID) AS balanceId
+          FROM 
+               TNF_BALANCE_BY_DAY T
+    </select>
+    
+    <update id="updateTnfBalanceByDay" parameterType="com.chinaplus.common.entity.TnfBalanceByDay">
+        UPDATE TNF_BALANCE_BY_DAY 
+           SET ORDER_QTY = #{orderQty,jdbcType=DECIMAL}
+             , IMP_INBOUND_QTY = #{impInboundQty,jdbcType=DECIMAL}
+             , FORCE_COMPLETED_QTY = #{forceCompletedQty,jdbcType=DECIMAL}
+             , ORDER_BALANCE_QTY = #{orderBalanceQty,jdbcType=DECIMAL}
+         WHERE PARTS_ID = #{partsId} 
+           AND SUPPLIER_ID = #{supplierId}  
+           <if test = "impPoNo != null and impPoNo != ''">
+           AND IMP_PO_NO = #{impPoNo} 
+           </if>
+           <if test = "kanbanPlanNo != null and kanbanPlanNo != ''">
+           AND KANBAN_PLAN_NO = #{kanbanPlanNo} 
+           </if>
+           AND END_DATE > #{endDate}
+           AND END_DATE <![CDATA[<=]]> #{lastEndDate}
+    </update>
+        
+    <update id="updateTnfImpStockByDay" parameterType="com.chinaplus.common.entity.TnfImpStockByDay">
+        UPDATE TNF_IMP_STOCK_BY_DAY 
+           SET IMP_IN_RACK_QTY = #{impInRackQty,jdbcType=DECIMAL}
+             , IMP_STOCK_QTY = #{impStockQty,jdbcType=DECIMAL}
+             , SYSTEM_STOCK_QTY = #{whsStockQty,jdbcType=DECIMAL}
+             , NG_QTY = #{ngQty,jdbcType=DECIMAL}
+             , ONHOLD_QTY = #{onholdQty,jdbcType=DECIMAL}
+         WHERE PARTS_ID = #{partsId} 
+           AND SUPPLIER_ID = #{supplierId}  
+           <if test = "whsId != null">
+           AND WHS_ID = #{whsId}  
+           </if>
+           <if test = "whsId == null">
+           AND WHS_ID IS NULL
+           </if>
+           AND END_DATE = #{endDate}
+    </update>
+</mapper>

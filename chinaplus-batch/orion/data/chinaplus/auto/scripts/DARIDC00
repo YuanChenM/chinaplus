@@ -1,0 +1,18 @@
+#!/bin/sh
+#Extract data from interface table, and insert the data into business table
+. /orion/data/chinaplus/auto/files/ENV/BASEENV
+
+/orion/data/chinaplus/auto/scripts/DARIDC31
+
+ret=$?
+
+if [ $ret -ne ${RET_OK_AAUTO} ]; then
+	 exit $ret
+fi
+
+#Extract data from interface table, and insert the data into business table
+
+/orion/data/chinaplus/auto/scripts/DARIDC61 DARIDC61 $1 $2 $3
+
+ret=$?
+exit ${ret} 

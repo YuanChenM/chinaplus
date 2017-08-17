@@ -1,0 +1,14 @@
+#Batch ID
+BATCH_ID=CPIIFB18
+
+#Log File
+BATCH_LOG_FILE=DARIDC41.log
+
+#interface path
+INTERFACE_PATH=/orion/data/chinaplus/auto/files/interfacepath
+
+#working path
+WORKING_PATH=/orion/data/chinaplus/auto/files/workingpath
+
+#backup path
+BACKUP_PATH=/orion/data/chinaplus/auto/files/backuppath

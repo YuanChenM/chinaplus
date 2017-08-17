@@ -1,0 +1,137 @@
+/**
+ * Customer Stock Upload Screen
+ * 
+ * @screen CPOCSS01
+ * @author li_feng
+ */
+CPOCSS01 = {
+    xtype : 'form',
+    id : chinaplus.screen.CPOCSS01,
+    title : chinaplus.label.CPOCSS01_Label_PageTitle,
+    frame : true,
+    autoHeight : false,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    autoScroll : true,
+    margin : '0 0 0 0',
+    buttonAlign : 'left',
+    fieldDefaults : {
+        labelAlign : 'right',
+        labelWidth : 70
+    },
+    items : [{
+                xtype : 'fileuploadfield',
+                fieldLabel : chinaplus.label.CPOCSS01_Label_FileName,
+                id : chinaplus.screen.CPOCSS01 + '_fileuploadfield',
+                labelAlign : 'right',
+                name : 'fileData',
+                margin : '50 0 0 70',
+                vtype : 'excel',
+                width : 600,
+                labelSeparator : '',
+                buttonText : chinaplus.label.CPOCSS01_Button_Browse,
+                editable : false,
+                fieldStyle : 'background:rgb(255,255,153)',
+                hideLabel : false,
+                autoFitErrors : false,
+                buttonConfig : {
+                    tabIndex : 0,
+                    width : 75
+                }
+            }, {
+                height : 35,
+                xtype : 'container',
+                margin : '50 0 0 50',
+                items : [{
+                            xtype : 'button',
+                            iconCls : 'btn-upload',
+                            width : 200,
+                            height : 25,
+                            text : chinaplus.label.CPOCSS01_Button_UploadCusStock,
+                            margin : '3 0 0 20',
+                            handler : function() {
+                                Ext.getCmp(chinaplus.screen.CPOCSS01).UploadFileCPU();
+                            }
+                        }]
+            }],
+
+    tbar : [{
+                text : chinaplus.label.CPOCSS01_Button_DlCusStockBlankTable,
+                iconCls : 'btn-download',
+                handler : function() {
+                    CPOCSS01.downloadBlankCPU();
+                }
+            }],
+
+    /**
+     * downloadBlankCPU Download Customer Stock Blank Table
+     */
+    downloadBlankCPU : function() {
+        var params = {};
+        TRF.util.downloadSubmit(null, chinaplus.screen.CPOCSS01, "om/CPOCSF01/downloadcheck", params, "om/CPOCSF01/download", false);
+    },
+
+    /**
+     * UploadFileCPU
+     */
+    UploadFileCPU : function() {
+
+        var fileVal = Ext.getCmp(chinaplus.screen.CPOCSS01 + '_fileuploadfield').getValue();
+        if (Ext.isEmpty(fileVal)) {
+            var popMsg = TRF.util.getMessage('w1001');
+            var lsMsgs = [];
+            Ext.Array.push(lsMsgs, TRF.util.getMessage('w1001_001', chinaplus.label.CPOCSS01_Label_FileName));
+            // check blank
+            TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, popMsg, lsMsgs);
+            return;
+        }
+
+        var form = this.getForm();
+        var params = {
+            'uploadProcess' : 'check'
+        };
+
+        /**
+         * Get SessionKey function.
+         * 
+         * @param responseData have sessionKey
+         */
+        var func = function(responseData) {
+            var sessionKey = responseData.result;
+            /**
+             * Get MessageCodes
+             * 
+             * @param applicationData have messageCodes
+             */
+            var CPOCSF11_backFun = function(applicationData) {
+                if (null != applicationData.messageCodes && applicationData.messageCodes.length == 0) {
+                    TRF.util.showMessageBoxByMsgIdAndArgs('i1001');
+                } else {
+                    if (applicationData.confirm == "yes") {
+                        var params = {
+                            'sessionKey' : sessionKey,
+                            'uploadProcess' : 'yes'
+                        };
+                        TRF.util.uploadSubmit(form, CPOCSF11_backFun, chinaplus.screen.CPOCSS01, 'om/CPOCSF11/upload', params);
+                    } else if (applicationData.confirm == "no") {
+                        var params = {
+                            'sessionKey' : sessionKey,
+                            'uploadProcess' : 'no'
+                        };
+                        TRF.util.uploadSubmit(form, null, chinaplus.screen.CPOCSS01, 'om/CPOCSF11/upload', params);
+                    }
+                }
+            }
+            if (responseData.success) {
+                var params = {
+                    'sessionKey' : sessionKey,
+                    'uploadProcess' : 'check'
+                };
+                TRF.util.uploadSubmit(form, CPOCSF11_backFun, chinaplus.screen.CPOCSS01, 'om/CPOCSF11/upload', params);
+            }
+        }
+
+        TRF.util.ajaxSubmit(func, chinaplus.screen.CPOCSS01, 'common/getSessionKey', params, null);
+
+    }
+
+}

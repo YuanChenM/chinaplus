@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.inv.service.CPVIVS07Service">
+
+    <select id="findPageListCount" parameterType="com.chinaplus.core.bean.PageParam" resultType="int" flushCache="true">
+        SELECT
+            COUNT(1) AS cnt
+        <include refid="fromSql" />
+    </select>
+    
+    <select id="findPageList" parameterType="com.chinaplus.core.bean.PageParam" resultType="com.chinaplus.web.inv.entity.CPVIVS07Entity" flushCache="true">
+        SELECT
+            *
+        FROM (
+            SELECT
+                A.ORDER_ID AS orderId,
+                A.IMP_PO_NO AS impOrderNo,
+                A.CUSTOMER_ORDER_NO AS cusOrderNo,
+                A.EXP_SO_DATE AS soDate,
+                A.EXP_REGION AS expCountry,
+                C.REGION_CODE AS impCountry,
+                C.CUSTOMER_CODE AS ttcCustomerCode,
+                B.nonInvoicedQty,
+                CASE WHEN B.nonTruelyQty > 0 THEN 1 ELSE 2 END AS orderStatus,
+                ROWNUMBER() over(<include refid="orderSql" />) AS rownum
+            <include refid="fromSql" />
+            <include refid="orderSql" />
+        ) 
+        WHERE
+            <include refid="com.chinaplus.const.pagingCondition" />
+    </select>
+    
+    <sql id="fromSql">
+        FROM
+            TNT_ORDER A
+        LEFT JOIN 
+            TNM_CUSTOMER C ON A.CUSTOMER_ID = C.CUSTOMER_ID
+        LEFT JOIN 
+            (SELECT
+                B.IMP_PO_NO,
+                B.CUSTOMER_ORDER_NO,
+                A.CUSTOMER_ID,
+                SUM
+                (
+                    COALESCE(B.ORDER_QTY, 0) - 
+                    (COALESCE(B.EXP_ONSHIPPING_QTY, 0) +
+                    COALESCE(B.IN_RACK_QTY, 0) +
+                    (COALESCE(B.IMP_STOCK_QTY, 0) - COALESCE(B.IMP_ADJUSTED_QTY, 0)) +
+                    COALESCE(B.IMP_DELIVERED_QTY, 0) +
+                    COALESCE(B.TRANSFER_OUT_QTY, 0) +
+                    COALESCE(B.CANCELLED_QTY, 0))
+                ) AS nonInvoicedQty,
+                SUM
+                (
+                    COALESCE(B.ORDER_QTY, 0) - 
+                    (COALESCE(B.EXP_ONSHIPPING_QTY, 0) + 
+                    COALESCE(B.IN_RACK_QTY, 0) + 
+                    (COALESCE(B.IMP_STOCK_QTY, 0) - COALESCE(B.IMP_ADJUSTED_QTY, 0)) + 
+                    COALESCE(B.IMP_DELIVERED_QTY, 0) + 
+                    COALESCE(B.TRANSFER_OUT_QTY, 0) + 
+                    COALESCE(B.FORCE_COMPLETED_QTY, 0) +
+                    COALESCE(B.CANCELLED_QTY, 0))
+                ) AS nonTruelyQty
+            FROM
+                TNT_ORDER A
+            INNER JOIN
+                TNF_ORDER_STATUS B ON A.IMP_PO_NO = B.IMP_PO_NO AND A.CUSTOMER_ORDER_NO = B.CUSTOMER_ORDER_NO
+            INNER JOIN
+                TNM_PARTS_MASTER C ON B.PARTS_ID = C.PARTS_ID AND A.CUSTOMER_ID = C.CUSTOMER_ID
+            WHERE
+                A.OFFICE_ID = #{currentOfficeId}
+            GROUP BY
+                B.IMP_PO_NO,
+                B.CUSTOMER_ORDER_NO,
+                A.CUSTOMER_ID
+            ) B ON A.IMP_PO_NO = B.IMP_PO_NO AND A.CUSTOMER_ORDER_NO = B.CUSTOMER_ORDER_NO AND A.CUSTOMER_ID = B.CUSTOMER_ID
+        WHERE
+            A.OFFICE_ID = #{currentOfficeId}
+        <if test="filters.impOrderNo != null and filters.impOrderNo != ''">
+            AND A.IMP_PO_NO LIKE #{filters.impOrderNo} ESCAPE '!'
+        </if>
+        <if test="filters.cusOrderNo != null and filters.cusOrderNo != ''">
+            AND A.CUSTOMER_ORDER_NO LIKE #{filters.cusOrderNo} ESCAPE '!'
+        </if>
+        <if test="filters.soDateFrom != null and filters.soDateFrom != ''">
+            AND A.EXP_SO_DATE <![CDATA[>=]]> #{filters.soDateFrom}
+        </if>
+        <if test="filters.soDateTo != null and filters.soDateTo != ''">
+            AND A.EXP_SO_DATE <![CDATA[<=]]> #{filters.soDateTo}
+        </if>
+        <if test="filters.expCountry != null and filters.expCountry.size() != 0">
+            AND A.EXP_REGION IN
+            <foreach item="expCountryItem" index="expCountryIndex" collection="filters.expCountry" open="(" separator="," close=")">  
+                #{expCountryItem}
+            </foreach>
+        </if>
+        <if test="filters.impCountry != null and filters.impCountry.size() != 0">
+            AND C.REGION_CODE IN
+            <foreach item="impCountryItem" index="impCountryIndex" collection="filters.impCountry" open="(" separator="," close=")">  
+                #{impCountryItem}
+            </foreach>
+        </if>
+        <if test="filters.ttcCustomerCode != null and filters.ttcCustomerCode.size() != 0">
+            AND A.CUSTOMER_ID IN
+            <foreach item="ttcCustomerCodeItem" index="ttcCustomerCodeIndex" collection="filters.ttcCustomerCode" open="(" separator="," close=")">  
+                #{ttcCustomerCodeItem}
+            </foreach>
+        </if>
+        <if test="filters.nonInvoicedQty != null and filters.nonInvoicedQty != ''">
+            <if test="filters.nonInvoicedQty == 1">
+                AND B.nonInvoicedQty <![CDATA[>]]> 0
+            </if>
+            <if test="filters.nonInvoicedQty == 2">
+                AND B.nonInvoicedQty <![CDATA[<=]]> 0
+            </if>
+        </if>
+        <if test="filters.orderStatus != null and filters.orderStatus != ''">
+            <if test="filters.orderStatus == 1">
+                AND B.nonTruelyQty <![CDATA[>]]> 0
+            </if>
+            <if test="filters.orderStatus == 2">
+                AND B.nonTruelyQty <![CDATA[<=]]> 0
+            </if>
+        </if>
+    </sql>
+    
+    <sql id="orderSql">
+        ORDER BY
+            A.EXP_SO_DATE DESC,
+            A.IMP_PO_NO ASC,
+            A.CUSTOMER_ORDER_NO ASC
+    </sql>
+    
+</mapper>

@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.kbp.service.DownloadZipService">
+    
+    <!-- Get Not In Rundown Data -->
+    <select id="getNirdData" parameterType="com.chinaplus.web.kbp.entity.DownloadZipEntity" resultType="com.chinaplus.web.kbp.entity.DownloadZipEntity" flushCache="true">
+        SELECT
+            KANBAN_SHIPPING_PARTS.PARTS_ID as partsId
+            , EXP_PARTS.SHIPPING_ROUTE_CODE AS shippingRouteCode
+            , EXP_PARTS.EXP_PARTS_ID AS expPartsId
+            , SUM(KANBAN_SHIPPING_PARTS.QTY) AS nirdQty
+        FROM
+            TNT_KANBAN KANBAN
+            INNER JOIN 
+                TNT_KANBAN_SHIPPING KANBAN_SHIPPING ON KANBAN.KANBAN_ID = KANBAN_SHIPPING.KANBAN_ID
+            INNER JOIN 
+                TNT_KANBAN_SHIPPING_PARTS KANBAN_SHIPPING_PARTS ON KANBAN_SHIPPING.KANBAN_SHIPPING_ID = KANBAN_SHIPPING_PARTS.KANBAN_SHIPPING_ID
+            INNER JOIN 
+                TNM_EXP_PARTS EXP_PARTS ON KANBAN_SHIPPING_PARTS.PARTS_ID = EXP_PARTS.PARTS_ID AND KANBAN.SUPPLIER_ID = EXP_PARTS.SUPPLIER_ID 
+        WHERE
+            KANBAN.KANBAN_ID = #{kanbanId}
+            AND KANBAN_SHIPPING.NIRD_FLAG = 1
+            AND KANBAN_SHIPPING.TRANSPORT_MODE = 1
+        GROUP BY
+            KANBAN_SHIPPING_PARTS.PARTS_ID
+            , EXP_PARTS.SHIPPING_ROUTE_CODE
+            , EXP_PARTS.EXP_PARTS_ID
+    </select>
+    
+    <!-- Get Last Shipping Plan -->
+    <select id="getLastShippingPlan" parameterType="com.chinaplus.web.kbp.entity.DownloadZipEntity" resultType="com.chinaplus.web.kbp.entity.DownloadZipEntity" flushCache="true">            
+        SELECT MAX(maxEtd) AS maxEtd 
+        FROM
+        (
+        SELECT
+            MAX(KANBAN_SHIPPING.ETD) AS maxEtd
+        FROM
+            TNT_KANBAN_SHIPPING KANBAN_SHIPPING
+        WHERE
+            KANBAN_SHIPPING.KANBAN_ID = #{kanbanId}
+            AND KANBAN_SHIPPING.TRANSPORT_MODE = 1
+        
+        UNION ALL
+        
+        SELECT
+            MAX(INVOICE.ETD) AS maxEtd
+        FROM
+            TNT_INVOICE INVOICE
+        INNER JOIN 
+            TNT_INVOICE_GROUP INVOICE_GROUP ON INVOICE_GROUP.INVOICE_GROUP_ID = INVOICE.INVOICE_GROUP_ID
+        WHERE
+            INVOICE_GROUP.KANBAN_PLAN_NO = (SELECT KANBAN_PLAN_NO FROM TNT_KANBAN WHERE KANBAN_ID = #{kanbanId} FETCH FIRST 1 ROWS ONLY)
+            AND INVOICE_GROUP.TRANSPORT_MODE = 1
+        )
+    </select>
+    
+    <!-- Get New Shipping Route -->
+    <select id="getNewShippingRoute" parameterType="com.chinaplus.web.kbp.entity.DownloadZipEntity" resultType="com.chinaplus.web.kbp.entity.DownloadZipEntity" flushCache="true">
+        SELECT
+            SR_DETAIL.ETD AS newEtd
+        FROM
+            TNM_SR_MASTER SR_MASTER
+            INNER JOIN 
+                TNM_SR_DETAIL SR_DETAIL ON SR_MASTER.SR_ID = SR_DETAIL.SR_ID
+        WHERE
+            SR_MASTER.SHIPPING_ROUTE_CODE = #{shippingRouteCode}
+            AND SR_DETAIL.ETD <![CDATA[>]]> #{maxEtd}
+        ORDER BY
+            SR_DETAIL.ETD ASC
+        FETCH FIRST 1 ROWS ONLY
+    </select>
+    
+    <!-- Insert Kanban Shipping -->
+    <insert id="insertKanbanShipping" parameterType="com.chinaplus.web.kbp.entity.DownloadZipEntity">
+        INSERT INTO TNT_KANBAN_SHIPPING(
+            KANBAN_SHIPPING_ID 
+            , KANBAN_ID
+            , SHIPPING_UUID
+            , TRANSPORT_MODE
+            , ETD
+            , ETA
+            , IMP_INB_PLAN_DATE
+            , ORIGINAL_VERSION
+            , REVISION_REASON
+            , COMPLETED_FLAG
+            , NIRD_FLAG
+            , CREATED_BY
+            , CREATED_DATE
+            , UPDATED_BY
+            , UPDATED_DATE
+            , VERSION
+        ) VALUES (
+            #{kanbanShippingId}
+            , #{kanbanId}
+            , #{shippingUuid}
+            , 1
+            , #{etd}
+            , #{eta}
+            , #{impPlanInboundDate}
+            , (SELECT MAX(ORIGINAL_VERSION) + 1 AS maxOriginalVersion FROM TNT_KANBAN_SHIPPING WHERE KANBAN_ID = #{kanbanId})
+            , #{revisonReason}
+            , 0
+            , 0
+            , #{createdBy}
+            , #{createdDate}
+            , #{updatedBy}
+            , #{updatedDate}
+            , 1
+        )
+    </insert>
+    
+    <!-- Insert Kanban Shipping Parts -->
+    <insert id="insertKanbanShippingParts" parameterType="com.chinaplus.web.kbp.entity.DownloadZipEntity">
+        INSERT INTO TNT_KANBAN_SHIPPING_PARTS(
+            KSP_ID
+            , KANBAN_SHIPPING_ID
+            , PARTS_ID
+            , QTY
+            , CREATED_BY
+            , CREATED_DATE
+            , UPDATED_BY
+            , UPDATED_DATE
+            , VERSION
+        ) VALUES (
+            #{kspId}
+            , #{kanbanShippingId}
+            , #{partsId}
+            , #{qty}
+            , #{createdBy}
+            , #{createdDate}
+            , #{updatedBy}
+            , #{updatedDate}
+            , 1
+        )
+    </insert>
+    
+    <!-- Insert Kanban Plan -->
+    <insert id="insertKanbanPlan" parameterType="com.chinaplus.web.kbp.entity.DownloadZipEntity">
+        INSERT INTO TNT_KANBAN_PLAN(
+            KANBAN_PLAN_ID
+            , KANBAN_ID
+            , SHIPPING_UUID
+            , ORDER_MONTH
+            , PLAN_TYPE
+            , CREATED_BY
+            , CREATED_DATE
+            , UPDATED_BY
+            , UPDATED_DATE
+            , VERSION
+        ) VALUES (
+            #{kanbanPlanId}
+            , #{kanbanId}
+            , #{shippingUuid}
+            , (SELECT ORDER_MONTH FROM TNT_KANBAN WHERE KANBAN_ID = #{kanbanId})
+            , 3
+            , #{createdBy}
+            , #{createdDate}
+            , #{updatedBy}
+            , #{updatedDate}
+            , 1
+        )
+    </insert>
+    
+    <!-- Insert Kanban Plan Parts -->
+    <insert id="insertKanbanPlanParts" parameterType="com.chinaplus.web.kbp.entity.DownloadZipEntity">
+        INSERT INTO TNT_KANBAN_PLAN_PARTS(
+            KB_PLAN_PARTS_ID
+            , KANBAN_PLAN_ID
+            , PARTS_ID
+            , QTY
+            , CREATED_BY
+            , CREATED_DATE
+            , UPDATED_BY
+            , UPDATED_DATE
+            , VERSION
+        ) VALUES (
+            #{kbPlanPartsId}
+            , #{kanbanPlanId}
+            , #{partsId}
+            , #{qty}
+            , #{createdBy}
+            , #{createdDate}
+            , #{updatedBy}
+            , #{updatedDate}
+            , 1
+        )
+    </insert>
+    
+    <!-- Delete not in rundown data (TNT_KANBAN_SHIPPING) -->
+    <delete id="deleteKanbanShipping" parameterType="com.chinaplus.web.kbp.entity.DownloadZipEntity">
+        DELETE FROM 
+            TNT_KANBAN_SHIPPING 
+        WHERE
+            KANBAN_ID = #{kanbanId}
+            AND TRANSPORT_MODE = 1
+            AND NIRD_FLAG = 1
+    </delete>
+    
+    <!-- Delete not in rundown data (TNT_KANBAN_SHIPPING_PARTS) -->
+    <delete id="deleteKanbanShippingParts" parameterType="com.chinaplus.web.kbp.entity.DownloadZipEntity">
+        DELETE FROM 
+            TNT_KANBAN_SHIPPING_PARTS
+        WHERE
+            KANBAN_SHIPPING_ID IN (SELECT KANBAN_SHIPPING_ID FROM TNT_KANBAN_SHIPPING WHERE KANBAN_ID = #{kanbanId} AND TRANSPORT_MODE = 1 AND NIRD_FLAG = 1)
+    </delete>
+</mapper>

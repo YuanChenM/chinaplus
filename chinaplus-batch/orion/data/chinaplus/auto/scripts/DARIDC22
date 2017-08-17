@@ -1,0 +1,7 @@
+#!/bin/sh
+#read the ssms file and insert into the interface table
+
+/orion/data/chinaplus/auto/scripts/BASE/ssmsiftable.sh DARIDC21
+
+ret=$?
+exit ${ret} 

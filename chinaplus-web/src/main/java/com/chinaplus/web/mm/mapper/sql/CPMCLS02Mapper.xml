@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.mm.service.CPMCLS02Service">
+
+    <insert id="addCustomer" parameterType="com.chinaplus.web.mm.entity.CPMCLS02Entity">
+        INSERT INTO 
+        TNM_CUSTOMER (
+        CUSTOMER_ID,
+        INACTIVE_FLAG, 
+        address1, 
+        address2, 
+        address3, 
+        address4,
+        BUSINESS_PATTERN,
+        contact1,
+        contact2,
+        CREATED_BY, 
+        CREATED_DATE, 
+        UPDATED_BY,
+        UPDATED_DATE,
+        CUSTOMER_CODE, 
+        CUSTOMER_NAME, 
+        email1, 
+        email2, 
+        fax1,
+        fax2,
+        OFFICE_ID, 
+        POSTAL_CODE, 
+        REGION_CODE, 
+        telephone1, 
+        telephone2, 
+        VERSION)
+        values(
+        #{customerId},
+        #{activeFlag},
+        #{address1},
+        #{address2},
+        #{address3},
+        #{address4},
+        #{businessPattern},
+        #{contact1}, 
+        #{contact2},
+        #{createdBy},
+        #{createdDate,jdbcType=TIMESTAMP},
+        #{updatedBy},
+        #{updatedDate,jdbcType=TIMESTAMP},
+        #{customerCode},
+        #{customerName},
+        #{email1},
+        #{email2},
+        #{fax1},#{fax2},
+        #{officeId},
+        #{postalCode},
+        #{region},
+        #{telephone1},
+        #{telephone2},
+        #{version})
+    </insert>
+
+    <update id="modifyCustomer" parameterType="com.chinaplus.web.mm.entity.CPMCLS02Entity">
+        UPDATE TNM_CUSTOMER
+        SET
+        CUSTOMER_NAME = #{customerName},
+        BUSINESS_PATTERN = #{businessPattern},
+        REGION_CODE = #{region},
+        ADDRESS1 = #{address1},
+        ADDRESS2 = #{address2},
+        ADDRESS3 = #{address3},
+        ADDRESS4 = #{address4},
+        CONTACT1 = #{contact1},
+        TELEPHONE1 = #{telephone1},
+        FAX1 = #{fax1},
+        EMAIL1 = #{email1},
+        POSTAL_CODE = #{postalCode},
+        CONTACT2 = #{contact2},
+        TELEPHONE2 = #{telephone2},
+        FAX2 = #{fax2},
+        EMAIL2 = #{email2},
+        INACTIVE_FLAG = #{activeFlag},
+        UPDATED_BY = #{updatedBy},
+        UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP},
+        VERSION = #{version}
+        WHERE CUSTOMER_CODE=#{customerCode}
+        AND OFFICE_ID=#{officeId}
+    </update>
+
+
+    <select id="getCustCodeCount" resultType="int"
+        parameterType="com.chinaplus.core.bean.BaseParam">
+        select COUNT(0) FROM TNM_CUSTOMER WHERE
+        CUSTOMER_CODE=#{filters.customerCode}
+    </select>
+    <select id="getExcInfo" resultType="int"
+        parameterType="com.chinaplus.core.bean.BaseParam">
+        select COUNT(0) FROM TNM_CUSTOMER WHERE
+        CUSTOMER_CODE=#{filters.customerCode} AND VERSION=#{filters.version}
+    </select>
+
+    <select id="getCustomerByCode" parameterType="com.chinaplus.core.bean.BaseParam"
+        resultType="com.chinaplus.web.mm.entity.CPMCLS02Entity">
+        select
+        A.CUSTOMER_ID AS customerId,
+        A.OFFICE_ID AS officeId,
+        A.CUSTOMER_CODE AS customerCode,
+        A.CUSTOMER_NAME AS customerName,
+        A.REGION_CODE AS region,
+        A.BUSINESS_PATTERN AS businessPattern,
+        A.ADDRESS1 AS address1,
+        A.ADDRESS2 AS address2,
+        A.ADDRESS3 AS address3,
+        A.ADDRESS4 AS address4,
+        A.CONTACT1 AS contact1,
+        A.TELEPHONE1 AS telephone1,
+        A.FAX1 AS fax1,
+        A.EMAIL1 AS email1,
+        A.POSTAL_CODE AS postalCode,
+        A.CONTACT2 AS contact2,
+        A.TELEPHONE2 AS telephone2,
+        A.FAX2 AS fax2,
+        A.EMAIL2 AS email2,
+        A.INACTIVE_FLAG AS activeFlag,
+        A.CREATED_BY AS createdBy,
+        B.LOGIN_ID AS createdUser,
+        A.CREATED_DATE AS createdDate,
+        A.UPDATED_BY AS updatedBy,
+        C.LOGIN_ID AS updatedUser,
+        A.UPDATED_DATE AS updatedDate,
+        A.VERSION AS version
+        FROM TNM_CUSTOMER A
+        INNER JOIN TNM_USER B ON A.CREATED_BY=B.USER_ID
+        LEFT JOIN TNM_USER C ON A.UPDATED_BY=C.USER_ID
+        INNER JOIN TNM_OFFICE O ON A.OFFICE_ID = O.OFFICE_ID
+        WHERE A.CUSTOMER_CODE=#{filters.customerCode}
+        AND O.OFFICE_CODE = #{filters.officeCode}
+    </select>
+    <insert id="insertWHS" parameterType="com.chinaplus.common.entity.TnmWhsCustomer">
+        insert into 
+        TNM_WHS_CUSTOMER(
+        WHS_CUSTOMER_ID,
+        OFFICE_ID,
+        WHS_CUSTOMER_CODE,
+        WHS_ID,
+        CUSTOMER_ID,
+        CREATED_BY,
+        CREATED_DATE,
+        UPDATED_BY,
+        UPDATED_DATE,
+        VERSION
+        )
+        values(
+        SEQ_TNM_WHS_CUSTOMER.nextval,
+        #{officeId},
+        #{whsCustomerCode},
+        #{whsId},
+        #{customerId},
+        #{createdBy},
+        #{createdDate},
+        #{updatedBy},
+        #{updatedDate},
+        #{version})
+    </insert>
+    <select id="getRegionCode" parameterType="com.chinaplus.core.bean.BaseParam" 
+        resultType="com.chinaplus.common.entity.TnmOffice">
+        SELECT
+        REGION_CODE AS regionCode
+        FROM
+        TNM_OFFICE
+        WHERE
+        OFFICE_CODE = #{swapData.officeCode}
+    </select>
+    
+    <select id="getWHSCodeList" parameterType="com.chinaplus.core.bean.BaseParam" 
+            resultType="com.chinaplus.common.bean.ComboData">
+        SELECT
+        w.WHS_ID AS id,
+        w.WHS_CODE AS text       
+        FROM
+        TNM_WAREHOUSE w 
+        WHERE
+        w.INACTIVE_FLAG = '0'
+        AND
+        w.REGION_CODE = #{swapData.whsRegionCode}
+        order by
+        w.WHS_CODE ASC
+    </select>
+    
+    <select id="getTTCLogixList" parameterType="com.chinaplus.core.bean.BaseParam" 
+            resultType="com.chinaplus.web.mm.entity.TTCLogixCustomer">
+        SELECT
+        A.WHS_CUSTOMER_ID AS whsCustomerId,
+        B.WHS_CODE AS whsCode,
+        A.WHS_CUSTOMER_CODE AS whsCustomerCode
+        FROM
+        TNM_WHS_CUSTOMER A,
+        TNM_WAREHOUSE B
+        WHERE
+        A.WHS_ID = B.WHS_ID
+        AND 
+        A.OFFICE_ID = #{swapData.officeId}
+        AND
+        A.CUSTOMER_ID = #{swapData.customerId}
+		ORDER BY
+			B.WHS_CODE ASC
+    </select>
+    <select id='getUserCustomer'  parameterType="com.chinaplus.core.bean.BaseParam" resultType="com.chinaplus.common.entity.TnmUserCustomer">
+    	SELECT 
+    		MAX(A.ALL_CUSTOMER_FLAG) AS allCustomerFlag
+    	FROM
+    		TNM_USER_CUSTOMER A
+			INNER JOIN TNM_OFFICE C ON C.OFFICE_ID = A.OFFICE_ID
+    	WHERE 
+    		A.USER_ID = #{loginUserId}
+			AND C.OFFICE_CODE = #{swapData.officeCode}
+    </select>
+    
+    <select id='checkUserCustomer'  parameterType="com.chinaplus.core.bean.BaseParam"  resultType="int">
+    	SELECT 
+			COUNT(0)
+		FROM 
+			TNM_USER_CUSTOMER A
+			INNER JOIN TNM_CUSTOMER B ON B.CUSTOMER_ID = A.CUSTOMER_ID
+			INNER JOIN TNM_OFFICE C ON C.OFFICE_ID = B.OFFICE_ID AND C.OFFICE_ID = A.OFFICE_ID
+		WHERE 
+			A.USER_ID = #{loginUserId}
+			AND B.CUSTOMER_CODE = #{swapData.customerCode}
+			AND C.OFFICE_CODE = #{swapData.officeCode}
+	</select>
+    
+    <select id='checkExistWhsCustomer'  parameterType="com.chinaplus.core.bean.BaseParam"  resultType="int">
+    
+        SELECT
+          TWC.CUSTOMER_ID
+        FROM
+          TNM_WHS_CUSTOMER TWC
+          INNER JOIN TNM_CUSTOMER TC
+            ON TC.CUSTOMER_ID = TWC.CUSTOMER_ID
+        WHERE
+          TC.BUSINESS_PATTERN = #{swapData.businessPattern}
+          AND TWC.WHS_CUSTOMER_CODE = #{swapData.whsCustomerCode}
+        <if test="swapData.customerId != null" >
+          AND TWC.CUSTOMER_ID <![CDATA[<>]]> #{swapData.customerId}
+        </if>
+        
+	</select>
+</mapper>

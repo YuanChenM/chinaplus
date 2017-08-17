@@ -1,0 +1,210 @@
+/**
+ * @screen CPCRMS01(Role List Screen)
+ * @author Common
+ */
+CPCRMS01 = {
+    xtype : 'gridpanel',
+    id : chinaplus.screen.CPCRMS01,
+    title : chinaplus.label.CPCRMS01_Label_PageTitle,
+    border : true,
+    closable : false,
+    enableColumnHide : false,
+    enableColumnMove : false,
+    isControl : true,
+    autoScroll : true,
+    qtip : true,
+    selType : 'cellmodel',
+    columnLines : true,
+    selModel : Ext.create('Ext.selection.CheckboxModel', {
+        checkOnly : true
+    }),
+    viewConfig : {
+        loadMask : false
+    },
+    plugins : [ {
+        ptype : 'gridheaderfilters',
+        allSingleFilter : false
+    }, {
+        ptype : 'emptystoreview'
+    }, {
+        ptype : 'headerfiltertoolbar',
+        showMore: true
+    } ],
+    header : false,
+    headerPosition : 'bottom',
+    autoScroll : true,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    columns : 
+        [
+            {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPCRMS01_Grid_RoleName + '</div>',                
+                items : [ {
+                    xtype : 'header',
+                    hidden : true
+                } ],
+                dataIndex : 'roleName',
+                sortable : false,
+                resizable : false,
+                locked : true,
+                filter : 'string',
+                renderer : function(v, p, record) {
+                    var formatStr = '<a class="link-focusable" href="javascript:Ext.getCmp(\'CPCRMS01\').goToDetailLink(\'{1}\')">{0}</a>';
+                    return Ext.String.format(formatStr, Ext.String.htmlEncode(v), record.data.roleId);
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPCRMS01_Grid_RoleNotes + '</div>',
+                items : [ {
+                    xtype : 'header',
+                    hidden : true
+                } ],
+                dataIndex : 'roleNotes',
+                sortable : false,
+                width: 300,
+                filter : 'string',
+                renderer : function(v, p, record) {
+                    return Ext.String.format(Ext.String.htmlEncode(v), record.data.roleNotes);
+                }
+            } , {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" >' + chinaplus.label.CPCRMS01_Grid_UpdatedDate + '</div>',
+                items : [ {
+                    xtype : 'header',
+                    hidden : true
+                } ],
+                dataIndex : 'updatedDate',
+                align : 'center',
+                width: 150,
+                sortable : false,
+                filter : 'date',
+                filterPlugins : [ {
+                    ptype : 'datePickerClear'
+                } ]
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" >' + chinaplus.label.CPCRMS01_Grid_UpdatedBy + '</div>',
+                items : [ {
+                    xtype : 'header',
+                    hidden : true
+                } ],
+                dataIndex : 'updateUser',
+                width: 150,
+                sortable : false,
+                filter : 'string'
+            }, {
+                xtype : 'gridcolumn',
+                hidden : true,
+                dataIndex : 'roleId'
+            }, {
+                xtype : 'gridcolumn',
+                hidden : true,
+                dataIndex : 'version'
+            }
+        ],
+    tbar : [{
+        text : chinaplus.label.CPCRMS01_Button_CreateNew,
+        iconCls : 'btn-add',
+        id : chinaplus.screen.CPCRMS01 + '_Button_CreateNew',
+        handler : function() {
+            TRF.util.setDetailTabMode_New();
+            TRF.util.addApplication(chinaplus.screen.CPCRMS02, chinaplus.screen.CPCRMS02, true);
+        }
+    }, {
+        text : chinaplus.label.CPCRMS01_Button_Delete,
+        iconCls : 'btn-remove',
+        id : chinaplus.screen.CPCRMS01 + '_Button_Delete',
+        handler : function() {
+            CPCRMS01.deleteFunc();
+        }
+    }],
+    store : TRF.util.createStore(chinaplus.screen.CPCRMS01, 'manage/CPCRMS01/getRoleList', 'Role', chinaplus.screen.CPCRMS01 + '_projectStore',{
+        load : TRF.util.addEnterListenerToFocusableLink
+    }),
+    
+    
+    /**
+     * The initialize function.
+     * 
+     * @param params.
+     *            the parameter object passed to this screen.
+     */
+    initialize : function(params) {
+    
+        var me = this;
+        var gridStore = this.store;
+    
+        TRF.util.dataLoadStart(chinaplus.screen.CPCRMS01);
+        TRF.util.loadStore(gridStore, null, function() {
+            TRF.util.dataLoadEnd(chinaplus.screen.CPCRMS01);
+            gridStore.on('beforeload', function() {
+                 TRF.core.mask(TRF.core.maskMsg.load, null, me);
+             });
+             gridStore.on('load', function() {
+                 TRF.core.unmask(me);
+             });
+        }); 
+        
+        this.doLayout();
+        TRF.util.addGridTip(this);
+    },
+    
+    /**
+     * Go to detail screen.
+     * 
+     * @param roleId.
+     */
+    goToDetailLink : function(roleId) {
+        TRF.util.setDetailTabMode_View();
+        TRF.util.addApplication(chinaplus.screen.CPCRMS02, chinaplus.screen.CPCRMS02, true, roleId);
+    },
+    
+    /**
+     * Delete Role
+     */
+    deleteFunc : function () {
+        // select check
+        var popMsg = TRF.util.getMessage('w1011');
+        var lsMsgs = [];
+        
+        var selectionArray = Ext.getCmp(chinaplus.screen.CPCRMS01).getSelectionModel().getSelection();
+
+        if (selectionArray.length == 0) {
+            Ext.Array.push(lsMsgs, popMsg);
+            TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, popMsg, lsMsgs);
+            return;
+        }
+        // delete confirm
+        var me = this;
+        var confirmMsg = TRF.util.getMessage('c1001', chinaplus.label.CPCRMS01_Button_Delete);
+        var confirmMsgL = [confirmMsg];
+        TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_QUESTION, confirmMsg, confirmMsgL,
+            function(btn){
+                if(btn == 'yes'){
+                    var selectedDatas = new Array();
+                    for (var i=0; i<selectionArray.length; i++) {
+                        selectedDatas[i] = {
+                            'roleId': selectionArray[i].data.roleId,
+                            'roleName': selectionArray[i].data.roleName,
+                            'version': selectionArray[i].data.version
+                        };
+                    }
+                    
+                    var params = {};
+                    params[TRF.cnst.DATAS] = selectedDatas;
+                    
+                    var backFun = function(applicationData) {
+                        if(applicationData.success){
+                            var lsMsgs = TRF.util.getMessage('i1004', ['CPCRMS01_Button_Delete']);
+                            TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_INFO, lsMsgs, lsMsgs, function() {me.store.reload();});
+                        }
+                    };
+                    
+                    // submit
+                    TRF.util.ajaxSubmit(backFun, chinaplus.screen.CPCRMS01, 'manage/CPCRMS01/deleteRole', null, params);
+                    
+                }//end if
+            }
+        ); 
+    }
+}

@@ -1,0 +1,115 @@
+/**
+ * Upload Invoice
+ * 
+ * @screen CPVIVS02
+ * @author gu_chengchen
+ */
+CPVIVS02 = {
+    id : chinaplus.screen.CPVIVS02,
+    title : chinaplus.label.CPVIVS02_Label_PageTitle,
+    xtype : 'form',
+    frame : true,
+    autoHeight : false,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    autoScroll : true,
+    fieldDefaults : {
+        labelAlign : 'right',
+        labelWidth : 70
+    },
+    items : [{
+                xtype : 'fileuploadfield',
+                fieldLabel : chinaplus.label.CPVIVS02_Label_FileName,
+                buttonText : chinaplus.label.CPVIVS02_Button_Browse,
+                name : 'fileData',
+                width : 500,
+                labelSeparator : '',
+                margin : '50 30 10 30',
+                editable : false,
+                fieldStyle : 'background:rgb(255,255,153)',
+                hideLabel : false,
+                autoFitErrors : false
+            }, {
+                xtype : 'label',
+                html : '<div style="color:red;margin-left:50px">' + chinaplus.label.CPVIVS02_Label_Remark + '</div>'
+            }, {
+                xtype : 'button',
+                iconCls : 'btn-upload',
+                width : 135,
+                height : 25,
+                text : chinaplus.label.CPVIVS02_Button_Upload,
+                margin : '50 0 0 50',
+                handler : function() {
+                    Ext.getCmp(chinaplus.screen.CPVIVS02).uploadInvoice(0);
+                }
+            }],
+    supplierCallBackFlg : 0,
+    irregularCallBackFlg : 0,
+
+    /**
+     * Upload invoice.
+     */
+    uploadInvoice : function(uploadProcess) {
+
+        var params = {
+            'uploadProcess' : uploadProcess
+        };
+        var form = this.getForm();
+        var backFun = function(applicationData) {
+            if (applicationData.success || (applicationData.messageCodes != null && applicationData.messageCodes.length == 0)) {
+                var uploadResult = applicationData.result.uploadResult;
+                var uploadId = applicationData.result.uploadId;
+                if (uploadResult == 0) {
+                    TRF.util.showMessageBoxByMsgIdAndArgs('i1001');
+                    Ext.getCmp(chinaplus.screen.CPVIVS01).refreshData();
+                    TRF.util.removePopupApplication(chinaplus.screen.CPVIVS02);
+                } else if (uploadResult == 1) {
+                    var supBackFun = function() {
+                        var callBackFlg = Ext.getCmp(chinaplus.screen.CPVIVS02).supplierCallBackFlg;
+                        if (callBackFlg == 1) {
+                            Ext.getCmp(chinaplus.screen.CPVIVS02).uploadInvoice(1);
+                        } else {
+                            Ext.getCmp(chinaplus.screen.CPVIVS02).uploadInvoice(3);
+                        }
+                    };
+                    Ext.getCmp(chinaplus.screen.CPVIVS02).supplierCallBackFlg = 0;
+                    TRF.util.popupApplication(chinaplus.screen.CPVIVS05, chinaplus.screen.CPVIVS05, null, '700*350', supBackFun);
+                } else if (uploadResult == 2) {
+                    var irrParam = {
+                        'uploadId' : uploadId,
+                        'forwardPage' : chinaplus.screen.CPVIVS02
+                    };
+                    var irrBackFun = function() {
+                        var callBackFlg = Ext.getCmp(chinaplus.screen.CPVIVS02).irregularCallBackFlg;
+                        if (callBackFlg == 1) {
+                            Ext.getCmp(chinaplus.screen.CPVIVS02).uploadInvoice(2);
+                        } else {
+                            TRF.util.showMessageBoxByMsgIdAndArgs('i1001');
+                            Ext.getCmp(chinaplus.screen.CPVIVS01).refreshData();
+                            TRF.util.removePopupApplication(chinaplus.screen.CPVIVS02);
+                        }
+                    };
+                    Ext.getCmp(chinaplus.screen.CPVIVS02).irregularCallBackFlg = 0;
+                    TRF.util.popupApplication(chinaplus.screen.CPVIVS04, chinaplus.screen.CPVIVS04, irrParam, null, irrBackFun);
+                } else if (uploadResult == 3) {
+                    TRF.util.showMessageBoxByMsgIdAndArgs('c1019', null, function(btn) {
+                                if (btn == 'yes') {
+                                    var uploadIdArray = [uploadId];
+                                    var params = {};
+                                    params[TRF.cnst.SELECTEDDATAS] = uploadIdArray;
+                                    Ext.getCmp(chinaplus.screen.CPVIVS01).refreshData();
+                                    TRF.util.downloadSubmit(null, chinaplus.screen.CPVIVS01, "inv/CPVIVF01/downloadcheck", params, "inv/CPVIVF01/download");
+                                    TRF.util.removePopupApplication(chinaplus.screen.CPVIVS02);
+                                } else {
+                                    Ext.getCmp(chinaplus.screen.CPVIVS01).refreshData();
+                                    TRF.util.removePopupApplication(chinaplus.screen.CPVIVS02);
+                                }
+                            });
+                } else if (uploadResult == 4) {
+                    TRF.util.removePopupApplication(chinaplus.screen.CPVIVS02);
+                }
+            }
+        };
+        TRF.util.uploadSubmit(form, backFun, chinaplus.screen.CPVIVS02, 'inv/CPVIVF11/upload', params);
+    }
+
+}

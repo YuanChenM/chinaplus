@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.inf.service.CPIIFS02Service">
+
+  <sql id="ConstDef">
+    <bind name="INVOICE_MISMATCH" value="@com.chinaplus.common.consts.CodeConst$HandleFlag@INVOICE_MISMATCH" />
+    <bind name="AISIN" value="@com.chinaplus.common.consts.CodeConst$BusinessPattern@AISIN" />
+    <bind name="MISMATCH" value="@com.chinaplus.common.consts.CodeConst$InvoiceMatchStatus@MISMATCH" />
+    <bind name="MATCHED" value="@com.chinaplus.common.consts.CodeConst$InvoiceMatchStatus@MATCHED" />
+  </sql> 
+    
+  <sql id="getIfImpIp">
+      FROM
+           (SELECT
+                  B.OFFICE_CODE,
+                  NVL(B.INVOICE_NO, NVL(B.DEVAN_INVOICE_NO, B.INB_INVOICE_NO))  AS INVOICE_NO,
+                  MIN(Date(B.IF_DATE_TIME)) AS IF_DATE
+             FROM
+                  TNT_IF_IMP_IP B
+            WHERE B.HANDLE_FLAG = ${INVOICE_MISMATCH}
+              AND  (B.INVOICE_NO IS NOT NULL OR B.DEVAN_INVOICE_NO IS NOT NULL OR B.INB_INVOICE_NO IS NOT NULL)
+            GROUP BY B.OFFICE_CODE, NVL(B.INVOICE_NO, NVL(B.DEVAN_INVOICE_NO, B.INB_INVOICE_NO))) A
+       INNER JOIN TNM_OFFICE F ON A.OFFICE_CODE = F.OFFICE_CODE
+       WHERE 
+            A.INVOICE_NO NOT IN (
+               SELECT W.WHS_INVOICE_NO FROM TNT_MATCH_INVOICE W <!-- WHERE W.STATUS = ${MATCHED} -->
+            )
+        <if test="filters.officeCode != null">
+                AND F.OFFICE_ID = #{filters.officeCode}
+        </if>
+        <if test="null != filters.wrongInvocie and filters.wrongInvocie.size()>0">
+                AND A.INVOICE_NO IN 
+            <foreach item="item" index="index" collection="filters.wrongInvocie" open="(" separator="," close=")">  
+                    #{item}
+            </foreach>
+        </if>
+        <if test="filters.matchedInvoiceNOBlank != null and filters.matchedInvoiceNOBlank == true">
+                AND 1 = 0
+        </if>
+        <if test="filters.businessPattern != null">
+                AND ${AISIN} = #{filters.businessPattern}
+        </if> 
+        <if test="filters.mismatchDateFrom != null and filters.mismatchDateFrom != ''">
+              AND A.IF_DATE <![CDATA[>=]]> #{filters.mismatchDateFrom}
+        </if>
+        <if test="filters.mismatchDateTo != null and filters.mismatchDateTo != ''">
+              AND A.IF_DATE <![CDATA[<=]]> #{filters.mismatchDateTo}
+        </if>       
+        <if test="filters.status != null">
+              AND ${MISMATCH} = #{filters.status}
+        </if>  
+  </sql>
+    
+  <sql id="getMatchInvoice">
+        FROM                                                                                                    
+            TNT_MATCH_INVOICE  D                                       
+            INNER JOIN TNM_OFFICE E ON D.OFFICE_ID = E.OFFICE_ID 
+     <where>
+        <if test="filters.officeCode != null">
+            AND D.OFFICE_ID = #{filters.officeCode}
+        </if>
+        <if test="null != filters.wrongInvocie and filters.wrongInvocie.size()>0">
+            AND D.WHS_INVOICE_NO IN 
+            <foreach item="item" index="index" collection="filters.wrongInvocie" open="(" separator="," close=")">  
+            #{item}
+            </foreach>
+        </if>
+        <if test="null != filters.matchedInvocie and filters.matchedInvocie.size()>0">
+            AND  (
+              <foreach item="item" index="index" collection="filters.matchedInvocie" open="" separator="OR" close="">                      
+                <if test="'Blank' != item">
+                     D.INVOICE_NO = #{item}
+                </if>
+                <if test="'Blank' == item">
+                     D.INVOICE_NO IS NULL
+                </if>   
+              </foreach>
+            )
+        </if>  
+        <if test="filters.businessPattern != null">
+             AND ${AISIN} = #{filters.businessPattern}
+        </if> 
+        <if test="filters.matchDateFrom != null and filters.matchDateFrom != ''">
+             AND D.MATCHED_DATE <![CDATA[>=]]> #{filters.matchDateFrom}
+        </if>
+        <if test="filters.matchDateTo != null and filters.matchDateTo != ''">
+             AND D.MATCHED_DATE <![CDATA[<=]]> #{filters.matchDateTo}
+        </if>     
+        <if test="filters.status != null">
+             AND D.STATUS = #{filters.status}
+        </if>
+     </where>                                                                                                                      
+  </sql>
+
+  <!-- <cache /> -->
+  <select id="findPageListCount" parameterType="com.chinaplus.core.bean.PageParam"
+    resultType="int">
+    <include refid="ConstDef"/>
+        SELECT  SUM(CO) FROM (
+          (
+          SELECT COUNT(1) AS  CO
+    <include refid="getIfImpIp" />
+          )
+         UNION ALL
+         (
+         SELECT COUNT(1) AS  CO
+    <include refid="getMatchInvoice" />
+         )
+        )
+  </select>
+
+  <!-- <cache /> -->
+  <select id="findPageList" parameterType="com.chinaplus.core.bean.PageParam"
+    resultType="com.chinaplus.web.inf.entity.CPIIFS02Entity">
+    <include refid="ConstDef"/>
+        SELECT  *  FROM (
+        SELECT 
+            K.*,
+            ROWNUMBER() over(ORDER BY K.wrongInvocie) as rownum
+        FROM (
+                (SELECT 
+                    E.OFFICE_ID AS officeId,
+                    E.OFFICE_CODE AS officeCode,
+                    D.INVOICE_NO AS matchedInvocie,
+                    ${AISIN}  AS businessPattern,
+                    D.WHS_INVOICE_NO AS wrongInvocie,
+                    D.STATUS AS status,
+                    D.DATA_DATE AS mismatchDate,
+                    D.MATCHED_DATE AS matchDate,
+                    '${filters.matchInvoice}' AS matchInvoice
+                <include refid="getMatchInvoice" />
+                GROUP BY 
+                    E.OFFICE_CODE,
+                    D.INVOICE_NO,
+                    D.WHS_INVOICE_NO,
+                    D.MATCHED_DATE,
+                    D.STATUS,
+                    E.OFFICE_ID,
+                    D.DATA_DATE
+                  )
+                  
+                 UNION ALL
+                 
+                 (SELECT 
+                    F.OFFICE_ID AS officeId,
+                    A.OFFICE_CODE AS officeCode,
+                    '' AS matchedInvocie,
+                    ${AISIN}  AS businessPattern,
+                    A.INVOICE_NO AS wrongInvocie,
+                    ${MISMATCH} AS status,
+                    A.IF_DATE AS mismatchDate,
+                    null AS matchDate,
+                    '${filters.matchInvoice}' AS matchInvoice
+                <include refid="getIfImpIp" />
+                GROUP BY 
+                    A.OFFICE_CODE,
+                    A.INVOICE_NO,
+                    A.IF_DATE,
+                    F.OFFICE_ID
+               )
+          )K 
+          ORDER BY  K.wrongInvocie  
+        )  
+         WHERE
+         
+        <include refid="com.chinaplus.const.pagingCondition" />    
+  </select>
+    
+    
+  <select id="getOfficeCode" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+       select   
+          A.OFFICE_ID AS id,
+          A.OFFICE_CODE  AS  text
+       from   
+           TNM_OFFICE A
+        ORDER  BY  A.OFFICE_CODE 
+  </select>  
+    
+  <select id="getMatchedInvoice" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+            SELECT   
+                DISTINCT 
+                D.INVOICE_NO AS id,                              
+                D.INVOICE_NO AS text                                                                                                                
+            FROM                                                                                                    
+                TNT_MATCH_INVOICE   D                                       
+                INNER JOIN TNM_OFFICE E ON D.OFFICE_ID = E.OFFICE_ID                                                                                                                
+            ORDER BY    D.INVOICE_NO
+    
+  </select> 
+  
+  <select id="getWrongInvocie" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+      <include refid="ConstDef"/> 
+        SELECT  
+            DISTINCT
+            text,
+            text as id
+         FROM (
+                SELECT
+                   A.INVOICE_NO AS text   
+                FROM
+                  (SELECT
+                          NVL(B.INVOICE_NO, NVL(B.DEVAN_INVOICE_NO, B.INB_INVOICE_NO))  AS INVOICE_NO
+                     FROM
+                          TNT_IF_IMP_IP B
+                    WHERE B.HANDLE_FLAG = ${INVOICE_MISMATCH}
+                      AND  (B.SOURCE_IP_NO IS NULL OR B.SOURCE_IP_NO = '')) A
+                    
+                UNION ALL              
+                
+                (
+                SELECT                                  
+                    D.WHS_INVOICE_NO    AS      text                                                                                                                
+                FROM                                                                                                    
+                    TNT_MATCH_INVOICE   D                                       
+                    INNER JOIN TNM_OFFICE E ON D.OFFICE_ID = E.OFFICE_ID                                                                                                                
+                ORDER BY    D.WHS_INVOICE_NO
+                )            
+        )
+  </select>
+    
+    <select id="getMatchInvoiceList" resultType="com.chinaplus.common.entity.TntMatchInvoice" parameterType="com.chinaplus.core.bean.BaseParam">
+        <include refid="ConstDef"/> 
+        SELECT 
+            A.MATCH_INVOICE_ID AS matchInvoiceId,
+            A.OFFICE_ID AS officeId,
+            A.WHS_ID AS whsId,
+            A.INVOICE_NO AS invoiceNo,
+            A.WHS_INVOICE_NO AS whsInvoiceNo,
+            A.STATUS AS status,
+            A.DATA_DATE AS dataDate,
+            A.MATCHED_BY AS matchedBy,
+            A.MATCHED_DATE AS matchedDate,
+            A.CREATED_BY AS createdBy,
+            A.CREATED_DATE AS matchInvoiceId,
+            A.UPDATED_BY AS updatedBy,
+            A.UPDATED_DATE AS updatedDate,
+            A.VERSION AS version
+        FROM 
+            TNT_MATCH_INVOICE A
+            INNER JOIN TNM_OFFICE B ON B.OFFICE_ID = A.OFFICE_ID
+        WHERE 
+            A.STATUS = ${MISMATCH}
+            AND
+            <foreach item="item" index="index" collection="swapData.datas" open="((" separator=") OR (" close="))">
+                A.WHS_INVOICE_NO = #{item.wrongInvocie}
+                AND B.OFFICE_CODE = #{item.officeCode}
+            </foreach>
+        ORDER BY A.OFFICE_ID
+    </select>
+</mapper>

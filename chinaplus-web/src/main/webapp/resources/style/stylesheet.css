@@ -1,0 +1,355 @@
+/*-- Tool Bar Button -------------------------------------------------------------------------------------------------*/
+.btn-add {
+	background-image: url(../images/icons/add.gif) !important;
+}
+
+.btn-alert {
+	background-image: url(../images/icons/alert.gif) !important;
+}
+
+.btn-go {
+	background-image: url(../images/icons/go.gif) !important;
+}
+
+.btn-back {
+	background-image: url(../images/icons/back.gif) !important;
+}
+
+.btn-refresh {
+	background-image: url(../images/icons/refresh.gif) !important;
+}
+
+.btn-calcurate {
+	background-image: url(../images/icons/calc.gif) !important;
+}
+
+.btn-cancel {
+	background-image: url(../images/icons/cancel.gif) !important;
+}
+
+.btn-customize {
+	background-image: url(../images/icons/customize.gif) !important;
+}
+
+.btn-debug {
+	background-image: url(../images/icons/debug.gif) !important;
+}
+
+.btn-execute {
+	background-image: url(../images/icons/execute.gif) !important;
+}
+
+.btn-check {
+	background-image: url(../images/icons/check.gif) !important;
+}
+
+.btn-help {
+	background-image: url(../images/icons/help.gif) !important;
+}
+
+.btn-top {
+	background-image: url(../images/icons/home.gif) !important;
+}
+
+.btn-info {
+	background-image: url(../images/icons/info.gif) !important;
+}
+
+.btn-login {
+	background-image: url(../images/icons/key.gif) !important;
+}
+
+.btn-logout {
+	background-image: url(../images/icons/key.gif) !important;
+}
+
+.btn-remove {
+	background-image: url(../images/icons/delete.gif) !important;
+}
+
+.btn-save {
+	background-image: url(../images/icons/save.gif) !important;
+}
+
+.btn-copy {
+	background-image: url(../images/icons/copy.gif) !important;
+}
+
+.btn-download {
+	background-image: url(../images/icons/download.gif) !important;
+}
+
+.btn-upload {
+	background-image: url(../images/icons/upload.gif) !important;
+}
+
+.btn-details {
+	background-image: url(../images/icons/details.gif) !important;
+}
+
+.btn-search {
+	background-image: url(../images/icons/search.gif) !important;
+}
+
+.btn-modify {
+	background-image: url(../images/icons/setting.gif) !important;
+}
+
+.btn-printer {
+	background-image: url(../images/icons/printer.gif) !important;
+}
+
+.btn-confirm {
+	background-image: url(../images/icons/save.gif) !important;
+}
+
+.btn-release {
+	background-image: url(../images/icons/cancel.gif) !important;
+}
+
+.btn-close {
+	background-image: url(../images/icons/cancel.gif) !important;
+}
+
+.btn-select {
+	background-image: url(../images/icons/details.gif) !important;
+}
+
+.btn-complete {
+	background-image: url(../images/icons/save.gif) !important;
+}
+
+.btn-clear {
+	background-image: url(../images/icons/cancel.gif) !important;
+}
+
+.btn-ok {
+	background-image: url(../images/icons/save.gif) !important;
+}
+
+.btn-view {
+	background-image: url(../images/icons/go.gif) !important;
+}
+
+.btn-edit {
+	background-image: url(../images/icons/setting.gif) !important;
+}
+
+.btn-approve {
+	background-image: url(../images/icons/check.gif) !important;
+}
+
+.btn-switch {
+	background-image: url(../images/icons/refresh.gif) !important;
+}
+
+.btn-setting {
+	background-image: url(../images/icons/setting.gif) !important;
+}
+
+.btn-error {
+	background-image: url(../images/icons/printer.gif) !important;
+}
+
+.btn-download-2 {
+	background-image: url(../images/icons/download-2.gif) !important;
+}
+
+.btn-upload-2 {
+	background-image: url(../images/icons/upload-2.gif) !important;
+}
+
+.btn-uparrow {
+	background-image: url(../images/icons/uparrow.gif) !important;
+}
+
+.btn-downarrow {
+	background-image: url(../images/icons/downarrow.gif) !important;
+}
+.btn-popup1 {
+    background-image: url(../images/icons/popup1.gif) !important;
+}
+.btn-excel {
+    background-image: url(../images/icons/page_excel.png) !important;
+}
+.btn-acrobat {
+    background-image: url(../images/icons/page_white_acrobat.png) !important;
+}
+.btn-detail {
+    background-image: url(../images/icons/part.png) !important;
+}
+.x-grid-back-editable {
+	background: #FFCC99;
+}
+
+.x-grid-back-editable div{
+	background: #FFCC99;
+}
+
+.x-tab-default-focus span {
+	border-color: #81A4D0;
+	border-width: 1px;
+	border-style: solid;
+}
+
+.x-tab-default-focus span span {
+	border: none;
+}
+
+.link-focusable:focus {
+	color: #8000ff;
+	background: #a4d1ff;
+}
+
+.x-combo-checker { 
+	background-position: 50% -2px;
+	margin-left: 1px;
+	background-color: transparent;
+	background-image: url("../images/icons/unchecked.gif") !important; 
+	background-position: -1px -1px;
+	background-repeat: no-repeat;
+	/*height: 14px; 
+	width: 14px; 
+	display: inline-block;*/
+}
+
+.x-boundlist-selected .x-combo-checker { 
+	background-image: url("../images/icons/checked.gif") !important; 
+}
+
+.x-grid-title{
+	white-space: normal;
+	word-break: normal; 
+	word-wrap: break-word;
+}
+
+.x-tooltip{
+	white-space: normal;
+	word-break: normal; 
+    word-wrap: break-word;
+    overflow:hidden;
+}
+
+.x-field-input-ellipsis{
+    overflow:hidden;
+    -o-text-overflow:ellipsis;
+    text-overflow:ellipsis;
+    padding:2px 6px 3px;
+    white-space:nowrap;
+}
+
+.x-field-input-textarea {
+	white-space:pre;
+}
+
+.withdrawRow-background {
+	background-color:#f50000 !important; 
+}
+
+.x-tool-over .x-tool-big-img{
+	background-image: url("../images/icons/closeover.png");
+}
+
+.x-tool-big-img {
+    overflow: hidden;
+	width: 16px;
+	height: 16px;
+	background-image: url("../images/icons/close.png");
+	margin: 0;
+}
+
+.x-grid-record-gray {
+	background-color:#D0D0D0 !important; 
+}
+
+.x-grid-record-red-blod {
+    font-weight:bold;
+    color:red;
+    text-align:center !important; 
+}
+
+.x-grid-header-checker {
+  height: 13px;
+  width: 13px;
+  background-image: url(../images/icons/checkbox.gif);
+  line-height: 13px;
+}
+
+.x-grid-hd-checker-on .x-grid-header-checker {
+  background-position: 0 -13px;
+}
+
+.ux-companyCalendar-calendarYear{
+    width:1051px;
+    text-align:center;
+    font-family:Arial;
+    font-weight:bold;
+    background-color:#A9D0F5;
+    border:1px solid #000000;
+}
+
+.ux-companyCalendar-calendarYear-red{
+    width:1051px;
+    text-align:center;
+    font-family:Arial;
+    font-weight:bold;
+    color:#FF0000;
+    background-color:#A9D0F5;
+    border:1px solid #000000;
+}
+
+.ux-companyCalendar-table{
+    width:1050px;
+    border-collapse:collapse;
+}
+.ux-companyCalendar-table th{
+    border:1px solid #000000;
+    background-color:#A9D0F5;
+    font-family:Arial;
+    font-weight:bold;
+    text-align:center;
+}
+.ux-companyCalendar-table td{
+    width:50px;
+    border:1px solid #000000;
+    text-align:center;
+}
+.ux-companyCalendar-weekend{
+    color:black;
+    background-color:#81F7F3;
+    border:1px solid #000000;
+    font-family:Arial;
+    font-weight:bold;
+    text-align:center;
+}
+#logo {
+	background-image: url(../images/main_mos_02.png) !important;
+}
+
+/* line 212, ../../../ext-theme-neutral/sass/src/picker/Date.scss */
+.x-monthpicker-months {
+  border-width: 0 1px 0 0;
+  border-color: #1b376c;
+  border-style: solid;
+  width: 87px !important;
+}
+/* line 221, ../../../ext-theme-neutral/sass/src/picker/Date.scss */
+.x-monthpicker-months .x-monthpicker-item {
+  width: 42px !important;
+}
+
+/* line 226, ../../../ext-theme-neutral/sass/src/picker/Date.scss */
+.x-monthpicker-years {
+  width: 86px !important;
+}
+/* line 229, ../../../ext-theme-neutral/sass/src/picker/Date.scss */
+.x-monthpicker-years .x-monthpicker-item {
+  width: 43px !important;
+}
+
+/* line 269, ../../../ext-theme-neutral/sass/src/picker/Date.scss */
+.x-monthpicker-yearnav-button-ct {
+  width: 43px !important;
+}
+
+.vertical-align-row td{ vertical-align:middle;line-height:20px;}

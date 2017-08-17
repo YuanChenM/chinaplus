@@ -1,0 +1,174 @@
+/**
+ * Rundown History Download Screen
+ * 
+ * @screen CPSRDS01
+ * @author zhang_chi
+ */
+CPSRDS01 = {
+	id : chinaplus.screen.CPSRDS01,
+	title : chinaplus.label.CPSRDS01_Label_PageTitle,
+	xtype : 'form',
+	overflowY : 'auto',
+	minWidth : 600,
+	height : Ext.getCmp('tabpanelId').getHeight() - 30,
+	border : false,
+	autoHeight : true,
+	closable : false,
+	labelAlign : 'right',
+	items : [{
+				margin : '30 0 0 20',
+				xtype : 'container',
+				layout : 'column',
+				autoScroll : true,
+				layout : 'hbox',
+				items : [{
+							xtype : 'label',
+							text : chinaplus.label.CPSRDS01_Label_CreateDate,
+							margin : '0 20 0 0'
+						}, {
+							xtype : 'label',
+							text : chinaplus.label.CPSRDS01_Label_From,
+							margin : '0 20 0 20'
+						}, {
+							xtype : 'container',
+							defaultType : 'datefield',
+							fieldDefaults : {
+								labelAlign : 'right',
+								labelWidth : 20
+							},
+							items : [{
+										labelSeparator : '',
+										id : chinaplus.screen.CPSRDS01
+												+ '_from',
+										editable : false,
+										width : 180,
+										msgTarget : 'side',
+										forceSelection : true,
+										autoFitErrors : false,
+										fieldStyle : 'background:rgb(255,255,153)',
+										listeners : {},
+										plugins : [{
+													ptype : 'datePickerClear'
+												}]
+									}]
+						}, {
+							xtype : 'label',
+							text : chinaplus.label.CPSRDS01_Label_To,
+							width : 10,
+							margin : '0 20 0 0'
+						}, {
+							xtype : 'container',
+							defaultType : 'datefield',
+							items : [{
+										labelSeparator : '',
+										id : chinaplus.screen.CPSRDS01 + '_to',
+										editable : false,
+										width : 180,
+										msgTarget : 'side',
+										forceSelection : true,
+										autoFitErrors : false,
+										fieldStyle : 'background:rgb(255,255,153)',
+										listeners : {},
+										plugins : [{
+													ptype : 'datePickerClear'
+												}]
+									}]
+						}]
+			}, {
+				xtype : 'fieldcontainer',
+				margin : '20 0 0 30',
+				defaultType : 'checkboxfield',
+				defaults : {
+					flex : 1
+				},
+				layout : 'hbox',
+				width : 380,
+				items : [{
+							boxLabel : chinaplus.label.CPSRDS01_Label_ByMultiParts,
+							name : 'downLoadTypeBy',
+							id : chinaplus.screen.CPSRDS01 + '_ByMultiParts'
+						}, {
+							boxLabel : chinaplus.label.CPSRDS01_Label_BySinglePart,
+							name : 'downLoadTypeBy',
+							id : chinaplus.screen.CPSRDS01 + '_BySinglePart'
+						}]
+			}, {
+				height : 35,
+				xtype : 'container',
+				margin : '30 0 0 15',
+				items : [{
+					xtype : 'button',
+					iconCls : 'btn-download',
+					width : 150,
+					height : 25,
+					text : chinaplus.label.CPSRDS01_Button_Download,
+					margin : '3 0 0 10',
+					handler : function() {
+						Ext.getCmp(chinaplus.screen.CPSRDS01)
+								.btnDownloadAction();
+					}
+				}]
+			}],
+
+	/**
+	 * initialize
+	 */
+	initialize : function() {
+	    // Set date format
+        var dateFormat;
+        if (TRF.core.language == chinaplus.consts.code.Language.CN) {
+            dateFormat = TRF.cnst.GLOBAL_DATE_YEAR_MONTH_DAY_FORMAT;
+        } else {
+            dateFormat = TRF.cnst.GLOBAL_DATETIME_SHORT_FORMAT;
+        }
+        Ext.getCmp(chinaplus.screen.CPSRDS01 + '_from').format = dateFormat;
+        Ext.getCmp(chinaplus.screen.CPSRDS01 + '_to').format = dateFormat;
+	
+	
+		var params = {};
+		var func = function(responseData) {
+			if (null != responseData && null != responseData.result) {
+				var start = responseData.result.start;
+				var end = responseData.result.end;
+				Ext.getCmp(chinaplus.screen.CPSRDS01 + '_from')
+						.setMinValue(new Date(start));
+				Ext.getCmp(chinaplus.screen.CPSRDS01 + '_from')
+						.setMaxValue(new Date(end));
+				Ext.getCmp(chinaplus.screen.CPSRDS01 + '_to')
+						.setMinValue(new Date(start));
+				Ext.getCmp(chinaplus.screen.CPSRDS01 + '_to')
+						.setMaxValue(new Date(end));
+			}
+		}
+		TRF.util.ajaxSubmit(func, chinaplus.screen.CPSRDS01,
+				'sa/CPSRDS01/loadFromToDate', params, null);
+	},
+
+	/**
+	 * data Download
+	 */
+	btnDownloadAction : function() {
+
+		var byMultiParts = Ext.getCmp(chinaplus.screen.CPSRDS01
+				+ '_ByMultiParts').getValue();
+		var bySinglePart = Ext.getCmp(chinaplus.screen.CPSRDS01
+				+ '_BySinglePart').getValue();
+		var from = Ext.getCmp(chinaplus.screen.CPSRDS01 + '_from').getValue();
+		var to = Ext.getCmp(chinaplus.screen.CPSRDS01 + '_to').getValue();
+		var form = this.getForm();
+
+		var params = {
+			'byMultiParts' : byMultiParts,
+			'bySinglePart' : bySinglePart,
+			'from' : from,
+			'to' : to
+		}
+
+		var fcn = function() {
+
+		};
+		TRF.util.downloadSubmit(fcn, chinaplus.screen.CPSRDS01,
+				"sa/CPSRDS01/downloadcheck", params, "sa/CPSRDS01/download",
+				false);
+	}
+}

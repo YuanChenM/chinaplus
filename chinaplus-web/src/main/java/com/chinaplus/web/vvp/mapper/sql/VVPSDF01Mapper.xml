@@ -1,0 +1,183 @@
+<!--
+@screen CPSKSS01
+@author shi_yuxi
+-->
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chinaplus.web.vvp.service.VVPSDF01Service">
+    <sql id="ConstDef">
+        
+    </sql>
+	<sql id="whereSql">
+		<if test="null != filters">
+			<if test="null != filters.exportOfficeName and filters.exportOfficeName.size()>0">
+				AND A.EXPORT_OFFICE IN
+                <foreach item="item" index="index" collection="filters.exportOfficeName" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+			</if>
+			<if test="null != filters.fullCompanyName and '' != filters.fullCompanyName">
+				AND A.FULL_COMPANY_NAME LIKE #{filters.fullCompanyName} ESCAPE '!'
+			</if>
+			<if test="null != filters.headquarterName and filters.headquarterName.size()>0">
+				AND B.REGION_CODE IN
+                <foreach item="item" index="index" collection="filters.headquarterName" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+			</if>
+			<if test="null != filters.officeBranchName and filters.officeBranchName.size()>0">
+				AND C.REGION_CODE IN
+                <foreach item="item" index="index" collection="filters.officeBranchName" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+			</if>
+			<if test="null != filters.productMateialCode and filters.productMateialCode.size()>0">
+				AND A.PRODUCT_MATEIAL IN
+                <foreach item="item" index="index" collection="filters.productMateialCode" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+			</if>
+			<if test="null != filters.sectionofthecarCode and filters.sectionofthecarCode.size()>0">
+				AND A.SECTION_OF_THE_CAR IN
+                <foreach item="item" index="index" collection="filters.sectionofthecarCode" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+			</if>
+			<if test="null != filters.productionProcessCode and filters.productionProcessCode.size()>0">
+				AND A.PRODUCTION_PROCESS IN
+                <foreach item="item" index="index" collection="filters.productionProcessCode" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+			</if>
+			<if test="null != filters.overallEvaluationCode and filters.overallEvaluationCode.size()>0">
+				AND A.OVERALL_EVALUATION IN
+                <foreach item="item" index="index" collection="filters.overallEvaluationCode" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+			</if>
+            <if test="null != filters.createdDateForDisplayFrom and '' != filters.createdDateForDisplayFrom">
+                and DATE(A.CREATED_DATE) <![CDATA[>=]]>
+                #{filters.createdDateForDisplayFrom}
+            </if>
+            <if test="null != filters.createdDateForDisplayTo and '' != filters.createdDateForDisplayTo">
+                and DATE (A.CREATED_DATE) <![CDATA[<=]]>
+                #{filters.createdDateForDisplayTo}
+            </if>
+            <if test="null != filters.createdDateForDisplayFrom and '' != filters.createdDateForDisplayFrom">
+                and DATE(A.LAST_UPDATED_DATE) <![CDATA[>=]]>
+                #{filters.createdDateForDisplayFrom}
+            </if>
+            <if test="null != filters.lastUpdatedDateForDisplayTo and '' != filters.lastUpdatedDateForDisplayTo">
+                and DATE (A.LAST_UPDATED_DATE) <![CDATA[<=]]>
+                #{filters.lastUpdatedDateForDisplayTo}
+            </if>
+			<if test="null != filters.statusCode and filters.statusCode.size()>0">
+				AND A.STATUS IN
+                <foreach item="item" index="index" collection="filters.statusCode" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+			</if>
+		</if>
+	</sql>
+    <select id="findSupplierBySupplierId" parameterType="com.chinaplus.core.bean.BaseParam" 
+            resultType="com.chinaplus.web.vvp.entity.VVPSDF01Entity" >
+            SELECT
+            	A.SUPPLIER_ID AS supplierId,
+            	A.EXPORT_OFFICE AS exportOffice,
+            	A.CREATED_DATE AS createdDate,
+            	A.CREATED_BY AS createBy,
+            	A.FULL_COMPANY_NAME AS fullCompanyName,
+            	A.LOCAL_ADDRESS AS localAddress,
+            	A.CAPITAL AS capital,
+            	A.BUSINESS_ACTIVITY AS businessActivity,
+            	A.SHARE_HOLDER AS shareHolder,
+            	A.COMPANY_WEBSITE AS companyWebsite,
+            	A.NO_OF_EMPLOYEE AS employeeNo,
+            	A.MAIN_CUSTOMER AS mainCustomer,
+            	A.HEADQUARTER_OFFICE AS headquarter,
+            	A.END_USER_OEM AS endUserOem,
+            	A.OFFICE_BRANCH AS officeBranch,
+            	A.PRODUCT_MATEIAL AS productMateial,
+            	A.SECTION_OF_THE_CAR AS sectionofthecar,
+            	A.PRODUCTION_PROCESS AS productionProcess,
+            	A.REMARKS1 AS remask1,
+            	A.BUSINESS_WITH_LOCAL_TTC AS withTTC,
+            	A.NDA_AGREEMENT AS ndaAgreement,
+            	A.SUPPILER_TARGET AS supplierTarget,
+            	A.APPEALING_POINT AS appealingPoint,
+            	A.OVERALL_EVALUATION AS overallEvaluation,
+            	A.RISK_CONCERN_IF_ANY AS riskConcern,
+            	A.REMARKS2 AS remask2
+            FROM
+            	VVP_SUPPILER A
+            	LEFT JOIN TNM_REGION B ON A.HEADQUARTER_OFFICE = B.REGION_ID
+            	LEFT JOIN TNM_REGION C ON A.OFFICE_BRANCH = C.REGION_ID
+            WHERE
+            	SUPPLIER_ID = #{swapData.supplierId}
+			ORDER BY
+			  	A.CREATED_DATE DESC
+    </select>
+    <select id="findAllSupplier" parameterType="com.chinaplus.core.bean.BaseParam" 
+            resultType="com.chinaplus.web.vvp.entity.VVPSDF01Entity" >
+            SELECT
+            	A.SUPPLIER_ID AS supplierId,
+            	A.EXPORT_OFFICE AS exportOffice,
+            	A.CREATED_DATE AS createdDate,
+            	A.CREATED_BY AS createBy,
+            	A.FULL_COMPANY_NAME AS fullCompanyName,
+            	A.LOCAL_ADDRESS AS localAddress,
+            	A.CAPITAL AS capital,
+            	A.BUSINESS_ACTIVITY AS businessActivity,
+            	A.SHARE_HOLDER AS shareHolder,
+            	A.COMPANY_WEBSITE AS companyWebsite,
+            	A.NO_OF_EMPLOYEE AS employeeNo,
+            	A.MAIN_CUSTOMER AS mainCustomer,
+            	A.HEADQUARTER_OFFICE AS headquarter,
+            	A.END_USER_OEM AS endUserOem,
+            	A.OFFICE_BRANCH AS officeBranch,
+            	A.PRODUCT_MATEIAL AS productMateial,
+            	A.SECTION_OF_THE_CAR AS sectionofthecar,
+            	A.PRODUCTION_PROCESS AS productionProcess,
+            	A.REMARKS1 AS remask1,
+            	A.BUSINESS_WITH_LOCAL_TTC AS withTTC,
+            	A.NDA_AGREEMENT AS ndaAgreement,
+            	A.SUPPILER_TARGET AS supplierTarget,
+            	A.APPEALING_POINT AS appealingPoint,
+            	A.OVERALL_EVALUATION AS overallEvaluation,
+            	A.RISK_CONCERN_IF_ANY AS riskConcern,
+            	A.REMARKS2 AS remask2
+            FROM
+            	VVP_SUPPILER A
+            	LEFT JOIN TNM_REGION B ON A.HEADQUARTER_OFFICE = B.REGION_ID
+            	LEFT JOIN TNM_REGION C ON A.OFFICE_BRANCH = C.REGION_ID
+            WHERE 1=1
+			<if test="null != swapData.supplierIds and swapData.supplierIds.size()>0">
+				AND SUPPLIER_ID IN
+                <foreach item="item" index="index" collection="swapData.supplierIds" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+			</if>
+            <include refid="whereSql" />
+			ORDER BY
+			  	A.CREATED_DATE DESC
+    </select>
+    <select id="getOffices" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+        SELECT 
+               DISTINCT
+               A.OFFICE_ID AS id,
+               A.OFFICE_CODE AS text
+        FROM  
+              TNM_OFFICE  A
+   </select> 
+  
+  <select id="getRegionCode" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+       SELECT   
+          DISTINCT
+          A.REGION_ID AS id,
+          A.REGION_CODE  AS  text
+       FROM 
+          TNM_REGION A
+       ORDER BY A.REGION_CODE
+    </select>  
+</mapper>

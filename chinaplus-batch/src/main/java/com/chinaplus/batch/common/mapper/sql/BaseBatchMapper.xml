@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.chinaplus.batch.common.service.BaseBatchService">
+
+    <select id="findPageListCount" parameterType="com.chinaplus.core.bean.PageParam" resultType="int" >
+    select 
+        count(1)
+    from 
+        TNT_BATCH_JOB
+    where 
+        STATUS = 9
+    and BATCH_ID IN
+        <foreach item="code" index="index" collection="selectedDatas" open="(" separator="," close=")">  
+          #{code}
+        </foreach>
+    </select>
+    
+</mapper>

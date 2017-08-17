@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.mm.service.CPMSMF11Service">
+
+    <sql id="ConstDef">
+        <bind name="N" value="@com.chinaplus.common.consts.CodeConst$BuildOutIndicator@N" />       
+        <bind name="NOT_REGISTERED" value="@com.chinaplus.common.consts.CodeConst$PartsStatus@NOT_REGISTERED" />
+        <bind name="Y" value="@com.chinaplus.common.consts.CodeConst$OrionPlusFlag@Y" />
+    </sql>  
+
+
+   <select id="getSsmsCustomerCode" resultType="com.chinaplus.web.mm.entity.CPMSMF11Entity" parameterType="com.chinaplus.core.bean.BaseParam"> 
+      SELECT         
+             A.SSMS_CUSTOMER_CODE AS ssmsCustomerCode,
+             A.VENDOR_ROUTE AS vendorRoute   
+        FROM  
+             TNM_SSMS_CUSTOMER A   
+       WHERE
+            SSMS_CUSTOMER_CODE IN 
+    <foreach item="item" index="index" collection="swapData.initDataList" open="(" separator="," close=")">    
+             #{item.ssmsCustomerCode}
+    </foreach>  
+        ORDER BY A.SSMS_CUSTOMER_CODE   
+  </select>   
+
+
+<select id="getCustomerOfficeMap" resultType="com.chinaplus.web.mm.entity.CPMSMF11Entity" parameterType="com.chinaplus.core.bean.BaseParam"> 
+      SELECT         
+             A.SSMS_CUSTOMER_CODE AS ssmsCustomerCode,
+             A.OFFICE_ID AS officeId   
+        FROM  
+             TNM_SSMS_CUSTOMER A   
+       WHERE
+            SSMS_CUSTOMER_CODE IN 
+    <foreach item="item" index="index" collection="swapData.initDataList" open="(" separator="," close=")">    
+             #{item.ssmsCustomerCode}
+    </foreach>  
+            and OFFICE_ID is not null
+        ORDER BY A.SSMS_CUSTOMER_CODE   
+  </select>   
+
+
+   <select id="getIfParts" resultType="com.chinaplus.web.mm.entity.TnmIfPart" parameterType="com.chinaplus.core.bean.BaseParam"> 
+        SELECT
+             A.IF_PARTS_ID AS ifPartsId,
+             A.EXP_CODE AS expCode,
+             A.TTC_PARTS_NO AS ttcPartsNo,
+             A.TTC_PARTS_NAME AS ttcPartsName,
+             A.CUSTOMER_CODE AS customerCode,
+             A.CUSTOMER_PARTS_NO AS customerPartsNo,
+             A.SUPPLIER_CODE AS supplierCode,
+             A.MAIN_ROUTE AS mainRoute,
+             A.SPQ AS spq,
+             A.ORDER_LOT AS orderLot,
+             A.UOM AS uom,
+             A.BUILDOUT_FLAG AS buildoutFlag
+        FROM
+             TNM_IF_PARTS A 
+             INNER JOIN ( 
+                       SELECT
+                          B.MAIN_ROUTE,
+                          B.TTC_PARTS_NO,
+                          B.CUSTOMER_CODE,
+                          B.SUPPLIER_CODE,
+                          MAX(B.CREATED_DATE) AS CREATED_DATE
+                       FROM
+                          TNM_IF_PARTS B 
+                      WHERE 
+                          B.CUSTOMER_CODE  IN 
+                         <foreach item="item" index="index" collection="swapData.initDataList" open="(" separator="," close=")">    
+                             #{item.ssmsCustomerCode}
+                         </foreach>                           
+                       GROUP BY
+                          B.MAIN_ROUTE,
+                          B.TTC_PARTS_NO,
+                          B.CUSTOMER_CODE,
+                          B.SUPPLIER_CODE
+                    ) C 
+                    ON A.MAIN_ROUTE = C.MAIN_ROUTE 
+                    AND A.TTC_PARTS_NO = C.TTC_PARTS_NO 
+                    AND A.CUSTOMER_CODE = C.CUSTOMER_CODE 
+                    AND A.SUPPLIER_CODE = C.SUPPLIER_CODE 
+                    AND A.CREATED_DATE = C.CREATED_DATE
+          LEFT JOIN TNM_EXP_PARTS EP 
+            ON EP.SSMS_MAIN_ROUTE = A.MAIN_ROUTE 
+            AND EP.TTC_PARTS_NO = A.TTC_PARTS_NO 
+            AND EP.SSMS_CUST_CODE = A.CUSTOMER_CODE 
+            AND EP.EXP_SUPP_CODE = A.SUPPLIER_CODE
+         WHERE 
+              A.CUSTOMER_CODE  IN 
+         <foreach item="item" index="index" collection="swapData.initDataList" open="(" separator="," close=")">    
+             #{item.ssmsCustomerCode}
+         </foreach>
+              AND EP.EXP_PARTS_ID IS NULL
+   </select> 
+   
+   <select id="getExpParts" resultType="com.chinaplus.web.mm.entity.TnmIfPart" parameterType="com.chinaplus.core.bean.BaseParam"> 
+        SELECT         
+             A.SSMS_MAIN_ROUTE AS mainRoute,
+             A.TTC_PARTS_NO AS ttcPartsNo,
+             A.SSMS_CUST_CODE AS customerCode,
+             A.EXP_SUPP_CODE AS supplierCode            
+        FROM  
+             TNM_EXP_PARTS A
+        WHERE 
+             1 = 1 
+             AND (
+         <foreach item="item" index="index" collection="swapData.ifPartDataList" open="(" separator="or" close=")">    
+             A.SSMS_MAIN_ROUTE = #{item.mainRoute}
+             AND  A.TTC_PARTS_NO = #{item.ttcPartsNo}
+             AND  A.SSMS_CUST_CODE = #{item.customerCode}
+             AND  A.EXP_SUPP_CODE = #{item.supplierCode}
+         </foreach> 
+             )      
+   </select> 
+   
+   <update id="updateSsmsCustomer" parameterType="com.chinaplus.web.mm.entity.CPMSMF11Entity">  
+      <include refid="ConstDef"/>
+      UPDATE 
+            TNM_SSMS_CUSTOMER
+      SET 
+             ORION_PLUS_FLAG = ${Y},
+             OFFICE_ID = #{officeId},
+             UPDATED_BY = #{updatedBy},
+             UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP},
+             VERSION =  VERSION + 1
+      WHERE 
+             SSMS_CUSTOMER_CODE = #{ssmsCustomerCode}
+      AND
+             OFFICE_ID IS NULL         
+   </update>    
+   
+   <insert id="insertExpParts"  parameterType="com.chinaplus.web.mm.entity.TnmIfPart"> 
+      <include refid="ConstDef"/>
+      INSERT INTO 
+              TNM_EXP_PARTS
+                (
+                   EXP_PARTS_ID,
+                   EXP_CODE,
+                   EXP_REGION,
+                   TTC_PARTS_NO,
+                   TTC_PARTS_NAME,
+                   SSMS_CUST_CODE,
+                   OFFICE_ID,
+                   
+                   CUST_PARTS_NO,
+                   EXP_SUPP_CODE,
+                   SSMS_MAIN_ROUTE,
+                   SSMS_VENDOR_ROUTE,
+                   SPQ,
+                   
+                   ORDER_LOT,
+                   EXP_UOM_CODE,
+                   BUILDOUT_FLAG,
+                   PARTS_STATUS,
+                   BUSINESS_PATTERN,
+                   
+                   CREATED_BY,
+                   CREATED_DATE,
+                   UPDATED_BY,
+                   UPDATED_DATE,
+                   VERSION 
+                )
+             VALUES
+              (                     
+                NEXTVAL FOR  SEQ_TNM_EXP_PARTS,
+                #{expCode,jdbcType=VARCHAR},
+                #{expCode,jdbcType=VARCHAR},
+                #{ttcPartsNo,jdbcType=VARCHAR},
+                #{ttcPartsName,jdbcType=VARCHAR},
+                #{customerCode,jdbcType=VARCHAR},
+                #{officeId,jdbcType=INTEGER}, 
+                
+                #{customerPartsNo,jdbcType=VARCHAR},
+                #{supplierCode,jdbcType=VARCHAR},
+                #{mainRoute,jdbcType=VARCHAR},
+                #{vendorRoute,jdbcType=VARCHAR},
+                #{spq,jdbcType=DECIMAL},
+                
+                #{orderLot,jdbcType=DECIMAL},                
+                #{uom,jdbcType=VARCHAR},                             
+                #{inactiveFlag,jdbcType=INTEGER},
+                ${NOT_REGISTERED}, 
+                1,
+                
+                #{createdBy,jdbcType=INTEGER},
+                #{createdDate,jdbcType=TIMESTAMP},
+                #{updatedBy,jdbcType=INTEGER},
+                #{updatedDate,jdbcType=TIMESTAMP},
+                1  
+             )       
+   </insert>
+   
+   <update id="updateIfParts" parameterType="com.chinaplus.web.mm.entity.TnmIfPart">  
+      UPDATE 
+            TNM_IF_PARTS
+      SET 
+             VALID_FLAG = 1,
+             HANDLE_FLAG = 1,
+             UPDATED_BY =  #{updatedBy},
+             UPDATED_DATE =#{updatedDate,jdbcType=TIMESTAMP},
+             VERSION =  VERSION + 1
+      WHERE 
+            MAIN_ROUTE = #{mainRoute}
+            AND TTC_PARTS_NO = #{ttcPartsNo}
+            AND CUSTOMER_CODE = #{customerCode}
+            AND SUPPLIER_CODE = #{supplierCode}
+   </update> 
+   
+   <!-- Get send mail object-->
+   <select id="getSendMailObject" resultType="com.chinaplus.common.entity.TnmUser" parameterType="com.chinaplus.core.bean.BaseParam">
+        SELECT
+            USER.USER_NAME AS userName
+            , USER.MAIL_ADDR AS mailAddr
+        FROM
+            TNM_USER USER
+            INNER JOIN TNM_USER_OFFICE_ROLE USER_OFFICE_ROLE ON USER_OFFICE_ROLE.USER_ID = USER.USER_ID
+        WHERE
+            USER_OFFICE_ROLE.OFFICE_ID = #{swapData.OFFICE_ID}
+        GROUP BY
+            USER.USER_NAME
+            , USER.MAIL_ADDR
+   </select>
+</mapper>

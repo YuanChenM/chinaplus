@@ -1,0 +1,1752 @@
+/**
+ * CPMPMS02
+ * 
+ * @author zhang_chi
+ * @screen CPMPMS02
+ */
+CPMPMS02 = {
+    xtype : 'form',
+    id : chinaplus.screen.CPMPMS02,
+    title : chinaplus.label.CPMPMS02_Label_PageTitle,
+    frame : true,
+    autoHeight : false,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    autoScroll : true,
+    buttonAlign : 'left',
+    fieldDefaults : {
+        labelAlign : 'right',
+        labelWidth : 150
+    },
+    items : [
+            // row 1
+            {
+        xtype : 'container',
+        minWidth : 1000,
+        layout : 'column',
+        margin : '20 20 10 20',
+        bodyPadding : '10 10 10 10',
+        items : [
+                // row 1 Columns 1
+                {
+            minWidth : 410,
+            bodyPadding : '10 10 10 10',
+            xtype : 'panel',
+            autoHeight : false,
+            height : 515,
+            defaultType : 'combo',
+            title : chinaplus.label.CPMPMS02_Grid_PartsMasterDownload,
+            items : [{
+                        xtype : 'textfield',
+                        fieldLabel : chinaplus.label.CPMPMS02_Grid_TTCPartNo,
+                        width : 362,
+                        id : chinaplus.screen.CPMPMS02 + '_ttcPartNo',
+                        name : 'ttcPartNo',
+                        labelSeparator : ''
+                    }, {
+                        xtype : 'checkcombo',
+                        fieldLabel : chinaplus.label.CPMPMS02_Grid_ImpOfficeCode,
+                        labelSeparator : '',
+                        id : chinaplus.screen.CPMPMS02 + '_impOfficeCode',
+                        name : 'impOfficeCode',
+                        addAllSelector : true,
+                        width : 380,
+                        msgTarget : 'side',
+                        multiSelect : true,
+                        store : TRF.util.createStore(chinaplus.screen.CPMPMS02, 'common/loadAllOffices', 'Combo', chinaplus.screen.CPMPMS02 + '_impOfficeCodeStore'),
+                        dispalyField : 'text',
+                        valueField : 'id',
+                        queryMode : 'local',
+                        forceSelection : true,
+                        autoFitErrors : false,
+                        listeners : {
+                            change : function() {
+                                CPMPMS02.clearReloadListInPartsMastArea(1);
+                            }
+                        }
+                    }, {
+                        xtype : 'checkcombo',
+                        fieldLabel : chinaplus.label.CPMPMS02_Grid_TTCCustCode,
+                        labelSeparator : '',
+                        id : chinaplus.screen.CPMPMS02 + '_ttcCustCd',
+                        name : 'ttcCustCd',
+                        addAllSelector : true,
+                        width : 380,
+                        msgTarget : 'side',
+                        multiSelect : true,
+                        store : TRF.util.createStore(chinaplus.screen.CPMPMS02, 'mm/CPMPMS02/loadCustomerCodeByIds', 'Combo', chinaplus.screen.CPMPMS02 + '_ttcCustCdStore'),
+                        dispalyField : 'text',
+                        valueField : 'id',
+                        queryMode : 'local',
+                        forceSelection : true,
+                        autoFitErrors : false,
+                        listeners : {
+                            change : function() {
+                                CPMPMS02.clearReloadListInPartsMastArea(2);
+                            }
+                        }
+                    }, {
+                        xtype : 'checkcombo',
+                        fieldLabel : chinaplus.label.CPMPMS02_Grid_TTCSuppCode,
+                        labelSeparator : '',
+                        id : chinaplus.screen.CPMPMS02 + '_ttcSuppCd',
+                        name : 'ttcSuppCd',
+                        addAllSelector : true,
+                        width : 380,
+                        msgTarget : 'side',
+                        multiSelect : true,
+                        store : TRF.util.createStore(chinaplus.screen.CPMPMS02, 'mm/CPMPMS02/loadTccSupCodeByIds', 'Combo', chinaplus.screen.CPMPMS02 + '_ttcSuppCdStore'),
+                        dispalyField : 'text',
+                        valueField : 'id',
+                        queryMode : 'local',
+                        forceSelection : true,
+                        autoFitErrors : false,
+                        listeners : {
+                            change : function() {
+                                CPMPMS02.clearReloadListInPartsMastArea(3);
+                            }
+                        }
+                    }, {
+                        xtype : 'textfield',
+                        fieldLabel : chinaplus.label.CPMPMS02_Grid_CustinSSMSORKANB,
+                        width : 362,
+                        id : chinaplus.screen.CPMPMS02 + '_custinSSMSORKANB',
+                        name : 'custinSSMSORKANB',
+                        labelSeparator : ''
+                    }, {
+                        xtype : 'checkcombo',
+                        fieldLabel : chinaplus.label.CPMPMS02_Grid_SSMSMainRoute,
+                        labelSeparator : '',
+                        id : chinaplus.screen.CPMPMS02 + '_ssmsMainRoute',
+                        name : 'ssmsMainRoute',
+                        addAllSelector : true,
+                        width : 380,
+                        msgTarget : 'side',
+                        multiSelect : true,
+                        store : TRF.util.createStore(chinaplus.screen.CPMPMS02, 'mm/CPMPMS02/loadSsmsMainRouteCodeByIds', 'Combo', chinaplus.screen.CPMPMS02
+                                        + '_ssmsMainRouteStore'),
+                        dispalyField : 'text',
+                        valueField : 'id',
+                        queryMode : 'local',
+                        forceSelection : true,
+                        autoFitErrors : false,
+                        listeners : {
+                            change : function() {
+                                CPMPMS02.clearReloadListInPartsMastArea(4);
+                            }
+                        }
+                    }, {
+                        xtype : 'checkcombo',
+                        fieldLabel : chinaplus.label.CPMPMS02_Grid_SSMSSupplierCode,
+                        labelSeparator : '',
+                        id : chinaplus.screen.CPMPMS02 + '_ssmsSuppCd',
+                        name : 'ssmsSuppCd',
+                        addAllSelector : true,
+                        width : 380,
+                        msgTarget : 'side',
+                        multiSelect : true,
+                        store : TRF.util.createStore(chinaplus.screen.CPMPMS02, 'mm/CPMPMS02/loadSsmsSuppCodeByIds', 'Combo', chinaplus.screen.CPMPMS02 + '_ssmsSuppCdStore'),
+                        dispalyField : 'text',
+                        valueField : 'id',
+                        queryMode : 'local',
+                        forceSelection : true,
+                        autoFitErrors : false
+                    }, {
+                        xtype : 'textfield',
+                        fieldLabel : chinaplus.label.CPMPMS02_Grid_CustomerPartNo,
+                        width : 362,
+                        id : chinaplus.screen.CPMPMS02 + '_custPartNo',
+                        name : 'custPartNo',
+                        labelSeparator : ''
+
+                    }, {
+                        xtype : 'textfield',
+                        fieldLabel : chinaplus.label.CPMPMS02_Grid_SupplierPartNo,
+                        width : 362,
+                        id : chinaplus.screen.CPMPMS02 + '_supPartNo',
+                        name : 'supPartNo',
+                        labelSeparator : ''
+
+                    }, {
+                        xtype : 'checkcombo',
+                        fieldLabel : chinaplus.label.CPMPMS02_Grid_BusinessPattern,
+                        labelSeparator : '',
+                        id : chinaplus.screen.CPMPMS02 + '_businessPattern',
+                        name : 'businessPattern',
+                        addAllSelector : true,
+                        width : 380,
+                        msgTarget : 'side',
+                        multiSelect : true,
+                        store : TRF.util.createStore(chinaplus.screen.CPMPMS02, 'mm/CPMPMS02/loadBusinessPatternByIds', 'Combo', chinaplus.screen.CPMPMS02
+                                        + '_businessPatternStore'),
+                        dispalyField : 'text',
+                        valueField : 'id',
+                        queryMode : 'local',
+                        forceSelection : true,
+                        autoFitErrors : false
+                    }, {
+                        columnWidth : 0.3,
+                        width : 380,
+                        xtype : 'container',
+                        items : [{
+                                    xtype : 'fieldcontainer',
+                                    defaultType : 'checkboxfield',
+                                    items : [{
+                                                boxLabel : chinaplus.label.CPMPMS02_Grid_BlankFormatDownUp,
+                                                id : chinaplus.screen.CPMPMS02 + '_blankFormatDownP',
+                                                name : 'blankFormatDownP',
+                                                checked : false,
+                                                margin : '20 0 0 60',
+                                                listeners : {
+                                                    change : function(o) {
+                                                        if (o.getValue()) {
+                                                            Ext.getCmp(chinaplus.screen.CPMPMS02 + '_partsMasterDownUp').setValue(false);
+                                                            Ext.getCmp(chinaplus.screen.CPMPMS02 + '_onlyDownNoRegParts').setValue(false);
+                                                        }
+                                                    }
+                                                }
+                                            }]
+                                }]
+                    }, {
+                        columnWidth : 0.3,
+                        width : 380,
+                        xtype : 'container',
+                        items : [{
+                                    xtype : 'fieldcontainer',
+                                    defaultType : 'checkboxfield',
+                                    items : [{
+                                                boxLabel : chinaplus.label.CPMPMS02_Grid_PartsMasterDownUp,
+                                                id : chinaplus.screen.CPMPMS02 + '_partsMasterDownUp',
+                                                name : 'partsMasterDownUp',
+                                                checked : false,
+                                                margin : '0 0 0 60',
+                                                listeners : {
+                                                    change : function(o) {
+                                                        if (o.getValue()) {
+                                                            Ext.getCmp(chinaplus.screen.CPMPMS02 + '_blankFormatDownP').setValue(false);
+                                                            Ext.getCmp(chinaplus.screen.CPMPMS02 + '_onlyDownNoRegParts').setValue(false);
+                                                            Ext.getCmp(chinaplus.screen.CPMPMS02 + '_includdiscontinuedparts').setDisabled(false);
+                                                            Ext.getCmp(chinaplus.screen.CPMPMS02 + '_includingNotReqParts').setDisabled(false);
+                                                        } else {
+                                                            Ext.getCmp(chinaplus.screen.CPMPMS02 + '_includdiscontinuedparts').setValue(false);
+                                                            Ext.getCmp(chinaplus.screen.CPMPMS02 + '_includingNotReqParts').setValue(false);
+                                                            Ext.getCmp(chinaplus.screen.CPMPMS02 + '_includdiscontinuedparts').setDisabled(true);
+                                                            Ext.getCmp(chinaplus.screen.CPMPMS02 + '_includingNotReqParts').setDisabled(true);
+                                                        }
+                                                    }
+                                                }
+                                            }]
+                                }]
+                    }, {
+                        columnWidth : 0.3,
+                        width : 380,
+                        xtype : 'container',
+                        items : [{
+                                    xtype : 'fieldcontainer',
+                                    defaultType : 'checkboxfield',
+                                    items : [{
+                                                boxLabel : chinaplus.label.CPMPMS02_Grid_Includdiscontinuedparts,
+                                                id : chinaplus.screen.CPMPMS02 + '_includdiscontinuedparts',
+                                                name : 'includdiscontinuedparts',
+                                                checked : false,
+                                                margin : '0 0 0 80'
+                                            }]
+                                }]
+                    }, {
+                        columnWidth : 0.3,
+                        width : 380,
+                        xtype : 'container',
+                        items : [{
+                                    xtype : 'fieldcontainer',
+                                    defaultType : 'checkboxfield',
+                                    items : [{
+                                                boxLabel : chinaplus.label.CPMPMS02_Grid_IncludingNotReqParts,
+                                                id : chinaplus.screen.CPMPMS02 + '_includingNotReqParts',
+                                                name : 'includingNotReqParts',
+                                                checked : false,
+                                                margin : '0 0 0 80'
+                                            }]
+                                }]
+                    }, {
+                        columnWidth : 0.3,
+                        width : 380,
+                        xtype : 'container',
+                        items : [{
+                                    xtype : 'fieldcontainer',
+                                    defaultType : 'checkboxfield',
+                                    items : [{
+                                                boxLabel : chinaplus.label.CPMPMS02_Grid_OnlyDownNoRegParts,
+                                                id : chinaplus.screen.CPMPMS02 + '_onlyDownNoRegParts',
+                                                name : 'onlyDownNoRegParts',
+                                                checked : false,
+                                                margin : '0 0 0 60',
+                                                listeners : {
+                                                    change : function(o) {
+                                                        if (o.getValue()) {
+                                                            Ext.getCmp(chinaplus.screen.CPMPMS02 + '_blankFormatDownP').setValue(false);
+                                                            Ext.getCmp(chinaplus.screen.CPMPMS02 + '_partsMasterDownUp').setValue(false);
+                                                        }
+                                                    }
+                                                }
+                                            }]
+                                }]
+                    }]
+        }, {
+            border : false,
+            bodyPadding : '10 10 10 10',
+            xtype : 'panel',
+            bodyStyle : 'background:rgb(244,249,252)',
+        },
+                // row 1 Columns 2
+                {
+                    border : false,
+                    //bodyPadding : '0 0 0 0',
+                    xtype : 'panel',
+                    minWidth : 410,
+                    autoHeight : false,
+                    height : 515,
+                    defaultType : 'combo',
+                    items : [
+                            // row 1 Columns 2 row 1
+                            {
+                        border : true,
+                        xtype : 'panel',
+                        height : 260,
+                        margin : '0 0 0 0',
+                        bodyPadding : '10 20 10 10',
+                        autoScroll : true,
+                        autoHeight : false,
+                        title : chinaplus.label.CPMPMS02_Grid_ShippingRouteDownload,
+                        items : [{
+                                    xtype : 'checkcombo',
+                                    fieldLabel : chinaplus.label.CPMPMS02_Grid_ImpOfficeCode,
+                                    labelSeparator : '',
+                                    id : chinaplus.screen.CPMPMS02 + '_srImpOfficeCode',
+                                    name : 'srImpOfficeCode',
+                                    addAllSelector : true,
+                                    width : 380,
+                                    msgTarget : 'side',
+                                    multiSelect : true,
+                                    store : TRF.util.createStore(chinaplus.screen.CPMPMS02, 'mm/CPMPMS02/loadSrOffices', 'Combo', chinaplus.screen.CPMPMS02
+                                                    + '_srImpOfficeCodeStore'),
+                                    dispalyField : 'text',
+                                    valueField : 'id',
+                                    queryMode : 'local',
+                                    forceSelection : true,
+                                    autoFitErrors : false,
+                                    listeners : {
+                                        change : function() {
+                                            CPMPMS02.clearReloadListInShippingRouteArea(1);
+                                        }
+                                    }
+                                }, {
+                                    xtype : 'checkcombo',
+                                    fieldLabel : chinaplus.label.CPMPMS02_Grid_ShippingRouteType,
+                                    labelSeparator : '',
+                                    id : chinaplus.screen.CPMPMS02 + '_shipRouteType',
+                                    name : 'shipRouteType',
+                                    addAllSelector : true,
+                                    width : 380,
+                                    msgTarget : 'side',
+                                    multiSelect : true,
+                                    store : TRF.util.createStore(chinaplus.screen.CPMPMS02, 'mm/CPMPMS02/loadShipRouteType', 'Combo', chinaplus.screen.CPMPMS02
+                                                    + '_shipRouteTypeStore'),
+                                    dispalyField : 'text',
+                                    valueField : 'id',
+                                    queryMode : 'local',
+                                    fieldStyle : 'background:rgb(255,255,153)',
+                                    forceSelection : true,
+                                    autoFitErrors : false,
+                                    listeners : {
+                                        change : function() {
+                                            CPMPMS02.clearReloadListInShippingRouteArea(2);
+                                        }
+                                    }
+                                }, {
+                                    xtype : 'checkcombo',
+                                    fieldLabel : chinaplus.label.CPMPMS02_Grid_ShippingRouteCode,
+                                    labelSeparator : '',
+                                    id : chinaplus.screen.CPMPMS02 + '_shipRouteCode',
+                                    name : 'shipRouteCode',
+                                    addAllSelector : true,
+                                    width : 380,
+                                    msgTarget : 'side',
+                                    multiSelect : true,
+                                    store : TRF.util.createStore(chinaplus.screen.CPMPMS02, 'mm/CPMPMS02/loadShipRouteCode', 'Combo', chinaplus.screen.CPMPMS02
+                                                    + '_shipRouteCodeStore'),
+                                    dispalyField : 'text',
+                                    valueField : 'id',
+                                    queryMode : 'local',
+                                    forceSelection : true,
+                                    autoFitErrors : false
+                                }, {
+                                    xtype : 'datefield',
+                                    fieldLabel : chinaplus.label.CPMPMS02_Grid_EffectivefromETD,
+                                    id : chinaplus.screen.CPMPMS02 + '_effFromEtd',
+                                    name : 'effFromEtd',
+                                    store : TRF.util
+                                            .createStore(chinaplus.screen.CPMPMS02, 'mm/CPMPMS02/loadEffFromToEtd', 'Combo', chinaplus.screen.CPMPMS02 + '_effFromEtdStore'),
+                                    allowBlank : true,
+                                    editable : false,
+                                    labelSeparator : '',
+                                    format : TRF.core.language == chinaplus.consts.code.Language.CN
+                                            ? TRF.cnst.GLOBAL_DATE_YEAR_MONTH_DAY_FORMAT
+                                            : TRF.cnst.GLOBAL_DATETIME_SHORT_FORMAT,
+                                    width : 362,
+                                    plugins : [{
+                                                ptype : 'datePickerClear'
+                                            }],
+                                    autoFitErrors : false
+                                }, {
+                                    xtype : 'datefield',
+                                    fieldLabel : chinaplus.label.CPMPMS02_Grid_EffectivetoETD,
+                                    id : chinaplus.screen.CPMPMS02 + '_effToEtd',
+                                    name : 'effToEtd',
+                                    allowBlank : true,
+                                    editable : false,
+                                    labelSeparator : '',
+                                    format : TRF.core.language == chinaplus.consts.code.Language.CN
+                                            ? TRF.cnst.GLOBAL_DATE_YEAR_MONTH_DAY_FORMAT
+                                            : TRF.cnst.GLOBAL_DATETIME_SHORT_FORMAT,
+                                    width : 362,
+                                    plugins : [{
+                                                ptype : 'datePickerClear'
+                                            }],
+                                    autoFitErrors : false
+                                }, {
+                                    columnWidth : 0.3,
+                                    width : 380,
+                                    xtype : 'container',
+                                    items : [{
+                                                xtype : 'fieldcontainer',
+                                                defaultType : 'checkboxfield',
+                                                items : [{
+                                                            boxLabel : chinaplus.label.CPMPMS02_Grid_BlankFormatDownUp,
+                                                            id : chinaplus.screen.CPMPMS02 + '_blankFormatDownSR',
+                                                            name : 'blankFormatDownSR',
+                                                            checked : false,
+                                                            margin : '15 0 0 60',
+                                                            listeners : {
+                                                                change : function(o) {
+                                                                    if (o.getValue()) {
+                                                                        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_shippingRouteMastDownUp').setValue(false);
+                                                                    }
+                                                                }
+                                                            }
+                                                        }]
+                                            }]
+                                }, {
+                                    columnWidth : 0.3,
+                                    width : 380,
+                                    xtype : 'container',
+                                    items : [{
+                                                xtype : 'fieldcontainer',
+                                                defaultType : 'checkboxfield',
+                                                items : [{
+                                                            boxLabel : chinaplus.label.CPMPMS02_Grid_ShippingRouteMastDownUp,
+                                                            id : chinaplus.screen.CPMPMS02 + '_shippingRouteMastDownUp',
+                                                            name : 'shippingRouteMastDownUp',
+                                                            checked : false,
+                                                            margin : '0 0 0 60',
+                                                            listeners : {
+                                                                change : function(o) {
+                                                                    if (o.getValue()) {
+                                                                        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_blankFormatDownSR').setValue(false);
+                                                                    }
+                                                                }
+                                                            }
+                                                        }]
+                                            }]
+                                }]
+                    }, {
+                        border : false,
+                        xtype : 'panel',
+                        height : 20,
+                        minWidth : 411,
+                        bodyStyle : 'background:rgb(244,249,252)',
+                        
+                    },
+
+                            // row 1 Columns 2 row 2
+                            {
+                                border : true,
+                                xtype : 'panel',
+                                height : 235,
+                                margin : '0 0 0 0',
+                                bodyPadding : '10 20 10 10',
+                                autoScroll : true,
+                                id : chinaplus.screen.CPMPMS02 + '_kanbanIssuedPlanDateMast',
+                                title : chinaplus.label.CPMPMS02_Grid_KanbanIssuedPlanDateMast,
+                                items : [{
+                                            xtype : 'checkcombo',
+                                            fieldLabel : chinaplus.label.CPMPMS02_Grid_ImpOfficeCode,
+                                            labelSeparator : '',
+                                            id : chinaplus.screen.CPMPMS02 + '_kbImpOfficeCode',
+                                            name : 'kbimpOfficeCode',
+                                            addAllSelector : true,
+                                            width : 380,
+                                            msgTarget : 'side',
+                                            multiSelect : true,
+                                            store : TRF.util.createStore(chinaplus.screen.CPMPMS02, 'common/loadAllOffices', 'Combo', chinaplus.screen.CPMPMS02
+                                                            + '_kbImpOfficeCodeStore'),
+                                            dispalyField : 'text',
+                                            valueField : 'id',
+                                            queryMode : 'local',
+                                            forceSelection : true,
+                                            autoFitErrors : false,
+                                            listeners : {
+                                                change : function() {
+                                                    CPMPMS02.loadkbImpOfficeCodeChange();
+                                                }
+                                            }
+                                        }, {
+                                            xtype : 'checkcombo',
+                                            fieldLabel : chinaplus.label.CPMPMS02_Grid_TTCCustomerCode,
+                                            labelSeparator : '',
+                                            id : chinaplus.screen.CPMPMS02 + '_ttcCustomerCode',
+                                            name : 'ttcCustomerCode',
+                                            addAllSelector : true,
+                                            width : 380,
+                                            msgTarget : 'side',
+                                            multiSelect : true,
+                                            store : TRF.util.createStore(chinaplus.screen.CPMPMS02, 'mm/CPMPMS02/loadCustomerCodeByIds', 'Combo', chinaplus.screen.CPMPMS02
+                                                            + '_ttcCustomerCodeStore'),
+                                            dispalyField : 'text',
+                                            valueField : 'id',
+                                            queryMode : 'local',
+                                            forceSelection : true,
+                                            autoFitErrors : false
+                                            // ,
+                                            // listeners : {
+                                            // change : function() {
+                                            // CPMPMS02.loadkbTtcCustCdChange();
+                                            // }
+                                            // }
+                                        }, {
+                                            xtype : 'datefield',
+                                            fieldLabel : chinaplus.label.CPMPMS02_Grid_OrderMonth + '&nbsp;&nbsp;&nbsp;&nbsp;' + chinaplus.label.CPMPMS02_Grid_From,
+                                            id : chinaplus.screen.CPMPMS02 + '_from',
+                                            name : 'from',
+                                            format : 'M Y',
+                                            allowBlank : true,
+                                            editable : false,
+                                            labelSeparator : '',
+                                            // store : TRF.util.createStore(
+                                            // chinaplus.screen.CPMPMS02,
+                                            // 'mm/CPMPMS02/loadOrderMonthFromTo',
+                                            // 'Combo',
+                                            // chinaplus.screen.CPMPMS02
+                                            // + '_fromStore'),
+                                            width : 362,
+                                            plugins : [{
+                                                        ptype : 'monthPicker'
+                                                    }],
+                                            autoFitErrors : false
+                                        }, {
+                                            xtype : 'datefield',
+                                            fieldLabel : chinaplus.label.CPMPMS02_Grid_To,
+                                            id : chinaplus.screen.CPMPMS02 + '_to',
+                                            name : 'to',
+                                            format : 'M Y',
+                                            allowBlank : true,
+                                            editable : false,
+                                            labelSeparator : '',
+                                            width : 362,
+                                            plugins : [{
+                                                        ptype : 'monthPicker'
+                                                    }],
+                                            autoFitErrors : false
+                                        }, {
+                                            columnWidth : 0.3,
+                                            width : 380,
+                                            xtype : 'container',
+                                            items : [{
+                                                        xtype : 'fieldcontainer',
+                                                        defaultType : 'checkboxfield',
+                                                        items : [{
+                                                                    boxLabel : chinaplus.label.CPMPMS02_Grid_BlankFormatDownUp,
+                                                                    id : chinaplus.screen.CPMPMS02 + '_blankFormatDownK',
+                                                                    name : 'blankFormatDownK',
+                                                                    checked : false,
+                                                                    margin : '15 0 0 60',
+                                                                    listeners : {
+                                                                        change : function(o) {
+                                                                            if (o.getValue()) {
+                                                                                Ext.getCmp(chinaplus.screen.CPMPMS02 + '_kanbIssuedPDateDownUp').setValue(false);
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }]
+                                                    }]
+                                        }, {
+                                            columnWidth : 0.3,
+                                            width : 380,
+                                            xtype : 'container',
+                                            items : [{
+                                                        xtype : 'fieldcontainer',
+                                                        defaultType : 'checkboxfield',
+                                                        items : [{
+                                                                    boxLabel : chinaplus.label.CPMPMS02_Grid_KanbIssuedPDateDownUp,
+                                                                    id : chinaplus.screen.CPMPMS02 + '_kanbIssuedPDateDownUp',
+                                                                    name : 'kanbIssuedPDateDownUp',
+                                                                    checked : false,
+                                                                    margin : '0 0 0 60',
+                                                                    listeners : {
+                                                                        change : function(o) {
+                                                                            if (o.getValue()) {
+                                                                                Ext.getCmp(chinaplus.screen.CPMPMS02 + '_blankFormatDownK').setValue(false);
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }]
+                                                    }]
+                                        }]
+
+                            }]
+                }
+
+        ]
+
+    },
+
+            // row 2
+            {
+                xtype : 'container',
+                minWidth : 1000,
+                layout : 'column',
+                margin : '20 20 10 20',
+                bodyPadding : '10 10 10 10',
+                // autoScroll : true,
+                items : [
+                        // Columns 1
+                        {
+                    minWidth : 410,
+                    bodyPadding : '10 10 10 10',
+                    xtype : 'panel',
+                    autoHeight : false,
+                    height : 400,
+                    defaultType : 'combo',
+                    title : chinaplus.label.CPMPMS02_Grid_CalendarMaster,
+                    items : [{
+                        xtype : 'combobox',
+                        fieldLabel : chinaplus.label.CPMPMS02_Grid_ImpOfficeCode,
+                        labelSeparator : '',
+                        id : chinaplus.screen.CPMPMS02 + '_cmImpOfficeCode',
+                        name : 'cmImpOfficeCode',
+                        editable : false,
+                        fieldStyle : 'background:rgb(255,255,153)',
+                        width : 380,
+                        msgTarget : 'side',
+                        store : TRF.util
+                                .createStore(chinaplus.screen.CPMPMS02, 'master/CPMCMS01/loadOfficeCodeByIds', 'Combo', chinaplus.screen.CPMPMS02 + '_cmImpOfficeCodeStore'),
+                        dispalyField : 'text',
+                        valueField : 'id',
+                        queryMode : 'local',
+                        forceSelection : true,
+                        autoFitErrors : false,
+                        listeners : {
+                            change : function() {
+                                CPMPMS02.loadCmImpOfficeCodeChange();
+                            }
+                        }
+                    }, {
+                        xtype : 'combobox',
+                        fieldLabel : chinaplus.label.CPMPMS02_Grid_Party,
+                        labelSeparator : '',
+                        id : chinaplus.screen.CPMPMS02 + '_party',
+                        name : 'party',
+                        editable : false,
+                        fieldStyle : 'background:rgb(255,255,153)',
+                        width : 380,
+                        msgTarget : 'side',
+                        store : TRF.util.createStore(chinaplus.screen.CPMPMS02, 'mm/CPMPMS02/loadParty', 'Combo', chinaplus.screen.CPMPMS02 + '_partyStore'),
+                        dispalyField : 'text',
+                        valueField : 'id',
+                        queryMode : 'local',
+                        forceSelection : true,
+                        autoFitErrors : false,
+                        listeners : {
+                            change : function() {
+                                CPMPMS02.loadPartyChange();
+                            }
+                        }
+                    }, {
+                        xtype : 'combobox',
+                        fieldLabel : chinaplus.label.CPMPMS02_Grid_Country,
+                        labelSeparator : '',
+                        id : chinaplus.screen.CPMPMS02 + '_country',
+                        name : 'country',
+                        editable : false,
+                        width : 380,
+                        msgTarget : 'side',
+                        // multiSelect : true,
+                        store : TRF.util.createStore(chinaplus.screen.CPMPMS02, 'master/CPMCMS01/loadCountryCombo', 'Combo', chinaplus.screen.CPMPMS02 + '_countryStore'),
+                        dispalyField : 'text',
+                        valueField : 'id',
+                        queryMode : 'local',
+                        forceSelection : true,
+                        autoFitErrors : false,
+                        listeners : {
+                            change : function() {
+                                CPMPMS02.loadCountryChange();
+                            }
+                        }
+                    }, {
+                        xtype : 'combo',
+                        fieldLabel : chinaplus.label.CPMPMS02_Grid_PartyCode,
+                        labelSeparator : '',
+                        id : chinaplus.screen.CPMPMS02 + '_partyCodeCombo',
+                        name : 'partyCodeCombo',
+                        msgTarget : 'side',
+                        width : 362,
+                        store : TRF.util.createStore(chinaplus.screen.CPMPMS02, 'master/CPMCMS01/loadPartyCode', 'Combo', chinaplus.screen.CPMPMS02 + '_partyCodeStoreCombo'),
+                        dispalyField : 'text',
+                        valueField : 'id',
+                        queryMode : 'local',
+                        editable : false,
+                        queryParam : false,
+                        editable : false,
+                        listeners : {
+                            change : function() {
+                                CPMPMS02.loadPartyCodeChange();
+                            }
+                        }
+                    }, {
+                        xtype : 'combobox',
+                        fieldLabel : chinaplus.label.CPMPMS02_Grid_CalendarCode,
+                        labelSeparator : '',
+                        id : chinaplus.screen.CPMPMS02 + '_calendarCode',
+                        name : 'calendarCode',
+                        width : 380,
+                        msgTarget : 'side',
+                        store : TRF.util.createStore(chinaplus.screen.CPMPMS02, 'master/CPMCMS01/loadCalendarCodeCombo', 'Combo', chinaplus.screen.CPMPMS02 + '_calendarCodeStore'),
+                        dispalyField : 'text',
+                        valueField : 'id',
+                        queryMode : 'local',
+                        editable : false,
+                        autoFitErrors : false,
+                        editable : false,
+                        listeners : {
+                            change : function() {
+                                CPMPMS02.loadCalendarCodeChange();
+                            }
+                        }
+                    }, {
+                        xtype : 'combobox',
+                        fieldLabel : chinaplus.label.CPMPMS02_Grid_Year,
+                        labelSeparator : '',
+                        id : chinaplus.screen.CPMPMS02 + '_year',
+                        name : 'year',
+                        addAllSelector : true,
+                        width : 380,
+                        msgTarget : 'side',
+                        store : TRF.util.createStore(chinaplus.screen.CPMPMS02, 'master/CPMCMS01/loadYearCombo', 'Combo', chinaplus.screen.CPMPMS02 + '_yearStore'),
+                        dispalyField : 'text',
+                        valueField : 'id',
+                        queryMode : 'local',
+                        fieldStyle : 'background:rgb(255,255,153)',
+                        editable : false,
+                        forceSelection : true,
+                        autoFitErrors : false,
+                        listeners : {
+                            change : function() {
+                                CPMPMS02.loadYearChange();
+                            }
+                        }
+                    }, {
+                        columnWidth : 0.3,
+                        width : 380,
+                        xtype : 'container',
+                        items : [{
+                                    xtype : 'fieldcontainer',
+                                    defaultType : 'checkboxfield',
+                                    items : [{
+                                                boxLabel : chinaplus.label.CPMPMS02_Grid_CalendarDownload,
+                                                id : chinaplus.screen.CPMPMS02 + '_calendarDownload',
+                                                name : 'calendarDownload',
+                                                checked : false,
+                                                margin : '30 0 0 60',
+                                                disabled : false
+                                            }]
+                                }]
+                    }]
+                }, {
+                    border : false,
+                    bodyPadding : '10 10 10 10',
+                    xtype : 'panel',
+                    bodyStyle : 'background:rgb(244,249,252)',
+                },
+
+                        // Columns 2
+                        {
+                            border : false,
+                            bodyPadding : '0 0 0 0',
+                            xtype : 'panel',
+                            minWidth : 410,
+                            autoHeight : false,
+                            height : 400,
+                            defaultType : 'combo',
+                            items : [
+                                    // Columns 2 row 1
+                                    {
+                                border : true,
+                                xtype : 'panel',
+                                height : 210,
+                                margin : '0 0 0 0',
+                                bodyPadding : '10 20 10 10',
+                                autoScroll : true,
+                                title : chinaplus.label.CPMPMS02_Grid_EmailAlertMaster,
+                                items : [{
+                                            xtype : 'checkcombo',
+                                            fieldLabel : chinaplus.label.CPMPMS02_Grid_ImpOfficeCode,
+                                            labelSeparator : '',
+                                            id : chinaplus.screen.CPMPMS02 + '_eaImpOfficeCode',
+                                            name : 'eaImpOfficeCode',
+                                            addAllSelector : true,
+                                            width : 380,
+                                            msgTarget : 'side',
+                                            multiSelect : true,
+                                            store : TRF.util.createStore(chinaplus.screen.CPMPMS02, 'common/loadAllOffices', 'Combo', chinaplus.screen.CPMPMS02
+                                                            + '_eaImpOfficeCodeStore'),
+                                            dispalyField : 'text',
+                                            valueField : 'id',
+                                            queryMode : 'local',
+                                            forceSelection : true,
+                                            autoFitErrors : false,
+                                            listeners : {
+                                                change : function() {
+                                                    CPMPMS02.clearReloadListInEmailAlertArea(1);
+                                                }
+                                            }
+                                        }, {
+                                            xtype : 'checkcombo',
+                                            fieldLabel : chinaplus.label.CPMPMS02_Grid_LoginID,
+                                            labelSeparator : '',
+                                            id : chinaplus.screen.CPMPMS02 + '_loginId',
+                                            name : 'loginId',
+                                            addAllSelector : true,
+                                            width : 380,
+                                            msgTarget : 'side',
+                                            multiSelect : true,
+                                            store : TRF.util
+                                                    .createStore(chinaplus.screen.CPMPMS02, 'mm/CPMPMS02/loadLoginId', 'Combo', chinaplus.screen.CPMPMS02 + '_loginIdStore'),
+                                            dispalyField : 'text',
+                                            valueField : 'id',
+                                            queryMode : 'local',
+                                            forceSelection : true,
+                                            autoFitErrors : false,
+                                            listeners : {
+                                                change : function() {
+                                                    CPMPMS02.clearReloadListInEmailAlertArea(2);
+                                                }
+                                            }
+                                        }, {
+                                            xtype : 'checkcombo',
+                                            fieldLabel : chinaplus.label.CPMPMS02_Grid_AlertLevel,
+                                            labelSeparator : '',
+                                            id : chinaplus.screen.CPMPMS02 + '_alertLevel',
+                                            name : 'alertLevel',
+                                            addAllSelector : true,
+                                            width : 380,
+                                            msgTarget : 'side',
+                                            multiSelect : true,
+                                            store : TRF.util.createStore(chinaplus.screen.CPMPMS02, 'mm/CPMPMS02/loadAlertLevel', 'Combo', chinaplus.screen.CPMPMS02
+                                                            + '_alertLevelStore'),
+                                            dispalyField : 'text',
+                                            valueField : 'id',
+                                            queryMode : 'local',
+                                            forceSelection : true,
+                                            autoFitErrors : false
+                                        }, {
+                                            columnWidth : 0.3,
+                                            width : 380,
+                                            xtype : 'container',
+                                            items : [{
+                                                        xtype : 'fieldcontainer',
+                                                        defaultType : 'checkboxfield',
+                                                        items : [{
+                                                                    boxLabel : chinaplus.label.CPMPMS02_Grid_BlankFormatDownUp,
+                                                                    id : chinaplus.screen.CPMPMS02 + '_blankFormatDownE',
+                                                                    name : 'blankFormatDownE',
+                                                                    checked : false,
+                                                                    margin : '15 0 0 60',
+                                                                    listeners : {
+                                                                        change : function(o) {
+                                                                            if (o.getValue()) {
+                                                                                Ext.getCmp(chinaplus.screen.CPMPMS02 + '_emailAlertMasterDownUp').setValue(false);
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }]
+                                                    }]
+                                        }, {
+                                            columnWidth : 0.3,
+                                            width : 380,
+                                            xtype : 'container',
+                                            items : [{
+                                                        xtype : 'fieldcontainer',
+                                                        defaultType : 'checkboxfield',
+                                                        items : [{
+                                                                    boxLabel : chinaplus.label.CPMPMS02_Grid_EmailAlertMasterDownUp,
+                                                                    id : chinaplus.screen.CPMPMS02 + '_emailAlertMasterDownUp',
+                                                                    name : 'emailAlertMasterDownUp',
+                                                                    checked : false,
+                                                                    margin : '0 0 0 60',
+                                                                    listeners : {
+                                                                        change : function(o) {
+                                                                            if (o.getValue()) {
+                                                                                Ext.getCmp(chinaplus.screen.CPMPMS02 + '_blankFormatDownE').setValue(false);
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }]
+                                                    }]
+                                        }]
+
+                            }, {
+                                border : false,
+                                xtype : 'panel',
+                                height : 20,
+                                minWidth : 411,
+                                bodyStyle : 'background:rgb(244,249,252)',
+                                
+
+                            },
+
+                                    // Columns 2 row 2
+                                    {
+                                        border : true,
+                                        xtype : 'panel',
+                                        height : 170,
+                                        margin : '0 0 0 0',
+                                        bodyPadding : '10 20 10 10',
+                                        autoScroll : true,
+                                        title : chinaplus.label.CPMPMS02_Grid_SPRevReasonMaster,
+                                        items : [{
+                                            xtype : 'checkcombo',
+                                            fieldLabel : chinaplus.label.CPMPMS02_Grid_BusinessPattern,
+                                            labelSeparator : '',
+                                            id : chinaplus.screen.CPMPMS02 + '_spBusinessPattern',
+                                            name : 'spBusinessPattern',
+                                            addAllSelector : true,
+                                            width : 380,
+                                            msgTarget : 'side',
+                                            multiSelect : true,
+                                            store : TRF.util.createStore(chinaplus.screen.CPMPMS02, 'mm/CPMPMS02/loadBusinessPatternByIds', 'Combo', chinaplus.screen.CPMPMS02
+                                                            + '_spBusinessPatternStore'),
+                                            dispalyField : 'text',
+                                            valueField : 'id',
+                                            queryMode : 'local',
+                                            forceSelection : true,
+                                            autoFitErrors : false
+                                        }, {
+                                            columnWidth : 0.3,
+                                            width : 380,
+                                            xtype : 'container',
+                                            items : [{
+                                                        xtype : 'fieldcontainer',
+                                                        defaultType : 'checkboxfield',
+                                                        items : [{
+                                                                    boxLabel : chinaplus.label.CPMPMS02_Grid_BlankFormatDownUp,
+                                                                    id : chinaplus.screen.CPMPMS02 + '_blankFormatDownSP',
+                                                                    name : 'blankFormatDownSP',
+                                                                    checked : false,
+                                                                    margin : '15 0 0 60',
+                                                                    listeners : {
+                                                                        change : function(o) {
+                                                                            if (o.getValue()) {
+                                                                                Ext.getCmp(chinaplus.screen.CPMPMS02 + '_sprevReasonDownUp').setValue(false);
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }]
+                                                    }]
+                                        }, {
+                                            columnWidth : 0.3,
+                                            width : 380,
+                                            xtype : 'container',
+                                            items : [{
+                                                        xtype : 'fieldcontainer',
+                                                        defaultType : 'checkboxfield',
+                                                        items : [{
+                                                                    boxLabel : chinaplus.label.CPMPMS02_Grid_SPRevReasonDownUp,
+                                                                    id : chinaplus.screen.CPMPMS02 + '_sprevReasonDownUp',
+                                                                    name : 'sprevReasonDownUp',
+                                                                    checked : false,
+                                                                    margin : '0 0 0 60',
+                                                                    listeners : {
+                                                                        change : function(o) {
+                                                                            if (o.getValue()) {
+                                                                                Ext.getCmp(chinaplus.screen.CPMPMS02 + '_blankFormatDownSP').setValue(false);
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }]
+                                                    }]
+                                        }]
+
+                                    }]
+                        }]
+
+            },
+            // row 3
+            {
+                height : 35,
+                xtype : 'container',
+                margin : '20 0 0 20',
+                items : [{
+                            xtype : 'button',
+                            iconCls : 'btn-download',
+                            width : 150,
+                            height : 25,
+                            text : chinaplus.label.CPMPMS02_Grid_Download,
+                            margin : '3 0 0 20',
+                            handler : function() {
+                                Ext.getCmp(chinaplus.screen.CPMPMS02).btnDownloadAction();
+                            }
+                        }]
+            }, {
+                xtype : 'textfield',
+                fieldLabel : 'SourceScreen',
+                name : 'sourceScreenId',
+                tabIndex : -1,
+                hidden : true,
+                margin : '10 0 0 0',
+                hideLabel : true,
+                width : 400,
+                labelSeparator : '',
+                autoFitErrors : false
+            }, {
+                xtype : 'fileuploadfield',
+                fieldLabel : chinaplus.label.CPMPMS02_Grid_Filename,
+                id : chinaplus.screen.CPMPMS02 + '_fileuploadfield',
+                labelAlign : 'right',
+                name : 'fileData',
+                margin : '20 0 0 10',
+                vtype : 'excel',
+                width : 600,
+                labelSeparator : '',
+                buttonText : chinaplus.label.CPMPMS02_Grid_Browse,
+                editable : false,
+                fieldStyle : 'background:rgb(255,255,153)',
+                hideLabel : false,
+                autoFitErrors : false,
+                buttonConfig : {
+                    tabIndex : 0,
+                    width : 75
+                }
+            }, {
+                height : 35,
+                xtype : 'container',
+                margin : '20 0 10 20',
+                items : [{
+                            xtype : 'button',
+                            iconCls : 'btn-upload',
+                            width : 150,
+                            height : 25,
+                            text : chinaplus.label.CPMPMS02_Grid_Upload,
+                            id : chinaplus.screen.CPMPMS02 + '_btnUpload',
+                            margin : '3 0 0 20',
+                            handler : function() {
+                                Ext.getCmp(chinaplus.screen.CPMPMS02).btnUploadAction();
+                            }
+                        }]
+            }
+
+    ],
+
+    /**
+     * download
+     */
+    btnDownloadAction : function() {
+        var partsMasterDownUp = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_partsMasterDownUp').getValue();
+        var blankFormatDownP = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_blankFormatDownP').getValue();
+
+        var shippingRouteMastDownUp = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_shippingRouteMastDownUp').getValue();
+        var blankFormatDownSR = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_blankFormatDownSR').getValue();
+
+        var kanbIssuedPDateDownUp = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_kanbIssuedPDateDownUp').getValue();
+        var blankFormatDownK = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_blankFormatDownK').getValue();
+
+        var calendarDownload = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_calendarDownload').getValue();
+
+        var emailAlertMasterDownUp = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_emailAlertMasterDownUp').getValue();
+        var blankFormatDownE = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_blankFormatDownE').getValue();
+
+        var sprevReasonDownUp = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_sprevReasonDownUp').getValue();
+        var blankFormatDownSP = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_blankFormatDownSP').getValue();
+        var _includdiscontinuedparts = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_includdiscontinuedparts').getValue();
+        var _onlyDownNoRegParts = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_onlyDownNoRegParts').getValue();
+        var _includingNotReqParts = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_includingNotReqParts').getValue();
+
+        if (!partsMasterDownUp && !blankFormatDownP && !shippingRouteMastDownUp && !blankFormatDownSR && !kanbIssuedPDateDownUp && !blankFormatDownK && !calendarDownload
+                && !emailAlertMasterDownUp && !blankFormatDownE && !sprevReasonDownUp && !blankFormatDownSP && !_onlyDownNoRegParts) {
+            var popMsg = TRF.util.getMessage('w1002', chinaplus.label.CPMPMS02_Grid_Download);
+            var lsMsgs = [];
+            Ext.Array.push(lsMsgs, TRF.util.getMessage('w1002_002', chinaplus.label.CPMPMS02_Grid_Download));
+            // check blank
+            TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, popMsg, lsMsgs);
+            return;
+        }
+
+        var shipRouteType = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_shipRouteType').getValue();
+
+        if ((shippingRouteMastDownUp || blankFormatDownSR) && '' == shipRouteType) {
+            var popMsg = TRF.util.getMessage('w1002', chinaplus.label.CPMPMS02_Grid_Download);
+            var lsMsgs = [];
+            Ext.Array.push(lsMsgs, TRF.util.getMessage('w1002_006', chinaplus.label.CPMPMS02_Grid_Download));
+            // check blank
+            TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, popMsg, lsMsgs);
+            return;
+        }
+
+        var _ttcPartNo = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_ttcPartNo').getValue();
+        var _impOfficeCode = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_impOfficeCode').getValue();
+        var _ttcCustCd = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_ttcCustCd').getValue();
+        var _ttcSuppCd = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_ttcSuppCd').getValue();
+        var _custinSSMSORKANB = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_custinSSMSORKANB').getValue();
+        var _ssmsMainRoute = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_ssmsMainRoute').getValue();
+        var _ssmsSuppCd = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_ssmsSuppCd').getValue();
+        var _custPartNo = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_custPartNo').getValue();
+        var _supPartNo = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_supPartNo').getValue();
+        var _businessPattern = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_businessPattern').getValue();
+
+        var shipRouteCode = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_shipRouteCode').getValue();
+        var srImpOfficeCode = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_srImpOfficeCode').getValue();
+        var effFromEtd = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_effFromEtd').getValue();
+        var effToEtd = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_effToEtd').getValue();
+
+        // kanban issue
+        var kbOfficeCode = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_kbImpOfficeCode').getValue();
+        var ttcCustomerCode = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_ttcCustomerCode').getValue();
+        var orderMonthFrom = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_from').getValue();
+        var orderMonthTo = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_to').getValue();
+        orderMonthFrom = Ext.Date.format(orderMonthFrom, 'Ym');
+        orderMonthTo = Ext.Date.format(orderMonthTo, 'Ym');
+        // email alert
+        var eaImpOfficeCode = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_eaImpOfficeCode').getValue();
+        var loginId = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_loginId').getValue();
+        var alertLevel = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_alertLevel').getValue();
+        // reasonBusinessPattern
+        var reasonBusinessPattern = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_spBusinessPattern').getValue();
+
+        var params = {
+            'partsMasterDownUp' : partsMasterDownUp,
+            'blankFormatDownP' : blankFormatDownP,
+            'ttcPartsNo' : _ttcPartNo,
+            'officeCode' : _impOfficeCode,
+            'customerCode' : _ttcCustCd,
+            'ttcSuppCode' : _ttcSuppCd,
+            'expCustCode' : _custinSSMSORKANB,
+            'ssmsMainRoute' : _ssmsMainRoute,
+            'supplierCode' : _ssmsSuppCd,
+            'custPartsNo' : _custPartNo,
+            'suppPartsNo' : _supPartNo,
+            'businessPattern' : _businessPattern,
+            'inactiveFlag' : _includdiscontinuedparts,
+            'onlyDownNoRegParts' : _onlyDownNoRegParts,
+            'includingNotReqParts' : _includingNotReqParts,
+
+            'shippingRouteMastDownUp' : shippingRouteMastDownUp,
+            'blankFormatDownSR' : blankFormatDownSR,
+            'srImpOfficeCode' : srImpOfficeCode,
+            'shipRouteCode' : shipRouteCode,
+            'shipRouteType' : shipRouteType,
+            'effFromEtd' : effFromEtd,
+            'effToEtd' : effToEtd,
+
+            'kanbIssuedPDateDownUp' : kanbIssuedPDateDownUp,
+            'blankFormatDownK' : blankFormatDownK,
+            'impOfficeCode' : kbOfficeCode,
+            'ttcCustomerCode' : ttcCustomerCode,
+            'orderMonthFrom' : orderMonthFrom,
+            'orderMonthTo' : orderMonthTo,
+
+            'calendarDownload' : calendarDownload,
+            'regionId' : Ext.getCmp(chinaplus.screen.CPMPMS02 + '_country').getValue(),
+            'calendarId' : Ext.getCmp(chinaplus.screen.CPMPMS02 + '_calendarCode').getRawValue(),
+            'year' : Ext.getCmp(chinaplus.screen.CPMPMS02 + '_year').getRawValue(),
+            'office' : Ext.getCmp(chinaplus.screen.CPMPMS02 + '_cmImpOfficeCode').getRawValue(),
+            'partyType' : Ext.getCmp(chinaplus.screen.CPMPMS02 + '_party').getRawValue(),
+            'partyCode' : Ext.getCmp(chinaplus.screen.CPMPMS02 + '_partyCodeCombo').getRawValue(),
+            'calendarRawId' : Ext.getCmp(chinaplus.screen.CPMPMS02 + '_calendarCode').getValue(),
+
+            'emailAlertMasterDownUp' : emailAlertMasterDownUp,
+            'blankFormatDownE' : blankFormatDownE,
+            'eaImpOfficeCode' : eaImpOfficeCode,
+            'loginId' : loginId,
+            'alertLevel' : alertLevel,
+
+            'sprevReasonDownUp' : sprevReasonDownUp,
+            'blankFormatDownSP' : blankFormatDownSP,
+            'reasonBusinessPattern' : reasonBusinessPattern
+
+        };
+        var fcn = function() {
+
+        };
+
+        TRF.util.downloadSubmit(fcn, chinaplus.screen.CPMPMS02, "mm/CPMPMS02/downloadcheck", params, "mm/CPMPMS02/download", false);
+    },
+
+    /**
+     * upload
+     */
+    btnUploadAction : function() {
+
+        var form = this.getForm();
+
+        var uploadUrl = 'mm/CPMPMS02/upload';
+
+        var params = {
+            'uploadProcess' : 'check'
+        };
+
+        var func = function(responseData) {
+            var sessionKey = '';
+            sessionKey = responseData.result;
+
+            /**
+             * Get MessageCodes
+             * 
+             * @param applicationData have messageCodes
+             */
+            var CPMPMS02_backFun = function(applicationData) {
+                if (null != applicationData.messageCodes && applicationData.messageCodes.length == 0) {
+                    TRF.util.showMessageBoxByMsgIdAndArgs('i1001');
+                } else {
+                    if (applicationData.confirm == "yes") {
+                        var params = {
+                            'sessionKey' : sessionKey,
+                            'uploadProcess' : 'yes'
+                        };
+                        TRF.util.uploadSubmit(form, CPMPMS02_backFun, chinaplus.screen.CPMPMS02, uploadUrl, params);
+                    } else if (applicationData.confirm == "no") {
+                        var params = {
+                            'sessionKey' : sessionKey,
+                            'uploadProcess' : 'no'
+                        };
+                        TRF.util.uploadSubmit(form, null, chinaplus.screen.CPMPMS02, uploadUrl, params);
+                    }
+                }
+            }
+            if (responseData.success) {
+                var params = {
+                    'sessionKey' : sessionKey,
+                    'uploadProcess' : 'check'
+                };
+                TRF.util.uploadSubmit(form, CPMPMS02_backFun, chinaplus.screen.CPMPMS02, uploadUrl, params);
+            }
+        }
+        TRF.util.ajaxSubmit(func, chinaplus.screen.CPMPMS02, 'common/getSessionKey', params, null);
+    },
+
+    /**
+     * initialize
+     */
+    initialize : function() {
+
+        var vvFlag = TRF.core.vvAllFlag;
+        var aisinFlag = TRF.core.aisinAllFlag;
+
+        // show Page
+        TRF.util.addFieldTipToPanel(this);
+
+        if (aisinFlag == 'false') {
+            Ext.getCmp(chinaplus.screen.CPMPMS02 + '_kanbanIssuedPlanDateMast').hide();
+        }
+        if (vvFlag == 'false') {
+            Ext.getCmp(chinaplus.screen.CPMPMS02 + '_ssmsMainRoute').hide();
+            Ext.getCmp(chinaplus.screen.CPMPMS02 + '_ssmsSuppCd').hide();
+        }
+
+        // init Parts Master Download
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS02 + '_impOfficeCodeStore'));
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS02 + '_businessPatternStore'));
+
+        // init Shipping Route Download
+        // TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS02 +
+        // '_shipRouteCodeStore'));
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS02 + '_srImpOfficeCodeStore'));
+
+        // init Kanban Issued Plan Date Master
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS02 + '_kbImpOfficeCodeStore'));
+
+        // init Calendar Master
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS02 + '_countryStore'));
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS02 + '_partyStore'));
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS02 + '_cmImpOfficeCodeStore'));
+
+        // init Email Alert Master
+        // TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS02 +
+        // '_loginIdStore'));
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS02 + '_eaImpOfficeCodeStore'));
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS02 + '_alertLevelStore'));
+
+        // init Shipping Plan Revision Reason Master _spBusinessPatternStore
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS02 + '_spBusinessPatternStore'));
+
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_calendarDownload').setDisabled(true);
+
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_includdiscontinuedparts').setDisabled(true);
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_includingNotReqParts').setDisabled(true);
+
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_shippingRouteMastDownUp').setDisabled(true);
+
+        this.doLayout();
+    },
+
+    /**
+     * clear drop download list in parts master download
+     */
+    clearReloadListInPartsMastArea : function(step) {
+
+        // get cmps
+        var cmpImpOfficeCode = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_impOfficeCode');
+        var cmpTtcCustCd = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_ttcCustCd');
+        var cmpTtcSuppCd = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_ttcSuppCd');
+        var cmpSsmsMainRoute = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_ssmsMainRoute');
+        var cmpSsmsSuppCd = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_ssmsSuppCd');
+
+        // prepare parameter
+        var params = {};
+        // set others
+        switch (step) {
+            case 4 :
+                params.ssmsMainRoute = cmpSsmsMainRoute.getValue();
+            case 3 :
+                params.ttcSuppCd = cmpTtcSuppCd.getValue();
+            case 2 :
+                params.ttcCustCd = cmpTtcCustCd.getValue();
+            case 1 :
+                params.impOfficeCode = cmpImpOfficeCode.getValue();
+            default :
+                break;
+        }
+        // clear and reload
+        switch (step) {
+            case 1 :
+                cmpTtcCustCd.store.removeAll();
+                cmpTtcCustCd.clearValue();
+                cmpTtcCustCd.destroyList();
+                var backTtcCustCdFun = function(records) {
+                    if (records != null && records.length == 1) {
+                        cmpTtcCustCd.setValue(records[0].data.id);
+                    }
+                };
+                TRF.util.loadStore(cmpTtcCustCd.store, params, backTtcCustCdFun);
+            case 2 :
+                cmpTtcSuppCd.store.removeAll();
+                cmpTtcSuppCd.clearValue();
+                cmpTtcSuppCd.destroyList();
+                var backTtcSuppCdFun = function(records) {
+                    if (records != null && records.length == 1) {
+                        cmpTtcSuppCd.setValue(records[0].data.id);
+                    }
+                };
+                TRF.util.loadStore(cmpTtcSuppCd.store, params, backTtcSuppCdFun);
+            case 3 :
+                cmpSsmsMainRoute.store.removeAll();
+                cmpSsmsMainRoute.clearValue();
+                cmpSsmsMainRoute.destroyList();
+                var backSsmsMainRouteFun = function(records, opt, su, args, res) {
+                    if (records != null && records.length == 1 && (res == null || res.data == null)) {
+                        cmpSsmsMainRoute.setValue(records[0].data.id);
+                    }
+                };
+                TRF.util.loadStore(cmpSsmsMainRoute.store, params, backSsmsMainRouteFun);
+            case 4 :
+                cmpSsmsSuppCd.store.removeAll();
+                cmpSsmsSuppCd.clearValue();
+                cmpSsmsSuppCd.destroyList();
+                var backSsmsSuppCdFun = function(records, opt, su, args, res) {
+                    if (records != null && records.length == 1 && (res == null || res.data == null)) {
+                        cmpSsmsSuppCd.setValue(records[0].data.id);
+                    }
+                };
+                TRF.util.loadStore(cmpSsmsSuppCd.store, params, backSsmsSuppCdFun);
+            default :
+                break;
+        }
+    },
+
+    /**
+     * clear drop download list in Shipping Route Download area
+     */
+    clearReloadListInShippingRouteArea : function(step) {
+
+        // get cmps
+        var cmpSrImpOfficeCode = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_srImpOfficeCode');
+        var cmpShipRouteCode = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_shipRouteCode');
+        var cmpShipRouteType = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_shipRouteType');
+        if (!Ext.isEmpty(cmpShipRouteType.getValue())) {
+            Ext.getCmp(chinaplus.screen.CPMPMS02 + '_shippingRouteMastDownUp').setDisabled(false);
+        } else {
+            Ext.getCmp(chinaplus.screen.CPMPMS02 + '_shippingRouteMastDownUp').setValue("selected", false);
+            Ext.getCmp(chinaplus.screen.CPMPMS02 + '_shippingRouteMastDownUp').setDisabled(true);
+        }
+
+        // reset values for etd
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_effFromEtd').setMinValue(null);
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_effFromEtd').setValue(null);
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_effToEtd').setMaxValue(null);
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_effToEtd').setValue(null);
+
+        Ext.getStore(chinaplus.screen.CPMPMS02 + '_shipRouteCodeStore').removeAll();
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_shipRouteCode').clearValue();
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_shipRouteCode').destroyList();
+        // prepare parameter
+        var params = {};
+        // set others
+        switch (step) {
+            case 1 :
+                params.srImpOfficeCode = cmpSrImpOfficeCode.getValue();
+            case 2 :
+                // params.shipRouteCode = cmpShipRouteCode.getValue();
+                params.srImpOfficeCode = cmpSrImpOfficeCode.getValue();
+                params.shipRouteType = cmpShipRouteType.getValue();
+            default :
+                break;
+        }
+        // clear and reload
+        switch (step) {
+            case 1 :
+                cmpShipRouteType.store.removeAll();
+                cmpShipRouteType.clearValue();
+                cmpShipRouteType.destroyList();
+                var backShipRouteTypeFun = function(records) {
+                    if (records != null && records.length > 0) {
+                        var texts = new Array();
+                        for (var i = 0; i < records.length; i++) {
+                            texts[i] = records[i].data.id;
+                        }
+                    }
+                    if (records != null && records.length == 1) {
+                        cmpShipRouteType.setValue(records[0].data.id);
+                    }
+                };
+                TRF.util.loadStore(cmpShipRouteType.store, params, backShipRouteTypeFun);
+            case 2 :
+                cmpShipRouteCode.store.removeAll();
+                cmpShipRouteCode.clearValue();
+                cmpShipRouteCode.destroyList();
+                var backShipRouteCodeFun = function(records) {
+                    if (records != null && records.length == 1) {
+                        cmpShipRouteCode.setValue(records[0].data.id);
+                    }
+                };
+                TRF.util.loadStore(cmpShipRouteCode.store, params, backShipRouteCodeFun);
+            default :
+                break;
+        }
+
+        // reset etd and eta
+        var shipRouteCode = cmpShipRouteCode.getValue();
+        if (shipRouteCode != null && shipRouteCode != '') {
+            var backEffFromToEtdFun = function(records) {
+                if (records.length > 0) {
+                    var effFromEtdStr = records[0].data.effFromEtdStr;
+                    var effTotdStr = records[0].data.effTotdStr;
+                    Ext.getCmp(chinaplus.screen.CPMPMS02 + '_effFromEtd').setMinValue(new Date(effFromEtdStr));
+                    Ext.getCmp(chinaplus.screen.CPMPMS02 + '_effToEtd').setMaxValue(new Date(effTotdStr));
+                }
+            }
+            TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS02 + '_effFromEtdStore'), params, backEffFromToEtdFun);
+        }
+    },
+
+    /**
+     * load kb customer code Change
+     */
+    loadkbImpOfficeCodeChange : function() {
+
+        var kbImpOfficeCode = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_kbImpOfficeCode').getValue();
+
+        Ext.getStore(chinaplus.screen.CPMPMS02 + '_ttcCustomerCodeStore').removeAll();
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_ttcCustomerCode').clearValue();
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_ttcCustomerCode').destroyList();
+
+        var params = {
+            'impOfficeCode' : kbImpOfficeCode
+        };
+
+        var backTtcCustCdFun = function(records) {
+            if (records.length == 1) {
+                Ext.getCmp(chinaplus.screen.CPMPMS02 + '_ttcCustomerCode').setValue(records[0].data.id);
+            }
+        };
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS02 + '_ttcCustomerCodeStore'), params, backTtcCustCdFun);
+    },
+
+    /**
+     * load country Change
+     */
+    loadCountryChange : function() {
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_partyCodeCombo').setValue('');
+        var officeId = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_cmImpOfficeCode').getValue();
+        var party = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_party').getValue();
+        var country = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_country').getRawValue();
+        var partyCodeCombo = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_partyCodeCombo');
+        var partyCodeComboValue = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_partyCodeCombo').getValue();
+        Ext.getStore(chinaplus.screen.CPMPMS02 + '_partyCodeStoreCombo').removeAll();
+
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_calendarDownload').setDisabled(true);
+        if (party != '') {
+            var params = {
+                'officeId' : officeId,
+                'party' : party,
+                'country' : country
+            };
+            var partyCodeValue = partyCodeComboValue;
+
+            var flg = false;
+            var backFun = function(records) {
+                if (records.length == 1) {
+                    Ext.getCmp(chinaplus.screen.CPMPMS02 + '_partyCodeCombo').setValue(records[0].data.id);
+                } else if (records.length > 1) {
+                    for (var i = 0; i < records.length; i++) {
+                        if (records[i].data.id == partyCodeValue) {
+                            flg = true;
+                            break;
+                        }
+                    }
+                    if (flg) {
+                        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_partyCodeCombo').setValue(partyCodeValue);
+                    } else {
+                        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_partyCodeCombo').setValue('');
+                    }
+                }
+            }
+            TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS02 + '_partyCodeStoreCombo'), params, backFun);
+        }
+
+    },
+
+    /**
+     * load PartyCode Change
+     */
+    loadPartyCodeChange : function() {
+        var officeId = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_cmImpOfficeCode').getValue();
+        var party = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_party').getValue();
+        var country = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_country').getRawValue();
+        var partyCodeComboValue = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_partyCodeCombo').getValue();
+        var calendarCode = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_calendarCode').getValue();
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_calendarCode').setValue('');
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_year').setValue('');
+        Ext.getStore(chinaplus.screen.CPMPMS02 + '_calendarCodeStore').removeAll();
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_calendarDownload').setDisabled(true);
+        var partyCodeValue = partyCodeComboValue;
+        var params = {
+            'party' : party,
+            'country' : country,
+            'officeId' : officeId,
+            'partyCode' : partyCodeValue
+        };
+
+        var backFun = function(records) {
+            if (records.length == 1) {
+                Ext.getCmp(chinaplus.screen.CPMPMS02 + '_calendarCode').setValue(records[0].data.id);
+            } else if (records.length == 0) {
+                var popMsg = TRF.util.getMessage('w1042');
+                var lsMsgs = [];
+                Ext.Array.push(popMsg, TRF.util.getMessage('w1042'));
+                TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, popMsg, lsMsgs);
+            }
+        }
+
+        if (party != null) {
+            if (partyCodeValue != '') {
+                if (partyCodeValue != null) {
+                    TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS02 + '_calendarCodeStore'), params, backFun);
+                }
+            }
+        }
+
+    },
+
+    /**
+     * load Calendar Code Change
+     */
+    loadCalendarCodeChange : function() {
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_year').setValue('');
+        var calendarId = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_calendarCode').getValue();
+        var calendarRawValue = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_calendarCode').getRawValue();
+        var today = Ext.util.Format.date(new Date(), 'Y-m-d');
+        var officeId = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_cmImpOfficeCode').getValue();
+        var params = {
+            'calendarId' : calendarId,
+            'today' : today,
+            'calendarRawValue' : calendarRawValue,
+            'officeId' : officeId
+        };
+        var backFun = function(records) {
+            if (records.length == 1) {
+                Ext.getCmp(chinaplus.screen.CPMPMS02 + '_year').setValue(records[0].data.id);
+            }
+        }
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS02 + '_yearStore'), params, backFun);
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_calendarDownload').setDisabled(true);
+    },
+
+    /**
+     * load Year Change
+     */
+    loadYearChange : function() {
+        var year = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_year').getValue();
+        if (null != year && '' != year) {
+            Ext.getCmp(chinaplus.screen.CPMPMS02 + '_calendarDownload').setDisabled(false);
+        } else {
+            Ext.getCmp(chinaplus.screen.CPMPMS02 + '_calendarDownload').setValue("selected", false);
+        }
+    },
+
+    /**
+     * load Party Change
+     */
+    loadPartyChange : function() {
+
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_country').setValue('');
+        Ext.getStore(chinaplus.screen.CPMPMS02 + '_partyCodeStoreCombo').removeAll();
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_partyCodeCombo').setValue('');
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_calendarCode').setValue('');
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_year').setValue('');
+
+        var officeId = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_cmImpOfficeCode').getValue();
+        var party = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_party').getValue();
+        var country = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_country').getRawValue();
+        var partyCodeCombo = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_partyCodeCombo');
+        var partyCodeComboValue = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_partyCodeCombo').getValue();
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_calendarDownload').setDisabled(true);
+        if (party != '') {
+            var partyCodeValue = partyCodeComboValue;
+            var params = {
+                'party' : party,
+                'country' : country,
+                'officeId' : officeId,
+                'partyCode' : partyCodeValue
+            };
+            var countryBackFun = function(records) {
+                if (records.length == 1) {
+                    Ext.getCmp(chinaplus.screen.CPMPMS02 + '_country').setValue(records[0].data.id);
+                }
+            }
+            var partyCodeBackFun = function(records) {
+                if (records.length == 1) {
+                    Ext.getCmp(chinaplus.screen.CPMPMS02 + '_partyCodeCombo').setValue(records[0].data.id);
+                }
+            }
+            var backFun = function(records) {
+                if (records.length == 1) {
+                    Ext.getCmp(chinaplus.screen.CPMPMS02 + '_calendarCode').setValue(records[0].data.id);
+                }
+            }
+            TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS02 + '_countryStore'), params, countryBackFun);
+            TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS02 + '_partyCodeStoreCombo'), params, partyCodeBackFun);
+            if (officeId != '') {
+                if (officeId != null) {
+                    TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS02 + '_calendarCodeStore'), params, backFun);
+                }
+            }
+
+        }
+
+    },
+
+    /**
+     * load Cm Imp Office Code Change
+     */
+    loadCmImpOfficeCodeChange : function() {
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_country').setValue('');
+        Ext.getStore(chinaplus.screen.CPMPMS02 + '_partyCodeStoreCombo').removeAll();
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_partyCodeCombo').setValue('');
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_calendarCode').setValue('');
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_year').setValue('');
+        var officeId = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_cmImpOfficeCode').getValue();
+        var party = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_party').getValue();
+        var country = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_country').getRawValue();
+        var partyCodeCombo = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_partyCodeCombo');
+        var partyCodeComboValue = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_partyCodeCombo').getValue();
+        Ext.getCmp(chinaplus.screen.CPMPMS02 + '_calendarDownload').setDisabled(true);
+        if (party != '') {
+            var partyCodeValue = partyCodeComboValue;
+            var params = {
+                'party' : party,
+                'country' : country,
+                'officeId' : officeId,
+                'partyCode' : partyCodeValue
+                ,
+            };
+
+            var countryBackFun = function(records) {
+                if (records.length == 1) {
+                    Ext.getCmp(chinaplus.screen.CPMPMS02 + '_country').setValue(records[0].data.id);
+                }
+            };
+            var partyCodeBackFun = function(records) {
+                if (records.length == 1) {
+                    Ext.getCmp(chinaplus.screen.CPMPMS02 + '_partyCodeCombo').setValue(records[0].data.id);
+                }
+            };
+            var backFun = function(records) {
+                if (records.length == 1) {
+                    Ext.getCmp(chinaplus.screen.CPMPMS02 + '_calendarCode').setValue(records[0].data.id);
+                }
+            };
+            TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS02 + '_countryStore'), params, countryBackFun);
+            TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS02 + '_partyCodeStoreCombo'), params, partyCodeBackFun);
+            if (party != '') {
+                if (party != null) {
+                    TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMPMS02 + '_calendarCodeStore'), params, backFun);
+                }
+            }
+
+        }
+    },
+
+    /**
+     * clear drop download list in Email Alert Master download
+     */
+    clearReloadListInEmailAlertArea : function(step) {
+
+        // get cmps
+        var cmpEaImpOfficeCode = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_eaImpOfficeCode');
+        var cmpLoginId = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_loginId');
+        var cmpAlertLevel = Ext.getCmp(chinaplus.screen.CPMPMS02 + '_alertLevel');
+
+        // prepare parameter
+        var params = {};
+        // set others
+        switch (step) {
+            case 2 :
+                params.loginId = cmpLoginId.getValue();
+            case 1 :
+                params.eaImpOfficeCode = cmpEaImpOfficeCode.getValue();
+            default :
+                break;
+        }
+        // clear and reload
+        switch (step) {
+            case 1 :
+                cmpLoginId.store.removeAll();
+                cmpLoginId.clearValue();
+                cmpLoginId.destroyList();
+                var backLoginIdFun = function(records) {
+                    if (records != null && records.length == 1) {
+                        cmpLoginId.setValue(records[0].data.id);
+                    }
+                };
+                TRF.util.loadStore(cmpLoginId.store, params, backLoginIdFun);
+            case 2 :
+                cmpAlertLevel.store.removeAll();
+                cmpAlertLevel.clearValue();
+                cmpAlertLevel.destroyList();
+                var backAlertLevelFun = function(records) {
+                    if (records != null && records.length == 1) {
+                        cmpAlertLevel.setValue(records[0].data.id);
+                    }
+                };
+                TRF.util.loadStore(cmpAlertLevel.store, params, backAlertLevelFun);
+            default :
+                break;
+        }
+    }
+}

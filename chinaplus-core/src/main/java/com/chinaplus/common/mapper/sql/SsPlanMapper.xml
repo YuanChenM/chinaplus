@@ -1,0 +1,953 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.chinaplus.common.service.SsPlanService">
+
+    <sql id="ConstDef">
+        <bind name="CompletedFlag_NORMAL" value="@com.chinaplus.common.consts.CodeConst$CompletedFlag@NORMAL" />
+        <bind name="CompletedFlag_COMPLETED" value="@com.chinaplus.common.consts.CodeConst$CompletedFlag@COMPLETED" />
+        
+        <bind name="NirdFlag_NORMAL" value="@com.chinaplus.common.consts.CodeConst$NirdFlag@NORMAL" />
+        <bind name="NirdFlag_NIRD" value="@com.chinaplus.common.consts.CodeConst$NirdFlag@NOT_IN_RUNDOWN" />
+    </sql>
+
+    <select id="queryOrderCreateList" parameterType="com.chinaplus.common.entity.IFOrderEntity" resultType="com.chinaplus.common.entity.IFOrderEntity">
+    
+        SELECT
+          A.ORDER_ID AS orderId
+          , A.OFFICE_ID AS officeId
+          , A.IMP_PO_NO AS impPoNo
+          , A.CUSTOMER_ORDER_NO AS customerOrderNo
+          , A.EXP_PO_NO AS expPoNo
+          , A.PARTS_ID AS partsId
+          , A.SUPPLIER_ID AS supplierId
+          , A.EXP_INB_PLAN_DATE AS expInbPlanDate
+          , A.TRANSPORT_MODE AS tansportMode
+          , A.ORDER_QTY AS orderQty
+          , B.CUSTOMER_ID AS customerId
+          , C.IMP_STOCK_FLAG AS impStockFlag
+          , C.TIME_ZONE AS timeZone
+          , C.OFFICE_CODE AS officeCode
+          , D.WHS_ID AS impWhsId
+          , D.WHS_CODE AS impWhsCode
+          , E.SHIPPING_ROUTE_CODE AS shippingRouteCode
+          , E.AIR_ETD_LEADTIME AS airEtdLt
+          , E.AIR_ETA_LEADTIME AS airEtaLt
+          , E.AIR_INBOUND_LEADTIME AS airInboundLt
+          , E.SEA_ETA_LEADTIME AS seaEtaLt
+          , E.SEA_INBOUND_LEADTIME AS seaInboundLt
+          , OS.ORDER_STATUS_ID AS orderStatusId
+          , B.CUSTOMER_CODE AS ttcCustomerCode
+          , A.EXP_SO_DATE AS expSoDate
+        FROM
+          (
+            SELECT
+              O.ORDER_ID
+              , O.OFFICE_ID
+              , O.IMP_PO_NO
+              , O.CUSTOMER_ORDER_NO
+              , OD.EXP_PO_NO
+              , OD.PARTS_ID
+              , P.SUPPLIER_ID
+              , OD.EXP_INB_PLAN_DATE
+              , P.EXP_PARTS_ID
+              , OD.TRANSPORT_MODE
+              , O.EXP_SO_DATE
+              , SUM(OD.ORDER_QTY) AS ORDER_QTY
+            FROM
+              TNT_ORDER_DETAIL OD
+              INNER JOIN TNT_ORDER O
+                ON O.ORDER_ID = OD.ORDER_ID
+              INNER JOIN TNM_EXP_PARTS P
+                ON P.EXP_PARTS_ID = OD.EXP_PARTS_ID
+              LEFT JOIN TNT_SS_MASTER SSM
+                ON SSM.ORDER_ID = O.ORDER_ID
+            WHERE
+              SSM.SS_ID IS NULL
+            AND
+              OD.CREATED_DATE = #{createdDate, jdbcType=TIMESTAMP}
+            GROUP BY
+              O.ORDER_ID
+              , O.OFFICE_ID
+              , O.IMP_PO_NO
+              , O.CUSTOMER_ORDER_NO
+              , OD.EXP_PO_NO
+              , OD.PARTS_ID
+              , P.SUPPLIER_ID
+              , OD.EXP_INB_PLAN_DATE
+              , P.EXP_PARTS_ID
+              , OD.TRANSPORT_MODE
+              , O.EXP_SO_DATE
+            ORDER BY
+              O.ORDER_ID
+              , O.OFFICE_ID
+              , O.IMP_PO_NO
+              , O.CUSTOMER_ORDER_NO
+              , OD.EXP_PO_NO
+              , OD.PARTS_ID
+              , P.SUPPLIER_ID
+              , OD.EXP_INB_PLAN_DATE
+          ) A
+          INNER JOIN TNM_PARTS_MASTER B
+            ON B.PARTS_ID = A.PARTS_ID
+          INNER JOIN TNM_OFFICE C
+            ON C.OFFICE_ID = A.OFFICE_ID
+          INNER JOIN TNM_WAREHOUSE D
+            ON D.WHS_CODE = B.IMP_WHS_CODE
+          INNER JOIN TNM_EXP_PARTS E
+            ON E.EXP_PARTS_ID = A.EXP_PARTS_ID
+          INNER JOIN TNF_ORDER_STATUS OS 
+            ON OS.IMP_PO_NO = A.IMP_PO_NO 
+           AND OS.EXP_PO_NO = A.EXP_PO_NO 
+           AND OS.CUSTOMER_ORDER_NO = A.CUSTOMER_ORDER_NO 
+           AND OS.PARTS_ID = A.PARTS_ID 
+           AND OS.SUPPLIER_ID = A.SUPPLIER_ID
+
+    </select>
+
+    <select id="queryOrderCreateListForReRun" parameterType="com.chinaplus.common.entity.IFOrderEntity" resultType="com.chinaplus.common.entity.IFOrderEntity">
+    
+        SELECT
+          A.ORDER_ID AS orderId
+          , A.OFFICE_ID AS officeId
+          , A.IMP_PO_NO AS impPoNo
+          , A.CUSTOMER_ORDER_NO AS customerOrderNo
+          , A.EXP_PO_NO AS expPoNo
+          , A.PARTS_ID AS partsId
+          , A.SUPPLIER_ID AS supplierId
+          , A.EXP_INB_PLAN_DATE AS expInbPlanDate
+          , A.TRANSPORT_MODE AS tansportMode
+          , A.ORDER_QTY AS orderQty
+          , B.CUSTOMER_ID AS customerId
+          , C.IMP_STOCK_FLAG AS impStockFlag
+          , C.TIME_ZONE AS timeZone
+          , C.OFFICE_CODE AS officeCode
+          , D.WHS_ID AS impWhsId
+          , D.WHS_CODE AS impWhsCode
+          , E.SHIPPING_ROUTE_CODE AS shippingRouteCode
+          , E.AIR_ETD_LEADTIME AS airEtdLt
+          , E.AIR_ETA_LEADTIME AS airEtaLt
+          , E.AIR_INBOUND_LEADTIME AS airInboundLt
+          , E.SEA_ETA_LEADTIME AS seaEtaLt
+          , E.SEA_INBOUND_LEADTIME AS seaInboundLt
+          , OS.ORDER_STATUS_ID AS orderStatusId
+          , B.CUSTOMER_CODE AS ttcCustomerCode
+          , A.EXP_SO_DATE AS expSoDate
+        FROM
+          (
+            SELECT
+              O.ORDER_ID
+              , O.OFFICE_ID
+              , O.IMP_PO_NO
+              , O.CUSTOMER_ORDER_NO
+              , OD.EXP_PO_NO
+              , OD.PARTS_ID
+              , P.SUPPLIER_ID
+              , OD.EXP_INB_PLAN_DATE
+              , P.EXP_PARTS_ID
+              , OD.TRANSPORT_MODE
+              , O.EXP_SO_DATE
+              , SUM(OD.ORDER_QTY) AS ORDER_QTY
+            FROM
+              TNT_ORDER_DETAIL OD
+              INNER JOIN TNT_ORDER O
+                ON O.ORDER_ID = OD.ORDER_ID
+              INNER JOIN TNM_EXP_PARTS P
+                ON P.EXP_PARTS_ID = OD.EXP_PARTS_ID
+            WHERE
+              OD.STATUS <![CDATA[<>]]> 99
+            GROUP BY
+              O.ORDER_ID
+              , O.OFFICE_ID
+              , O.IMP_PO_NO
+              , O.CUSTOMER_ORDER_NO
+              , OD.EXP_PO_NO
+              , OD.PARTS_ID
+              , P.SUPPLIER_ID
+              , OD.EXP_INB_PLAN_DATE
+              , P.EXP_PARTS_ID
+              , OD.TRANSPORT_MODE
+              , O.EXP_SO_DATE
+            ORDER BY
+              O.ORDER_ID
+              , O.OFFICE_ID
+              , O.IMP_PO_NO
+              , O.CUSTOMER_ORDER_NO
+              , OD.EXP_PO_NO
+              , OD.PARTS_ID
+              , P.SUPPLIER_ID
+              , OD.EXP_INB_PLAN_DATE
+          ) A
+          INNER JOIN TNM_PARTS_MASTER B
+            ON B.PARTS_ID = A.PARTS_ID
+          INNER JOIN TNM_OFFICE C
+            ON C.OFFICE_ID = A.OFFICE_ID
+          INNER JOIN TNM_WAREHOUSE D
+            ON D.WHS_CODE = B.IMP_WHS_CODE
+          INNER JOIN TNM_EXP_PARTS E
+            ON E.EXP_PARTS_ID = A.EXP_PARTS_ID
+          INNER JOIN TNF_ORDER_STATUS OS 
+            ON OS.IMP_PO_NO = A.IMP_PO_NO 
+           AND OS.EXP_PO_NO = A.EXP_PO_NO 
+           AND OS.CUSTOMER_ORDER_NO = A.CUSTOMER_ORDER_NO 
+           AND OS.PARTS_ID = A.PARTS_ID 
+           AND OS.SUPPLIER_ID = A.SUPPLIER_ID
+          WHERE
+               C.OFFICE_CODE = #{officeCode}
+           AND B.BUSINESS_PATTERN = #{businessPattern}
+           <if test="expPartsIdList != null and expPartsIdList.size() > 0">
+           AND 
+            E.EXP_PARTS_ID 
+            IN
+            <foreach item="param" index="index" collection="expPartsIdList" open="(" separator="," close=")">  
+            #{param}  
+            </foreach>
+           </if> 
+
+    </select>
+
+    <select id="queryOrderChangeList" parameterType="com.chinaplus.common.entity.IFOrderEntity" resultType="com.chinaplus.common.entity.IFOrderEntity">
+    
+        SELECT
+          O.ORDER_ID AS orderId
+          , O.OFFICE_ID AS officeId
+          , O.IMP_PO_NO AS impPoNo
+          , O.CUSTOMER_ORDER_NO AS customerOrderNo
+          , OD.EXP_PO_NO AS expPoNo
+          , OD.PARTS_ID AS partsId
+          , P.SUPPLIER_ID AS supplierId
+          , OD.EXP_INB_PLAN_DATE AS expInbPlanDate
+          , OD.TRANSPORT_MODE AS tansportMode
+          , OD.ORIGINAL_TRANSPORT_MODE AS originalTransportMode
+          , OD.ORDER_QTY AS orderQty
+          , OD.ORIGINAL_QTY AS originalQty
+          , OD.EXP_PARTS_ID AS expPartsId
+          , B.CUSTOMER_ID AS customerId
+          , C.IMP_STOCK_FLAG AS impStockFlag
+          , C.OFFICE_CODE AS officeCode
+          , C.TIME_ZONE AS timeZone
+          , D.WHS_ID AS impWhsId
+          , P.SHIPPING_ROUTE_CODE AS shippingRouteCode
+          , P.AIR_ETD_LEADTIME AS airEtdLt
+          , P.AIR_ETA_LEADTIME AS airEtaLt
+          , P.AIR_INBOUND_LEADTIME AS airInboundLt
+          , P.SEA_ETA_LEADTIME AS seaEtaLt
+          , P.SEA_INBOUND_LEADTIME AS seaInboundLt
+          , OS.ORDER_STATUS_ID AS orderStatusId
+          , SSM.SS_ID AS ssId
+          , B.CUSTOMER_CODE AS ttcCustomerCode
+          , O.EXP_SO_DATE AS expSoDate
+        FROM
+          TNT_ORDER_DETAIL OD
+          INNER JOIN TNT_ORDER O
+            ON O.ORDER_ID = OD.ORDER_ID
+          INNER JOIN TNM_EXP_PARTS P
+            ON P.EXP_PARTS_ID = OD.EXP_PARTS_ID
+          INNER JOIN TNF_ORDER_STATUS OS
+            ON OS.IMP_PO_NO = O.IMP_PO_NO
+            AND OS.EXP_PO_NO = OD.EXP_PO_NO
+            AND OS.CUSTOMER_ORDER_NO = O.CUSTOMER_ORDER_NO
+            AND OS.PARTS_ID = OD.PARTS_ID
+            AND OS.SUPPLIER_ID = P.SUPPLIER_ID
+          INNER JOIN TNT_SS_MASTER SSM
+            ON SSM.ORDER_ID = O.ORDER_ID
+            AND SSM.OFFICE_ID = O.OFFICE_ID
+            AND SSM.REVISION_VERSION = (
+              SELECT
+                MAX(REVISION_VERSION)
+              FROM
+                TNT_SS_MASTER
+              WHERE
+                ORDER_ID = O.ORDER_ID
+                AND OFFICE_ID = O.OFFICE_ID
+            )
+          INNER JOIN TNM_PARTS_MASTER B
+            ON B.PARTS_ID = P.PARTS_ID
+          INNER JOIN TNM_OFFICE C
+            ON C.OFFICE_ID = O.OFFICE_ID
+          INNER JOIN TNM_WAREHOUSE D
+            ON D.WHS_CODE = B.IMP_WHS_CODE
+        WHERE
+          OD.UPDATED_DATE = #{updatedDate, jdbcType=TIMESTAMP}
+          AND OD.FORCE_COMPLETED_BY IS NULL
+          AND OD.STATUS <![CDATA[<>]]> 99
+
+    </select>
+    
+    <select id="getPlanList" parameterType="com.chinaplus.common.entity.IFOrderEntity" resultType="com.chinaplus.common.entity.IFOrderEntity">
+    
+        <include refid="ConstDef"/>
+        SELECT
+          A.SS_PARTS_ID AS ssPartsId
+          , A.SS_PLAN_ID AS ssPlanId
+          , A.ETD AS etd
+          , A.ETA AS eta
+          , A.CC_DATE AS impPlanCustomDate
+          , A.IMP_INB_PLAN_DATE AS impPlanInboundDate
+          , A.TRANSPORT_MODE AS tansportMode
+          , A.PARTS_ID AS partsId
+          , A.ORDER_STATUS_ID AS orderStatusId
+          , A.QTY AS orderQty
+          , A.UPDATED_DATE AS updatedDate
+          , A.SORTNUM AS sortNum
+        FROM
+          (
+            (
+              SELECT DISTINCT
+                SPT.SS_PARTS_ID
+                , SPL.SS_PLAN_ID
+                , SPL.ETD
+                , SPL.ETA
+                , SPL.CC_DATE
+                , SPL.IMP_INB_PLAN_DATE
+                , SPL.TRANSPORT_MODE
+                , SPL.UPDATED_DATE
+                , SPT.PARTS_ID
+                , SPT.ORDER_STATUS_ID
+                , SPT.QTY
+                , 1 AS SORTNUM
+              FROM
+                TNT_SS_PLAN SPL
+                INNER JOIN TNT_SS_PARTS SPT
+                  ON SPL.SS_PLAN_ID = SPT.SS_PLAN_ID
+                INNER JOIN TNT_SS_MASTER SSM
+                  ON SSM.SS_ID = SPL.SS_ID
+                INNER JOIN TNT_ORDER O
+                  ON O.ORDER_ID = SSM.ORDER_ID
+                INNER JOIN TNF_ORDER_STATUS OS
+                  ON OS.ORDER_STATUS_ID = SPT.ORDER_STATUS_ID
+                  AND OS.PARTS_ID = SPT.PARTS_ID
+              WHERE
+                SPL.TRANSPORT_MODE = #{originalTransportMode,jdbcType=INTEGER}
+                AND SPL.ETD = #{etd,jdbcType=DATE}
+                AND SPL.ETA = #{eta,jdbcType=DATE}
+                <if test="null == impPlanCustomDate">
+                    AND SPL.CC_DATE IS NULL
+                </if>
+                <if test="null != impPlanCustomDate">
+                    AND SPL.CC_DATE = #{impPlanCustomDate,jdbcType=DATE}
+                </if>
+                <if test="null == impPlanInboundDate">
+                    AND SPL.IMP_INB_PLAN_DATE IS NULL
+                </if>
+                <if test="null != impPlanInboundDate">
+                    AND SPL.IMP_INB_PLAN_DATE = #{impPlanInboundDate,jdbcType=DATE}
+                </if>
+                AND SPL.COMPLETED_FLAG = #{CompletedFlag_NORMAL}
+                AND ((SPT.PARTS_ID = #{partsId,jdbcType=INTEGER}
+                AND SPT.ORDER_STATUS_ID = #{orderStatusId,jdbcType=INTEGER})
+                 OR O.ORDER_ID = #{orderId,jdbcType=INTEGER})
+                AND (OS.FORCE_COMPLETED_QTY = 0
+                 OR OS.FORCE_COMPLETED_QTY IS NULL)
+            )
+            UNION ALL (
+              SELECT DISTINCT
+                SPT.SS_PARTS_ID
+                , SPL.SS_PLAN_ID
+                , SPL.ETD
+                , SPL.ETA
+                , SPL.CC_DATE
+                , SPL.IMP_INB_PLAN_DATE
+                , SPL.TRANSPORT_MODE
+                , SPL.UPDATED_DATE
+                , SPT.PARTS_ID
+                , SPT.ORDER_STATUS_ID
+                , SPT.QTY
+                , 2 AS SORTNUM
+              FROM
+                TNT_SS_PLAN SPL
+                INNER JOIN TNT_SS_PARTS SPT
+                  ON SPL.SS_PLAN_ID = SPT.SS_PLAN_ID
+                INNER JOIN TNF_ORDER_STATUS OS
+                  ON OS.ORDER_STATUS_ID = SPT.ORDER_STATUS_ID
+                  AND OS.PARTS_ID = SPT.PARTS_ID
+              WHERE
+                SPL.TRANSPORT_MODE = #{originalTransportMode,jdbcType=INTEGER}
+                AND (SPL.ETD <![CDATA[<>]]> #{etd,jdbcType=DATE}
+                  OR SPL.ETA <![CDATA[<>]]> #{eta,jdbcType=DATE}
+                  <if test="null == impPlanCustomDate">
+                      OR SPL.CC_DATE IS NOT NULL
+                  </if>
+                  <if test="null != impPlanCustomDate">
+                      OR SPL.CC_DATE <![CDATA[<>]]> #{impPlanCustomDate,jdbcType=DATE}
+                  </if>
+                  <if test="null == impPlanInboundDate">
+                      OR SPL.IMP_INB_PLAN_DATE IS NOT NULL
+                  </if>
+                  <if test="null != impPlanInboundDate">
+                      OR SPL.IMP_INB_PLAN_DATE <![CDATA[<>]]> #{impPlanInboundDate,jdbcType=DATE}
+                  </if>
+                  )
+                AND SPL.COMPLETED_FLAG = #{CompletedFlag_NORMAL}
+                AND SPL.NIRD_FLAG <![CDATA[<>]]> #{NirdFlag_NORMAL}
+                AND SPT.PARTS_ID = #{partsId,jdbcType=INTEGER}
+                AND SPT.ORDER_STATUS_ID = #{orderStatusId,jdbcType=INTEGER}
+                AND (OS.FORCE_COMPLETED_QTY = 0
+                 OR OS.FORCE_COMPLETED_QTY IS NULL)
+              ORDER BY
+                SPL.ETD
+                , SPL.ETA
+                , SPL.CC_DATE
+                , SPL.IMP_INB_PLAN_DATE
+            )
+            UNION ALL (
+              SELECT DISTINCT
+                SPT.SS_PARTS_ID
+                , SPL.SS_PLAN_ID
+                , SPL.ETD
+                , SPL.ETA
+                , SPL.CC_DATE
+                , SPL.IMP_INB_PLAN_DATE
+                , SPL.TRANSPORT_MODE
+                , SPL.UPDATED_DATE
+                , SPT.PARTS_ID
+                , SPT.ORDER_STATUS_ID
+                , SPT.QTY
+                , 3 AS SORTNUM
+              FROM
+                TNT_SS_PLAN SPL
+                INNER JOIN TNT_SS_PARTS SPT
+                  ON SPL.SS_PLAN_ID = SPT.SS_PLAN_ID
+                INNER JOIN TNF_ORDER_STATUS OS
+                  ON OS.ORDER_STATUS_ID = SPT.ORDER_STATUS_ID
+                  AND OS.PARTS_ID = SPT.PARTS_ID
+              WHERE
+                SPL.TRANSPORT_MODE = #{originalTransportMode,jdbcType=INTEGER}
+                AND (SPL.ETD <![CDATA[<>]]> #{etd,jdbcType=DATE}
+                  OR SPL.ETA <![CDATA[<>]]> #{eta,jdbcType=DATE}
+                  <if test="null == impPlanCustomDate">
+                      OR SPL.CC_DATE IS NOT NULL
+                  </if>
+                  <if test="null != impPlanCustomDate">
+                      OR SPL.CC_DATE <![CDATA[<>]]> #{impPlanCustomDate,jdbcType=DATE}
+                  </if>
+                  <if test="null == impPlanInboundDate">
+                      OR SPL.IMP_INB_PLAN_DATE IS NOT NULL
+                  </if>
+                  <if test="null != impPlanInboundDate">
+                      OR SPL.IMP_INB_PLAN_DATE <![CDATA[<>]]> #{impPlanInboundDate,jdbcType=DATE}
+                  </if>
+                  )
+                AND SPL.COMPLETED_FLAG = #{CompletedFlag_NORMAL}
+                AND SPL.NIRD_FLAG = #{NirdFlag_NORMAL}
+                AND SPT.PARTS_ID = #{partsId,jdbcType=INTEGER}
+                AND SPT.ORDER_STATUS_ID = #{orderStatusId,jdbcType=INTEGER}
+                AND (OS.FORCE_COMPLETED_QTY = 0
+                 OR OS.FORCE_COMPLETED_QTY IS NULL)
+              ORDER BY
+                SPL.ETD
+                , SPL.ETA
+                , SPL.CC_DATE
+                , SPL.IMP_INB_PLAN_DATE
+            )
+            UNION ALL (
+              SELECT DISTINCT
+                SPT.SS_PARTS_ID
+                , SPL.SS_PLAN_ID
+                , SPL.ETD
+                , SPL.ETA
+                , SPL.CC_DATE
+                , SPL.IMP_INB_PLAN_DATE
+                , SPL.TRANSPORT_MODE
+                , SPL.UPDATED_DATE
+                , SPT.PARTS_ID
+                , SPT.ORDER_STATUS_ID
+                , SPT.QTY
+                , 4 AS SORTNUM
+              FROM
+                TNT_SS_PLAN SPL
+                INNER JOIN TNT_SS_PARTS SPT
+                  ON SPL.SS_PLAN_ID = SPT.SS_PLAN_ID
+                INNER JOIN TNF_ORDER_STATUS OS
+                  ON OS.ORDER_STATUS_ID = SPT.ORDER_STATUS_ID
+                  AND OS.PARTS_ID = SPT.PARTS_ID
+              WHERE
+                SPL.TRANSPORT_MODE = #{tansportMode,jdbcType=INTEGER}
+                AND SPL.ETD = #{etd,jdbcType=DATE}
+                AND SPL.ETA = #{eta,jdbcType=DATE}
+                <if test="null == impPlanCustomDate">
+                    AND SPL.CC_DATE IS NULL
+                </if>
+                <if test="null != impPlanCustomDate">
+                    AND SPL.CC_DATE = #{impPlanCustomDate,jdbcType=DATE}
+                </if>
+                <if test="null == impPlanInboundDate">
+                    AND SPL.IMP_INB_PLAN_DATE IS NULL
+                </if>
+                <if test="null != impPlanInboundDate">
+                    AND SPL.IMP_INB_PLAN_DATE = #{impPlanInboundDate,jdbcType=DATE}
+                </if>
+                AND SPL.COMPLETED_FLAG = #{CompletedFlag_NORMAL}
+                AND SPT.PARTS_ID = #{partsId,jdbcType=INTEGER}
+                AND SPT.ORDER_STATUS_ID = #{orderStatusId,jdbcType=INTEGER}
+                AND (OS.FORCE_COMPLETED_QTY = 0
+                 OR OS.FORCE_COMPLETED_QTY IS NULL)
+            )
+            UNION ALL (
+              SELECT DISTINCT
+                SPT.SS_PARTS_ID
+                , SPL.SS_PLAN_ID
+                , SPL.ETD
+                , SPL.ETA
+                , SPL.CC_DATE
+                , SPL.IMP_INB_PLAN_DATE
+                , SPL.TRANSPORT_MODE
+                , SPL.UPDATED_DATE
+                , SPT.PARTS_ID
+                , SPT.ORDER_STATUS_ID
+                , SPT.QTY
+                , 5 AS SORTNUM
+              FROM
+                TNT_SS_PLAN SPL
+                INNER JOIN TNT_SS_PARTS SPT
+                  ON SPL.SS_PLAN_ID = SPT.SS_PLAN_ID
+                INNER JOIN TNF_ORDER_STATUS OS
+                  ON OS.ORDER_STATUS_ID = SPT.ORDER_STATUS_ID
+                  AND OS.PARTS_ID = SPT.PARTS_ID
+              WHERE
+                SPL.TRANSPORT_MODE = #{tansportMode,jdbcType=INTEGER}
+                AND (SPL.ETD <![CDATA[<>]]> #{etd,jdbcType=DATE}
+                  OR SPL.ETA <![CDATA[<>]]> #{eta,jdbcType=DATE}
+                  <if test="null == impPlanCustomDate">
+                      OR SPL.CC_DATE IS NOT NULL
+                  </if>
+                  <if test="null != impPlanCustomDate">
+                      OR SPL.CC_DATE <![CDATA[<>]]> #{impPlanCustomDate,jdbcType=DATE}
+                  </if>
+                  <if test="null == impPlanInboundDate">
+                      OR SPL.IMP_INB_PLAN_DATE IS NOT NULL
+                  </if>
+                  <if test="null != impPlanInboundDate">
+                      OR SPL.IMP_INB_PLAN_DATE <![CDATA[<>]]> #{impPlanInboundDate,jdbcType=DATE}
+                  </if>
+                  )
+                AND SPL.COMPLETED_FLAG = #{CompletedFlag_NORMAL}
+                AND SPL.NIRD_FLAG <![CDATA[<>]]> #{NirdFlag_NORMAL}
+                AND SPT.PARTS_ID = #{partsId,jdbcType=INTEGER}
+                AND SPT.ORDER_STATUS_ID = #{orderStatusId,jdbcType=INTEGER}
+                AND (OS.FORCE_COMPLETED_QTY = 0
+                 OR OS.FORCE_COMPLETED_QTY IS NULL)
+              ORDER BY
+                SPL.ETD
+                , SPL.ETA
+                , SPL.CC_DATE
+                , SPL.IMP_INB_PLAN_DATE
+            )
+            UNION ALL (
+              SELECT DISTINCT
+                SPT.SS_PARTS_ID
+                , SPL.SS_PLAN_ID
+                , SPL.ETD
+                , SPL.ETA
+                , SPL.CC_DATE
+                , SPL.IMP_INB_PLAN_DATE
+                , SPL.TRANSPORT_MODE
+                , SPL.UPDATED_DATE
+                , SPT.PARTS_ID
+                , SPT.ORDER_STATUS_ID
+                , SPT.QTY
+                , 6 AS SORTNUM
+              FROM
+                TNT_SS_PLAN SPL
+                INNER JOIN TNT_SS_PARTS SPT
+                  ON SPL.SS_PLAN_ID = SPT.SS_PLAN_ID
+                INNER JOIN TNF_ORDER_STATUS OS
+                  ON OS.ORDER_STATUS_ID = SPT.ORDER_STATUS_ID
+                  AND OS.PARTS_ID = SPT.PARTS_ID
+              WHERE
+                SPL.TRANSPORT_MODE = #{tansportMode,jdbcType=INTEGER}
+                AND (SPL.ETD <![CDATA[<>]]> #{etd,jdbcType=DATE}
+                  OR SPL.ETA <![CDATA[<>]]> #{eta,jdbcType=DATE}
+                  <if test="null == impPlanCustomDate">
+                      OR SPL.CC_DATE IS NOT NULL
+                  </if>
+                  <if test="null != impPlanCustomDate">
+                      OR SPL.CC_DATE <![CDATA[<>]]> #{impPlanCustomDate,jdbcType=DATE}
+                  </if>
+                  <if test="null == impPlanInboundDate">
+                      OR SPL.IMP_INB_PLAN_DATE IS NOT NULL
+                  </if>
+                  <if test="null != impPlanInboundDate">
+                      OR SPL.IMP_INB_PLAN_DATE <![CDATA[<>]]> #{impPlanInboundDate,jdbcType=DATE}
+                  </if>
+                  )
+                AND SPL.COMPLETED_FLAG = #{CompletedFlag_NORMAL}
+                AND SPL.NIRD_FLAG = #{NirdFlag_NORMAL}
+                AND SPT.PARTS_ID = #{partsId,jdbcType=INTEGER}
+                AND SPT.ORDER_STATUS_ID = #{orderStatusId,jdbcType=INTEGER}
+                AND (OS.FORCE_COMPLETED_QTY = 0
+                 OR OS.FORCE_COMPLETED_QTY IS NULL)
+              ORDER BY
+                SPL.ETD
+                , SPL.ETA
+                , SPL.CC_DATE
+                , SPL.IMP_INB_PLAN_DATE
+            )
+          ) A
+        ORDER BY
+          SORTNUM
+    
+    </select>
+    
+    <select id="queryOrderCancelList" parameterType="com.chinaplus.common.entity.IFOrderEntity" resultType="com.chinaplus.common.entity.IFOrderEntity">
+    
+        SELECT
+          O.ORDER_ID AS orderId
+          , O.OFFICE_ID AS officeId
+          , O.IMP_PO_NO AS impPoNo
+          , O.CUSTOMER_ORDER_NO AS customerOrderNo
+          , OD.EXP_PO_NO AS expPoNo
+          , OD.PARTS_ID AS partsId
+          , P.SUPPLIER_ID AS supplierId
+          , OD.EXP_INB_PLAN_DATE AS expInbPlanDate
+          , OD.TRANSPORT_MODE AS tansportMode
+          , OD.ORIGINAL_TRANSPORT_MODE AS originalTransportMode
+          , OD.ORDER_QTY AS orderQty
+          , OD.ORIGINAL_QTY AS originalQty
+          , OD.EXP_PARTS_ID AS expPartsId
+          , B.CUSTOMER_ID AS customerId
+          , C.IMP_STOCK_FLAG AS impStockFlag
+          , C.OFFICE_CODE AS officeCode
+          , C.TIME_ZONE AS timeZone
+          , D.WHS_ID AS impWhsId
+          , P.SHIPPING_ROUTE_CODE AS shippingRouteCode
+          , P.AIR_ETD_LEADTIME AS airEtdLt
+          , P.AIR_ETA_LEADTIME AS airEtaLt
+          , P.AIR_INBOUND_LEADTIME AS airInboundLt
+          , P.SEA_ETA_LEADTIME AS seaEtaLt
+          , P.SEA_INBOUND_LEADTIME AS seaInboundLt
+          , OS.ORDER_STATUS_ID AS orderStatusId
+          , SSM.SS_ID AS ssId
+          , B.CUSTOMER_CODE AS ttcCustomerCode
+          , O.EXP_SO_DATE AS expSoDate
+        FROM
+          TNT_ORDER_DETAIL OD
+          INNER JOIN TNT_ORDER O
+            ON O.ORDER_ID = OD.ORDER_ID
+          INNER JOIN TNM_EXP_PARTS P
+            ON P.EXP_PARTS_ID = OD.EXP_PARTS_ID
+          INNER JOIN TNF_ORDER_STATUS OS
+            ON OS.IMP_PO_NO = O.IMP_PO_NO
+            AND OS.EXP_PO_NO = OD.EXP_PO_NO
+            AND OS.CUSTOMER_ORDER_NO = O.CUSTOMER_ORDER_NO
+            AND OS.PARTS_ID = OD.PARTS_ID
+            AND OS.SUPPLIER_ID = P.SUPPLIER_ID
+          INNER JOIN TNT_SS_MASTER SSM
+            ON SSM.ORDER_ID = O.ORDER_ID
+            AND SSM.OFFICE_ID = O.OFFICE_ID
+            AND SSM.REVISION_VERSION = (
+              SELECT
+                MAX(REVISION_VERSION)
+              FROM
+                TNT_SS_MASTER
+              WHERE
+                ORDER_ID = O.ORDER_ID
+                AND OFFICE_ID = O.OFFICE_ID
+            )
+          INNER JOIN TNM_PARTS_MASTER B
+            ON B.PARTS_ID = P.PARTS_ID
+          INNER JOIN TNM_OFFICE C
+            ON C.OFFICE_ID = O.OFFICE_ID
+          INNER JOIN TNM_WAREHOUSE D
+            ON D.WHS_CODE = B.IMP_WHS_CODE
+        WHERE
+          OD.STATUS = 99 
+          AND OD.UPDATED_DATE = #{updatedDate, jdbcType=TIMESTAMP}
+          AND OD.FORCE_COMPLETED_BY IS NULL
+    
+    </select>
+    
+    <select id="findOneTntSsPlan" parameterType="com.chinaplus.common.entity.TntSsPlan" resultType="com.chinaplus.common.entity.TntSsPlan">
+    
+        SELECT
+          SP.SS_PLAN_ID AS ssPlanId
+          , SP.SS_ID AS ssId
+          , SP.TRANSPORT_MODE AS transportMode
+          , SP.ETD AS etd
+          , SP.ETA AS eta
+          , SP.CC_DATE AS ccDate
+          , SP.IMP_INB_PLAN_DATE AS impInbPlanDate
+          , SP.ORIGINAL_VERSION AS originalVersion
+          , SP.REVISION_VERSION AS revisionVersion
+          , SP.REVISION_REASON AS revisionReason
+          , SP.NIRD_FLAG AS nirdFlag
+          , SP.COMPLETED_FLAG AS completedFlag
+          , SP.UPDATED_DATE AS updatedDate
+        FROM
+          TNT_SS_PLAN SP
+        WHERE
+          SP.SS_PLAN_ID = #{ssPlanId, jdbcType=INTEGER}
+    
+    </select>
+    
+    <select id="getAllPartsOfPlan" parameterType="com.chinaplus.common.entity.TntSsPart" resultType="com.chinaplus.common.entity.TntSsPart">
+    
+        SELECT
+          SPT.SS_PARTS_ID AS ssPartsId
+          , SPT.SS_PLAN_ID AS ssPlanId
+          , SPT.ORDER_STATUS_ID AS orderStatusId
+          , SPT.PARTS_ID AS partsId
+          , SPT.QTY AS qty
+          , SPT.CREATED_BY AS createdBy
+          , SPT.CREATED_DATE AS createdDate
+          , SPT.UPDATED_BY AS updatedBy
+          , SPT.UPDATED_DATE AS updatedDate
+          , SPT.VERSION AS version
+        FROM
+          TNT_SS_PARTS SPT
+          INNER JOIN TNF_ORDER_STATUS OS
+            ON OS.ORDER_STATUS_ID = SPT.ORDER_STATUS_ID
+            AND OS.PARTS_ID = SPT.PARTS_ID
+        WHERE
+          SPT.SS_PLAN_ID = #{ssPlanId, jdbcType=INTEGER}
+          AND (OS.FORCE_COMPLETED_QTY = 0
+           OR OS.FORCE_COMPLETED_QTY IS NULL)
+    
+    </select>
+    
+    <select id="getCurrParts" parameterType="com.chinaplus.common.entity.TntSsPart" resultType="com.chinaplus.common.entity.TntSsPart">
+    
+        SELECT
+          SS_PARTS_ID AS ssPartsId
+          , SS_PLAN_ID AS ssPlanId
+          , ORDER_STATUS_ID AS orderStatusId
+          , PARTS_ID AS partsId
+          , QTY AS qty
+          , CREATED_BY AS createdBy
+          , CREATED_DATE AS createdDate
+          , UPDATED_BY AS updatedBy
+          , UPDATED_DATE AS updatedDate
+          , VERSION AS version
+        FROM
+          TNT_SS_PARTS
+        WHERE
+          SS_PLAN_ID = #{ssPlanId, jdbcType=INTEGER}
+          AND PARTS_ID = #{partsId, jdbcType=INTEGER}
+          AND ORDER_STATUS_ID = #{orderStatusId, jdbcType=INTEGER}
+    
+    </select>
+    
+    <update id="completedTntSsPlan" parameterType="com.chinaplus.common.entity.TntSsPlan">
+            UPDATE 
+                TNT_SS_PLAN
+            SET 
+                  UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+                , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+                , VERSION = VERSION + 1
+                , COMPLETED_FLAG = #{completedFlag,jdbcType=INTEGER}
+            WHERE
+                SS_PLAN_ID = #{ssPlanId,jdbcType=INTEGER}
+    </update>
+    
+    <insert id="addSSMaster" parameterType="com.chinaplus.common.entity.TntSsMaster">
+        INSERT 
+        INTO 
+        TNT_SS_MASTER (
+              SS_ID
+            , ORDER_ID    
+            , OFFICE_ID  
+            , REVISION_VERSION
+            , UPLOADED_BY
+            , UPLOADED_DATE
+            , CREATED_BY
+            , CREATED_DATE
+            , UPDATED_BY
+            , UPDATED_DATE
+            , VERSION
+        )
+        VALUES
+        (
+            #{ssId,jdbcType=INTEGER},
+            #{orderId,jdbcType=INTEGER},
+            #{officeId,jdbcType=VARCHAR},
+            0,
+            #{uploadedBy,jdbcType=INTEGER},
+            #{uploadedDate,jdbcType=TIMESTAMP},
+            #{createdBy,jdbcType=INTEGER},
+            #{createdDate,jdbcType=TIMESTAMP},
+            #{updatedBy,jdbcType=INTEGER},
+            #{updatedDate,jdbcType=TIMESTAMP},
+            1
+        )
+    </insert>
+    
+    <insert id="addSSPlan" parameterType="com.chinaplus.common.entity.TntSsPlan">
+    
+        <include refid="ConstDef"/>
+        INSERT 
+        INTO 
+        TNT_SS_PLAN (
+              SS_PLAN_ID
+            , SS_ID    
+            , TRANSPORT_MODE  
+            , ETD    
+            , ETA
+            , CC_DATE
+            , IMP_INB_PLAN_DATE
+            , ORIGINAL_VERSION 
+            , REVISION_VERSION
+            , REVISION_REASON
+            , NIRD_FLAG 
+            , COMPLETED_FLAG
+            , CREATED_BY  
+            , CREATED_DATE    
+            , UPDATED_BY  
+            , UPDATED_DATE    
+            , VERSION
+        )
+        VALUES
+        (
+            #{ssPlanId,jdbcType=INTEGER},
+            #{ssId,jdbcType=INTEGER},
+            #{transportMode,jdbcType=INTEGER},
+            #{etd,jdbcType=DATE},
+            #{eta,jdbcType=DATE},
+            #{ccDate,jdbcType=DATE},
+            #{impInbPlanDate,jdbcType=DATE},
+            #{originalVersion,jdbcType=INTEGER},
+            #{revisionVersion,jdbcType=INTEGER},
+            #{revisionReason,jdbcType=VARCHAR},
+            #{nirdFlag,jdbcType=INTEGER},
+            #{completedFlag,jdbcType=INTEGER},
+            #{createdBy,jdbcType=INTEGER},
+            #{createdDate,jdbcType=TIMESTAMP},
+            #{updatedBy,jdbcType=INTEGER},
+            #{updatedDate,jdbcType=TIMESTAMP},
+            1
+        )
+    </insert>
+    
+    <insert id="addSSParts" parameterType="com.chinaplus.common.entity.TntSsPart">
+        INSERT 
+        INTO 
+        TNT_SS_PARTS (
+               SS_PARTS_ID  
+             , SS_PLAN_ID  
+             , ORDER_STATUS_ID  
+             , PARTS_ID 
+             , QTY 
+             , CREATED_BY 
+             , CREATED_DATE 
+             , UPDATED_BY 
+             , UPDATED_DATE 
+             , VERSION 
+        )
+        VALUES
+        (
+            #{ssPartsId,jdbcType=INTEGER},
+            #{ssPlanId,jdbcType=INTEGER},
+            #{orderStatusId,jdbcType=INTEGER},
+            #{partsId,jdbcType=INTEGER},
+            #{qty,jdbcType=DECIMAL},
+            #{createdBy,jdbcType=INTEGER},
+            #{createdDate,jdbcType=TIMESTAMP},
+            #{updatedBy,jdbcType=INTEGER},
+            #{updatedDate,jdbcType=TIMESTAMP},
+            1
+        )
+    </insert>
+    
+    <update id="updateSSParts" parameterType="com.chinaplus.common.entity.TntSsPart">
+            UPDATE
+                TNT_SS_PARTS
+            SET
+                  QTY = #{qty,jdbcType=DECIMAL}
+                , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+                , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+                , VERSION = VERSION + 1
+            WHERE
+                SS_PARTS_ID = #{ssPartsId,jdbcType=INTEGER}
+    </update>
+    
+    <select id="queryMaxVersion" parameterType="com.chinaplus.common.entity.IFOrderEntity" resultType="com.chinaplus.common.entity.IFOrderEntity">
+    
+        SELECT DISTINCT
+          CASE
+            WHEN B.ORIGINAL_VERSION IS NULL
+            THEN 1
+            ELSE 2
+            END AS newPlanFlag
+          , CASE
+            WHEN B.ORIGINAL_VERSION IS NULL
+            THEN A.ORIGINAL_VERSION
+            ELSE B.ORIGINAL_VERSION
+            END AS originalVersion
+          , CASE
+            WHEN B.ORIGINAL_VERSION IS NULL
+            THEN 0
+            ELSE B.REVISION_VERSION
+            END AS revisionVersion
+        FROM
+          (
+            SELECT
+              P1.SS_ID
+              , P1.ORIGINAL_VERSION
+              , P1.REVISION_VERSION
+            FROM
+              TNT_SS_PLAN P1
+            WHERE
+              P1.SS_ID = #{ssId, jdbcType=INTEGER}
+              AND P1.ORIGINAL_VERSION = (
+                SELECT
+                  MAX(ORIGINAL_VERSION)
+                FROM
+                  TNT_SS_PLAN P
+                WHERE
+                  P.SS_ID = P1.SS_ID
+              )
+          ) A
+          LEFT JOIN (
+            SELECT
+              P2.SS_ID
+              , P2.ORIGINAL_VERSION
+              , P2.REVISION_VERSION
+            FROM
+              TNT_SS_PLAN P2
+            WHERE
+              P2.SS_ID = #{ssId, jdbcType=INTEGER}
+              AND P2.ETD = #{etd, jdbcType=DATE}
+              AND P2.ETA = #{eta, jdbcType=DATE}
+              <if test="null == impPlanCustomDate">
+                  AND P2.CC_DATE IS NULL
+              </if>
+              <if test="null != impPlanCustomDate">
+                  AND P2.CC_DATE = #{impPlanCustomDate,jdbcType=DATE}
+              </if>
+              <if test="null == impPlanInboundDate">
+                  AND P2.IMP_INB_PLAN_DATE IS NULL
+              </if>
+              <if test="null != impPlanInboundDate">
+                  AND P2.IMP_INB_PLAN_DATE = #{impPlanInboundDate,jdbcType=DATE}
+              </if>
+              AND P2.ORIGINAL_VERSION = (
+                SELECT
+                  MAX(ORIGINAL_VERSION)
+                FROM
+                  TNT_SS_PLAN P
+                WHERE
+                  P.SS_ID = P2.SS_ID
+                  AND P.ETD = P2.ETD
+              )
+          ) B
+            ON B.SS_ID = A.SS_ID
+        ORDER BY
+          revisionVersion DESC
+    
+    </select>
+    
+    <delete id="delTntSsParts" parameterType="com.chinaplus.common.entity.TntSsPart">
+        DELETE FROM 
+          TNT_SS_PARTS
+        WHERE
+          SS_PARTS_ID = #{ssPartsId, jdbcType=INTEGER}
+    </delete>
+    
+    <delete id="delTntSsPlan" parameterType="com.chinaplus.common.entity.TntSsPlan">
+        DELETE FROM 
+          TNT_SS_PLAN
+        WHERE
+          SS_PLAN_ID = #{ssPlanId, jdbcType=INTEGER}
+    </delete>
+    
+</mapper>

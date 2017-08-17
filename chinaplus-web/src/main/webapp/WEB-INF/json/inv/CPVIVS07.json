@@ -1,0 +1,226 @@
+/**
+ * Create New Invoice Screen
+ * 
+ * @screen CPVIVS07
+ * @author gu_chengchen
+ */
+CPVIVS07 = {
+    id : chinaplus.screen.CPVIVS07,
+    title : chinaplus.label.CPVIVS07_Label_PageTitle,
+    xtype : 'grid',
+    autoScroll : true,
+    border : true,
+    closable : false,
+    enableColumnHide : false,
+    enableColumnMove : false,
+    qtip : true,
+    columnLines : true,
+    selModel : Ext.create('Ext.ux.selection.CheckBoxModel', {
+                checkOnly : true
+            }),
+    viewConfig : {
+        loadMask : false
+    },
+    plugins : [{
+                ptype : 'gridheaderfilters'
+            }, {
+                ptype : 'emptystoreview'
+            }, {
+                ptype : 'headerfiltertoolbar',
+                showMore : true,
+                pageSize : TRF.cnst.PAGE_SIZE_COMMON
+            }],
+    header : false,
+    headerPosition : 'bottom',
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    columns : [{
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPVIVS07_Grid_ImportOrderNo + '</div>',
+                width : 130,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'impOrderNo',
+                sortable : false,
+                filter : 'string'
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPVIVS07_Grid_CustomerOrderNo + '</div>',
+                width : 130,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'cusOrderNo',
+                sortable : false,
+                filter : 'string'
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPVIVS07_Grid_SODate + '</div>',
+                width : 160,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'soDate',
+                sortable : false,
+                align : 'center',
+                filter : 'date',
+                filterPlugins : [{
+                            ptype : 'datePickerClear'
+                        }]
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPVIVS07_Grid_ExpCountry + '</div>',
+                width : 100,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'expCountry',
+                sortable : false,
+                align : 'center',
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPVIVS07, 'common/loadActiveRegions', 'Combo', chinaplus.screen.CPVIVS07 + '_expCountryStore')
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPVIVS07_Grid_ImpCountry + '</div>',
+                width : 100,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'impCountry',
+                sortable : false,
+                align : 'center',
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPVIVS07, 'common/loadActiveRegions', 'Combo', chinaplus.screen.CPVIVS07 + '_impCountryStore')
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPVIVS07_Grid_TTCCustomerCode + '</div>',
+                width : 130,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'ttcCustomerCode',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPVIVS07, 'common/loadOfficeCustomers', 'Combo', chinaplus.screen.CPVIVS07 + '_customerStore')
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPVIVS07_Grid_NonInvoicedQty + '</div>',
+                width : 120,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'nonInvoicedQty',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    options : chinaplus.master.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_NonInvoicedQty)
+                },
+                align : 'right',
+                renderer : function(v, p, record) {
+                    return TRF.util.getDecimalFormatByDigits(v, 3);
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPVIVS07_Grid_OrderStatus + '</div>',
+                width : 130,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'orderStatus',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    options : chinaplus.master.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_InvoiceOrderStatus)
+                },
+                renderer : function(v, p, record) {
+                    return chinaplus.master.getMasterName(chinaplus.master.consts.TnmCodeCategory_InvoiceOrderStatus, v);
+                }
+            }],
+    tbar : [{
+                text : chinaplus.label.CPVIVS07_Button_DownloadBlankInvoice,
+                id : chinaplus.screen.CPVIVS07 + '_downloadBlankInvoice',
+                iconCls : 'btn-download',
+                handler : function() {
+                    CPVIVS07.downloadBlankInvoice();
+                }
+            }, {
+                text : chinaplus.label.CPVIVS07_Button_UploadNewInvoice,
+                id : chinaplus.screen.CPVIVS07 + '_uploadNewInvoice',
+                iconCls : 'btn-upload',
+                handler : function() {
+                    TRF.util.popupApplication(chinaplus.screen.CPVIVS08, chinaplus.screen.CPVIVS08);
+                }
+            }],
+    store : TRF.util.createStore(chinaplus.screen.CPVIVS07, 'inv/CPVIVS07/loadOrderList', 'InvoiceOrderList', chinaplus.screen.CPVIVS07 + '_orderStore'),
+
+    /**
+     * The initialize function.
+     * 
+     * @param params the parameter object passed to this screen
+     */
+    initialize : function(params) {
+
+        var me = this;
+        var gridStore = this.store;
+
+        // Set deafult condition
+        TRF.util.setDefaultValuesForToolBar(this, 'nonInvoicedQty', '1');
+
+        // Load the invoice list.
+        TRF.util.loadStore(gridStore, null, function() {
+                    gridStore.on('beforeload', function() {
+                                TRF.core.mask(TRF.core.maskMsg.load, null, me);
+                            });
+                    gridStore.on('load', function() {
+                                TRF.core.unmask(me);
+                            });
+                }, {
+                    filters : {
+                        nonInvoicedQty : '1'
+                    }
+                });
+        me.doLayout();
+        TRF.util.addGridTip(me);
+    },
+
+    /**
+     * Download blank invoice.
+     */
+    downloadBlankInvoice : function() {
+
+        // Select Check
+        var selectionArray = Ext.getCmp(chinaplus.screen.CPVIVS07).getSelectionModel().getSelection();
+        if (selectionArray.length == 0) {
+            TRF.util.showMessageBoxByMsgIdAndArgs('w1011');
+            return;
+        }
+
+        // Download
+        var orderIdArray = [];
+        selectionArray.forEach(function(record) {
+                    orderIdArray.push(record.data.orderId);
+                });
+        var params = {};
+        params[TRF.cnst.SELECTEDDATAS] = orderIdArray;
+
+        TRF.util.downloadSubmit(null, chinaplus.screen.CPVIVS07, "inv/CPVIVF03/downloadcheck", params, "inv/CPVIVF03/download");
+    }
+
+}

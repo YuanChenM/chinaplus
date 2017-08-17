@@ -1,0 +1,1124 @@
+/**
+ * CPMCLS02                                         
+ * 
+ * @author shi_yuxi
+ * @screen CPMCLS02
+ */
+
+CPMCLS02 = {
+    xtype : 'form',
+    id : chinaplus.screen.CPMCLS02,
+    title : chinaplus.label.CPMCLS02_Label_PageTitle,
+    frame : true,
+    autoHeight : false,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    autoScroll : true,
+    buttonAlign : 'left',
+    fieldDefaults : {
+        labelAlign : 'right',
+        labelWidth : 150
+    },
+    items : [
+            {
+                xtype : 'container',
+                minWidth : 1000,
+                layout : 'column',
+                margin : '15 0 0 0',
+                autoScroll : true,
+                items : [
+                        {
+                            columnWidth : 0.25,
+                            minWidth : 400,
+                            xtype : 'container',
+                            autoHeight : true,
+                            items : [
+                                    {
+                                        xtype : 'combobox',
+                                        fieldLabel : chinaplus.label.CPMCLS02_Label_OfficeCode,
+                                        id : chinaplus.screen.CPMCLS02
+                                                + '_officeId',
+                                        //name : 'officeId',
+                                        fieldStyle : 'background:rgb(255,255,153)',
+                                        editable : false,
+                                        store : Ext.create(
+                                                        'Ext.data.Store',
+                                                        {
+                                                            id : chinaplus.screen.CPMCLS02 + '_OfficeStore',
+                                                            fields : [ 'id', 'text' ],
+                                                            data : chinaplus.master.getMasterByCategoryForCombo(chinaplus.master.consts.UserOffices)
+                                                        }),
+                                        dispalyField : 'text',
+                                        valueField : 'id',
+                                        forceSelection : true,
+                                        width : 400,
+                                        labelSeparator : '',
+                                        listeners : {
+                                            afterrender : function(o) {
+                                                if(!TRF.util.isDetailTabMode_New()) {
+                                                    TRF.util.makeCmpReadOnly(o);
+                                                }
+                                            },
+                                            change : function(o)
+                                            {
+                                                if (TRF.util.isDetailTabMode_New()) {
+                                                    var officeCode = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_officeId').getRawValue();
+                                                    var whsParam = {
+                                                        'officeCode' : officeCode
+                                                    };
+                                                    var whsStore = Ext.getStore(chinaplus.screen.CPMCLS02 + '_getWHSCodeList');
+                                                    Ext.getCmp(chinaplus.screen.CPMCLS02 + '_whCode').setRawValue("");
+                                                    TRF.util.loadStore(whsStore, whsParam);
+
+                                                    // get store
+                                                    var preStore = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_TTCCustomerList').store;
+
+                                                    if (preStore && preStore.isStore) {
+                                                        // check not exits
+                                                        var datas = preStore.getRange();
+                                                        if (datas.length > 0) {
+                                                            for (var i = 0; i < datas.length; i++) {
+                                                                var data = datas[i];
+                                                                preStore.remove(data);
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        xtype : 'textfield',
+                                        fieldLabel : 'originalOfficeId',
+                                        id : chinaplus.screen.CPMCLS02 + '_originalOfficeId',
+                                        name : 'officeId',
+                                        fieldStyle : 'background:rgb(255,255,153)',
+                                        width : 400,
+                                        hidden : true,
+                                        hiddenLabel : true,
+                                        labelSeparator : ''
+                                    },
+                                    {
+                                        xtype : 'textfield',
+                                        fieldLabel : chinaplus.label.CPMCLS02_Label_CustomerCode,
+                                        id : chinaplus.screen.CPMCLS02
+                                                + '_customerCode',
+                                        name : 'customerCode',
+                                        fieldStyle : 'background:rgb(255,255,153)',
+                                        width : 400,
+                                        labelSeparator : '',
+                                        autoFitErrors : false,
+                                        listeners : {
+                                            afterrender : function(o) {
+                                                if(!TRF.util.isDetailTabMode_New()) {
+                                                    TRF.util.makeCmpReadOnly(o);
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        xtype : 'textfield',
+                                        fieldLabel : 'customerId',
+                                        id : chinaplus.screen.CPMCLS02 + '_customerId',
+                                        name : 'customerId',
+                                        fieldStyle : 'background:rgb(255,255,153)',
+                                        width : 400,
+                                        hidden : true,
+                                        hiddenLabel : true,
+                                        labelSeparator : ''
+                                    },
+                                    {
+                                        xtype : 'textfield',
+                                        id : chinaplus.screen.CPMCLS02 + '_regionCode',
+                                        name : 'region',
+                                        fieldStyle : 'background:rgb(255,255,153)',
+                                        width : 400,
+                                        hidden : true,
+                                        hiddenLabel : true,
+                                        labelSeparator : ''
+                                    },
+                                    {
+                                        xtype : 'textfield',
+                                        fieldLabel : 'version',
+                                        id : chinaplus.screen.CPMCLS02 + '_version',
+                                        name : 'version',
+                                        fieldStyle : 'background:rgb(255,255,153)',
+                                        width : 400,
+                                        hidden : true,
+                                        hiddenLabel : true,
+                                        labelSeparator : ''
+                                    },
+                                    {
+                                        xtype : 'textfield',
+                                        fieldLabel : 'authOffice',
+                                        id : chinaplus.screen.CPMCLS02 + '_authOffice',
+                                        fieldStyle : 'background:rgb(255,255,153)',
+                                        width : 400,
+                                        hidden : true,
+                                        hiddenLabel : true,
+                                        labelSeparator : ''
+                                    }
+                            ]
+                        },
+                        {
+                            xtype : 'container',
+                            items : [
+                                    {
+                                        margin : '25 0 0 0',
+                                        xtype : 'textfield',
+                                        fieldLabel : chinaplus.label.CPMCLS02_Label_CustomerName,
+                                        id : chinaplus.screen.CPMCLS02
+                                                + '_customerName',
+                                        name : 'customerName',
+                                        fieldStyle : 'background:rgb(255,255,153)',
+                                        width : 400,
+                                        labelSeparator : '',
+                                        autoFitErrors : false,
+                                        listeners : {
+                                            afterrender : function(o) {
+                                                if(TRF.util.isDetailTabMode_View()) {
+                                                    TRF.util.makeCmpReadOnly(o);
+                                                }
+                                            }
+                                        }
+                                    }]
+                        } ]
+            },
+            {
+                xtype : 'container',
+                minWidth : 1000,
+                layout : 'column',
+                margin : '15 0 0 0',
+                autoScroll : true,
+                items : [
+                        {
+                            columnWidth : 0.25,
+                            minWidth : 400,
+                            xtype : 'container',
+                            items : [
+                                    {
+                                        xtype : 'combobox',
+                                        fieldLabel : chinaplus.label.CPMCLS02_Label_Region,
+                                        id : chinaplus.screen.CPMCLS02 + '_region',
+                                        fieldStyle : 'background:rgb(255,255,153)',
+                                        editable : false,
+                                        master : chinaplus.master.consts.TnmRegion,
+                                        store : TRF.util.createStore(chinaplus.screen.CPMCLS02, 'mm/CPMPMS02/loadCountry', 'Combo', chinaplus.screen.CPMCLS02 + '_countryStore'),
+                                        dispalyField : 'text',
+                                        valueField : 'id',
+                                        forceSelection : true,
+                                        width : 400,
+                                        labelSeparator : '',
+                                        listeners : {
+                                            afterrender : function(o) {
+                                                if(TRF.util.isDetailTabMode_View()) {
+                                                    TRF.util.makeCmpReadOnly(o);
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        xtype : 'combo',
+                                        fieldLabel : chinaplus.label.CPMCLS01_Grid_BusinessPattern,
+                                        id : chinaplus.screen.CPMCLS02 + '_businessPattern',
+                                        width : 400,
+                                        name : 'businessPattern',
+                                        fieldStyle : 'background:rgb(255,255,153)',
+                                        editable : false,
+                                        store : Ext.create('Ext.data.Store', {
+                                                    id : chinaplus.screen.CPMCLS02 + '_businessPattern',
+                                                    fields : ['id', 'text'],
+                                                    data : chinaplus.master.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_BUSINESS_PATTERN)
+                                                }),
+                                        dispalyField : 'text',
+                                        valueField : 'id',
+                                        labelSeparator : '',
+                                        listeners : {
+                                            afterrender : function(o) {
+                                                if(!TRF.util.isDetailTabMode_New()) {
+                                                    TRF.util.makeCmpReadOnly(o);
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        xtype : 'textfield',
+                                        fieldLabel : chinaplus.label.CPMCLS02_Label_Address1,
+                                        id : chinaplus.screen.CPMCLS02
+                                                + '_address1',
+                                        name : 'address1',
+                                        fieldStyle : 'background:rgb(255,255,153)',
+                                        width : 400,
+                                        labelSeparator : '',
+                                        autoFitErrors : false,
+                                        listeners : {
+                                            afterrender : function(o) {
+                                                if(TRF.util.isDetailTabMode_View()) {
+                                                    TRF.util.makeCmpReadOnly(o);
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        xtype : 'textfield',
+                                        fieldLabel : chinaplus.label.CPMCLS02_Label_Address2,
+                                        id : chinaplus.screen.CPMCLS02
+                                                + '_address2',
+                                        name : 'address2',
+                                        allowBlank : true,
+                                        width : 400,
+                                        labelSeparator : '',
+                                        autoFitErrors : false,
+                                        listeners : {
+                                            afterrender : function(o) {
+                                                if(TRF.util.isDetailTabMode_View()) {
+                                                    TRF.util.makeCmpReadOnly(o);
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        xtype : 'textfield',
+                                        fieldLabel : chinaplus.label.CPMCLS02_Label_Address3,
+                                        id : chinaplus.screen.CPMCLS02
+                                                + '_address3',
+                                        name : 'address3',
+                                        allowBlank : true,
+                                        width : 400,
+                                        labelSeparator : '',
+                                        autoFitErrors : false,
+                                        listeners : {
+                                            afterrender : function(o) {
+                                                if(TRF.util.isDetailTabMode_View()) {
+                                                    TRF.util.makeCmpReadOnly(o);
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        xtype : 'textfield',
+                                        fieldLabel : chinaplus.label.CPMCLS02_Label_Address4,
+                                        id : chinaplus.screen.CPMCLS02
+                                                + '_address4',
+                                        name : 'address4',
+                                        allowBlank : true,
+                                        width : 400,
+                                        labelSeparator : '',
+                                        autoFitErrors : false,
+                                        listeners : {
+                                            afterrender : function(o) {
+                                                if(TRF.util.isDetailTabMode_View()) {
+                                                    TRF.util.makeCmpReadOnly(o);
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        xtype : 'textfield',
+                                        fieldLabel : chinaplus.label.CPMCLS02_Label_PostalCode,
+                                        id : chinaplus.screen.CPMCLS02
+                                                + '_postalCode',
+                                        name : 'postalCode',
+                                        fieldStyle : 'background:rgb(255,255,153)',
+                                        width : 400,
+                                        labelSeparator : '',
+                                        autoFitErrors : false,
+                                        listeners : {
+                                            afterrender : function(o) {
+                                                if(TRF.util.isDetailTabMode_View()) {
+                                                    TRF.util.makeCmpReadOnly(o);
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        xtype : 'combobox',
+                                        fieldLabel : chinaplus.label.CPMCLS02_Label_DiscontinueIndicator,
+                                        id : chinaplus.screen.CPMCLS02
+                                                + '_activeFlag',
+                                        name : 'activeFlag',
+                                        fieldStyle : 'background:rgb(255,255,153)',
+                                        editable : false,
+                                        msgTarget : 'side',
+                                        master : chinaplus.master.consts.TnmCodeCategory_DiscontinueIndicator,
+                                        store : Ext
+                                                .create(
+                                                        'Ext.data.Store',
+                                                        {
+                                                            id : chinaplus.screen.CPMCLS02 + '_activeFlagStore',
+                                                            fields : [ 'id', 'text' ],
+                                                            data : chinaplus.master.getMasterByCategoryForCombo(chinaplus.master.consts.TnmCodeCategory_DiscontinueIndicator)
+                                                        }),
+                                        dispalyField : 'text',
+                                        valueField : 'id',
+                                        queryMode : 'local',
+                                        forceSelection : true,
+                                        width : 400,
+                                        labelSeparator : '',
+                                        listeners : {
+                                            afterrender : function(o) {
+                                                if (TRF.util.isDetailTabMode_View()) {
+                                                    TRF.util.makeCmpReadOnly(o);
+                                                } else if (TRF.util.isDetailTabMode_New()) {
+                                                    TRF.util.makeCmpReadOnly(o);
+                                                }
+                                            }
+                                        }
+                                    } ]
+                        },
+                        // Columns 2
+                        {
+                            xtype : 'container',
+                            items : [
+                                    {
+                                        xtype : 'textfield',
+                                        fieldLabel : chinaplus.label.CPMCLS02_Label_Contact1,
+                                        id : chinaplus.screen.CPMCLS02
+                                                + '_contact1',
+                                        name : 'contact1',
+                                        fieldStyle : 'background:rgb(255,255,153)',
+                                        width : 400,
+                                        labelSeparator : '',
+                                        autoFitErrors : false,
+                                        listeners : {
+                                            afterrender : function(o) {
+                                                if(TRF.util.isDetailTabMode_View()) {
+                                                    TRF.util.makeCmpReadOnly(o);
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        xtype : 'textfield',
+                                        fieldLabel : chinaplus.label.CPMCLS02_Label_Telephone1,
+                                        id : chinaplus.screen.CPMCLS02
+                                                + '_telephone1',
+                                        name : 'telephone1',
+                                        fieldStyle : 'background:rgb(255,255,153)',
+                                        width : 400,
+                                        labelSeparator : '',
+                                        autoFitErrors : false,
+                                        listeners : {
+                                            afterrender : function(o) {
+                                                if(TRF.util.isDetailTabMode_View()) {
+                                                    TRF.util.makeCmpReadOnly(o);
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        xtype : 'textfield',
+                                        fieldLabel : chinaplus.label.CPMCLS02_Label_Fax1,
+                                        id : chinaplus.screen.CPMCLS02 + '_fax1',
+                                        name : 'fax1',
+                                        fieldStyle : 'background:rgb(255,255,153)',
+                                        width : 400,
+                                        labelSeparator : '',
+                                        autoFitErrors : false,
+                                        listeners : {
+                                            afterrender : function(o) {
+                                                if(TRF.util.isDetailTabMode_View()) {
+                                                    TRF.util.makeCmpReadOnly(o);
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        xtype : 'textfield',
+                                        fieldLabel : chinaplus.label.CPMCLS02_Label_Email1,
+                                        id : chinaplus.screen.CPMCLS02 + '_email1',
+                                        name : 'email1',
+                                        fieldStyle : 'background:rgb(255,255,153)',
+                                        width : 400,
+                                        labelSeparator : '',
+                                        autoFitErrors : false,
+                                        listeners : {
+                                            afterrender : function(o) {
+                                                if(TRF.util.isDetailTabMode_View()) {
+                                                    TRF.util.makeCmpReadOnly(o);
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        xtype : 'textfield',
+                                        fieldLabel : chinaplus.label.CPMCLS02_Label_Contact2,
+                                        id : chinaplus.screen.CPMCLS02
+                                                + '_contact2',
+                                        name : 'contact2',
+                                        allowBlank : true,
+                                        width : 400,
+                                        labelSeparator : '',
+                                        autoFitErrors : false,
+                                        listeners : {
+                                            afterrender : function(o) {
+                                                if(TRF.util.isDetailTabMode_View()) {
+                                                    TRF.util.makeCmpReadOnly(o);
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        xtype : 'textfield',
+                                        fieldLabel : chinaplus.label.CPMCLS02_Label_Telephone2,
+                                        id : chinaplus.screen.CPMCLS02
+                                                + '_telephone2',
+                                        name : 'telephone2',
+                                        allowBlank : true,
+                                        width : 400,
+                                        labelSeparator : '',
+                                        autoFitErrors : false,
+                                        listeners : {
+                                            afterrender : function(o) {
+                                                if(TRF.util.isDetailTabMode_View()) {
+                                                    TRF.util.makeCmpReadOnly(o);
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        xtype : 'textfield',
+                                        fieldLabel : chinaplus.label.CPMCLS02_Label_Fax2,
+                                        id : chinaplus.screen.CPMCLS02 + '_fax2',
+                                        name : 'fax2',
+                                        allowBlank : true,
+                                        width : 400,
+                                        labelSeparator : '',
+                                        autoFitErrors : false,
+                                        listeners : {
+                                            afterrender : function(o) {
+                                                if(TRF.util.isDetailTabMode_View()) {
+                                                    TRF.util.makeCmpReadOnly(o);
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        xtype : 'textfield',
+                                        fieldLabel : chinaplus.label.CPMCLS02_Label_Email2,
+                                        id : chinaplus.screen.CPMCLS02 + '_email2',
+                                        name : 'email2',
+                                        allowBlank : true,
+                                        width : 400,
+                                        labelSeparator : '',
+                                        autoFitErrors : false,
+                                        listeners : {
+                                            afterrender : function(o) {
+                                                if(TRF.util.isDetailTabMode_View()) {
+                                                    TRF.util.makeCmpReadOnly(o);
+                                                }
+                                            }
+                                        }
+                                    } ]
+                        } ]
+            },
+            {
+                xtype : 'container',
+                minWidth : 1000,
+                layout : 'column',
+                margin : '15 0 0 0',
+                autoScroll : true,
+                items : [
+                        // Columns 1
+                        {
+                            columnWidth : 0.25,
+                            minWidth : 400,
+                            xtype : 'container',
+                            autoHeight : true,
+                            defaultType : 'textfield',
+                            defaults : {
+                                readOnly : true,
+                                allowBlank : true,
+                                fieldCls : 'x-field-input-ellipsis'
+                            },
+                            items : [
+                                    {
+                                        fieldLabel : chinaplus.label.CPMCLS02_Label_CreatedDate,
+                                        id : chinaplus.screen.CPMCLS02
+                                                + '_createdDate',
+                                        name : 'createdDate',
+                                        readOnly : true,
+                                        width : 400,
+                                        labelSeparator : '',
+                                        autoFitErrors : false,
+                                        listeners : {
+                                            afterrender : function(o) {
+                                                TRF.util.makeCmpReadOnly(o);
+                                            }
+                                        }
+                                    },
+                                    {
+                                        fieldLabel : chinaplus.label.CPMCLS02_Label_CreatedBy,
+                                        id : chinaplus.screen.CPMCLS02
+                                                + '_createdBy',
+                                        name : 'createdBy',
+                                        readOnly : true,
+                                        width : 400,
+                                        labelSeparator : '',
+                                        autoFitErrors : false,
+                                        listeners : {
+                                            afterrender : function(o) {
+                                                TRF.util.makeCmpReadOnly(o);
+                                            }
+                                        }
+                                    } ]
+                        },
+                        // Columns 2
+                        {
+                            xtype : 'container',
+                            autoHeight : true,
+                            defaultType : 'textfield',
+                            defaults : {
+                                readOnly : true,
+                                allowBlank : true,
+                                fieldCls : 'x-field-input-ellipsis'
+                            },
+                            items : [
+                                    {
+                                        fieldLabel : chinaplus.label.CPMCLS02_Label_LastModifiedDate,
+                                        id : chinaplus.screen.CPMCLS02
+                                                + '_updatedDate',
+                                        name : 'updatedDate',
+                                        readOnly : true,
+                                        width : 400,
+                                        allowBlank : true,
+                                        labelSeparator : '',
+                                        autoFitErrors : false,
+                                        listeners : {
+                                            afterrender : function(o) {
+                                                TRF.util.makeCmpReadOnly(o);
+                                            }
+                                        }
+                                    },
+                                    {
+                                        fieldLabel : chinaplus.label.CPMCLS02_Label_LastModifiedBy,
+                                        id : chinaplus.screen.CPMCLS02
+                                                + '_updatedBy',
+                                        name : 'updatedBy',
+                                        readOnly : true,
+                                        width : 400,
+                                        allowBlank : true,
+                                        labelSeparator : '',
+                                        autoFitErrors : false,
+                                        listeners : {
+                                            afterrender : function(o) {
+                                                TRF.util.makeCmpReadOnly(o);
+                                            }
+                                        }
+                                    } ]
+                        } ]
+            },{
+                title : chinaplus.label.CPMCLS02_Label_TT_logixCustomerList,
+                xtype : 'form',
+                autoScroll : false,
+	            minWidth : 1000,
+                border : true,
+                closable : false,
+                frame : true,
+                items : [{
+	                xtype : 'container',
+	                layout : 'column',
+	                autoScroll : false,
+	                items : [{
+	                    margin : '5 0 5 0',
+	                    xtype : 'combo',
+	                    store : TRF.util.createStore(
+	                        chinaplus.screen.CPMCLS02, 'mm/CPMCLS02/getWHSCodeList', 'Combo',
+	                        chinaplus.screen.CPMCLS02 + '_getWHSCodeList'),
+	                    dispalyField : 'text',
+	                    valueField : 'id',
+	                    msgTarget : 'side',
+	                    queryMode : 'local',
+	                    editable : true,
+	                    fieldLabel : chinaplus.label.CPMCLS02_Grid_Office,
+	                    width : 420,
+	                    autoFitErrors : false,
+	                    id : chinaplus.screen.CPMCLS02 + '_whCode',
+	                    style : 'width:50%;',
+	                    listeners : {
+	                        afterrender : function(o) {
+	                            if (TRF.util.isDetailTabMode_View()) {
+	                                TRF.util.makeCmpReadOnly(o);
+	                            }
+	                        }
+	                    }
+	            	},{
+	                    margin : '5 0 5 -20',
+	                    xtype : 'textfield',
+	                    msgTarget : 'side',
+	                    fieldLabel : chinaplus.label.CPMCLS02_Grid_Role,
+	                    width : 420,
+	                    autoFitErrors : false,
+	                    id : chinaplus.screen.CPMCLS02 + '_ttcCode',
+	                    style : 'width:50%;',
+	                    listeners : {
+	                        afterrender : function(o) {
+	                            if (TRF.util.isDetailTabMode_View()) {
+	                                TRF.util.makeCmpReadOnly(o);
+	                            }
+	                        }
+	                    }
+	                }]
+                }]
+           },{
+                id : chinaplus.screen.CPMCLS02 + '_TTCCustomerList',
+                xtype : 'gridpanel',
+                //title : chinaplus.label.CPMCLS02_Label_TT_logixCustomerList,
+                autoScroll : true,
+                border : false,
+                closable : false,
+                enableColumnHide : false,
+                enableColumnMove : false,
+                qtip : true,
+                columnLines : true,
+                margin : '2',
+                columnLines : true,
+                selModel : Ext.create('Ext.ux.selection.CheckBoxModel', {
+                            checkOnly : true
+                        }),
+                columns : [{
+                            xtype : 'gridcolumn',
+                            text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPMCLS02_Grid_Office + '</div>',
+                            width : 300,
+                            items : [{
+                                        xtype : 'header',
+                                        hidden : true
+                                    }],
+                            dataIndex : 'whsCode',
+                            sortable : false,
+                        },{
+                            xtype : 'gridcolumn',
+                            text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPMCLS02_Grid_Role + '</div>',
+                            width : 300,
+                            items : [{
+                                        xtype : 'header',
+                                        hidden : true
+                                    }],
+                            dataIndex : 'whsCustomerCode',
+                            sortable : false,
+                            resizable : false
+                        }],
+                dockedItems : [{
+                                xtype: 'toolbar',
+                                hidden : true,
+                                id : chinaplus.screen.CPMCLS02 + '_btnToolBar',
+                                hidden : TRF.util.isDetailTabMode_View() ? true : false,
+                                dock: 'top',
+                                items: [{
+                                            xtype : 'button',
+                                            text : chinaplus.label.CPMCLS02_Button_Add,
+                                            id : chinaplus.screen.CPMCLS02 + '_Add',
+                                            iconCls : 'btn-add',
+                                            handler : function () {
+                                                var my = Ext.getCmp(chinaplus.screen.CPMCLS02);
+                                                my.addItem();
+                                            }
+                                        }, {
+                                            xtype : 'button',
+                                            text : chinaplus.label.CPCUMS02_Button_Remove,
+                                            id : chinaplus.screen.CPMCLS02 + '_Remove',
+                                            iconCls : 'btn-remove',
+                                            /**remove record*/
+                                            handler : function () {
+                                                var my = Ext.getCmp(chinaplus.screen.CPMCLS02);
+                                                my.removeItem();
+                                            }
+                                       }]
+                                }],
+                store : TRF.util.createStore(chinaplus.screen.CPMCLS02, 'mm/CPMCLS02/getWHSList', 'TtcCustomerList', chinaplus.screen.CPMCLS02 + '_wareHouseCodeStore',{})
+            }],
+            tbar : [ {
+                xtype : 'button',
+                id : chinaplus.screen.CPMCLS02 + '_btnSave',
+                iconCls : 'btn-save',
+                text : chinaplus.label.CPMCLS02_Button_Save,
+                handler : function() {
+                    Ext.getCmp(chinaplus.screen.CPMCLS02).btnAddAction();
+                }
+            }, {
+                xtype : 'button',
+                id : chinaplus.screen.CPMCLS02 + '_btnModify',
+                iconCls : 'btn-modify',
+                text : chinaplus.label.CPMCLS02_Button_Modify,
+                handler : function() {
+                    Ext.getCmp(chinaplus.screen.CPMCLS02).btnUpdateAction();
+                }
+            } ],
+            
+    // add for #0214061 begin
+    needConfirmChange : TRF.util.isDetailTabMode_View() ? false : true,
+    // add for #0214061 end
+            
+    /**
+     * The initialize function.
+     * 
+     * @param params.
+     *            the parameter object passed to this screen.
+     */
+    initialize : function(inParam) {
+        var me = this;
+        var customerCode = null;
+        var officeCode = null;
+        var officeId = null;
+        var region = null;
+        if(null != inParam)
+        {
+        	customerCode = inParam.customerCode;
+            officeCode = inParam.officeCode;
+            officeId = inParam.officeId;
+            region = inParam.region;
+        }
+        if(TRF.util.isDetailTabMode_View()) {
+            Ext.getCmp(chinaplus.screen.CPMCLS02 + '_btnSave').hide();
+        } else {
+            Ext.getCmp(chinaplus.screen.CPMCLS02 + '_btnModify').hide();
+        }
+        var ajaxUrl = 'master/CPMCLS02/init';
+        if (null != customerCode && '' != customerCode && null != officeCode && '' != officeCode) {
+            var param = {
+                'customerCode' : customerCode,
+                'officeCode' : officeCode
+            };
+            var func = function(response) {
+                Ext.getCmp(chinaplus.screen.CPMCLS02 + '_customerCode').setValue(customerCode);
+                Ext.getCmp(chinaplus.screen.CPMCLS02 + '_regionCode').setValue(region);
+                var authOffice = inParam['authOfficeId'];
+                if (!authOffice || authOffice == null || authOffice == ""){
+                	authOffice = officeId;
+                }
+                Ext.getCmp(chinaplus.screen.CPMCLS02 + '_authOffice').setValue(authOffice);
+                CPMCLS02.setPageValue(response.result);
+                Ext.getCmp(chinaplus.screen.CPMCLS02 + '_officeId').setRawValue(officeCode);
+                var grid = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_TTCCustomerList');
+                //-----------------------------------------------------------------
+                //load grid
+                if(response.result != null) {
+                     officeId = response.result.officeId;
+                     var modifyAuth = response.result.modifyAuth;
+                     if (modifyAuth != true){
+                    	Ext.getCmp(chinaplus.screen.CPMCLS02 + '_btnSave').hide();
+                     	Ext.getCmp(chinaplus.screen.CPMCLS02 + '_btnModify').hide();
+                     }
+                     var gridParam = {'customerId' : response.result.customerId, 'officeId' : officeId};
+                     TRF.util.loadStore(grid.store, gridParam, function(records) {
+                         TRF.util.dataLoadEnd(chinaplus.screen.CPMCLS02);
+                   });
+               } else {
+                   TRF.util.dataLoadEnd(chinaplus.screen.CPMCLS02);
+               }
+               //------------------------------------------------------------- 
+            }
+            TRF.util.detailSubmit(func, me, ajaxUrl, param);
+            Ext.getCmp(chinaplus.screen.CPMCLS02 + '_officeId').setRawValue(officeCode);
+        } else {
+            Ext.getCmp(chinaplus.screen.CPMCLS02 + '_activeFlag').setValue(0);
+        }
+        this.doLayout();
+        TRF.util.addFieldTipToPanel(me);
+        if(TRF.util.isDetailTabMode_Edit())
+        {
+            var whsParam = {'officeCode' : officeCode};
+            TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCLS02 + '_getWHSCodeList'),whsParam); 
+        }
+    },
+    
+    /**
+     * setPageValue
+     */
+    setPageValue : function(detailData) {
+//        alert(calVal);
+        Ext.getCmp(chinaplus.screen.CPMCLS02 + '_createdBy').setValue(detailData.createdUser);
+        Ext.getCmp(chinaplus.screen.CPMCLS02 + '_updatedBy').setValue(detailData.updatedUser);
+        Ext.getCmp(chinaplus.screen.CPMCLS02 + '_region').setValue(detailData.region);
+        Ext.getCmp(chinaplus.screen.CPMCLS02 + '_region').setRawValue(detailData.region);
+        
+        var businessPattern = detailData.businessPattern;
+        if(null != businessPattern && '' != businessPattern) {
+            Ext.getCmp(chinaplus.screen.CPMCLS02 + '_businessPattern').setValue('' + detailData.businessPattern);
+        }
+    },
+    /**
+     * btnAddAction
+     */
+    btnAddAction : function() {
+        var isok = CPMCLS02.checkCom();
+        if (isok == 'false') {
+        	return;
+        }
+        var messageCode = 'c1001';
+        var messageParam = 'CPMOLS02_Button_Save';
+        var ttcStore =  Ext.getStore(chinaplus.screen.CPMCLS02 + '_wareHouseCodeStore');
+        if(ttcStore && ttcStore.isStore)
+        {
+                // check not exits
+            var datas = ttcStore.getRange();
+            if (datas.length == 0) {
+            	messageCode = 'c1029';
+        		messageParam = null;
+            }
+        }
+        //TRF.util.showMessageBoxByMsgIdAndArgs('c1001', 'CPMOLS02_Button_Save', function(btn) {
+        TRF.util.showMessageBoxByMsgIdAndArgs(messageCode, messageParam, function(btn) {
+        if (btn == 'yes') {
+            
+            var officeId = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_originalOfficeId').getValue();
+            if (Ext.isEmpty(officeId)) {
+                officeId = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_officeId').getValue();
+            }
+            var customerId = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_customerId').getValue();
+            var customerCode = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_customerCode').getValue();
+            var customerName = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_customerName').getValue();
+            var region = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_region').getValue();
+            var address1 = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_address1').getValue();
+            var address2 = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_address2').getValue();
+            var address3 = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_address3').getValue();
+            var address4 = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_address4').getValue();
+            var contact1 = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_contact1').getValue();
+            var telephone1 = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_telephone1').getValue();
+            var fax1 = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_fax1').getValue();
+            var email1 = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_email1').getValue();
+            var postalCode = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_postalCode').getValue();
+            var contact2 = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_contact2').getValue();
+            var telephone2 = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_telephone2').getValue();
+            var fax2 = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_fax2').getValue();
+            var email2 = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_email2').getValue();
+            var businessPattern = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_businessPattern').getValue();
+            var activeFlag = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_activeFlag').getValue();
+            var version = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_version').getValue();
+            var upParams = {
+                'officeId' : officeId,
+                'customerId' : customerId,
+                'customerCode' : customerCode,
+                'customerName' : customerName,
+                'region' : region,
+                'address1' : address1,
+                'address2' : address2,
+                'address3' : address3,
+                'address4' : address4,
+                'contact1' : contact1,
+                'telephone1' : telephone1,
+                'fax1' : fax1,
+                'email1' : email1,
+                'postalCode' : postalCode,
+                'contact2' : contact2,
+                'telephone2' : telephone2,
+                'fax2' : fax2,
+                'email2' : email2,
+                'businessPattern' : businessPattern,
+                'activeFlag' : activeFlag,
+                'version' : version
+            };
+            
+            var authOffice = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_authOffice').getValue();
+            if(null == authOffice || '' == authOffice) {
+                Ext.getCmp(chinaplus.screen.CPMCLS02 + '_authOffice').setValue(officeId);
+            }
+            var ttcStore =  Ext.getStore(chinaplus.screen.CPMCLS02 + '_wareHouseCodeStore');
+            var records = [];
+                ttcStore.each(function(recordttc, index) {
+                    records[index] = recordttc.data;
+                });
+                
+             // set ttc customer
+             upParams['ttcCus'] = records;
+             
+             var ajaxUrl = 'master/CPMCLS02/save';
+             var func = function(responseData) {
+                 if(responseData.success) {
+                     // show success message
+                     Ext.getCmp(chinaplus.screen.CPMCLS02).isEdited = false;
+                     TRF.util.showMessageBoxByMsgIdAndArgs('i1002');
+                     CPMCLS02.toViewPage();
+                 }
+             }
+            TRF.util.ajaxSubmit(func, 'CPMCLS02', ajaxUrl, null, {data: upParams});
+        }});
+    },
+    /**
+     * btnUpdateAction
+     */
+    btnUpdateAction : function() {
+        var officeId = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_officeId').getRawValue();
+        var customerCode = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_customerCode').getValue();
+        var regionCode = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_regionCode').getValue();
+        var authOffice = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_authOffice').getValue();
+        //var param = {'customerCode' : customerCode, 'customerId' : customerId};
+        var param = {'officeCode' : officeId, 'customerCode' : customerCode, 'region' : regionCode, 'authOfficeId' : authOffice};
+        
+        TRF.util.setDetailTabMode_Edit();
+        var detailApplicationId = 'CPMCLS02';
+        TRF.util.addApplication(detailApplicationId, detailApplicationId, true, param);
+    },
+    
+    /**
+     * btnUpdateAction
+     */
+    toViewPage : function() {
+    	 var officeId = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_officeId').getRawValue();
+         var customerCode = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_customerCode').getValue();
+         var regionCode = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_regionCode').getValue();
+         var authOffice = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_authOffice').getValue();
+         //var param = {'customerCode' : customerCode, 'customerId' : customerId};
+         var param = {'officeCode' : officeId, 'customerCode' : customerCode, 'region' : regionCode, 'authOfficeId' : authOffice};
+        
+        TRF.util.setDetailTabMode_View();
+        var detailApplicationId = 'CPMCLS02';
+        TRF.util.addApplication(detailApplicationId, detailApplicationId, true, param);
+    },
+    
+    /**
+     * checkCom
+     */
+    checkCom : function() {
+        var popMsg = TRF.util.getMessage('w1003');
+        var lsMsgs = [];
+        var officeId = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_officeId').getValue();
+        var customerCode = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_customerCode').getValue();
+        var customerName = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_customerName').getValue();
+        var region = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_region').getValue();
+        var address1 = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_address1').getValue();
+        var contact1 = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_contact1').getValue();
+        var telephone1 = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_telephone1').getValue();
+        var telephone2 = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_telephone2').getValue();
+        var fax1 = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_fax1').getValue();
+        var email1 = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_email1').getValue();
+        var email2 = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_email2').getValue();
+        var postalCode = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_postalCode').getValue();
+        var businessPattern = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_businessPattern').getValue();
+        var activeFlag = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_activeFlag').getValue();
+        if(TRF.util.isDetailTabMode_New()) {
+            if (Ext.isEmpty(officeId)) {
+                Ext.Array.push(lsMsgs,TRF.util.getMessage('w1003_001',chinaplus.label.CPMCLS02_Label_OfficeCode));
+            }
+            if (Ext.isEmpty(customerCode)) {
+                Ext.Array.push(lsMsgs,TRF.util.getMessage('w1003_001',chinaplus.label.CPMCLS02_Label_CustomerCode));
+            }
+        }
+        if (Ext.isEmpty(customerName)) {
+             Ext.Array.push(lsMsgs,TRF.util.getMessage('w1003_001',chinaplus.label.CPMCLS02_Label_CustomerName));
+        }
+        if (Ext.isEmpty(region)) {
+             Ext.Array.push(lsMsgs,TRF.util.getMessage('w1003_001',chinaplus.label.CPMCLS02_Label_Region));
+        }
+        if (Ext.isEmpty(address1)) {
+             Ext.Array.push(lsMsgs,TRF.util.getMessage('w1003_001',chinaplus.label.CPMCLS02_Label_Address1));
+        }
+        if (Ext.isEmpty(contact1)) {
+             Ext.Array.push(lsMsgs,TRF.util.getMessage('w1003_001',chinaplus.label.CPMCLS02_Label_Contact1));
+        }
+        var tel = /^[\u0020\u0026-\u0040\u005B-\u0060\u007B-\u007D]*$/;
+        if (Ext.isEmpty(telephone1)) {
+            Ext.Array.push(lsMsgs, TRF.util.getMessage('w1003_001', chinaplus.label.CPMCLS02_Label_Telephone1));
+        } else if ( !tel.test(telephone1)){
+        	Ext.Array.push(lsMsgs,TRF.util.getMessage('w1003_028', chinaplus.label.CPMCLS02_Label_Telephone1));
+        }
+        if ( !Ext.isEmpty(telephone2) && !tel.test(telephone2)) {
+        	Ext.Array.push(lsMsgs,TRF.util.getMessage('w1003_028', chinaplus.label.CPMCLS02_Label_Telephone2));
+        }
+        if (Ext.isEmpty(fax1)) {
+             Ext.Array.push(lsMsgs,TRF.util.getMessage('w1003_001',chinaplus.label.CPMCLS02_Label_Fax1));
+        }
+        var email = /^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/;
+        if (Ext.isEmpty(email1)) {
+            Ext.Array.push(lsMsgs, TRF.util.getMessage('w1003_001', chinaplus.label.CPMCLS02_Label_Email1));
+        } else if (!email.test(email1)) {
+	        Ext.Array.push(lsMsgs,TRF.util.getMessage('w1003_028', chinaplus.label.CPMCLS02_Label_Email1));
+        }
+        if ( !Ext.isEmpty(email2) && !email.test(email2)){
+        	Ext.Array.push(lsMsgs,TRF.util.getMessage('w1003_028', chinaplus.label.CPMCLS02_Label_Email2));
+        }
+        if (Ext.isEmpty(postalCode)) {
+             Ext.Array.push(lsMsgs,TRF.util.getMessage('w1003_001',chinaplus.label.CPMCLS02_Label_PostalCode));
+        }
+        if (Ext.isEmpty(businessPattern)) {
+             Ext.Array.push(lsMsgs,TRF.util.getMessage('w1003_001',chinaplus.label.CPMCLS01_Grid_BusinessPattern));
+        }
+        if(TRF.util.isDetailTabMode_Edit)
+        {
+            if (Ext.isEmpty(activeFlag)) {
+                 Ext.Array.push(lsMsgs,TRF.util.getMessage('w1003_001',chinaplus.label.CPMCLS02_Label_DiscontinueIndicator));
+            }
+        }
+        // get store
+        var preStore = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_TTCCustomerList').store;
+        /*if(preStore && preStore.isStore)
+        {
+                // check not exits
+            var datas = preStore.getRange();
+            if (datas.length == 0) {
+                Ext.Array.push(lsMsgs,TRF.util.getMessage('w1003_001',chinaplus.label.CPMCLS02_Label_TT_logixCustomerList));
+            }
+        }*/
+        
+        if(!Ext.isEmpty(lsMsgs)) {
+            TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, popMsg,
+            lsMsgs);
+            return 'false';
+        }
+        return 'true';
+    },
+    addItem : function()
+    {
+        var whCode = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_whCode').getRawValue();
+        var ttcCode = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_ttcCode').getValue();
+        // check select
+        var msgs = [];
+        var flag = false;
+        if(Ext.isEmpty(whCode)){
+            Ext.Array.push(msgs, TRF.util.getMessage('w1003_001', 'CPMCLS02_Grid_Office'));
+            flag = true;
+        }
+        if(Ext.isEmpty(ttcCode)){
+            Ext.Array.push(msgs, TRF.util.getMessage('w1003_001', 'CPMCLS02_Grid_Role'));
+            flag = true;
+        }
+        if(flag)
+        {
+            TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, TRF.util.getMessage('w1003'), msgs);
+            return;
+        }
+        // get store
+        var preStore = Ext.getCmp(chinaplus.screen.CPMCLS02 + '_TTCCustomerList').store;
+        
+        if(preStore && preStore.isStore)
+        {
+            // check not exits
+            var datas = preStore.getRange();
+            if (datas.length > 0) {
+                for(var i = 0; i < datas.length; i++){
+                    var data = datas[i];
+                    if(data.get('whsCode') == whCode && data.get('whsCustomerCode') == ttcCode){
+                        // show message
+                        var message = TRF.util.getMessage('w1003_015',["CPMCLS02_Label_WhsCustCode", "CPMCLS02_Label_WhsCust"]);
+                        TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, message,[message]);
+                        return;
+                    }
+                }
+            }
+        }
+        // set into store
+        var values = {};
+        values["whsCode"] = whCode;
+        values["whsCustomerCode"] = ttcCode;
+        values["whsCustomerId"] = '-1';
+        preStore.add(values);
+        Ext.getCmp(chinaplus.screen.CPMCLS02 + '_whCode').setValue("");
+        Ext.getCmp(chinaplus.screen.CPMCLS02 + '_ttcCode').setValue("");
+        // reflesh
+        Ext.getCmp(chinaplus.screen.CPMCLS02).isEdited = true;
+    },
+    removeItem : function(){
+        // grid panel
+        var gridpanel = Ext.getCmp(chinaplus.screen.CPMCLS02).down('gridpanel');
+        //var officeId = record.data.officeId;
+        var detailInfo = TRF.util.getDetailInfo(Ext.getCmp(chinaplus.screen.CPMCLS02));
+        // no select 
+        var selectionArray = gridpanel.getSelectionModel().getSelection();
+        if (selectionArray.length == 0) {
+            TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, TRF.util.getMessage('w1011'));
+            return;
+        }
+        gridpanel.getStore().remove(selectionArray);
+        // set is edited
+        Ext.getCmp(chinaplus.screen.CPMCLS02).isEdited = true;
+    }
+}

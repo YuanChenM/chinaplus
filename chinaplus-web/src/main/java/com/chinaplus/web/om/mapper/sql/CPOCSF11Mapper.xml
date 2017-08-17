@@ -1,0 +1,260 @@
+<!--
+@screen CPOCSF11
+@author li_feng
+-->
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.om.service.CPOCSF11Service">
+        
+    <sql id="ConstDef">
+        <bind name="ACTIVE" value="@com.chinaplus.common.consts.CodeConst$User$Status@ACTIVE" />
+        <bind name="V-V" value="@com.chinaplus.common.consts.CodeConst$BusinessPattern@V_V" />
+        <bind name="AISIN" value="@com.chinaplus.common.consts.CodeConst$BusinessPattern@AISIN" />
+        <bind name="COMPLETED" value="@com.chinaplus.common.consts.CodeConst$PartsStatus@COMPLETED" />
+    </sql>
+        
+    <!-- get business patterns -->
+    <select id="getBusinessPatterns" parameterType="com.chinaplus.core.bean.BaseParam" resultType="com.chinaplus.web.om.entity.CPOCSF11Entity">
+        SELECT  DISTINCT
+            CODE_NAME AS CODENAME
+        FROM  
+            TNM_CODE_CATEGORY
+        WHERE 
+            CODE_CATEGORY = #{swapData.codeCategory}
+    </select>
+
+    <!-- get 1.uom , 2.customer code , 3.business pattern , 4.CustomerStockLockFlg -->
+    <select id="getAllcheckInfo" parameterType="com.chinaplus.core.bean.ObjectParam" resultType="com.chinaplus.web.om.entity.CPOCSF11Entity">
+        SELECT 
+            A.PARTS_ID AS PARTSID
+            ,A.CUSTOMER_CODE AS CUSTOMERCODE
+            ,A.TTC_PARTS_NO AS TTCPARTSNO
+            ,A.CUST_PARTS_NO AS CUSTPARTSNO
+            ,A.BUSINESS_PATTERN AS BUSINESSPATTERN
+            ,A.OS_CUST_STOCK_FLAG AS OSCUSTSTOCKFLAG
+            ,A.SA_CUST_STOCK_FLAG AS SACUSTSTOCKFLAG
+            ,B.DECIMAL_DIGITS AS DECIMALDIGITS
+        FROM  
+            TNM_PARTS_MASTER A
+        INNER JOIN 
+            TNM_UOM B 
+        ON 
+            A.UOM_CODE = B.UOM_CODE
+        WHERE 
+            A.OFFICE_ID = #{currentOfficeId}
+        And
+            A.CUSTOMER_CODE 
+        IN
+            <foreach item="cpocsf11Entity" index="Index" collection="swapData.CPOCSF11EntityList" open="(" separator="," close=")">  
+                #{cpocsf11Entity.customerCode}
+            </foreach>
+    </select>
+    
+    <!-- get customer code -->
+     <select id="getUserCustomerCode" parameterType="com.chinaplus.core.bean.ObjectParam" resultType="com.chinaplus.web.om.entity.CPOCSF11Entity">
+        SELECT 
+            CUSTOMER_CODE AS CUSTOMERCODE
+        FROM  
+            TNM_CUSTOMER A
+        INNER JOIN 
+            TNM_USER_CUSTOMER B 
+        ON
+            A.CUSTOMER_ID = B.CUSTOMER_ID
+        WHERE
+            B.USER_ID = #{loginUserId}
+        AND
+            B.OFFICE_ID = #{currentOfficeId}
+    </select>
+
+    <!-- get Registered PartNo -->
+    <select id="getRegisteredPartNo" parameterType="com.chinaplus.core.bean.ObjectParam" resultType="com.chinaplus.web.om.entity.CPOCSF11Entity">
+        <include refid="ConstDef"/>
+        SELECT 
+            A.PARTS_ID AS PARTSID
+            ,A.CUSTOMER_CODE AS CUSTOMERCODE
+            ,A.TTC_PARTS_NO AS TTCPARTSNO
+            ,A.CUST_PARTS_NO AS CUSTPARTSNO
+        FROM  
+            TNM_PARTS_MASTER A
+        INNER JOIN 
+            TNM_EXP_PARTS B
+        ON 
+            A.PARTS_ID=B.PARTS_ID
+        WHERE 
+            A.OFFICE_ID = #{currentOfficeId}
+        And
+            B.PARTS_STATUS = ${COMPLETED}
+        AND
+            A.CUSTOMER_CODE 
+        IN
+            <foreach item="cpocsf11Entity" index="Index" collection="swapData.CPOCSF11EntityList" open="(" separator="," close=")">  
+                #{cpocsf11Entity.customerCode}
+            </foreach>
+    </select>
+    
+    <!-- get Registered PartNo -->
+    <select id="getEndingStockDate" parameterType="com.chinaplus.core.bean.ObjectParam" resultType="com.chinaplus.web.om.entity.CPOCSF11Entity">
+        <include refid="ConstDef"/>
+        SELECT 
+            A.ENDING_STOCK_DATE AS ENDINGSTOCKDATE
+            ,B.CUSTOMER_CODE AS CUSTOMERCODE
+            ,B.TTC_PARTS_NO AS TTCPARTSNO
+            ,B.CUST_PARTS_NO AS CUSTPARTSNO
+        FROM  
+            TNT_CUSTOMER_STOCK A
+        INNER JOIN
+            TNM_PARTS_MASTER B 
+        ON 
+            A.PARTS_ID = B.PARTS_ID 
+        AND 
+            A.CUSTOMER_ID = B.CUSTOMER_ID 
+        AND 
+            A.OFFICE_ID = B.OFFICE_ID
+        WHERE 
+            A.OFFICE_ID = #{currentOfficeId}
+        And
+            A.STATUS = ${ACTIVE}
+        AND
+            B.CUSTOMER_CODE 
+        IN
+            <foreach item="cpocsf11Entity" index="Index" collection="swapData.CPOCSF11EntityList" open="(" separator="," close=")">  
+                #{cpocsf11Entity.customerCode}
+            </foreach>
+    </select>
+    
+    <!-- Find old Data -->
+    <select id="findOldData" parameterType="com.chinaplus.core.bean.ObjectParam" resultType="com.chinaplus.web.om.entity.CPOCSF11Entity">
+        <include refid="ConstDef"/>
+        SELECT 
+            A.PARTS_ID 
+        FROM
+            TNT_CUSTOMER_STOCK A
+        INNER JOIN
+            TNM_PARTS_MASTER B
+        ON 
+            A.PARTS_ID = B.PARTS_ID
+        WHERE
+            A.OFFICE_ID = #{currentOfficeId}
+        AND
+            A.CUSTOMER_ID = B.CUSTOMER_ID
+        AND
+            A.PARTS_ID = B.PARTS_ID
+        AND
+            A.STATUS = ${ACTIVE}
+        AND
+            A.ENDING_STOCK_DATE = #{swapData.ENTITY.customerStockDate}
+        AND
+            B.CUSTOMER_CODE = #{swapData.ENTITY.customerCode}     
+            <if test="swapData.BSPTN == 1" >
+        AND
+            B.TTC_PARTS_NO = #{swapData.ENTITY.partNo}
+            </if>
+            <if test="swapData.BSPTN == 2" >
+        AND
+            B.CUST_PARTS_NO = #{swapData.ENTITY.partNo}
+            </if>      
+    </select>
+    
+    <!-- Select Data Value -->
+    <select id="selectDataValue" parameterType="com.chinaplus.core.bean.ObjectParam" resultType="com.chinaplus.web.om.entity.DBTEMPEntity">
+        <include refid="ConstDef"/>
+        SELECT
+            CUSTOMER_ID AS CUSTOMERID
+            ,PARTS_ID AS PARTSID
+        FROM
+            TNM_PARTS_MASTER
+        WHERE
+            CUSTOMER_CODE = #{swapData.ENTITY.customerCode}
+        <if test="swapData.BSPTN == 1" >
+        AND
+            TTC_PARTS_NO = #{swapData.ENTITY.partNo}
+        </if>
+        <if test="swapData.BSPTN == 2" >
+        AND
+             CUST_PARTS_NO = #{swapData.ENTITY.partNo}
+        </if>      
+
+    </select>
+
+    <!-- Insert Data -->
+    <insert id="InsertData" parameterType="com.chinaplus.core.bean.ObjectParam">
+        <include refid="ConstDef"/>
+        INSERT INTO
+            TNT_CUSTOMER_STOCK
+            (CUSTOMER_STOCK_ID
+            ,OFFICE_ID
+            ,CUSTOMER_ID
+            ,PARTS_ID
+            ,STOCK_QTY
+            ,ENDING_STOCK_DATE
+            ,STATUS
+            ,VERSION
+            ,CREATED_BY
+            ,CREATED_DATE
+            ,UPDATED_BY
+            ,UPDATED_DATE)
+        VALUES
+            (NEXTVAL FOR SEQ_TNT_CUSTOMER_STOCK
+            ,#{currentOfficeId}
+            ,#{swapData.CUSTOMER_ID}
+            ,#{swapData.PARTS_ID}
+            ,#{swapData.ENTITY.customerStock}
+            ,#{swapData.ENTITY.customerStockDate}
+            ,${ACTIVE}
+            ,1
+            ,#{loginUserId}
+            ,#{swapData.CREATED_DATE}
+            ,#{loginUserId}
+            ,#{swapData.UPDATED_DATE})         
+    </insert>
+    
+    <!-- Update Old Customer Stock Status -->
+    <update id="updateOldStatus" parameterType="com.chinaplus.core.bean.ObjectParam">
+         <include refid="ConstDef"/>
+         UPDATE
+            TNT_CUSTOMER_STOCK
+         SET
+            STATUS = 0
+            ,VERSION = VERSION + 1
+            ,UPDATED_BY = #{loginUserId}
+            ,UPDATED_DATE = #{swapData.UPDATED_DATE}
+         WHERE
+            OFFICE_ID = #{currentOfficeId}
+         AND
+            STATUS = ${ACTIVE}
+         AND
+            ENDING_STOCK_DATE != #{swapData.ENTITY.customerStockDate}
+         AND
+            CUSTOMER_ID = #{swapData.CUSTOMER_ID}    
+         AND
+            PARTS_ID = #{swapData.PARTS_ID}
+    </update>
+    
+    
+    <!-- Update Old Customer Stock -->
+    <update id="updateOldCustomerStock" parameterType="com.chinaplus.core.bean.ObjectParam">
+        <include refid="ConstDef"/>
+        UPDATE
+            TNT_CUSTOMER_STOCK
+         SET
+            STOCK_QTY = #{swapData.ENTITY.customerStock}
+            ,VERSION = VERSION + 1
+            ,UPDATED_BY = #{loginUserId}
+            ,UPDATED_DATE = #{swapData.UPDATED_DATE}
+         WHERE
+            OFFICE_ID = #{currentOfficeId}
+         AND
+            STATUS = ${ACTIVE}
+         AND
+            ENDING_STOCK_DATE = #{swapData.ENTITY.customerStockDate}
+         AND
+            CUSTOMER_ID = #{swapData.CUSTOMER_ID}
+         AND
+            PARTS_ID = #{swapData.PARTS_ID}
+    </update>  
+    
+    
+</mapper>
+

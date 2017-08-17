@@ -1,0 +1,412 @@
+<!--
+@screen CPSKSS01
+@author shi_yuxi
+-->
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="com.chinaplus.web.sa.service.CPSDRF01Service">
+    <sql id="ConstDef">
+        <bind name="BusinessPattern_vv" value="@com.chinaplus.common.consts.CodeConst$BusinessPattern@V_V" />
+        <bind name="BusinessPattern_aisin" value="@com.chinaplus.common.consts.CodeConst$BusinessPattern@AISIN" />
+        <bind name="DONE" value="@com.chinaplus.common.consts.CodeConst$InvoiceIrregularsStatus@DONE" />
+    </sql>
+    <select id="getvvInfo" parameterType="com.chinaplus.core.bean.BaseParam" 
+            resultType="com.chinaplus.web.sa.entity.CPSDRF01Entity" >
+        SELECT
+            M.PARTS_ID AS partsId
+            , PM.TTC_PARTS_NO AS ttcPart
+            , PM.CUSTOMER_CODE AS customerCode
+            , PM.UOM_CODE AS uomCode
+            , TOR.EXP_REGION AS region
+            , S.SUPPLIER_CODE AS supplierCode
+            , TOR.EXP_SO_DATE AS expSoDate
+            , TOR.IMP_PO_NO AS impPoNo
+            , N.ETD AS etd
+            , SUM(COALESCE(M.QTY, 0)) AS sumQty 
+        FROM
+            TNT_SS_PARTS M 
+            INNER JOIN TNM_PARTS_MASTER PM ON M.PARTS_ID = PM.PARTS_ID 
+            INNER JOIN TNF_ORDER_STATUS OS ON M.ORDER_STATUS_ID = OS.ORDER_STATUS_ID
+            INNER JOIN TNM_SUPPLIER S ON OS.SUPPLIER_ID = S.SUPPLIER_ID 
+            INNER JOIN TNT_SS_PLAN N ON M.SS_PLAN_ID = N.SS_PLAN_ID 
+            INNER JOIN 
+                (
+                    SELECT
+                        MIN(B.CREATED_DATE) AS CREATED_DATE 
+                        , A.ORDER_ID 
+                    FROM
+                        TNT_SS_MASTER A 
+                        INNER JOIN TNT_SS_PLAN B ON A.SS_ID = B.SS_ID 
+                        INNER JOIN 
+                            (
+                                SELECT 
+                                    AA.ORDER_ID 
+                                FROM
+                                    TNT_SS_MASTER AA 
+                                    INNER JOIN TNT_SS_PLAN BB ON BB.SS_ID = AA.SS_ID 
+                                    INNER JOIN TNT_ORDER CC ON AA.ORDER_ID = CC.ORDER_ID 
+                                    INNER JOIN TNM_CUSTOMER DD ON CC.CUSTOMER_ID = DD.CUSTOMER_ID
+                                WHERE
+                                    AA.OFFICE_ID = #{currentOfficeId}
+                                    AND BB.ETD <![CDATA[>=]]> #{swapData.etdFrom}
+                                    AND BB.ETD <![CDATA[<=]]> #{swapData.etdTo}
+						            <if test="swapData.ttcOrderNo != null and swapData.ttcOrderNo != ''">
+						                AND CC.IMP_PO_NO = #{swapData.ttcOrderNo}
+						            </if>
+						            <if test="swapData.region != null and swapData.region.size() != 0">
+						                AND CC.EXP_REGION IN 
+						                    <foreach collection="swapData.region" item="item" index="index" open="(" separator="," close=")">
+						                        #{item}
+						                    </foreach>
+						            </if>
+						            AND CC.EXP_SO_DATE <![CDATA[>=]]> #{swapData.oidFrom}
+						            AND CC.EXP_SO_DATE <![CDATA[<=]]> #{swapData.oidTo}
+						            <if test="swapData.customerCode != null and swapData.customerCode.size() != 0">
+						                AND DD.CUSTOMER_CODE IN
+						                    <foreach collection="swapData.customerCode" item="item" index="index" open="(" separator="," close=")">
+						                        #{item}
+						                    </foreach>
+						            </if>
+						        GROUP BY 
+						          AA.ORDER_ID 
+                            ) X ON A.ORDER_ID = X.ORDER_ID 
+                    GROUP BY 
+                        A.ORDER_ID 
+                ) Y ON N.CREATED_DATE = Y.CREATED_DATE
+            INNER JOIN TNT_SS_MASTER SSM ON N.SS_ID = SSM.SS_ID AND SSM.ORDER_ID = Y.ORDER_ID
+            INNER JOIN TNT_ORDER TOR ON TOR.ORDER_ID = Y.ORDER_ID
+        WHERE
+            1=1
+            <if test="swapData.ttcPartsNo != null and swapData.ttcPartsNo != ''">
+                AND PM.TTC_PARTS_NO = #{swapData.ttcPartsNo}
+            </if>
+            <if test="swapData.supplierCode != null and swapData.supplierCode.size() != 0">
+                AND S.SUPPLIER_CODE IN
+                    <foreach collection="swapData.supplierCode" item="item" index="index" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+            </if>
+        GROUP BY 
+            M.PARTS_ID 
+            , PM.TTC_PARTS_NO 
+            , PM.CUSTOMER_CODE 
+            , TOR.EXP_REGION 
+            , S.SUPPLIER_CODE 
+            , TOR.EXP_SO_DATE 
+            , TOR.IMP_PO_NO
+            , N.ETD 
+            , PM.UOM_CODE
+        ORDER BY 
+            PM.TTC_PARTS_NO 
+            , PM.CUSTOMER_CODE 
+            , TOR.EXP_REGION 
+            , S.SUPPLIER_CODE 
+            , TOR.EXP_SO_DATE 
+            , TOR.IMP_PO_NO 
+            , N.ETD
+    </select>
+    <select id="getaisinInfo" parameterType="com.chinaplus.core.bean.BaseParam" 
+            resultType="com.chinaplus.web.sa.entity.CPSDRF01Entity" >
+        SELECT 
+            C.PARTS_ID partsId,
+            F.TTC_PARTS_NO ttcPart,
+            F.CUSTOMER_CODE customerCode,
+            F.UOM_CODE AS uomCode,
+            G.REGION_CODE region,
+            G.SUPPLIER_CODE supplierCode,
+            E.ORDER_MONTH orderMonth,
+            E.KANBAN_PLAN_NO planNo,
+            D.ETD etd,
+            SUM(COALESCE(C.QTY,0)) sumQty
+        FROM 
+        	TNT_KANBAN_SHIPPING_PARTS C
+			INNER JOIN TNT_KANBAN_SHIPPING D ON D.KANBAN_SHIPPING_ID IN (
+				SELECT 
+					KS.KANBAN_SHIPPING_ID 
+				FROM 
+					TNT_KANBAN_SHIPPING KS
+				WHERE 
+					KS.KANBAN_ID IN (
+						SELECT 
+							KB.KANBAN_ID 
+						FROM 
+							TNT_KANBAN KB
+							INNER JOIN (SELECT 
+											AA.KANBAN_ID,
+											MIN(AA.CREATED_DATE) AS CREATE_DATE_MIN
+										FROM TNT_KANBAN_SHIPPING AA
+										GROUP BY AA.KANBAN_ID
+									) KST ON KST.KANBAN_ID = KS.KANBAN_ID AND KST.CREATE_DATE_MIN = KS.CREATED_DATE
+						WHERE 
+							KB.KANBAN_PLAN_NO IN (
+								SELECT 
+									A.KANBAN_PLAN_NO 
+								FROM 
+                                    TNT_KANBAN A
+									INNER JOIN TNT_KANBAN_SHIPPING B ON B.KANBAN_ID = A.KANBAN_ID AND A.OFFICE_ID = #{currentOfficeId}
+								WHERE 
+									B.ETD <![CDATA[>=]]> #{swapData.etdFrom}
+									AND B.ETD <![CDATA[<=]]> #{swapData.etdTo}
+								GROUP BY A.KANBAN_PLAN_NO 
+								)
+							AND KB.REVISION_VERSION is NULL
+							AND KB.STATUS <![CDATA[<>]]> '99'
+						GROUP BY KB.KANBAN_ID 
+						)
+				GROUP BY KS.KANBAN_SHIPPING_ID 
+				)
+				AND D.REVISION_VERSION is NULL
+				AND D.NIRD_FLAG <![CDATA[<>]]> '1'
+				AND C.KANBAN_SHIPPING_ID = D.KANBAN_SHIPPING_ID
+			INNER JOIN TNT_KANBAN E ON E.KANBAN_ID = D.KANBAN_ID AND E.OFFICE_ID = #{currentOfficeId}
+        INNER JOIN TNM_PARTS_MASTER F ON F.PARTS_ID = C.PARTS_ID
+			INNER JOIN TNM_SUPPLIER G ON G.SUPPLIER_ID = E.SUPPLIER_ID        
+        WHERE
+            D.REVISION_VERSION is null
+        AND E.STATUS <![CDATA[<>]]> '99'
+        AND D.NIRD_FLAG <![CDATA[<>]]> '1'
+        <if test="swapData.ttcPartsNo != null and swapData.ttcPartsNo != ''">
+            AND F.TTC_PARTS_NO = #{swapData.ttcPartsNo}
+        </if>
+        <if test="swapData.customerCode != null and swapData.customerCode.size() != 0">
+            AND 
+            F.CUSTOMER_CODE IN
+            <foreach collection="swapData.customerCode" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="swapData.supplierCode != null and swapData.supplierCode.size() != 0">
+            AND 
+            G.SUPPLIER_CODE IN
+            <foreach collection="swapData.supplierCode" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="swapData.planNo != null and swapData.planNo != ''">
+            AND E.KANBAN_PLAN_NO = #{swapData.planNo}
+        </if>
+        <if test="swapData.region != null and swapData.region.size() != 0">
+            AND 
+            G.REGION_CODE IN 
+            <foreach collection="swapData.region" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        AND E.ORDER_MONTH <![CDATA[>=]]> #{swapData.orderMonthFrom}
+        AND E.ORDER_MONTH <![CDATA[<=]]> #{swapData.orderMonthTo}
+        GROUP BY 
+            C.PARTS_ID,
+            F.TTC_PARTS_NO,
+            F.CUSTOMER_CODE,
+            G.REGION_CODE,
+            G.SUPPLIER_CODE,
+            E.ORDER_MONTH,
+            E.KANBAN_PLAN_NO,
+            D.ETD,
+            F.UOM_CODE
+        ORDER BY
+            F.TTC_PARTS_NO ASC,
+            F.CUSTOMER_CODE ASC,
+            G.REGION_CODE ASC,
+            G.SUPPLIER_CODE ASC,
+            E.ORDER_MONTH ASC,
+            E.KANBAN_PLAN_NO ASC,
+            D.ETD
+    </select>
+    <select id="getInvoiceQty" parameterType="com.chinaplus.core.bean.BaseParam" 
+            resultType="com.chinaplus.web.sa.entity.CPSDRF01Entity" >
+        <include refid="ConstDef"/>
+        SELECT 
+            A.PARTS_ID partsId,
+            D.TTC_PARTS_NO ttcPart,
+            D.CUSTOMER_CODE customerCode,
+            D.UOM_CODE AS uomCode,
+            E.REGION_CODE region,
+            E.SUPPLIER_CODE supplierCode,
+            <if test="swapData.vvFalg">
+            F.EXP_SO_DATE expSoDate,
+            </if>
+            <if test="swapData.aisinFlag">
+            H.ORDER_MONTH orderMonth,
+            </if>
+            <if test="swapData.vvFalg">
+            A.IMP_PO_NO impPoNo,
+            </if>
+            <if test="swapData.aisinFlag">
+            G.KANBAN_PLAN_NO planNo,
+            </if>
+            B.INVOICE_NO invoiceNo,
+            B.ETD etd,
+            SUM(COALESCE(A.QTY,0)) invoiceQty
+        FROM 
+        TNT_INVOICE_PARTS A
+        INNER JOIN TNT_INVOICE B on B.INVOICE_ID = A.INVOICE_ID AND B.OFFICE_ID = #{currentOfficeId}
+        INNER JOIN TNT_INVOICE_SUMMARY C on
+        <if test="swapData.vvFalg"> 
+        C.BUSINESS_PATTERN = ${BusinessPattern_vv}
+        </if>
+        <if test="swapData.aisinFlag">
+        C.BUSINESS_PATTERN = ${BusinessPattern_aisin}
+        </if> 
+        AND C.OFFICE_ID = B.OFFICE_ID
+        AND C.INVOICE_SUMMARY_ID = B.INVOICE_SUMMARY_ID AND C.INVOICE_STATUS <![CDATA[<>]]> '99' AND C.INVOICE_STATUS <![CDATA[<>]]> '1'
+        AND (C.NON_SHIPPING_ROUTE IS NULL OR C.NON_SHIPPING_ROUTE = ${DONE}) AND (C.UPLOAD_STATUS IS NULL OR C.UPLOAD_STATUS = ${DONE})
+        <if test="swapData.aisinFlag">
+            INNER JOIN TNT_INVOICE_GROUP G on G.INVOICE_GROUP_ID = B.INVOICE_GROUP_ID
+            INNER JOIN (
+            	SELECT 
+					AA.KANBAN_PLAN_NO,
+					AA.ORDER_MONTH,
+					MAX(AA.REVISION_VERSION)
+				FROM 
+					TNT_KANBAN AA 
+				WHERE 
+					AA.KANBAN_PLAN_NO IN 
+						<foreach collection="swapData.planNos" item="item" index="index" open="(" separator="," close=")">
+			                #{item}
+			            </foreach>
+					AND AA.OFFICE_ID = #{currentOfficeId}
+				GROUP BY 
+					AA.KANBAN_PLAN_NO,
+					AA.ORDER_MONTH
+            ) H on H.KANBAN_PLAN_NO = G.KANBAN_PLAN_NO
+        </if>
+        INNER JOIN TNM_PARTS_MASTER D ON D.PARTS_ID = A.PARTS_ID
+        INNER JOIN TNM_SUPPLIER E on E.SUPPLIER_ID = A.SUPPLIER_ID
+        <if test="swapData.vvFalg">
+            INNER JOIN TNT_ORDER F on F.OFFICE_ID = B.OFFICE_ID
+            AND F.EXP_REGION = E.REGION_CODE
+            AND F.IMP_PO_NO = A.IMP_PO_NO
+		   	AND F.IMP_PO_NO IN (
+            	SELECT 
+            		CCC.IMP_PO_NO
+            	FROM 
+            		TNT_ORDER CCC
+            	WHERE 
+            		CCC.ORDER_ID IN (
+            			SELECT 
+            				AAA.ORDER_ID
+            			FROM 
+            				TNT_SS_MASTER AAA
+            				INNER JOIN TNT_SS_PLAN BBB ON BBB.SS_ID = AAA.SS_ID
+            			WHERE 
+            				AAA.OFFICE_ID = #{currentOfficeId}
+            				AND BBB.ETD <![CDATA[>=]]> #{swapData.etdFrom}
+            				AND BBB.ETD <![CDATA[<=]]> #{swapData.etdTo}
+            			GROUP BY 
+            			AAA.ORDER_ID
+            		)
+            	GROUP BY 
+            		CCC.IMP_PO_NO
+            )
+            AND F.CUSTOMER_ORDER_NO = A.CUSTOMER_ORDER_NO
+        </if>
+        WHERE 
+        	B.etd <![CDATA[>=]]> #{swapData.etdFrom}
+        	AND B.etd <![CDATA[<=]]> #{swapData.etdTo}
+        <if test = "swapData.ttcPartsNo != null and swapData.ttcPartsNo != ''">
+        AND 
+            D.TTC_PARTS_NO = #{swapData.ttcPartsNo}
+        </if>
+        <if test = "swapData.customerCode != null and swapData.customerCode.size() > 0">
+        AND
+            D.CUSTOMER_CODE IN 
+            <foreach collection="swapData.customerCode" item="item" index="index" open="(" separator="," close=")">
+            #{item}
+            </foreach>
+        </if>
+        <if test = "swapData.supplierCode != null and swapData.supplierCode.size() > 0">
+        AND
+            E.SUPPLIER_CODE IN 
+            <foreach collection="swapData.supplierCode" item="item" index="index" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        </if>
+        <if test="swapData.vvFalg and swapData.ttcOrderNo != null and swapData.ttcOrderNo != ''">
+        AND A.IMP_PO_NO = #{swapData.ttcOrderNo}
+        </if>
+        <if test="swapData.aisinFlag and swapData.planNo != null and swapData.planNo != ''">
+        AND G.KANBAN_PLAN_NO = #{swapData.planNo}
+        </if>
+        
+        <if test = "swapData.region != null and swapData.region.size() > 0">
+        AND
+            E.REGION_CODE IN 
+            <foreach collection="swapData.region" item="item" index="index" open="(" separator="," close=")">
+            #{item}
+            </foreach>
+        </if>
+        <if test="swapData.vvFalg">
+        AND F.EXP_SO_DATE <![CDATA[>=]]> #{swapData.oidFrom}
+        AND F.EXP_SO_DATE <![CDATA[<=]]> #{swapData.oidTo}
+        </if>
+        <if test="swapData.aisinFlag">
+        AND H.ORDER_MONTH <![CDATA[>=]]> #{swapData.orderMonthFrom}
+        AND H.ORDER_MONTH <![CDATA[<=]]> #{swapData.orderMonthTo}
+        </if>
+        <if test="swapData.planNos != null and swapData.planNos.size() > 0">
+        AND 
+            A.PARTS_ID IN (
+            		SELECT DISTINCT
+						X.PARTS_ID
+					FROM 
+						TNT_KANBAN_PARTS X
+					WHERE 
+						X.KANBAN_ID IN (
+									SELECT 
+										Y.KANBAN_ID
+									FROM 
+										TNT_KANBAN Y
+									WHERE 
+										Y.KANBAN_PLAN_NO IN 
+										<foreach collection="swapData.planNos" item="item" index="index" open="(" separator="," close=")">
+							                #{item}
+							            </foreach>
+						)
+			)
+        </if>
+        GROUP BY
+            A.PARTS_ID,
+            D.TTC_PARTS_NO,
+            D.CUSTOMER_CODE,
+            D.UOM_CODE,
+            E.REGION_CODE,
+            E.SUPPLIER_CODE,
+            <if test="swapData.vvFalg">
+            F.EXP_SO_DATE,
+            </if>
+            <if test="swapData.aisinFlag">
+            H.ORDER_MONTH,
+            </if>
+            <if test="swapData.vvFalg">
+            A.IMP_PO_NO,
+            </if>
+            <if test="swapData.aisinFlag">
+            G.KANBAN_PLAN_NO,
+            </if>
+            B.INVOICE_NO,
+            B.ETD
+        ORDER BY
+            D.TTC_PARTS_NO,
+            D.CUSTOMER_CODE,
+            D.UOM_CODE,
+            E.REGION_CODE,
+            E.SUPPLIER_CODE,
+            <if test="swapData.vvFalg">
+            F.EXP_SO_DATE,
+            </if>
+            <if test="swapData.aisinFlag">
+            H.ORDER_MONTH,
+            </if>
+            <if test="swapData.vvFalg">
+            A.IMP_PO_NO,
+            </if>
+            <if test="swapData.aisinFlag">
+            G.KANBAN_PLAN_NO,
+            </if>
+            B.INVOICE_NO,
+            B.ETD
+    </select>
+</mapper>

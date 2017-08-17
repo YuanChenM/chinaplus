@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.mm.service.CPMSMF01Service">
+    
+    <sql id="ConstDef">
+        <bind name="ORION_PLUS_FLAG" value="@com.chinaplus.common.consts.CodeConst$CodeMasterCategory@ORION_PLUS_FLAG" /> 
+    </sql>
+    
+    <select id="getCPMSMF01EntityList" resultType="com.chinaplus.web.mm.entity.CPMSMF01Entity" parameterType="com.chinaplus.core.bean.BaseParam"> 
+        <include refid="ConstDef"/>
+        SELECT         
+            A.SSMS_CUSTOMER_CODE AS ssmsCustomerCode,
+            A.SSMS_CUSTOMER_NAME AS ssmsCustomerName,
+            A.VENDOR_ROUTE_SET AS vendorRouteSet,
+            B.CODE_NAME AS orionPlusFlag,
+            C.OFFICE_CODE AS officeCode      
+        FROM  
+            TNM_SSMS_CUSTOMER A   
+        LEFT JOIN TNM_CODE_CATEGORY B ON A.ORION_PLUS_FLAG = B.CODE_VALUE AND B.CODE_CATEGORY = #{ORION_PLUS_FLAG} AND B.LANGUAGE_FLAG = 1
+        LEFT JOIN TNM_OFFICE C ON A.OFFICE_ID = C.OFFICE_ID
+        WHERE
+            1 =  1
+        <if test="swapData.ssmsCustomerCode != null and swapData.ssmsCustomerCode != ''">
+            AND A.SSMS_CUSTOMER_CODE LIKE #{swapData.ssmsCustomerCode} ||  '%'  ESCAPE '!'
+        </if>
+        <if test="null != swapData.vendorRoute and swapData.vendorRoute.size()>0">
+            AND
+            <foreach item="item" index="index" collection="swapData.vendorRoute" open="(" separator="OR" close=")">  
+                A.VENDOR_ROUTE_SET LIKE '%'||#{item}||'%'
+            </foreach>
+        </if>
+        ORDER BY 
+            A.SSMS_CUSTOMER_CODE,
+            A.VENDOR_ROUTE_SET  
+    </select> 
+
+</mapper>

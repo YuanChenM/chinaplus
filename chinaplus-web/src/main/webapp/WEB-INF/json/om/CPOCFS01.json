@@ -1,0 +1,450 @@
+/**
+ * Customer Forecast Screen
+ * 
+ * @screen CPOCFS01
+ * @author li_feng
+ */
+CPOCFS01 = {
+    xtype : 'gridpanel',
+    id : chinaplus.screen.CPOCFS01,
+    title : chinaplus.label.CPOCFS01_Label_PageTitle,
+    border : true,
+    closable : false,
+    enableColumnHide : false,
+    enableColumnMove : false,
+    isControl : true,
+    autoScroll : true,
+    qtip : true,
+    selType : 'cellmodel',
+    columnLines : true,
+    selModel : Ext.create('Ext.selection.CheckboxModel', {
+                checkOnly : true
+            }),
+    viewConfig : {
+        loadMask : false
+    },
+    plugins : [{
+                ptype : 'gridheaderfilters',
+                allSingleFilter : false
+            }, {
+                ptype : 'emptystoreview'
+            }, {
+                ptype : 'headerfiltertoolbar',
+                showMore : true
+            }],
+    header : false,
+    headerPosition : 'bottom',
+    autoScroll : true,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    columns : [{
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPOCFS01_Grid_ForecastNo + '</div>',
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'forecastNo',
+                sortable : false,
+                resizable : false,
+                width : 250,
+                filter : 'string'
+                ,
+
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" >' + chinaplus.label.CPOCFS01_Grid_FcReceivedDate + '</div>',
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'fcReceivedDate',
+                align : 'center',
+                width : 160,
+                sortable : false,
+                filter : 'date',
+                filterPlugins : [{
+                            ptype : 'datePickerClear'
+                        }]
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPOCFS01_Grid_TTCCustomerCode + '</div>',
+                align : 'left',
+                width : 160,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'tTCCustomerCode',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPOCFS01, 'common/loadOfficeCustomers', 'Combo', chinaplus.screen.CPOCFS01 + '_TTCCustomerCode')
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPOCFS01_Grid_CusFcMonthRange + '</div>',
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                align : 'center',
+                dataIndex : 'cusFcMonthRange',
+                sortable : false,
+                width : 200,
+                renderer : function(v, p, record) {
+                    if(record.data.firstFcMonth == record.data.lastFcMonth){
+                        return record.data.firstFcMonth;
+                    } else {
+                        return record.data.firstFcMonth + " ~ " + record.data.lastFcMonth;
+                    }
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" >' + chinaplus.label.CPOCFS01_Grid_Remark + '</div>',
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'remark',
+                width : 300,
+                sortable : false
+                ,
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPOCFS01_Grid_Status + '</div>',
+                align : 'left',
+                width : 139,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'status',
+                sortable : false,
+                renderer : function(value) {
+                    return chinaplus.master.getMasterName(chinaplus.master.consts.TnmCodeCategory_CustomerForecastStatus, value);
+                },
+                filter : {
+                    type : 'list',
+                    multiSelect : false,
+                    options : chinaplus.master.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_CustomerForecastStatus)
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPOCFS01_Grid_UploadID + '</div>',
+                align : 'left',
+                width : 100,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'userId',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPOCFS01, 'common/loadOfficeUsers', 'Combo', chinaplus.screen.CPOCFS01 + '_UploadIdStore')
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" >' + chinaplus.label.CPOCFS01_Grid_UploadTime + '</div>',
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'uploadTime',
+                align : 'center',
+                width : 150,
+                sortable : false,
+                filter : 'date',
+                filterPlugins : [{
+                            ptype : 'datePickerClear'
+                        }]
+            }],
+    tbar : [{
+                text : chinaplus.label.CPOCFS01_Button_UploadForecast,
+                id : chinaplus.screen.CPOCFS01 + '_UploadOrderform',
+                iconCls : 'btn-upload',
+                handler : function() {
+                    CPOCFS01.uploadForecastFunc();
+                }
+            }, {
+                text : chinaplus.label.CPOCFS01_Button_CancelCusFc,
+                id : chinaplus.screen.CPOCFS01 + '_Cancel',
+                iconCls : 'btn-clear',
+                handler : function() {
+                    CPOCFS01.cancelCusFcFunc();
+                }
+            }, {
+                text : chinaplus.label.CPOCFS01_Button_DlCusFcBlkForm,
+                id : chinaplus.screen.CPOCFS01 + '_DlCusFcBlkForm',
+                iconCls : 'btn-download',
+                handler : function() {
+                    CPOCFS01.downloadCusFcBlkFunc();
+                }
+            }, {
+                text : chinaplus.label.CPOCFS01_Button_DlSelCusForecast,
+                id : chinaplus.screen.CPOCFS01 + '_DlSelCusForecast',
+                iconCls : 'btn-download',
+                handler : function() {
+                    CPOCFS01.downloadSelCusFcFunc();
+                }
+            }, {
+                text : chinaplus.label.CPOCFS01_Button_DlCusFcCompReport,
+                id : chinaplus.screen.CPOCFS01 + '_DlCusFcCompReport',
+                iconCls : 'btn-download',
+                handler : function() {
+                    CPOCFS01.downloadCusFcCompReportFunc();
+                }
+            }, {
+                text : chinaplus.label.CPOCFS01_Button_DlCusFcHisReport,
+                id : chinaplus.screen.CPOCFS01 + '_DlCusFcHisReport',
+                iconCls : 'btn-download',
+                handler : function() {
+                    CPOCFS01.downloadCusFcHisReportFunc();
+                }
+            }, {
+                text : chinaplus.label.CPOCFS01_Button_DlLstCusFcinRdown,
+                id : chinaplus.screen.CPOCFS01 + '_DlLstCusFcinRdown',
+                iconCls : 'btn-download',
+                handler : function() {
+                    CPOCFS01.downloadLstCusFcinRdownFunc();
+                }
+            }],
+
+    store : TRF.util.createStore(chinaplus.screen.CPOCFS01, 'om/CPOCFS01/getCustomerForecastList', 'Role', chinaplus.screen.CPOCFS01 + '_projectStore'),
+
+    /**
+     * The initialize function.
+     * 
+     * @param params. the parameter object passed to this screen.
+     */
+    initialize : function(params) {
+        // set gridstatus
+        TRF.util.setDefaultValuesForToolBar(this, 'status', '1');
+        TRF.util.addGridTip(this);
+        var me = this;
+        var gridStore = this.store;
+
+        TRF.util.dataLoadStart(chinaplus.screen.CPOCFS01);
+        TRF.util.loadStore(gridStore, null, function() {
+
+                    TRF.util.dataLoadEnd(chinaplus.screen.CPOCFS01);
+                    gridStore.on('beforeload', function() {
+                         TRF.core.mask(TRF.core.maskMsg.load, null, me);
+                     });
+                     gridStore.on('load', function() {
+                         TRF.core.unmask(me);
+                     });
+                }, {
+                    filters : {
+                        status : '1'
+                    }
+                });
+
+        this.doLayout();
+    },
+
+    /**
+     * Cancel Customer Forecast
+     */
+    cancelCusFcFunc : function() {
+        // less than one record select check
+        var popMsg = null;
+        var lsMsgs = [];
+        var selectionArray = Ext.getCmp(chinaplus.screen.CPOCFS01).getSelectionModel().getSelection();
+
+        if (selectionArray.length == 0) {
+            popMsg = TRF.util.getMessage('w1011');
+            Ext.Array.push(lsMsgs, popMsg);
+            TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, popMsg, lsMsgs);
+            return;
+        }
+
+        // canceled data select check
+        for (var i = 0; i < selectionArray.length; i++) {
+
+            if (99 == selectionArray[i].data.status) {
+                popMsg = TRF.util.getMessage('w1013');
+                Ext.Array.push(lsMsgs, popMsg);
+                TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, popMsg, lsMsgs);
+                return;
+            }
+        };
+
+        // cancel confirm
+        var me = this;
+        var confirmMsg = TRF.util.getMessage('c1001', chinaplus.label.CPOCFS01_Button_Cancel);
+        var confirmMsgL = [confirmMsg];
+        TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_QUESTION, confirmMsg, confirmMsgL, function(btn) {
+                    if (btn == 'yes') {
+                        var selectedDatas = new Array();
+                        for (var i = 0; i < selectionArray.length; i++) {
+                            selectedDatas[i] = {
+                                'forecastId' : selectionArray[i].data.forecastId
+                            };
+                        }
+
+                        var params = {};
+                        params[TRF.cnst.DATAS] = selectedDatas;
+
+                        var backFun = function(applicationData) {
+                            if (applicationData.success) {
+                                var lsMsgs = TRF.util.getMessage('i1004', ['CPCRMS01_Button_Delete']);
+                                TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_INFO, lsMsgs, lsMsgs, function() {
+                                            me.store.reload();
+                                        });
+                            }
+                        };
+
+                        // submit
+                        TRF.util.ajaxSubmit(backFun, chinaplus.screen.CPCRMS01, 'om/CPOCFS01/cancelCustomerForecast', null, params);
+
+                    }// end if
+                });
+    },
+
+    /**
+     * Download Customer Forecast Blank Form Screen
+     */
+    downloadCusFcBlkFunc : function() {
+        TRF.util.popupApplication(chinaplus.screen.CPOCFS03, chinaplus.screen.CPOCFS03, {}, '500*300');
+    },
+    
+    
+    /**
+     * Download Customer Forecast Screen
+     */
+    downloadSelCusFcFunc : function() {
+        // select check
+        var lsMsgs = [];
+        Ext.Array.push(lsMsgs, TRF.util.getMessage('w1011'));
+        var selectionArray = Ext.getCmp(chinaplus.screen.CPOCFS01).getSelectionModel().getSelection();
+        // must select two
+        if (selectionArray.length == 0) {
+            TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, lsMsgs, lsMsgs);
+            return;
+        } else {
+            TRF.util.popupApplication(chinaplus.screen.CPOCFS06, chinaplus.screen.CPOCFS06, {}, '500*300');
+        }
+        
+    },
+
+    /**
+     * Upload Forecast Form Screen
+     */
+    uploadForecastFunc : function() {
+        TRF.util.setDetailTabMode_New();
+        TRF.util.popupApplication(chinaplus.screen.CPOCFS02, chinaplus.screen.CPOCFS02, {}, '800*350');
+
+    },
+
+    /**
+     * Download Customer Forecast History Screen
+     */
+    downloadCusFcHisReportFunc : function() {
+        TRF.util.popupApplication(chinaplus.screen.CPOCFS04, chinaplus.screen.CPOCFS04, {}, '500*300');
+    },
+    
+    /**
+     * Download Latest Customer Forecast in Rundown Screen
+     */
+    downloadLstCusFcinRdownFunc : function() {
+        TRF.util.popupApplication(chinaplus.screen.CPOCFS05, chinaplus.screen.CPOCFS05, {}, '500*300');
+    },
+
+    /**
+     * Download Customer Forecast Comparison Report
+     */
+    downloadCusFcCompReportFunc : function() {
+        
+        var params;
+        /**
+         * Get SessionKey function.
+         * 
+         * @param responseData have sessionKey
+         */
+        var func = function(responseData) {
+            var sessionKey = responseData.result;
+            var params;
+            // select check
+            var lsMsgs = [];
+            if (TRF.core.language == chinaplus.consts.code.Language.CN) {
+                Ext.Array.push(lsMsgs, TRF.util.getMessage('w1012', '两条记录'));
+            } else {
+                Ext.Array.push(lsMsgs, TRF.util.getMessage('w1012', 'two records'));
+            }
+            var selectionArray = Ext.getCmp(chinaplus.screen.CPOCFS01).getSelectionModel().getSelection();
+            // must select two
+            if (selectionArray.length != 2) {
+                TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, lsMsgs, lsMsgs);
+                return;
+            } else {
+                // do selected data
+                var selectedDatas = new Array();
+                var cfcStartMonth;
+                var cfcEndMonth;
+                for (var i = 0; i < selectionArray.length; i++) {
+                    // set into data
+                    selectedDatas.push(selectionArray[i].data.forecastId);
+                    if (cfcStartMonth == null || cfcStartMonth > selectionArray[i].data.firstFcMonth) {
+                        cfcStartMonth = selectionArray[i].data.firstFcMonth;
+                    }
+                    if(cfcEndMonth == null || cfcEndMonth < selectionArray[i].data.lastFcMonth){
+                        cfcEndMonth =  selectionArray[i].data.lastFcMonth;
+                    }
+                }
+                params = {
+                    'cfcId' : selectedDatas,
+                    'custStartMonth' : cfcStartMonth,
+                    'custEndMonth' : cfcEndMonth,
+                    'file1StartMonth' : selectionArray[0].data.firstFcMonth,
+                    'file1EndMonth' : selectionArray[0].data.lastFcMonth,
+                    'file2StartMonth' : selectionArray[1].data.firstFcMonth,
+                    'file2EndMonth' : selectionArray[1].data.lastFcMonth,
+                    'file1FcDate' : selectionArray[0].data.fcReceivedDate,
+                    'file2FcDate' :  selectionArray[1].data.fcReceivedDate,
+                    'file1CfcNo' : selectionArray[0].data.forecastNo,
+                    'file2CfcNo' : selectionArray[1].data.forecastNo,
+                };
+            }
+            
+            if (responseData.success) {
+                params = {
+                    'sessionKey' : sessionKey,
+                    'cfcId' : selectedDatas,
+                    'custStartMonth' : cfcStartMonth,
+                    'custEndMonth' : cfcEndMonth,
+                    'file1StartMonth' : selectionArray[0].data.firstFcMonth,
+                    'file1EndMonth' : selectionArray[0].data.lastFcMonth,
+                    'file2StartMonth' : selectionArray[1].data.firstFcMonth,
+                    'file2EndMonth' : selectionArray[1].data.lastFcMonth,
+                    'file1FcDate' : selectionArray[0].data.fcReceivedDate,
+                    'file2FcDate' :  selectionArray[1].data.fcReceivedDate,
+                    'file1CfcNo' : selectionArray[0].data.forecastNo,
+                    'file2CfcNo' : selectionArray[1].data.forecastNo,
+                    
+                };
+                var backFun = function(applicationData) {
+                    if (applicationData.success) {     
+                    TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, TRF.util.getMessage('i1003'));
+                        // show success message
+                        TRF.util.showMessageBoxByMsgIdAndArgs('i1003');
+                    }
+                }
+                TRF.util.downloadSubmit(backFun, 'CPOCFS03', "om/CPOCFF03/cfcComparisonReportDownloadCheck", params, "om/CPOCFF03/download", false);
+            }
+        }
+        
+        TRF.util.ajaxSubmit(func, chinaplus.screen.CPOCFS01, 'common/getSessionKey', params, null);
+    },
+
+    /**
+     * Refresh grid data.
+     */
+    refreshData : function() {
+
+        this.store.loadPage(1);
+    }
+    ,
+}

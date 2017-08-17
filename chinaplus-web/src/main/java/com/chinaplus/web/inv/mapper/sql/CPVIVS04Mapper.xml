@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.inv.service.CPVIVS04Service">
+    
+    <select id="findIrregularShipping" parameterType="com.chinaplus.web.inv.entity.CPVIVS04Entity" resultType="com.chinaplus.web.inv.entity.CPVIVS04Entity" flushCache="true">
+        SELECT DISTINCT
+            A.VESSEL_NAME AS vesselName,
+            A.ETD AS etd
+        FROM
+            TNT_INVOICE_SUMMARY A
+        WHERE
+            A.UPLOAD_ID = #{uploadId}
+        AND A.NON_SHIPPING_ROUTE = 1
+        ORDER BY
+            A.VESSEL_NAME ASC,
+            A.ETD ASC
+    </select>
+    
+    <select id="findIrregularParts" parameterType="com.chinaplus.web.inv.entity.CPVIVS04Entity" resultType="com.chinaplus.web.inv.entity.CPVIVS04Entity" flushCache="true">
+        SELECT
+            A.VESSEL_NAME AS vesselName,
+            A.ETD AS etd,
+            D.EXP_PARTS_ID AS expPartsId,
+            D.SHIPPING_ROUTE_CODE AS shippingRoute
+        FROM
+            TNT_INVOICE_SUMMARY A
+        INNER JOIN
+            TNT_INVOICE B ON A.INVOICE_SUMMARY_ID = B.INVOICE_SUMMARY_ID AND B.INVOICE_GROUP_ID IS NOT NULL
+        INNER JOIN
+            TNT_INVOICE_PARTS C ON B.INVOICE_ID = C.INVOICE_ID
+        INNER JOIN
+            TNM_EXP_PARTS D ON C.PARTS_ID = D.PARTS_ID AND C.SUPPLIER_ID = D.SUPPLIER_ID
+        WHERE
+            A.UPLOAD_ID = #{uploadId}
+        AND A.NON_SHIPPING_ROUTE = 1
+        ORDER BY
+            A.VESSEL_NAME ASC,
+            A.ETD ASC,
+            D.EXP_PARTS_ID ASC
+    </select>
+    
+    <select id="findCompletedInvoices" parameterType="com.chinaplus.web.inv.entity.CPVIVF11SupportEntity" resultType="com.chinaplus.web.inv.entity.CPVIVF11SupportEntity" flushCache="true">
+        SELECT
+            B.INVOICE_NO AS invoiceNo,
+            D.KANBAN_PLAN_NO AS kanbanPlanNo,
+            D.TRANSPORT_MODE AS transMode,
+            D.ETD AS etd,
+            D.ETA AS eta,
+            D.IMP_INB_PLAN_DATE AS inbPlanDate,
+            C.PARTS_ID AS partsId,
+            SUM(C.QTY) AS invoiceQty
+        FROM
+            TNT_INVOICE_SUMMARY A
+        INNER JOIN
+            TNT_INVOICE B ON A.INVOICE_SUMMARY_ID = B.INVOICE_SUMMARY_ID
+        INNER JOIN
+            TNT_INVOICE_PARTS C ON B.INVOICE_ID = C.INVOICE_ID
+        INNER JOIN
+            TNT_INVOICE_GROUP D ON B.INVOICE_GROUP_ID = D.INVOICE_GROUP_ID
+        WHERE
+        <if test="summaryIdList != null and summaryIdList.size() != 0">
+            A.INVOICE_SUMMARY_ID IN
+            <foreach item="summaryIdItem" index="summaryIdIndex" collection="summaryIdList" open="(" separator="," close=")">  
+                #{summaryIdItem}
+            </foreach>
+        </if>
+        GROUP BY
+            B.INVOICE_NO,
+            D.KANBAN_PLAN_NO,
+            D.TRANSPORT_MODE,
+            D.ETD,
+            D.ETA,
+            D.IMP_INB_PLAN_DATE,
+            C.PARTS_ID
+        ORDER BY
+            D.KANBAN_PLAN_NO ASC,
+            D.TRANSPORT_MODE ASC,
+            D.ETD ASC,
+            D.ETA ASC,
+            D.IMP_INB_PLAN_DATE ASC,
+            B.INVOICE_NO ASC
+    </select>
+    
+</mapper>

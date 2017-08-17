@@ -1,0 +1,111 @@
+/**
+ * Customer Forecast DownLoad Screen
+ * 
+ * @screen CPOCFS06
+ * @author li_feng
+ */
+CPOCFS06 = {
+    xtype : 'form',
+    id : chinaplus.screen.CPOCFS06,
+    title : chinaplus.label.CPOCFS06_Label_PageTitle,
+    frame : true,
+    autoHeight : false,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    autoScroll : true,
+    margin : '0 0 0 0',
+    buttonAlign : 'left',
+    fieldDefaults : {
+        labelAlign : 'right',
+        labelWidth : 150
+    },
+    items : [{
+                xtype : 'fieldcontainer',
+                margin : '60 0 0 120',
+                defaultType : 'radiofield',
+                defaults : {
+                    flex : 1
+                },
+                layout : 'hbox',
+                items : [{
+                            boxLabel : chinaplus.label.CPOCFS06_Label_ByMonth,
+                            name : 'downLoadTypeBy',
+                            inputValue : 'ByMonth',
+                            id : chinaplus.screen.CPOCFS06 + '_ByMonth',
+                            checked : true
+                        }, {
+                            boxLabel : chinaplus.label.CPOCFS06_Label_ByDay,
+                            name : 'downLoadTypeBy',
+                            inputValue : 'ByDay',
+                            id : chinaplus.screen.CPOCFS06 + '_ByDay'
+                        }]
+            }, {
+                xtype : 'button',
+                id : 'custDownload',
+                iconCls : 'btn-download',
+                align : 'center',
+                width : 130,
+                height : 25,
+                text : chinaplus.label.CPOCFS06_Button_Download,
+                margin : '30 0 30 75',
+                handler : function() {
+                    Ext.getCmp(chinaplus.screen.CPOCFS06).downloadFunc();
+                }
+            }, {
+                xtype : 'button',
+                id : 'cancel',
+                iconCls : 'btn-cancel',
+                align : 'center',
+                width : 130,
+                height : 25,
+                text : chinaplus.label.CPOCFS06_Button_Cancel,
+                margin : '30 0 30 77',
+                handler : function() {
+                    CPOCFS06.cancelFunc();
+                }
+            }],
+
+    /**
+     * The initialize function.
+     * 
+     * @param params. the parameter object passed to this screen.
+     */
+    initialize : function(params) {
+        // show Page                     
+        this.doLayout();
+    },
+
+    /**
+     * Close window function.
+     */
+    cancelFunc : function() {
+        TRF.util.removePopupApplication('CPOCFS06');
+    },
+
+    /**
+     * Upload function.
+     * @param params. the parameter object passed to this screen.
+     */
+    downloadFunc : function(params) {
+        var selectionArray = Ext.getCmp(chinaplus.screen.CPOCFS01).getSelectionModel().getSelection();
+        var downLoadBy = Ext.getCmp(chinaplus.screen.CPOCFS06 + '_ByMonth').checked == true ? 'ByMonth' : 'ByDay';
+        var cfcIdList= new Array();  
+        var cfcNoList= new Array();  
+        for (var i = 0; i < selectionArray.length; i++) {
+            cfcIdList.push(selectionArray[i].data.forecastId);
+            cfcNoList.push(selectionArray[i].data.forecastNo);
+        }
+        var params = {
+            'cfcIdList' : cfcIdList,
+            'cfcNoList' : cfcNoList,
+            'downLoadBy' : downLoadBy,
+            needCheck : false
+        };
+
+        TRF.util.downloadSubmit(null, 'CPOCFS06', "om/CPOCFF06/custdownloadcheck", params, "om/CPOCFF06/download", false);
+
+    }
+
+}
+    
+    
+    

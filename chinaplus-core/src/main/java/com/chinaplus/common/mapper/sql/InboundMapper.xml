@@ -1,0 +1,221 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.chinaplus.common.service.SsmsCommonService">
+    
+     <update id="modInboundIfValidFlag" parameterType="com.chinaplus.common.entity.IFInboundEntity">
+        UPDATE 
+            TNT_IF_EXP_INBOUND C
+        SET 
+            VALID_FLAG = 1
+        WHERE
+        <if test="expPartsIdList == null or expPartsIdList.size() == 0">
+            IF_DATE_TIME = #{ifDateTime,jdbcType=TIMESTAMP}
+        AND 
+        </if>
+            HANDLE_FLAG <![CDATA[<>]]> 1
+        AND
+        EXISTS 
+            (
+        SELECT 
+            * 
+        FROM 
+            TNT_ORDER_DETAIL OD 
+        INNER JOIN TNM_EXP_PARTS P
+        ON
+            P.EXP_PARTS_ID = OD.EXP_PARTS_ID
+        AND
+            P.PARTS_STATUS = 2
+        WHERE 
+            OD.EXP_PO_NO = C.EXP_PO_NO
+        AND
+            OD.EXP_PO_ITEM_NO = C.EXP_PO_ITEM_NO
+        <if test="expPartsIdList != null and expPartsIdList.size() > 0">
+        AND
+            OD.EXP_PARTS_ID
+            IN
+            <foreach item="param" index="index" collection="expPartsIdList" open="(" separator="," close=")">  
+            #{param}  
+            </foreach>
+        </if>
+            )
+    </update>
+    
+    <select id="getInboundIfList" parameterType="com.chinaplus.common.entity.IFInboundEntity" resultType="com.chinaplus.common.entity.IFInboundEntity">
+        SELECT 
+             C.DATA_ID AS dataId
+           , C.EXP_CODE AS expCode
+           , C.MAIN_ROUTE AS representativeRoot
+           , C.SSMS_CUSTOMER_CODE AS ssmsCustomerCode
+           , C.IMP_PO_NO AS impPoNo
+           , C.EXP_PO_NO AS expPoNo
+           , C.EXP_PO_ITEM_NO AS expPoItemCode
+           , C.EXP_INB_PLAN_DATE AS expInboundPlanDate
+           , C.EXP_INB_ACTUAL_DATE AS expInboundActualDate
+           , C.TTC_PARTS_NO AS partsNo
+           , C.QTY AS qty
+           , C.DT_NO AS dtNo
+           , C.CANCEL_FLAG AS cancelFlag
+           , C.IF_DATE_TIME AS ifDateTime
+           , C.VALID_FLAG AS validFlag
+           , C.HANDLE_FLAG AS handleFlag
+           , C.CREATED_BY AS createdBy
+           , C.CREATED_DATE AS createdDate
+           , C.UPDATED_BY AS updatedBy
+           , C.UPDATED_DATE AS updatedDate
+           , C.VERSION AS version
+           , D.PARTS_ID AS partsId
+           , O.CUSTOMER_ORDER_NO AS customerOrderNo
+           , O.CUSTOMER_ID AS customerId
+           , P.SUPPLIER_ID AS supplierId
+           , P.EXP_PARTS_ID AS expPartsId
+           , C.IF_INBOUND_ID AS ifInboundId
+        FROM
+           TNT_IF_EXP_INBOUND C
+        INNER JOIN
+           TNT_ORDER_DETAIL D
+        ON
+           C.EXP_PO_NO = D.EXP_PO_NO
+        AND
+           C.EXP_PO_ITEM_NO = D.EXP_PO_ITEM_NO
+        INNER JOIN
+           TNT_ORDER O
+        ON
+           D.ORDER_ID = O.ORDER_ID
+        INNER JOIN
+           TNM_EXP_PARTS P
+        ON
+           P.EXP_PARTS_ID = D.EXP_PARTS_ID
+        WHERE
+           C.HANDLE_FLAG 
+        IN
+        <foreach item="param" index="index" collection="handleFlagParam" open="(" separator="," close=")">  
+            #{param}  
+        </foreach> 
+        AND
+           P.PARTS_STATUS = 2
+        AND
+           C.VALID_FLAG = 1
+        <if test="expPartsIdList == null or expPartsIdList.size() == 0">
+        AND
+           C.IF_DATE_TIME = #{ifDateTime,jdbcType=TIMESTAMP}
+        </if>
+        <if test="expPartsIdList != null and expPartsIdList.size() > 0">
+        AND 
+            P.EXP_PARTS_ID 
+            IN
+            <foreach item="param" index="index" collection="expPartsIdList" open="(" separator="," close=")">  
+            #{param}  
+            </foreach>
+        </if> 
+        ORDER BY
+           C.IF_INBOUND_ID
+    </select>
+    
+    <select id="checkInboundSSMSExist" parameterType="com.chinaplus.common.entity.IFInboundEntity" resultType="com.chinaplus.common.entity.IFInboundEntity">
+        SELECT 
+                DT_NO AS dtNo
+              , PARTS_ID AS partsId
+              , EXP_PARTS_ID AS expPartsId
+              , IMP_PO_NO AS impPoNo
+              , EXP_PO_NO AS expPoNo
+              , EXP_PO_ITEM_NO AS expPoItemCode
+              , EXP_INB_PLAN_DATE AS expInboundPlanDate
+              , EXP_INB_ACTUAL_DATE AS expInboundActualDate
+              , QTY AS qty
+              , STATUS AS status
+        FROM
+              TNT_EXP_DT
+        WHERE
+              DT_NO = #{dtNo,jdbcType=VARCHAR}
+    </select>
+    
+    <update id="modInboundSSMS" parameterType="com.chinaplus.common.entity.IFInboundEntity">
+        UPDATE 
+            TNT_EXP_DT
+        SET 
+              DT_NO = #{dtNo,jdbcType=VARCHAR}
+            , PARTS_ID = #{partsId,jdbcType=INTEGER}
+            , EXP_PARTS_ID = #{expPartsId,jdbcType=INTEGER}
+            , IMP_PO_NO = #{impPoNo,jdbcType=VARCHAR}
+            , EXP_PO_NO = #{expPoNo,jdbcType=VARCHAR}
+            , EXP_PO_ITEM_NO = #{expPoItemCode,jdbcType=VARCHAR}
+            , EXP_INB_PLAN_DATE = #{expInPlanDate,jdbcType=DATE}
+            , EXP_INB_ACTUAL_DATE = #{expInActDate,jdbcType=DATE}
+            , QTY = #{qty,jdbcType=DECIMAL}
+            , STATUS = 1
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+        WHERE
+            DT_NO = #{dtNo,jdbcType=VARCHAR}
+    </update>
+    
+    <update id="modInboundStatus" parameterType="com.chinaplus.common.entity.IFInboundEntity">
+        UPDATE 
+            TNT_EXP_DT
+        SET 
+              STATUS = 99             
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+        WHERE
+            DT_NO = #{dtNo,jdbcType=VARCHAR}
+    </update>
+    
+    <insert id="addInboundSSMS" parameterType="com.chinaplus.common.entity.IFInboundEntity">
+        INSERT 
+        INTO 
+        TNT_EXP_DT (
+              EXP_DT_ID
+            , DT_NO
+            , PARTS_ID
+            , EXP_PARTS_ID
+            , IMP_PO_NO
+            , EXP_PO_NO
+            , EXP_PO_ITEM_NO
+            , EXP_INB_PLAN_DATE
+            , EXP_INB_ACTUAL_DATE 
+            , QTY
+            , STATUS
+            , CREATED_BY  
+            , CREATED_DATE    
+            , UPDATED_BY  
+            , UPDATED_DATE    
+            , VERSION
+        )
+        VALUES
+        (
+            SEQ_TNT_EXP_DT.NEXTVAL,
+            #{dtNo,jdbcType=VARCHAR},
+            #{partsId,jdbcType=INTEGER},
+            #{expPartsId,jdbcType=INTEGER},
+            #{impPoNo,jdbcType=VARCHAR},
+            #{expPoNo,jdbcType=VARCHAR},
+            #{expPoItemCode,jdbcType=VARCHAR},
+            #{expInPlanDate,jdbcType=DATE},
+            #{expInActDate,jdbcType=DATE},
+            #{qty,jdbcType=DECIMAL},
+            1,
+            #{createdBy,jdbcType=INTEGER},
+            #{createdDate,jdbcType=TIMESTAMP},
+            #{updatedBy,jdbcType=INTEGER},
+            #{updatedDate,jdbcType=TIMESTAMP},
+            1
+        )
+    </insert>
+    
+    <update id="modInboundIfHandleFlag" parameterType="com.chinaplus.common.entity.IFInboundEntity">
+        UPDATE 
+            TNT_IF_EXP_INBOUND
+        SET 
+              HANDLE_FLAG = #{handleFlag,jdbcType=INTEGER}
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+        WHERE
+            IF_INBOUND_ID = #{ifInboundId,jdbcType=INTEGER}
+    </update>
+    
+</mapper>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chinaplus.web.mm.service.CPMKBF01Service">
+
+<select id="findAllList" parameterType="com.chinaplus.core.bean.BaseParam" resultType="com.chinaplus.web.mm.entity.CPMKBF01Entity">
+            SELECT 
+                A.ORDER_MONTH AS orderMonth,
+                C.REGION_CODE AS regionCode,
+                A.FROM_DATE AS fromDate,
+                A.TO_DATE AS toDate,
+                C.OFFICE_CODE AS officeCode,
+                B.CUSTOMER_CODE AS customerCode
+            FROM
+                TNM_KB_ISSUED_DATE A                                                                
+                INNER 
+                JOIN 
+                    TNM_CUSTOMER B 
+                ON 
+                    A.CUSTOMER_ID=B.CUSTOMER_ID                                                                
+                INNER 
+                JOIN 
+                    TNM_OFFICE C 
+                ON 
+                    C.OFFICE_ID=B.OFFICE_ID
+            WHERE 1 = 1          
+            <!--If {TTC Customer Code} IS NOT NULL then add the following condition:-->                                                               
+            <if test="null != swapData.ttcCustomerCode and '' != swapData.ttcCustomerCode">
+                AND
+                   B.CUSTOMER_CODE 
+                IN  
+                    (${swapData.ttcCustomerCode})
+            </if>
+             <!--If {Order Month From} IS NOT NULL then add the following condition:-->                                                                
+            <if test="null != swapData.orderMonthFrom and '' != swapData.orderMonthFrom">
+                AND                                                            
+                    to_date(A.ORDER_MONTH, 'yyyymm') <![CDATA[>=]]>  to_date(#{swapData.orderMonthFrom}, 'yyyymm') 
+            </if>
+            <!--If {Order Month To} IS NOT NULL then add the following condition:-->                                                              
+            <if test="null != swapData.orderMonthTo and '' != swapData.orderMonthTo">
+                AND
+                    to_date(A.ORDER_MONTH, 'yyyymm') <![CDATA[<=]]>  to_date(#{swapData.orderMonthTo}, 'yyyymm') 
+            </if>                                                        
+            <if test="null == swapData.impOfficeCode or '' == swapData.impOfficeCode">
+                AND    
+                    B.OFFICE_ID 
+                IN
+                <foreach item="officeId" index="officeIdIndex" collection="userOfficeIds" open="(" separator="," close=")">  
+                    #{officeId}
+                </foreach>
+            </if>
+            <if test="null != swapData.impOfficeCode and '' != swapData.impOfficeCode">
+                AND 
+                    B.OFFICE_ID IN (${swapData.impOfficeCode})
+            </if>
+            ORDER BY 
+                C.OFFICE_CODE ASC
+                ,B.CUSTOMER_CODE ASC
+                ,A.ORDER_MONTH ASC
+                ,A.FROM_DATE ASC
+    </select>
+</mapper>

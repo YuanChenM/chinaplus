@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.common.service.DailyAdjustKanbanService">
+
+    <select id="findNeedAdjustKanban" parameterType="com.chinaplus.common.entity.DailyAdjustKanbanEntity" resultType="com.chinaplus.common.entity.DailyAdjustKanbanEntity" flushCache="true">
+        SELECT DISTINCT
+            A.KANBAN_ID AS kanbanId,
+            A.KANBAN_PLAN_NO AS kanbanPlanNo,
+            A.ORDER_MONTH AS orderMonth
+        FROM
+            TNT_KANBAN A
+        INNER JOIN
+            (SELECT
+                MAX(KANBAN_ID) AS KANBAN_ID 
+            FROM 
+                TNT_KANBAN 
+            WHERE 
+                OFFICE_ID = #{officeId}
+            GROUP BY
+                KANBAN_PLAN_NO
+            ) K ON A.KANBAN_ID = K.KANBAN_ID
+        INNER JOIN
+            TNT_KANBAN_SHIPPING B ON A.KANBAN_ID = B.KANBAN_ID
+        WHERE
+            A.OFFICE_ID = #{officeId}
+        AND A.STATUS != 99
+        AND B.NIRD_FLAG = 0
+        AND B.COMPLETED_FLAG = 0
+        AND B.ETD <![CDATA[<]]> #{officeToday}
+    </select>
+
+    <select id="findNonCompletedPlan" parameterType="com.chinaplus.common.entity.DailyAdjustKanbanEntity" resultType="com.chinaplus.common.entity.DailyAdjustKanbanEntity" flushCache="true">
+        SELECT DISTINCT
+            A.KANBAN_ID AS kanbanId,
+            A.KANBAN_PLAN_NO AS kanbanPlanNo,
+            A.ORDER_MONTH AS orderMonth,
+            B.KANBAN_SHIPPING_ID AS kanbanShippingId,
+            B.SHIPPING_UUID AS shippingUUID,
+            B.ORIGINAL_VERSION AS originalVersion,
+            B.REVISION_VERSION AS revisionVersion,
+            B.TRANSPORT_MODE AS transportMode,
+            B.COMPLETED_FLAG AS completedFlag,
+            B.NIRD_FLAG AS nirdFlag,
+            B.ETD AS etd,
+            B.ETA AS eta,
+            B.IMP_INB_PLAN_DATE AS inbPlanDate,
+            D.KANBAN_PLAN_ID AS differBoxId,
+            E.KANBAN_PLAN_ID AS dummyBoxId,
+            C.PARTS_ID AS partsId,
+            C.QTY AS planQty
+        FROM
+            TNT_KANBAN A
+        INNER JOIN
+            TNT_KANBAN_SHIPPING B ON A.KANBAN_ID = B.KANBAN_ID
+        INNER JOIN
+            TNT_KANBAN_SHIPPING_PARTS C ON B.KANBAN_SHIPPING_ID = C.KANBAN_SHIPPING_ID
+        LEFT JOIN
+            TNT_KANBAN_PLAN D ON B.KANBAN_ID = D.KANBAN_ID AND B.SHIPPING_UUID = D.SHIPPING_UUID AND D.PLAN_TYPE = 1
+        LEFT JOIN
+            TNT_KANBAN_PLAN E ON B.KANBAN_ID = E.KANBAN_ID AND B.SHIPPING_UUID = E.SHIPPING_UUID AND E.PLAN_TYPE = 3
+        WHERE
+            A.KANBAN_ID = #{kanbanId}
+        AND B.NIRD_FLAG = 0
+        AND B.COMPLETED_FLAG = 0
+        ORDER BY
+            B.TRANSPORT_MODE ASC,
+            B.ETD ASC,
+            B.ETA ASC,
+            B.IMP_INB_PLAN_DATE ASC
+    </select>
+    
+    <select id="findAllParts" parameterType="com.chinaplus.common.entity.DailyAdjustKanbanEntity" resultType="com.chinaplus.common.entity.DailyAdjustKanbanEntity" flushCache="true">
+        SELECT DISTINCT
+            A.KANBAN_ID AS kanbanId,
+            A.KANBAN_PLAN_NO AS kanbanPlanNo,
+            B.PARTS_ID AS partsId,
+            B.SPQ AS spq,
+            B.STATUS AS partStatus,
+            C.SHIPPING_ROUTE_CODE AS shippingRouteCode,
+            C.EXP_PARTS_ID AS expPartsId
+        FROM
+            TNT_KANBAN A
+        INNER JOIN
+            TNT_KANBAN_PARTS B ON A.KANBAN_ID = B.KANBAN_ID
+        INNER JOIN
+            TNM_EXP_PARTS C ON A.SUPPLIER_ID = C.SUPPLIER_ID AND B.PARTS_ID = C.PARTS_ID
+        WHERE
+            A.KANBAN_ID = #{kanbanId}
+    </select>
+    
+    <select id="findMaxOriginalVersion" parameterType="com.chinaplus.common.entity.DailyAdjustKanbanEntity" resultType="com.chinaplus.common.entity.DailyAdjustKanbanEntity" flushCache="true">
+        SELECT
+            MAX(A.ORIGINAL_VERSION) AS originalVersion
+        FROM
+            TNT_KANBAN_SHIPPING A
+        WHERE
+            A.KANBAN_ID = #{kanbanId}
+    </select>
+    
+</mapper>

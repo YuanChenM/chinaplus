@@ -1,0 +1,126 @@
+<!--
+@screen CPOCFF01
+@author li_feng
+-->
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="com.chinaplus.web.om.service.CPOCFF01Service">   
+    <sql id="ConstDef">
+        <bind name="ACTIVE" value="@com.chinaplus.common.consts.CodeConst$InactiveFlag@ACTIVE" />
+    </sql>
+    
+    <!-- get last update forecast month -->
+    <select id="getLastUpdateForecastMonth" parameterType="com.chinaplus.core.bean.PageParam" resultType="com.chinaplus.web.om.entity.CPOCFF01Entity">
+        SELECT
+            A.CUSTOMER_ID AS CUSTOMERID
+            ,MAX(A.LAST_FC_MONTH) AS LASTFCMONTH
+        FROM  
+            TNT_CFC_MASTER A
+        WHERE 
+            A.OFFICE_ID = #{currentOfficeId}
+        AND
+            A.CUSTOMER_ID
+         IN
+            (${swapData.customerCode})
+        GROUP BY
+            CUSTOMER_ID
+        
+    </select>
+    
+    <!-- get customer code -->
+    <select id="getCustomerCode" parameterType="com.chinaplus.core.bean.PageParam" resultType="com.chinaplus.web.om.entity.CPOCFF01Entity">
+        SELECT
+            CUSTOMER_CODE AS CUSTOMERCODE
+        FROM
+            TNM_CUSTOMER
+        WHERE
+            OFFICE_ID = #{currentOfficeId}
+        AND
+            CUSTOMER_ID = #{swapData.CustomerId}
+    </select>
+    
+    <!-- get customer calendar -->
+    <select id="getCustomerCalendar" parameterType="com.chinaplus.core.bean.PageParam" resultType="com.chinaplus.web.om.entity.CPOCFF01Entity">
+    <include refid="ConstDef"/>
+        SELECT
+            C.CUSTOMER_CODE AS CUSTOMERCODE
+            ,C.BUSINESS_PATTERN AS BUSINESSPATTERN
+            ,A.CALENDAR_DATE AS CALENDARDATE
+            ,A.WORKING_FLAG AS WORKINGFLAG
+            ,A.CALENDAR_ID AS CALENDARID
+        FROM
+            TNM_CUSTOMER C
+        INNER JOIN    
+            TNM_CALENDAR_PARTY D ON C.CUSTOMER_ID = D.CUSTOMER_ID
+        INNER JOIN 
+            TNM_CALENDAR_MASTER B ON D.CALENDAR_ID = B.CALENDAR_ID
+        INNER JOIN 
+            TNM_CALENDAR_DETAIL A ON B.CALENDAR_ID = A.CALENDAR_ID     
+        WHERE
+            B.INACTIVE_FLAG  = ${ACTIVE}
+        AND
+            C.CUSTOMER_ID
+        IN
+            (${swapData.customerCode})
+        AND
+            A.CALENDAR_DATE
+        BETWEEN 
+            #{swapData.StartDate} 
+        AND
+            #{swapData.EndDate}
+        ORDER BY
+            A.CALENDAR_ID ASC
+            ,C.BUSINESS_PATTERN ASC
+            ,C.CUSTOMER_CODE ASC
+            ,A.CALENDAR_DATE ASC               
+    </select>
+    
+    <!-- get customer calendar -->
+    <select id="getCustomerCalendarMonth" parameterType="com.chinaplus.core.bean.PageParam" resultType="com.chinaplus.web.om.entity.CPOCFF01Entity">
+        SELECT
+            CUSTOMER_CODE AS CUSTOMERCODE
+            ,BUSINESS_PATTERN AS BUSINESSPATTERN
+        FROM
+            TNM_CUSTOMER
+        WHERE
+            CUSTOMER_ID
+        IN
+            (${swapData.customerCode})
+        ORDER BY
+            BUSINESS_PATTERN ASC
+            ,CUSTOMER_CODE ASC
+    </select>
+
+    <!-- get customer calendar -->
+    <select id="getCustomerCalendarEndDate" parameterType="com.chinaplus.core.bean.PageParam" resultType="com.chinaplus.web.om.entity.CPOCFF01Entity">
+    <include refid="ConstDef"/>
+        SELECT
+            C.CUSTOMER_CODE AS CUSTOMERCODE
+            ,C.BUSINESS_PATTERN AS BUSINESSPATTERN
+            ,A.CALENDAR_DATE AS CALENDARDATE
+            ,A.WORKING_FLAG AS WORKINGFLAG
+            ,A.CALENDAR_ID AS CALENDARID
+        FROM
+            TNM_CUSTOMER C
+        INNER JOIN    
+            TNM_CALENDAR_PARTY D ON C.CUSTOMER_ID = D.CUSTOMER_ID
+        INNER JOIN 
+            TNM_CALENDAR_MASTER B ON D.CALENDAR_ID = B.CALENDAR_ID
+        INNER JOIN 
+            TNM_CALENDAR_DETAIL A ON B.CALENDAR_ID = A.CALENDAR_ID     
+        WHERE
+            B.INACTIVE_FLAG  = ${ACTIVE}
+        AND
+            C.CUSTOMER_ID
+        IN
+            (${swapData.customerCode})
+        ORDER BY
+            A.CALENDAR_ID ASC
+            ,C.BUSINESS_PATTERN ASC
+            ,C.CUSTOMER_CODE ASC
+            ,A.CALENDAR_DATE ASC               
+    </select>
+
+</mapper>

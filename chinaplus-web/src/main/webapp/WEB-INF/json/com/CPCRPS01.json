@@ -1,0 +1,138 @@
+/**
+ * @screen CPCRPS01  ---  Reset Password
+ * @author shi_yuxi
+ */
+CPCRPS01 = {
+	id : chinaplus.screen.CPCRPS01,
+	title : chinaplus.label.CPCRPS01_Label_PageTitle,
+	header : false,
+	xtype : 'form',
+	autoScroll : true,
+	height : Ext.getCmp('tabpanelId').getHeight() - 30,
+	border : true,
+	closable : false,
+	frame : true,
+	bodyStyle : 'text-align:center',
+	defaultType : 'textfield',
+	fieldDefaults: {
+		style : 'text-align:center',
+		labelAlign: 'right',
+		labelPad : 10,
+		labelWidth : 100,
+		margin : 2,
+		labelSeparator : ''
+	},
+	tbar : [
+		{
+			text : chinaplus.label.CPCRPS01_Button_Save,
+			id : chinaplus.label.CPCRPS01b + '_Save',
+			iconCls : 'btn-save',
+			/*add role*/
+			handler : function () {
+			    // set message
+			    var popMsg = TRF.util.getMessage('w1003');
+                var lsMsgs = [];
+                
+                // get form values
+			    var oldPassword = Ext.getCmp(chinaplus.screen.CPCRPS01 + '_OldPw').getValue();
+			    var newPassword = Ext.getCmp(chinaplus.screen.CPCRPS01 + '_NewPw').getValue();
+			    var confPassword = Ext.getCmp(chinaplus.screen.CPCRPS01 + '_ConfirmPw').getValue();
+			    // check oldPassword
+			    if (Ext.isEmpty(oldPassword)) {
+			       Ext.Array.push(lsMsgs,TRF.util.getMessage('w1003_001', 'CPCRPS01_Label_OldPw'));
+			    }
+			    // check newPassword
+			    if (Ext.isEmpty(newPassword)) {
+			       Ext.Array.push(lsMsgs,TRF.util.getMessage('w1003_001', 'CPCRPS01_Label_NewPw'));
+			    }
+			    // check confPassword
+			    if (Ext.isEmpty(confPassword)) {
+			       Ext.Array.push(lsMsgs,TRF.util.getMessage('w1003_001', 'CPCRPS01_Label_ConfirmPw'));
+                }
+                
+                // if has check error
+                if(!Ext.isEmpty(lsMsgs)){
+                    //Ext.Array.push(lsMsgs,popMsg);
+                    TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, popMsg, lsMsgs);
+                    return;
+                }
+                
+                // if confpassword not equals with newPassword
+                if(newPassword != confPassword) {
+                   TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, popMsg, [TRF.util.getMessage('w1003_017')]);
+                   return;
+                }
+                // New Password is same as Old Password
+                if(newPassword == oldPassword) {
+                   TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, popMsg, [TRF.util.getMessage('w1003_018')]);
+                   return;
+                }
+			
+                // callAjax to do insert or update
+                var backFun = function(responseData) {
+                    if(responseData.success){
+                        // show message
+                        var message = TRF.util.getMessage('i1002');
+                        TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_INFO,message, [message]);
+                        Ext.getCmp(chinaplus.screen.CPCRPS01 + '_version').setValue(responseData.result)
+                        TRF.util.removePopupApplication(chinaplus.screen.CPCRPS01);
+                    }
+                };
+                
+                // get version
+                var version = Ext.getCmp(chinaplus.screen.CPCRPS01 + '_version').getValue();
+                
+                // set password
+                var param = {oldPassword:oldPassword, newPassword:newPassword, confPassword:confPassword, version: version};
+        
+                // submit
+                TRF.util.ajaxSubmit(backFun, chinaplus.screen.CPCRPS01, 'manage/CPCRPS01/resetPassword', param);
+			}
+		}
+	],
+	items : [
+	     {
+            margin : '10 0 0 0',
+            inputType : 'password',
+            maxLength : 30,
+            msgTarget : 'side',
+            fieldLabel : chinaplus.label.CPCRPS01_Label_OldPw,
+            autoFitErrors: false,
+            id : chinaplus.screen.CPCRPS01 + '_OldPw',
+            name : 'oldPassword',
+            style : 'width:100%;',
+            fieldStyle : 'background:rgb(255,255,153)'
+        },
+		{
+			margin : '10 0 0 0',
+            inputType : 'password',
+            maxLength : 30,
+            msgTarget : 'side',
+            fieldLabel : chinaplus.label.CPCRPS01_Label_NewPw,
+            autoFitErrors: false,
+            id : chinaplus.screen.CPCRPS01 + '_NewPw',
+            name : 'newPassword',
+            style : 'width:100%;',
+            fieldStyle : 'background:rgb(255,255,153)'
+		},
+        {
+            margin : '10 0 0 0',
+            inputType : 'password',
+            maxLength : 30,
+            msgTarget : 'side',
+            fieldLabel : chinaplus.label.CPCRPS01_Label_ConfirmPw,
+            autoFitErrors: false,
+            id : chinaplus.screen.CPCRPS01 + '_ConfirmPw',
+            name : 'confPassword',
+            style : 'width:100%;',
+            fieldStyle : 'background:rgb(255,255,153)'
+        },{
+            inputType : 'textfield',
+            hidden : true,
+            id : chinaplus.screen.CPCRPS01 + '_version',
+        }
+        
+	],
+	initialize : function (param) {
+	}
+}

@@ -1,0 +1,75 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.batch.migration.service.IPFileReaderService">
+
+     <insert id="addIntoMigrationIP" parameterType="com.chinaplus.batch.migration.bean.TntMgImpIpEx">
+        INSERT INTO 
+            TNT_MG_IMP_IP( 
+                MG_IP_ID
+              , SEQ_NO
+              , OFFICE_CODE
+              , SOURCE_IP_NO
+              , PID_NO
+              , PARENT_PID_NO
+              , WHS_CODE
+              , FROM_CUSTOMER_CODE
+              , CUSTOMER_CODE
+              , TTC_PARTS_NO
+              , ORIGINAL_QTY
+              , QTY
+              , INVOICE_NO
+              , MODULE_NO
+              , STATUS
+              , INB_DATE
+              , SYS_OB_DATE_TIME
+              , ACTUAL_OB_DATE_TIME
+              , ADJUSTMENT_DATE
+              , HANDLE_FLAG
+              , IF_DATE_TIME
+              , CREATED_BY
+              , CREATED_DATE
+              , UPDATED_BY
+              , UPDATED_DATE
+              , VERSION
+        ) VALUES (
+                #{mgIpId,jdbcType=INTEGER}
+              , #{seqNo,jdbcType=INTEGER}
+              , #{officeCode,jdbcType=VARCHAR}
+              , #{sourceIpNo,jdbcType=VARCHAR}
+              , #{pidNo,jdbcType=VARCHAR}
+              , #{parentPidNo,jdbcType=VARCHAR}
+              , #{whsCode,jdbcType=VARCHAR}
+              , #{originalCustCode,jdbcType=VARCHAR}
+              , #{customerCode,jdbcType=VARCHAR}
+              , #{ttcPartsNo,jdbcType=VARCHAR}
+              , #{originalQty,jdbcType=VARCHAR}
+              , #{qty,jdbcType=VARCHAR}
+              , #{invoiceNo,jdbcType=VARCHAR}
+              , #{moduleNo,jdbcType=VARCHAR}
+              , #{status,jdbcType=INTEGER}
+              , #{inboundDate,jdbcType=VARCHAR}
+              , #{sysObDateTime,jdbcType=VARCHAR}
+              , #{actualObDateTime,jdbcType=VARCHAR}
+              , #{adjustmentDate,jdbcType=VARCHAR}
+              , #{handleFlag,jdbcType=INTEGER}
+              , #{ifDateTime,jdbcType=TIMESTAMP}
+              , #{createdBy,jdbcType=INTEGER}
+              , #{createdDate,jdbcType=TIMESTAMP}
+              , #{updatedBy,jdbcType=INTEGER}
+              , #{updatedDate,jdbcType=TIMESTAMP}
+              , #{version,jdbcType=INTEGER}
+        )
+    </insert>
+    
+    <select id="getMaxMgIpId" resultType="java.lang.Integer">
+        SELECT MAX(MG_IP_ID) + 1 FROM TNT_MG_IMP_IP
+    </select>
+       
+    <select id="getSourceIpNo" resultType="com.chinaplus.batch.migration.bean.TntMgImpIpEx" parameterType="com.chinaplus.batch.migration.bean.TntMgImpIpEx">
+        SELECT SOURCE_IP_NO AS sourceIpNo
+             , PID_NO AS pidNo
+          FROM TNT_MG_IMP_IP
+         WHERE PID_NO = #{parentPidNo}
+    </select>
+    
+</mapper>

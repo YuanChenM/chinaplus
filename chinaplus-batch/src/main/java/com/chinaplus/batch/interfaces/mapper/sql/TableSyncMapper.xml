@@ -1,0 +1,403 @@
+<!--
+@screen CPIIFB01
+@author yang_jia1
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.chinaplus.batch.interfaces.service.CPIIFB15Service">
+                
+    <select id="getMaxIfCustomerId" resultType="java.lang.Integer">
+        SELECT MAX(IF_CUSTOMER_ID) + 1 FROM TNM_IF_CUSTOMER
+    </select>
+                
+    <select id="getMaxIfPartId" resultType="java.lang.Integer">
+        SELECT MAX(IF_PARTS_ID) + 1 FROM TNM_IF_PARTS
+    </select>
+                
+    <select id="getMaxIfOrderId" resultType="java.lang.Integer">
+        SELECT MAX(IF_ORDER_ID) + 1 FROM TNT_IF_EXP_ORDER
+    </select>
+                
+    <select id="getMaxIfOrderCancelId" resultType="java.lang.Integer">
+        SELECT MAX(IF_CANCEL_ID) + 1 FROM TNT_IF_CANCEL_ORDER
+    </select>
+                
+    <select id="getMaxIfInboundId" resultType="java.lang.Integer">
+        SELECT MAX(IF_INBOUND_ID) + 1 FROM TNT_IF_EXP_INBOUND
+    </select>
+                
+    <select id="getMaxIfOutBoundId" resultType="java.lang.Integer">
+        SELECT MAX(IF_OUTBOUND_ID) + 1 FROM TNT_IF_EXP_OUTBOUND
+    </select>
+                
+    <select id="getMaxIfInvoiceId" resultType="java.lang.Integer">
+        SELECT MAX(IF_INVOICE_ID) + 1 FROM TNT_IF_EXP_INVOICE
+    </select>
+    
+    <insert id="addSSMSCustomerIf" parameterType="com.chinaplus.batch.interfaces.bean.Customer">
+        INSERT 
+        INTO 
+        TNM_IF_CUSTOMER (
+              IF_CUSTOMER_ID
+            , DATA_ID  
+            , EXP_CODE    
+            , CUSTOMER_CODE  
+            , VENDOR_ROUTE    
+            , CUSTOMER_NAME
+            , IF_DATE_TIME
+            , VALID_FLAG
+            , HANDLE_FLAG   
+            , CREATED_BY  
+            , CREATED_DATE    
+            , UPDATED_BY  
+            , UPDATED_DATE    
+            , VERSION
+        )
+        VALUES
+        (
+            #{ifCustomerId,jdbcType=INTEGER},
+            #{dataId,jdbcType=INTEGER},
+            #{expCode,jdbcType=VARCHAR},
+            #{customerCode,jdbcType=VARCHAR},
+            #{vendorRoute,jdbcType=VARCHAR},
+            #{customerName,jdbcType=VARCHAR},
+            #{ifDateTime,jdbcType=TIMESTAMP},
+            #{validFlag,jdbcType=INTEGER},
+            #{handleFlag,jdbcType=INTEGER},
+            #{createdBy,jdbcType=INTEGER},
+            #{createdDate,jdbcType=TIMESTAMP},
+            #{updatedBy,jdbcType=INTEGER},
+            #{updatedDate,jdbcType=TIMESTAMP},
+            #{version,jdbcType=INTEGER}
+        )
+    </insert>
+    
+    <insert id="addSSMSPartsIf" parameterType="com.chinaplus.batch.interfaces.bean.Parts">
+        INSERT 
+        INTO 
+        TNM_IF_PARTS (
+              IF_PARTS_ID
+            , DATA_ID    
+            , EXP_CODE  
+            , MAIN_ROUTE    
+            , TTC_PARTS_NO
+            , DISPLAY_PARTS_NO
+            , CUSTOMER_PARTS_NO
+            , TTC_PARTS_NAME   
+            , CUSTOMER_CODE  
+            , SUPPLIER_CODE    
+            , SPQ  
+            , ORDER_LOT    
+            , UOM
+            , TRANSPORT_MODE
+            , IF_DATE_TIME
+            , VALID_FLAG
+            , HANDLE_FLAG
+            , CREATED_BY
+            , CREATED_DATE
+            , UPDATED_BY
+            , UPDATED_DATE
+            , VERSION
+            , BUILDOUT_FLAG
+        )
+        VALUES
+        (
+            #{ifPartsId,jdbcType=INTEGER},
+            #{dataId,jdbcType=INTEGER},
+            #{expCode,jdbcType=VARCHAR},
+            #{represetativeRoute,jdbcType=VARCHAR},
+            #{partsNo,jdbcType=VARCHAR},
+            #{displayPN,jdbcType=VARCHAR},
+            #{customerPartsNo,jdbcType=VARCHAR},
+            #{TTCPartsName,jdbcType=VARCHAR},
+            #{customerCode,jdbcType=VARCHAR},
+            #{supplierCode,jdbcType=VARCHAR},
+            #{spq,jdbcType=INTEGER},
+            #{orderLot,jdbcType=INTEGER},
+            #{uom,jdbcType=VARCHAR},
+            #{transportMode,jdbcType=VARCHAR},
+            #{ifDateTime,jdbcType=TIMESTAMP},
+            #{validFlag,jdbcType=INTEGER},
+            #{handleFlag,jdbcType=INTEGER},
+            #{createdBy,jdbcType=INTEGER},
+            #{createdDate,jdbcType=TIMESTAMP},
+            #{updatedBy,jdbcType=INTEGER},
+            #{updatedDate,jdbcType=TIMESTAMP},
+            #{version,jdbcType=INTEGER},
+            #{buildOutFlag,jdbcType=VARCHAR}
+        )
+    </insert>
+    
+    <insert id="addSSMSOrderIf" parameterType="com.chinaplus.common.entity.IFOrderEntity">
+        INSERT 
+        INTO 
+        TNT_IF_EXP_ORDER (
+              IF_ORDER_ID
+            , DATA_ID    
+            , EXP_CODE  
+            , MAIN_ROUTE
+            , VENDOR_ROUTE
+            , IMP_PO_NO
+            , SSMS_SUPPLIER_CODE    
+            , SO_DATE
+            , PO_DATE
+            , TRANSPORT_MODE
+            , EXP_PO_NO
+            , EXP_PO_ITEM_NO
+            , SSMS_CUSTOMER_CODE
+            , CUSTOMER_ORDER_NO
+            , TTC_PARTS_NO
+            , ORDER_QTY
+            , EXP_INB_PLAN_DATE
+            , ORDER_TYPE
+            , IF_DATE_TIME
+            , VALID_FLAG
+            , HANDLE_FLAG
+            , CREATED_BY
+            , CREATED_DATE
+            , UPDATED_BY
+            , UPDATED_DATE
+            , VERSION
+        )
+        VALUES
+        (
+            #{ifOrderId,jdbcType=INTEGER},
+            #{dataId,jdbcType=INTEGER},
+            #{expCode,jdbcType=VARCHAR},
+            #{mainRoute,jdbcType=VARCHAR},
+            #{vendorRoute,jdbcType=VARCHAR},
+            #{impPoNo,jdbcType=VARCHAR},
+            #{ssmsSupplierCode,jdbcType=VARCHAR},
+            #{soDate,jdbcType=VARCHAR},
+            #{poDate,jdbcType=VARCHAR},
+            #{transportModeStr,jdbcType=VARCHAR},
+            #{expPoNo,jdbcType=VARCHAR},
+            #{expPoItemNo,jdbcType=VARCHAR},
+            #{ssmsCustomerCode,jdbcType=VARCHAR},
+            #{customerOrderNo,jdbcType=VARCHAR},
+            #{ttcPartsNo,jdbcType=VARCHAR},
+            #{orderQty,jdbcType=VARCHAR},
+            #{expInbPlanDateStr,jdbcType=VARCHAR},
+            #{orderType,jdbcType=VARCHAR},
+            #{ifDateTime,jdbcType=TIMESTAMP},
+            #{validFlag,jdbcType=INTEGER},
+            #{handleFlag,jdbcType=INTEGER},
+            #{createdBy,jdbcType=INTEGER},
+            #{createdDate,jdbcType=TIMESTAMP},
+            #{updatedBy,jdbcType=INTEGER},
+            #{updatedDate,jdbcType=TIMESTAMP},
+            #{version,jdbcType=INTEGER}
+        )
+    </insert>
+    
+     <insert id="addOrderCancelIf" parameterType="com.chinaplus.common.entity.IFOrderCancelEntity">
+        INSERT 
+        INTO 
+        TNT_IF_CANCEL_ORDER (
+              IF_CANCEL_ID
+            , DATA_ID    
+            , EXP_CODE
+            , MAIN_ROUTE
+            , IMP_PO_NO
+            , EXP_PO_NO
+            , EXP_PO_ITEM_NO 
+            , CUSTOMER_CODE
+            , PARTS_NO
+            , EXP_INB_PLAN_DATE
+            , IF_DATE_TIME
+            , VALID_FLAG
+            , HANDLE_FLAG   
+            , CREATED_BY  
+            , CREATED_DATE    
+            , UPDATED_BY  
+            , UPDATED_DATE    
+            , VERSION
+        )
+        VALUES
+        (
+            #{ifCancelId,jdbcType=VARCHAR},
+            #{dataId,jdbcType=VARCHAR},
+            #{expCode,jdbcType=VARCHAR},
+            #{represetativeRoute,jdbcType=VARCHAR},
+            #{impPoNo,jdbcType=VARCHAR},
+            #{expPoNo,jdbcType=VARCHAR},
+            #{expPoItemNo,jdbcType=VARCHAR},
+            #{customerCode,jdbcType=VARCHAR},
+            #{partsNo,jdbcType=VARCHAR},
+            #{expInboundPlanDate,jdbcType=VARCHAR},
+            #{ifDateTime,jdbcType=TIMESTAMP},
+            #{validFlag,jdbcType=INTEGER},
+            #{handleFlag,jdbcType=INTEGER},
+            #{createdBy,jdbcType=INTEGER},
+            #{createdDate,jdbcType=TIMESTAMP},
+            #{updatedBy,jdbcType=INTEGER},
+            #{updatedDate,jdbcType=TIMESTAMP},
+            #{version,jdbcType=INTEGER}
+        )
+    </insert>
+    
+    <insert id="addInboundIf" parameterType="com.chinaplus.common.entity.IFInboundEntity">
+        INSERT 
+        INTO 
+        TNT_IF_EXP_INBOUND (
+              IF_INBOUND_ID
+            , DATA_ID    
+            , EXP_CODE
+            , MAIN_ROUTE
+            , SSMS_CUSTOMER_CODE
+            , IMP_PO_NO
+            , EXP_PO_NO 
+            , EXP_PO_ITEM_NO
+            , EXP_INB_PLAN_DATE
+            , EXP_INB_ACTUAL_DATE
+            , TTC_PARTS_NO
+            , QTY
+            , DT_NO
+            , CANCEL_FLAG
+            , IF_DATE_TIME
+            , VALID_FLAG
+            , HANDLE_FLAG   
+            , CREATED_BY  
+            , CREATED_DATE    
+            , UPDATED_BY  
+            , UPDATED_DATE    
+            , VERSION
+        )
+        VALUES
+        (
+            #{ifInboundId,jdbcType=VARCHAR},
+            #{dataId,jdbcType=VARCHAR},
+            #{expCode,jdbcType=VARCHAR},
+            #{representativeRoot,jdbcType=VARCHAR},
+            #{ssmsCustomerCode,jdbcType=VARCHAR},
+            #{impPoNo,jdbcType=VARCHAR},
+            #{expPoNo,jdbcType=VARCHAR},
+            #{expPoItemCode,jdbcType=VARCHAR},
+            #{expInboundPlanDate,jdbcType=VARCHAR},
+            #{expInboundActualDate,jdbcType=VARCHAR},
+            #{partsNo,jdbcType=VARCHAR},
+            #{qty,jdbcType=VARCHAR},
+            #{dtNo,jdbcType=VARCHAR},
+            #{cancelFlag,jdbcType=VARCHAR},
+            #{ifDateTime,jdbcType=TIMESTAMP},
+            #{validFlag,jdbcType=INTEGER},
+            #{handleFlag,jdbcType=INTEGER},
+            #{createdBy,jdbcType=INTEGER},
+            #{createdDate,jdbcType=TIMESTAMP},
+            #{updatedBy,jdbcType=INTEGER},
+            #{updatedDate,jdbcType=TIMESTAMP},
+            #{version,jdbcType=INTEGER}
+        )
+    </insert>
+    
+    <insert id="addOutboundIf" parameterType="com.chinaplus.common.entity.IFOutboundEntity">
+        INSERT 
+        INTO 
+        TNT_IF_EXP_OUTBOUND (
+              IF_OUTBOUND_ID
+            , DATA_ID    
+            , EXP_CODE
+            , MAIN_ROUTE
+            , IMP_PO_NO
+            , TTC_PARTS_NO
+            , IP_NO 
+            , DT_NO
+            , OUTBOUND_QTY
+            , CONTAINER_NO
+            , MODULE_NO
+            , EXP_INB_PLAN_DATE
+            , EXP_OB_ACTUAL_DATE
+            , TRANSPORT_MODE
+            , CANCEL_FLAG
+            , IF_DATE_TIME
+            , VALID_FLAG
+            , HANDLE_FLAG   
+            , CREATED_BY  
+            , CREATED_DATE    
+            , UPDATED_BY  
+            , UPDATED_DATE    
+            , VERSION
+        )
+        VALUES
+        (
+            #{ifOutboundId,jdbcType=VARCHAR},
+            #{dataId,jdbcType=VARCHAR},
+            #{expCode,jdbcType=VARCHAR},
+            #{representativeRoot,jdbcType=VARCHAR},
+            #{impPoNo,jdbcType=VARCHAR},
+            #{partsNo,jdbcType=VARCHAR},
+            #{ipNo,jdbcType=VARCHAR},
+            #{dtNo,jdbcType=VARCHAR},
+            #{outboundQty,jdbcType=VARCHAR},
+            #{containerNo,jdbcType=VARCHAR},
+            #{moduleNo,jdbcType=VARCHAR},
+            #{expInboundPlanDate,jdbcType=VARCHAR},
+            #{expOutboundActualDate,jdbcType=VARCHAR},
+            #{transportationMode,jdbcType=VARCHAR},
+            #{cancelFlag,jdbcType=VARCHAR},
+            #{ifDateTime,jdbcType=TIMESTAMP},
+            #{validFlag,jdbcType=INTEGER},
+            #{handleFlag,jdbcType=INTEGER},
+            #{createdBy,jdbcType=INTEGER},
+            #{createdDate,jdbcType=TIMESTAMP},
+            #{updatedBy,jdbcType=INTEGER},
+            #{updatedDate,jdbcType=TIMESTAMP},
+            #{version,jdbcType=INTEGER}
+        )
+    </insert>
+    
+    <insert id="addInvoiceIf" parameterType="com.chinaplus.common.entity.IFInvoiceEntity">
+        INSERT 
+        INTO 
+        TNT_IF_EXP_INVOICE (
+              IF_INVOICE_ID
+            , DATA_ID    
+            , EXP_CODE
+            , MAIN_ROUTE
+            , INVOICE_NO
+            , BL_DATE
+            , BL_NO 
+            , ETD
+            , ETA
+            , TRANSPORT_MODE
+            , VESSEL_NAME
+            , CONTAINER_NO
+            , MODULE_NO
+            , IF_DATE_TIME
+            , VALID_FLAG
+            , HANDLE_FLAG   
+            , CREATED_BY  
+            , CREATED_DATE    
+            , UPDATED_BY  
+            , UPDATED_DATE    
+            , VERSION
+        )
+        VALUES
+        (
+            #{ifInvoiceId,jdbcType=VARCHAR},
+            #{dataId,jdbcType=VARCHAR},
+            #{expCode,jdbcType=VARCHAR},
+            #{representativeRoot,jdbcType=VARCHAR},
+            #{invoiceNo,jdbcType=VARCHAR},
+            #{blDate,jdbcType=VARCHAR},
+            #{blNo,jdbcType=VARCHAR},
+            #{etdStr,jdbcType=VARCHAR},
+            #{etaStr,jdbcType=VARCHAR},
+            #{transportMode,jdbcType=VARCHAR},
+            #{vesselName,jdbcType=VARCHAR},
+            #{containerNo,jdbcType=VARCHAR},
+            #{moduleNo,jdbcType=VARCHAR},
+            #{ifDateTime,jdbcType=TIMESTAMP},
+            #{validFlag,jdbcType=INTEGER},
+            #{handleFlag,jdbcType=INTEGER},
+            #{createdBy,jdbcType=INTEGER},
+            #{createdDate,jdbcType=TIMESTAMP},
+            #{updatedBy,jdbcType=INTEGER},
+            #{updatedDate,jdbcType=TIMESTAMP},
+            #{version,jdbcType=INTEGER}
+        )
+    </insert>
+    
+</mapper>

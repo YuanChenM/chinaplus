@@ -1,0 +1,377 @@
+<!--
+@screen CPOCFF05
+@author li_feng
+-->
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="com.chinaplus.common.service.CfcRundownService">
+	<sql id="ConstDef">
+        <bind name="ACTIVE" value="@com.chinaplus.common.consts.CodeConst$User$Status@ACTIVE" />
+        <bind name="WORKINGDAY" value="@com.chinaplus.common.consts.CodeConst$WorkingDay@WORKING_DAY" />
+        <bind name="COMPLETED" value="@com.chinaplus.common.consts.CodeConst$PartsStatus@COMPLETED" />
+        <bind name="INACTIVE" value="@com.chinaplus.common.consts.CodeConst$InactiveFlag@ACTIVE" />
+    </sql>
+	
+	<!-- get customer forecast info -->
+    <select id="getPartsInfo" parameterType="com.chinaplus.core.bean.PageParam" resultType="com.chinaplus.common.entity.CPOCFFComEntity">
+    <include refid="ConstDef"/>
+        SELECT
+            C.PARTS_ID AS PARTSID
+            , C.CFC_MONTH AS CFCMONTH
+            , C.CFC_QTY AS CFCQTY
+            , C.CFC_MONTH_ID AS CFCMONTHID
+            , C.CFC_ID AS CFCID
+            , E.FC_DATE AS FCDATE
+            , E.CUSTOMER_ID AS CUSTOMERID
+            , D.TTC_PARTS_NO AS TTCPARTSNO
+            , D.CUST_PARTS_NO AS CUSTPARTSNO
+            , D.CUSTOMER_CODE AS CUSTOMERCODE
+            , D.PARTS_TYPE AS PARTSTYPE
+            , D.CAR_MODEL AS CARMODEL
+            , D.SPQ AS SPQ
+            , D.ORDER_LOT AS ORDERLOT
+            , D.UOM_CODE AS UOMCODE
+            , D.OLD_TTC_PARTS_NO AS OLDTTCPARTSNO
+            , D.PARTS_NAME_EN AS PARTSNAMEEN
+            , D.PARTS_NAME_CN AS PARTSNAMECN
+            , D.CFC_ADJUSTMENT_TYPE1 AS CFCADJUSTMENTTYPE1
+            , D.CFC_ADJUSTMENT_TYPE2 AS CFCADJUSTMENTTYPE2
+        FROM
+            TNT_CFC_MONTH C 
+            INNER JOIN TNM_PARTS_MASTER D ON C.PARTS_ID = D.PARTS_ID 
+            INNER JOIN TNT_CFC_MASTER E ON C.CFC_ID = E.CFC_ID 
+            AND E.STATUS = ${ACTIVE}
+        WHERE
+            CFC_MONTH_ID IN ( 
+                SELECT
+                  MAX(B.CFC_MONTH_ID) 
+                FROM
+                  TNT_CFC_MASTER A 
+                  INNER JOIN TNT_CFC_MONTH B 
+                    ON A.CFC_ID = B.CFC_ID 
+                WHERE
+                  A.STATUS = ${ACTIVE}
+                  <if test="swapData.SelectFrom == 'CPOCFF05' " >
+                    AND A.CUSTOMER_ID = #{swapData.customerCode}
+                  	AND B.CFC_MONTH BETWEEN #{swapData.custStartMonth} AND #{swapData.custEndMonth}
+                    AND A.OFFICE_ID = #{currentOfficeId}
+                  </if>
+                GROUP BY
+                  B.PARTS_ID
+                  , B.CFC_MONTH
+            ) 
+        ORDER BY
+            C.PARTS_ID
+    </select>
+	
+	
+	<!-- get customer forecast info -->
+    <select id="getDailyInfo" parameterType="com.chinaplus.core.bean.PageParam" resultType="com.chinaplus.common.entity.CPOCFFComDailyEntity">
+    <include refid="ConstDef"/>
+        SELECT
+            A.PARTS_ID AS PARTSID
+            ,A.CFC_DATE AS CFCDATE
+            ,E.WORKING_FLAG WORKINGFLAG
+            ,A.CFC_QTY AS CFCQTY
+        FROM
+            TNT_CFC_DAY A 
+            INNER JOIN ( 
+                SELECT
+                    B.CALENDAR_DATE
+                    ,B.WORKING_FLAG 
+                FROM
+                    TNM_CALENDAR_DETAIL B 
+                    INNER JOIN TNM_CALENDAR_PARTY C ON B.CALENDAR_ID = C.CALENDAR_ID 
+                    INNER JOIN TNM_CALENDAR_MASTER D ON B.CALENDAR_ID = D.CALENDAR_ID 
+                    AND D.INACTIVE_FLAG = ${INACTIVE} 
+                    
+                WHERE
+                    C.CUSTOMER_ID = #{swapData.customerCode}
+            ) E ON A.CFC_DATE = E.CALENDAR_DATE 
+            
+        WHERE
+            A.CFC_MONTH_ID 
+        IN 
+            <foreach item="cfcMonth" index="Index" collection="swapData.cfcMonthList" open="(" separator="," close=")">  
+                #{cfcMonth}
+            </foreach>
+        ORDER BY
+            A.PARTS_ID
+            ,A.CFC_DATE
+	</select>
+	
+	
+	
+	<!-- get customer forecast info -->
+    <select id="getActualQty" parameterType="com.chinaplus.core.bean.PageParam" resultType="com.chinaplus.common.entity.CPOCFFComDailyEntity">
+    <include refid="ConstDef"/>
+        SELECT
+             A.PARTS_ID AS PARTSID
+            ,B.END_DATE AS ENDDATE
+            ,SUM(NVL(B.DAY_OUTBOUND_QTY, 0)) AS ACTUALQTY 
+        FROM
+            TNM_PARTS_MASTER A
+            LEFT JOIN TNF_IMP_STOCK_BY_DAY B ON A.PARTS_ID = B.PARTS_ID
+        AND A.OFFICE_ID = B.OFFICE_ID
+        AND B.END_DATE 
+        BETWEEN
+            #{swapData.dbtempEntity.startDate} 
+        AND
+            #{swapData.dbtempEntity.endDate} 
+        WHERE
+            <if test="swapData.SelectFrom == 'CPOCFF05' " >
+                A.OFFICE_ID = #{currentOfficeId}
+            AND 
+                A.CUSTOMER_ID = #{swapData.customerCode}
+            </if>
+        GROUP BY 
+            A.PARTS_ID
+           ,B.END_DATE
+        ORDER BY
+            A.PARTS_ID
+           ,B.END_DATE
+    </select>
+    
+    <!-- get customer forecast info -->
+    <select id="getActualQtyBatch" parameterType="com.chinaplus.core.bean.PageParam" resultType="com.chinaplus.common.entity.CPOCFFComDailyEntity">
+    <include refid="ConstDef"/>
+        SELECT
+             A.PARTS_ID AS PARTSID
+            ,B.END_DATE AS ENDDATE
+            ,SUM(NVL(B.DAY_OUTBOUND_QTY, 0)) AS ACTUALQTY 
+        FROM
+            TNM_PARTS_MASTER A
+            LEFT JOIN TNF_IMP_STOCK_BY_DAY B ON A.PARTS_ID = B.PARTS_ID
+        AND A.OFFICE_ID = B.OFFICE_ID
+        WHERE A.OFFICE_ID = #{swapData.officeId}
+        AND B.END_DATE 
+        BETWEEN
+            #{swapData.startDate} 
+        AND
+            #{swapData.endDate} 
+        GROUP BY 
+            A.PARTS_ID
+           ,B.END_DATE
+        ORDER BY
+            A.PARTS_ID
+           ,B.END_DATE
+    </select>
+	
+	<update id="UpdateRunDownCfc" parameterType="com.chinaplus.common.entity.TntRundownCfc">
+        
+        UPDATE 
+            TNT_RUNDOWN_CFC
+        SET                         
+            ORIGINAL_QTY = #{originalQty,jdbcType=DECIMAL}
+            ,CFC_QTY = #{cfcQty,jdbcType=DECIMAL} 
+            ,DELIVERED_QTY = #{deliveredQty,jdbcType=DECIMAL}
+            ,CFC_ADJUSTMENT_TYPE = #{cfcAdjustmentType}
+            ,UPDATED_BY = #{updatedBy}
+            ,UPDATED_DATE = #{updatedDate}
+            ,VERSION  = VERSION + 1  
+        WHERE 
+            PARTS_ID = #{partsId}
+        AND
+            CFC_DATE = #{cfcDate}
+    	 
+	</update>
+	
+	
+	<insert id="InsertRunDownCfc"  parameterType="com.chinaplus.common.entity.TntRundownCfc"> 
+     INSERT INTO  
+          TNT_RUNDOWN_CFC
+            (  RUNDOWN_CFC_ID,
+               PARTS_ID,
+               CFC_DATE,                
+               ORIGINAL_QTY,
+               CFC_QTY,
+               DELIVERED_QTY,
+               CFC_ADJUSTMENT_TYPE,
+               CREATED_BY,
+               CREATED_DATE,
+               UPDATED_BY,
+               UPDATED_DATE,
+               VERSION           
+            )
+          VALUES
+            (                     
+                NEXTVAL FOR  SEQ_TNT_RUNDOWN_CFC,
+                #{partsId},
+                #{cfcDate},
+                #{originalQty,jdbcType=DECIMAL},
+                #{cfcQty,jdbcType=DECIMAL},
+                #{deliveredQty,jdbcType=DECIMAL},
+                #{cfcAdjustmentType},
+                #{createdBy},
+                #{createdDate},              
+                #{updatedBy},
+                #{updatedDate},
+                 1  
+              )
+    </insert> 
+	
+	<!-- get TntCfcMonth -->
+    <select id="getTntCfcMonth" parameterType="com.chinaplus.core.bean.PageParam" resultType="com.chinaplus.common.entity.TntCfcMonth">
+        SELECT
+            B.PARTS_ID AS PARTSID
+            ,B.CFC_MONTH AS CFCMONTH
+            ,B.CFC_QTY AS CFCQTY
+            ,B.STATUS AS STATUS
+            ,B.CREATED_BY AS CREATEDBY
+            ,B.CREATED_DATE AS CREATEDDATE
+            ,B.UPDATED_BY AS UPDATEDBY
+            ,B.UPDATED_DATE AS UPDATEDDATE
+            ,B.VERSION AS VERSION
+        FROM
+            TNT_CFC_MASTER A
+        LEFT JOIN 
+            TNT_CFC_MONTH B ON B.CFC_ID = A.CFC_ID
+        WHERE
+            A.OFFICE_ID = #{swapData.officeId}
+    </select>
+	
+	<!-- get TntRundownCfc Info -->
+    <select id="getTntRundownCfcInfo" parameterType="com.chinaplus.core.bean.PageParam" resultType="com.chinaplus.common.entity.CPOCFFRunDownEntity">
+    <include refid="ConstDef"/>
+        SELECT
+            A.PARTS_ID AS PARTSID
+            ,A.CFC_DATE AS CFCDATE
+            ,A.ORIGINAL_QTY AS ORIGINALQTY
+            ,A.CFC_QTY AS CFCQTY
+            ,A.DELIVERED_QTY AS DELIVEREDQTY
+            ,A.CFC_ADJUSTMENT_TYPE AS CFCADJUSTMENTTYPE
+            ,C.WORKINGFLAG AS WORKINGFLAG
+        FROM
+            TNT_RUNDOWN_CFC A
+            LEFT JOIN (
+                SELECT
+                    H.CUSTOMER_CODE AS CUSTOMERCODE
+                    ,H.BUSINESS_PATTERN AS BUSINESSPATTERN
+                    ,D.CALENDAR_DATE AS CALENDARDATE
+                    ,D.WORKING_FLAG AS WORKINGFLAG
+                    ,D.CALENDAR_ID AS CALENDARID
+                FROM
+                    TNM_CUSTOMER H
+                INNER JOIN    
+                    TNM_CALENDAR_PARTY F ON H.CUSTOMER_ID = F.CUSTOMER_ID
+                INNER JOIN 
+                    TNM_CALENDAR_MASTER E ON F.CALENDAR_ID = E.CALENDAR_ID
+                INNER JOIN 
+                    TNM_CALENDAR_DETAIL D ON E.CALENDAR_ID = D.CALENDAR_ID     
+                WHERE
+                    E.INACTIVE_FLAG  = ${INACTIVE}
+                AND
+                    H.CUSTOMER_ID
+                IN
+                    (${swapData.customerCode})
+                ORDER BY
+                    D.CALENDAR_ID ASC
+                    ,H.BUSINESS_PATTERN ASC
+                    ,H.CUSTOMER_CODE ASC
+                    ,D.CALENDAR_DATE ASC               
+            
+            ) C ON C.CALENDARDATE = A.CFC_DATE
+        WHERE   
+            A.PARTS_ID IN 
+            (
+                SELECT
+                    K.PARTS_ID 
+                FROM
+                    TNT_CFC_MASTER I 
+                    LEFT JOIN TNM_PARTS_MASTER J ON J.CUSTOMER_ID = I.CUSTOMER_ID 
+                    LEFT JOIN TNT_CFC_MONTH K ON K.CFC_ID = I.CFC_ID 
+                WHERE
+                    J.CUSTOMER_ID = #{swapData.customerCode}
+                AND 
+                    J.OFFICE_ID = #{currentOfficeId} 
+                GROUP BY
+                    K.PARTS_ID
+            )
+            
+        AND A.CFC_DATE <![CDATA[>=]]> #{swapData.firstDay} 
+        AND A.CFC_DATE <![CDATA[<=]]> #{swapData.lastDay} 
+
+        ORDER BY
+            A.PARTS_ID
+            ,A.CFC_DATE
+    </select>
+	
+	<!-- get customer forecast info -->
+    <select id="getRundownPartsInfo" parameterType="com.chinaplus.core.bean.PageParam" resultType="com.chinaplus.common.entity.CPOCFFComEntity">
+    <include refid="ConstDef"/>
+	   SELECT
+          A.CFC_MONTH_ID AS CFCMONTHID
+          , A.PARTS_ID AS PARTSID
+          , E.CUSTOMER_ID AS CUSTOMERID
+          , A.CFC_DATE AS CFCDATE
+          , E.WORKING_FLAG WORKINGFLG
+          , A.CFC_QTY AS CFCQTY
+          , G.CFC_MONTH AS CFCMONTH
+          , G.CFC_QTY AS CFCMONTHQTY
+          , H.FC_DATE AS FCDATE
+          , F.TTC_PARTS_NO AS TTCPARTSNO
+          , F.CUST_PARTS_NO AS CUSTPARTSNO
+          , F.CUSTOMER_CODE AS CUSTOMERCODE
+          , F.PARTS_TYPE AS PARTSTYPE
+          , F.CAR_MODEL AS CARMODEL
+          , F.SPQ AS SPQ
+          , F.ORDER_LOT AS ORDERLOT
+          , F.UOM_CODE AS UOMCODE
+          , F.OLD_TTC_PARTS_NO AS OLDTTCPARTSNO
+          , F.PARTS_NAME_EN AS PARTSNAMEEN
+          , F.PARTS_NAME_CN AS PARTSNAMECN
+          , F.CFC_ADJUSTMENT_TYPE1 AS CFCADJUSTMENTTYPE1
+          , F.CFC_ADJUSTMENT_TYPE2 AS CFCADJUSTMENTTYPE2 
+        FROM
+          TNT_CFC_DAY A 
+          INNER JOIN TNM_PARTS_MASTER F 
+            ON A.PARTS_ID = F.PARTS_ID 
+          INNER JOIN TNT_CFC_MONTH G 
+            ON A.CFC_MONTH_ID = G.CFC_MONTH_ID 
+          INNER JOIN TNT_CFC_MASTER H 
+            ON A.CFC_ID = H.CFC_ID 
+          INNER JOIN ( 
+            SELECT
+              TNT_CFC_MONTH.PARTS_ID
+              , MAX(TNT_CFC_MONTH.CFC_MONTH_ID) CFCMONTHID 
+            FROM
+              TNT_CFC_MASTER 
+              INNER JOIN TNT_CFC_MONTH 
+                ON TNT_CFC_MASTER.CFC_ID = TNT_CFC_MONTH.CFC_ID 
+            WHERE
+              TNT_CFC_MASTER.STATUS = ${ACTIVE}
+              AND TNT_CFC_MONTH.CFC_MONTH = #{swapData.cfcMonth}
+            GROUP BY
+              TNT_CFC_MONTH.PARTS_ID
+          ) I 
+            ON A.CFC_MONTH_ID = I.CFCMONTHID 
+            AND A.PARTS_ID = I.PARTS_ID 
+          INNER JOIN ( 
+            SELECT
+              B.CALENDAR_DATE
+              , B.WORKING_FLAG
+              , C.CUSTOMER_ID 
+            FROM
+              TNM_CALENDAR_DETAIL B 
+              INNER JOIN TNM_CALENDAR_PARTY C 
+                ON B.CALENDAR_ID = C.CALENDAR_ID 
+              INNER JOIN TNM_CALENDAR_MASTER D 
+                ON B.CALENDAR_ID = D.CALENDAR_ID 
+                AND D.INACTIVE_FLAG = ${INACTIVE}
+          ) E 
+            ON A.CFC_DATE = E.CALENDAR_DATE 
+            AND E.CUSTOMER_ID = F.CUSTOMER_ID 
+        WHERE
+          F.OFFICE_ID = #{swapData.officeId}
+           <if test="swapData.SelectFrom == 'CPOCFF05' " >
+            AND 
+                F.CUSTOMER_ID = #{swapData.customerCode}
+            </if>
+        ORDER BY
+          A.PARTS_ID
+          , A.CFC_DATE
+	</select>
+	
+</mapper>

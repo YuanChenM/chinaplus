@@ -1,0 +1,170 @@
+/**
+ * Post GR/GI
+ * 
+ * @screen CPVIVS06
+ * @author gu_chengchen
+ */
+CPVIVS06 = {
+    id : chinaplus.screen.CPVIVS06,
+    title : chinaplus.label.CPVIVS06_Label_PageTitle,
+    xtype : 'form',
+    frame : true,
+    autoHeight : false,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    autoScroll : true,
+    fieldDefaults : {
+        labelSeparator : '',
+        labelAlign : 'right',
+        labelWidth : 150,
+        width : 350
+    },
+    items : [{
+                xtype : 'textfield',
+                margin : '10 0 0 0',
+                msgTarget : 'side',
+                fieldLabel : chinaplus.label.CPVIVS06_Label_InvoiceNo,
+                id : chinaplus.screen.CPVIVS06 + '_invoiceNo',
+                listeners : {
+                    afterrender : function(o) {
+                        TRF.util.makeCmpReadOnly(o);
+                    }
+                }
+            }, {
+                xtype : 'textfield',
+                margin : '10 0 0 0',
+                msgTarget : 'side',
+                fieldLabel : chinaplus.label.CPVIVS06_Label_TransportMode,
+                id : chinaplus.screen.CPVIVS06 + '_transportMode',
+                listeners : {
+                    afterrender : function(o) {
+                        TRF.util.makeCmpReadOnly(o);
+                    }
+                }
+            }, {
+                xtype : 'textfield',
+                margin : '10 0 0 0',
+                msgTarget : 'side',
+                fieldLabel : chinaplus.label.CPVIVS06_Label_ETDDate,
+                id : chinaplus.screen.CPVIVS06 + '_etd',
+                listeners : {
+                    afterrender : function(o) {
+                        TRF.util.makeCmpReadOnly(o);
+                    }
+                }
+            }, {
+                xtype : 'textfield',
+                margin : '10 0 0 0',
+                msgTarget : 'side',
+                fieldLabel : chinaplus.label.CPVIVS06_Label_ETADate,
+                id : chinaplus.screen.CPVIVS06 + '_eta',
+                listeners : {
+                    afterrender : function(o) {
+                        TRF.util.makeCmpReadOnly(o);
+                    }
+                }
+            }, {
+                xtype : 'datefield',
+                margin : '10 0 0 0',
+                msgTarget : 'side',
+                editable : false,
+                allowBlank : true,
+                fieldLabel : chinaplus.label.CPVIVS06_Label_GRDate,
+                fieldStyle : 'background:rgb(255,255,153)',
+                id : chinaplus.screen.CPVIVS06 + '_grDate',
+                plugins : [{
+                            ptype : 'datePickerClear'
+                        }]
+
+            }, {
+                xtype : 'datefield',
+                margin : '10 0 0 0',
+                msgTarget : 'side',
+                editable : false,
+                allowBlank : true,
+                fieldLabel : chinaplus.label.CPVIVS06_Label_GIDate,
+                fieldStyle : 'background:rgb(255,255,153)',
+                id : chinaplus.screen.CPVIVS06 + '_giDate',
+                plugins : [{
+                            ptype : 'datePickerClear'
+                        }]
+            }, {
+                xtype : 'button',
+                iconCls : 'btn-execute',
+                width : 145,
+                height : 25,
+                text : chinaplus.label.CPVIVS06_Button_PostRI,
+                margin : '30 0 0 10',
+                handler : function() {
+                    Ext.getCmp(chinaplus.screen.CPVIVS06).postGrGi();
+                }
+            }],
+    invoiceSummaryId : 0,
+    version : 0,
+
+    /**
+     * The initialize function.
+     * 
+     * @param params the parameter object passed to this screen
+     */
+    initialize : function(params) {
+
+        // Set display data
+        var data = params.data;
+        Ext.getCmp(chinaplus.screen.CPVIVS06 + '_invoiceNo').setValue(data.invoiceNo);
+        var transMode = chinaplus.master.getMasterName(chinaplus.master.consts.TnmCodeCategory_TransportMode, data.transportMode);
+        Ext.getCmp(chinaplus.screen.CPVIVS06 + '_transportMode').setValue(transMode);
+        Ext.getCmp(chinaplus.screen.CPVIVS06 + '_etd').setValue(data.etd);
+        Ext.getCmp(chinaplus.screen.CPVIVS06 + '_eta').setValue(data.eta);
+        Ext.getCmp(chinaplus.screen.CPVIVS06).invoiceSummaryId = data.invoiceSummaryId;
+        Ext.getCmp(chinaplus.screen.CPVIVS06).version = data.version;
+
+        // Set date format
+        var dateFormat;
+        if (TRF.core.language == chinaplus.consts.code.Language.CN) {
+            dateFormat = TRF.cnst.GLOBAL_DATE_YEAR_MONTH_DAY_FORMAT;
+        } else {
+            dateFormat = TRF.cnst.GLOBAL_DATETIME_SHORT_FORMAT;
+        }
+        Ext.getCmp(chinaplus.screen.CPVIVS06 + '_grDate').format = dateFormat;
+        Ext.getCmp(chinaplus.screen.CPVIVS06 + '_giDate').format = dateFormat;
+    },
+
+    /**
+     * Post GR/GI.
+     */
+    postGrGi : function() {
+
+        var backFun = function(responseData) {
+            if (responseData.success) {
+                TRF.util.showMessageBoxByMsgIdAndArgs('i1004', chinaplus.label.CPVIVS06_Button_PostRI);
+                Ext.getCmp(chinaplus.screen.CPVIVS01).refreshData();
+                TRF.util.removePopupApplication(chinaplus.screen.CPVIVS06);
+            }
+        };
+        var dateFormat;
+        if (TRF.core.language == chinaplus.consts.code.Language.CN) {
+            dateFormat = TRF.cnst.GLOBAL_DATE_YEAR_MONTH_DAY_FORMAT;
+        } else {
+            dateFormat = TRF.cnst.GLOBAL_DATETIME_SHORT_FORMAT;
+        }
+        var summaryId = Ext.getCmp(chinaplus.screen.CPVIVS06).invoiceSummaryId;
+        var ver = Ext.getCmp(chinaplus.screen.CPVIVS06).version;
+        var grd = Ext.getCmp(chinaplus.screen.CPVIVS06 + '_grDate').getValue();
+        if (!Ext.isEmpty(grd)) {
+            grd = Ext.util.Format.date(grd, dateFormat);
+        }
+        var gid = Ext.getCmp(chinaplus.screen.CPVIVS06 + '_giDate').getValue();
+        if (!Ext.isEmpty(gid)) {
+            gid = Ext.util.Format.date(gid, dateFormat);
+        }
+        var param = {
+            invoiceSummaryId : summaryId,
+            version : ver,
+            grDate : grd,
+            giDate : gid
+        };
+        TRF.util.ajaxSubmit(backFun, chinaplus.screen.CPVIVS06, 'inv/CPVIVS06/post', null, {
+                    data : param
+                });
+    }
+}

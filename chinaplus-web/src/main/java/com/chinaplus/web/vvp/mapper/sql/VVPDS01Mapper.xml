@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.vvp.service.VVPDS01Service">
+
+    <select id="findSupplierInfoBySupplierId" parameterType="com.chinaplus.web.vvp.entity.VVPDS01Entity" resultType="com.chinaplus.web.vvp.entity.VVPDS01Entity">
+        SELECT  A.SUPPLIER_ID AS supplierId
+              , A.EXPORT_OFFICE AS exportOffice
+              , B.OFFICE_CODE as exportOfficeCode
+              , A.CREATED_DATE AS createdDate
+              , A.CREATED_BY AS createdBy
+              , A.LAST_UPDATED_DATE AS lastUpdatedDate
+              , A.STATUS AS status
+              , A.FULL_COMPANY_NAME AS fullCompanyName
+              , A.LOCAL_ADDRESS AS localAddress
+              , A.CAPITAL AS capital
+              , A.BUSINESS_ACTIVITY AS businessActivity
+              , A.SHARE_HOLDER AS shareholder
+              , A.COMPANY_WEBSITE AS companyWebsite
+              , A.NO_OF_EMPLOYEE AS noOfEmployee
+              , A.MAIN_CUSTOMER AS mainCustomer
+              , A.HEADQUARTER_OFFICE AS headquarter
+              , C.REGION_CODE as headquarterCode
+              , A.END_USER_OEM AS endUserOem
+              , A.OFFICE_BRANCH AS officeBranch
+              , D.REGION_CODE as officeBranchCode
+              , A.PRODUCT_MATEIAL AS productMateial
+              , A.SECTION_OF_THE_CAR AS sectionOfTheCar
+              , A.PRODUCTION_PROCESS AS productionProcess
+              , A.REMARKS1 AS remarks1
+              , A.BUSINESS_WITH_LOCAL_TTC AS businessWithLocalTTC
+              , A.NDA_AGREEMENT AS ndaAgreement
+              , A.SUPPILER_TARGET AS suppilerTarget
+              , A.APPEALING_POINT AS appealingPoint
+              , A.OVERALL_EVALUATION AS overallEvaluation
+              , A.RISK_CONCERN_IF_ANY AS riskConcern
+              , A.REMARKS2 AS remarks2
+              , A.DOCUMENT1_NAME AS supportingDocument1
+              , A.DOCUMENT2_NAME AS supportingDocument2
+              , A.DOCUMENT3_NAME AS supportingDocument3
+              , A.DOCUMENT4_NAME AS supportingDocument4
+              , A.DOCUMENT5_NAME AS supportingDocument5
+          FROM VVP_SUPPILER A
+          INNER JOIN TNM_OFFICE B
+            ON B.OFFICE_ID = A.EXPORT_OFFICE
+          LEFT JOIN TNM_REGION C
+            ON C.REGION_ID = A.HEADQUARTER_OFFICE
+          LEFT JOIN TNM_REGION D
+            ON D.REGION_ID = A.OFFICE_BRANCH
+         WHERE A.SUPPLIER_ID = #{supplierId}
+    </select>
+
+    <insert id="insertIntoVVPSupplier"  parameterType="com.chinaplus.web.vvp.entity.VVPDS01Entity"> 
+     INSERT 
+        INTO VVP_SUPPILER( 
+          SUPPLIER_ID
+          , EXPORT_OFFICE
+          , CREATED_DATE
+          , CREATED_BY
+          , STATUS
+          , FULL_COMPANY_NAME
+          , LOCAL_ADDRESS
+          , CAPITAL
+          , BUSINESS_ACTIVITY
+          , SHARE_HOLDER
+          , COMPANY_WEBSITE
+          , NO_OF_EMPLOYEE
+          , MAIN_CUSTOMER
+          , HEADQUARTER_OFFICE
+          , END_USER_OEM
+          , OFFICE_BRANCH
+          , PRODUCT_MATEIAL
+          , SECTION_OF_THE_CAR
+          , PRODUCTION_PROCESS
+          , REMARKS1
+          , BUSINESS_WITH_LOCAL_TTC
+          , NDA_AGREEMENT
+          , SUPPILER_TARGET
+          , APPEALING_POINT
+          , OVERALL_EVALUATION
+          , RISK_CONCERN_IF_ANY
+          , REMARKS2
+          , DOCUMENT1_NAME
+          , DOCUMENT2_NAME
+          , DOCUMENT3_NAME
+          , DOCUMENT4_NAME
+          , DOCUMENT5_NAME
+          , VERSION
+        ) 
+        VALUES ( 
+            #{supplierId,jdbcType=INTEGER}
+          , #{exportOffice,jdbcType=INTEGER}
+          , #{createdDate,jdbcType=DATE}
+          , #{createdBy,jdbcType=VARCHAR}
+          , #{lastUpdatedDate,jdbcType=VARCHAR}
+          , #{fullCompanyName,jdbcType=VARCHAR}
+          , #{localAddress,jdbcType=VARCHAR}
+          , #{capital,jdbcType=VARCHAR}
+          , #{businessActivity,jdbcType=VARCHAR}
+          , #{shareholder,jdbcType=VARCHAR}
+          , #{companyWebsite,jdbcType=VARCHAR}
+          , #{noOfEmployee,jdbcType=VARCHAR}
+          , #{mainCustomer,jdbcType=VARCHAR}
+          , #{headquarter,jdbcType=INTEGER}
+          , #{endUserOem,jdbcType=VARCHAR}
+          , #{officeBranch,jdbcType=INTEGER}
+          , #{productMateial,jdbcType=INTEGER}
+          , #{sectionOfTheCar,jdbcType=INTEGER}
+          , #{productionProcess,jdbcType=INTEGER}
+          , #{remarks1,jdbcType=VARCHAR}
+          , #{businessWithLocalTTC,jdbcType=INTEGER}
+          , #{ndaAgreement,jdbcType=INTEGER}
+          , #{suppilerTarget,jdbcType=VARCHAR}
+          , #{appealingPoint,jdbcType=VARCHAR}
+          , #{overallEvaluation,jdbcType=INTEGER}
+          , #{riskConcern,jdbcType=VARCHAR}
+          , #{remarks2,jdbcType=VARCHAR}
+          , #{supportingDocument1,jdbcType=VARCHAR}
+          , #{supportingDocument2,jdbcType=VARCHAR}
+          , #{supportingDocument3,jdbcType=VARCHAR}
+          , #{supportingDocument4,jdbcType=VARCHAR}
+          , #{supportingDocument5,jdbcType=VARCHAR}
+          , 1
+        )
+    </insert> 
+    
+    <update id="updateIntoVVPSupplier"  parameterType="com.chinaplus.web.vvp.entity.VVPDS01Entity"> 
+         UPDATE VVP_SUPPILER 
+           SET
+               EXPORT_OFFICE = #{exportOffice,jdbcType=INTEGER}
+              , STATUS = #{status,jdbcType=INTEGER}
+              , FULL_COMPANY_NAME = #{fullCompanyName,jdbcType=VARCHAR}
+              , LAST_UPDATED_DATE = CURRENT DATE
+              , LOCAL_ADDRESS = #{localAddress,jdbcType=VARCHAR}
+              , CAPITAL = #{capital,jdbcType=VARCHAR}
+              , BUSINESS_ACTIVITY = #{businessActivity,jdbcType=VARCHAR}
+              , SHARE_HOLDER = #{shareholder,jdbcType=VARCHAR}
+              , COMPANY_WEBSITE = #{companyWebsite,jdbcType=VARCHAR}
+              , NO_OF_EMPLOYEE = #{noOfEmployee,jdbcType=VARCHAR}
+              , MAIN_CUSTOMER = #{mainCustomer,jdbcType=VARCHAR}
+              , HEADQUARTER_OFFICE = #{headquarter,jdbcType=INTEGER}
+              , END_USER_OEM = #{endUserOem,jdbcType=VARCHAR}
+              , OFFICE_BRANCH = #{officeBranch,jdbcType=INTEGER}
+              , PRODUCT_MATEIAL = #{productMateial,jdbcType=INTEGER}
+              , SECTION_OF_THE_CAR = #{sectionOfTheCar,jdbcType=INTEGER}
+              , PRODUCTION_PROCESS = #{productionProcess,jdbcType=INTEGER}
+              , REMARKS1 = #{remarks1,jdbcType=VARCHAR}
+              , BUSINESS_WITH_LOCAL_TTC = #{businessWithLocalTTC,jdbcType=INTEGER}
+              , NDA_AGREEMENT = #{ndaAgreement,jdbcType=INTEGER}
+              , SUPPILER_TARGET = #{suppilerTarget,jdbcType=VARCHAR}
+              , APPEALING_POINT = #{appealingPoint,jdbcType=VARCHAR}
+              , OVERALL_EVALUATION = #{overallEvaluation,jdbcType=INTEGER}
+              , RISK_CONCERN_IF_ANY = #{riskConcern,jdbcType=VARCHAR}
+              , REMARKS2 = #{remarks2,jdbcType=VARCHAR}
+              , DOCUMENT1_NAME = #{supportingDocument1,jdbcType=VARCHAR}
+              , DOCUMENT2_NAME = #{supportingDocument2,jdbcType=VARCHAR}
+              , DOCUMENT3_NAME = #{supportingDocument3,jdbcType=VARCHAR}
+              , DOCUMENT4_NAME = #{supportingDocument4,jdbcType=VARCHAR}
+              , DOCUMENT5_NAME = #{supportingDocument5,jdbcType=VARCHAR}
+              , VERSION = VERSION + 1
+         WHERE SUPPLIER_ID = #{supplierId,jdbcType=INTEGER}
+    </update> 
+</mapper>

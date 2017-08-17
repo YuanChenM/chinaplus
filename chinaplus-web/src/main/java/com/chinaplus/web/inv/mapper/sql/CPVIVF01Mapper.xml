@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.inv.service.CPVIVF01Service">
+    
+    <select id="findAllList" parameterType="com.chinaplus.web.inv.entity.CPVIVF01Entity" resultType="com.chinaplus.web.inv.entity.CPVIVF01Entity" flushCache="true">
+        SELECT DISTINCT
+            A.INVOICE_NO AS invoiceNo,
+            A.ETD AS etd,
+            D.CUSTOMER_CODE AS ttcCustomerCode,
+            C.INV_CUST_CODE AS mailCustomerCode,
+            D.TTC_PARTS_NO AS ttcPartNo,
+            D.UOM_CODE AS uomCode,
+            E.SUPP_PARTS_NO AS supplierPartNo,
+            E.TTC_SUPP_CODE AS ttcSupplierCode,
+            C.QTY AS totalQty,
+            A.TRANSPORT_MODE AS transportMode,
+            F.ETA AS eta,
+            F.IMP_INB_PLAN_DATE AS inboundDate,
+            ROWNUMBER() over(PARTITION BY A.INVOICE_NO, D.TTC_PARTS_NO, E.SUPP_PARTS_NO <include refid="orderSql" />) AS rownum
+        FROM
+            TNT_INVOICE_SUMMARY A
+        INNER JOIN
+            TNT_INVOICE B ON A.INVOICE_SUMMARY_ID = B.INVOICE_SUMMARY_ID AND B.INVOICE_GROUP_ID IS NULL
+        INNER JOIN
+            TNT_INVOICE_PARTS C ON B.INVOICE_ID = C.INVOICE_ID
+        INNER JOIN   
+            TNM_PARTS_MASTER D ON C.PARTS_ID = D.PARTS_ID
+        INNER JOIN
+            TNM_EXP_PARTS E ON C.PARTS_ID = E.PARTS_ID AND C.SUPPLIER_PARTS_NO = E.SUPP_PARTS_NO
+        LEFT JOIN (
+            SELECT DISTINCT
+                M.INVOICE_SUMMARY_ID,
+                N.ETA,
+                N.IMP_INB_PLAN_DATE
+            FROM
+                TNT_INVOICE_SUMMARY M
+            INNER JOIN
+                TNT_INVOICE N ON M.INVOICE_SUMMARY_ID = N.INVOICE_SUMMARY_ID AND N.INVOICE_GROUP_ID IS NOT NULL
+            WHERE
+                M.UPLOAD_ID = #{uploadId}
+            ) F ON A.INVOICE_SUMMARY_ID = F.INVOICE_SUMMARY_ID   
+        WHERE
+            A.UPLOAD_ID = #{uploadId}
+        AND A.UPLOAD_STATUS = 1
+        <include refid="orderSql" />
+    </select>
+    
+    <sql id="orderSql">
+        ORDER BY
+            A.INVOICE_NO ASC,
+            A.ETD ASC,
+            D.CUSTOMER_CODE ASC,
+            D.TTC_PARTS_NO ASC,
+            E.TTC_SUPP_CODE ASC
+    </sql>
+    
+</mapper>

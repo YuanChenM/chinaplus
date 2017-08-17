@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.inv.service.CPVIVF12Service">
+    
+    <select id="findInvoicePart" parameterType="com.chinaplus.web.inv.entity.CPVIVF12Entity" resultType="com.chinaplus.web.inv.entity.CPVIVF12Entity" flushCache="true">
+        SELECT DISTINCT
+            A.INVOICE_SUMMARY_ID AS invoiceSummaryId,
+            A.UPLOAD_ID AS uploadId,
+            C.PARTS_ID AS partsId,
+            C.QTY AS qty,
+            D.UOM_CODE AS uomCode,
+            D.CUSTOMER_ID AS customerId,
+            E.SUPPLIER_ID AS supplierId,
+            F.ETA AS eta,
+            F.IMP_INB_PLAN_DATE AS inboundDate
+        FROM
+            TNT_INVOICE_SUMMARY A
+        INNER JOIN
+            TNT_INVOICE B ON A.INVOICE_SUMMARY_ID = B.INVOICE_SUMMARY_ID AND B.INVOICE_GROUP_ID IS NULL
+        INNER JOIN
+            TNT_INVOICE_PARTS C ON B.INVOICE_ID = C.INVOICE_ID
+        INNER JOIN   
+            TNM_PARTS_MASTER D ON C.PARTS_ID = D.PARTS_ID
+        INNER JOIN
+            TNM_EXP_PARTS E ON C.PARTS_ID = E.PARTS_ID AND C.SUPPLIER_PARTS_NO = E.SUPP_PARTS_NO
+        LEFT JOIN
+            TNT_INVOICE F ON A.INVOICE_SUMMARY_ID = F.INVOICE_SUMMARY_ID AND F.INVOICE_GROUP_ID IS NOT NULL    
+        WHERE
+            D.OFFICE_ID = #{officeId}
+        AND A.UPLOAD_STATUS = 1
+        AND A.INVOICE_STATUS != 99
+        <if test="currentCustomers != null and currentCustomers.size() != 0">
+            AND D.CUSTOMER_ID IN
+            <foreach item="currentCustomerItem" index="currentCustomerIndex" collection="currentCustomers" open="(" separator="," close=")">  
+                #{currentCustomerItem}
+            </foreach>
+        </if>
+        <if test="invoiceNo != null and invoiceNo != ''">
+            AND A.INVOICE_NO = #{invoiceNo}
+        </if>
+        <if test="etd != null">
+            AND A.ETD = #{etd}
+        </if>
+        <if test="transportMode != null and transportMode != ''">
+            AND A.TRANSPORT_MODE = #{transportMode}
+        </if>
+        <if test="ttcCustomerCode != null and ttcCustomerCode != ''">
+            AND D.CUSTOMER_CODE = #{ttcCustomerCode}
+        </if>
+        <if test="mailCustomerCode != null and mailCustomerCode != ''">
+            AND C.INV_CUST_CODE = #{mailCustomerCode}
+        </if>
+        <if test="ttcPartNo != null and ttcPartNo != ''">
+            AND D.TTC_PARTS_NO = #{ttcPartNo}
+        </if>
+        <if test="supplierPartNo != null and supplierPartNo != ''">
+            AND E.SUPP_PARTS_NO = #{supplierPartNo}
+        </if>
+        <if test="ttcSupplierCode != null and ttcSupplierCode != ''">
+            AND E.TTC_SUPP_CODE = #{ttcSupplierCode}
+        </if>
+    </select>
+    
+    <select id="findAllSupplementaryData" parameterType="com.chinaplus.web.inv.entity.CPVIVF12Entity" resultType="com.chinaplus.web.inv.entity.CPVIVF12Entity" flushCache="true">
+        SELECT DISTINCT
+            A.INVOICE_NO AS invoiceNo,
+            D.CUSTOMER_CODE AS ttcCustomerCode,
+            E.SUPP_PARTS_NO AS supplierPartNo
+        FROM
+            TNT_INVOICE_SUMMARY A
+        INNER JOIN
+            TNT_INVOICE B ON A.INVOICE_SUMMARY_ID = B.INVOICE_SUMMARY_ID AND B.INVOICE_GROUP_ID IS NULL
+        INNER JOIN
+            TNT_INVOICE_PARTS C ON B.INVOICE_ID = C.INVOICE_ID
+        INNER JOIN   
+            TNM_PARTS_MASTER D ON C.PARTS_ID = D.PARTS_ID
+        INNER JOIN
+            TNM_EXP_PARTS E ON C.PARTS_ID = E.PARTS_ID AND C.SUPPLIER_PARTS_NO = E.SUPP_PARTS_NO
+        WHERE
+            A.UPLOAD_ID = #{uploadId}
+        AND A.UPLOAD_STATUS = 1
+    </select>
+    
+    <delete id="deleteInvoiceParts" parameterType="com.chinaplus.web.inv.entity.CPVIVF12Entity">
+        DELETE FROM 
+            TNT_INVOICE_PARTS A
+        WHERE
+            A.INVOICE_ID IN (
+                SELECT
+                    B.INVOICE_ID
+                FROM
+                    TNT_INVOICE B
+                WHERE
+                    B.INVOICE_GROUP_ID IS NULL
+                AND B.INVOICE_SUMMARY_ID IN (
+                    SELECT
+                        C.INVOICE_SUMMARY_ID
+                    FROM
+                        TNT_INVOICE_SUMMARY C
+                    WHERE
+                        C.UPLOAD_ID = #{uploadId}
+                    AND C.UPLOAD_STATUS = 1
+                )
+            )
+    </delete>
+    
+    <delete id="deleteInvoice" parameterType="com.chinaplus.web.inv.entity.CPVIVF12Entity">
+        DELETE FROM 
+            TNT_INVOICE A
+        WHERE
+            A.INVOICE_GROUP_ID IS NULL
+        AND A.INVOICE_SUMMARY_ID IN (
+            SELECT
+                B.INVOICE_SUMMARY_ID
+            FROM
+                TNT_INVOICE_SUMMARY B
+            WHERE
+                B.UPLOAD_ID = #{uploadId}
+            AND B.UPLOAD_STATUS = 1
+        )
+    </delete>
+    
+    <select id="findCompletedInvoices" parameterType="com.chinaplus.web.inv.entity.CPVIVF11SupportEntity" resultType="com.chinaplus.web.inv.entity.CPVIVF11SupportEntity" flushCache="true">
+        SELECT
+            B.INVOICE_NO AS invoiceNo,
+            D.KANBAN_PLAN_NO AS kanbanPlanNo,
+            D.TRANSPORT_MODE AS transMode,
+            D.ETD AS etd,
+            D.ETA AS eta,
+            D.IMP_INB_PLAN_DATE AS inbPlanDate,
+            C.PARTS_ID AS partsId,
+            SUM(C.QTY) AS invoiceQty
+        FROM
+            TNT_INVOICE_SUMMARY A
+        INNER JOIN
+            TNT_INVOICE B ON A.INVOICE_SUMMARY_ID = B.INVOICE_SUMMARY_ID
+        INNER JOIN
+            TNT_INVOICE_PARTS C ON B.INVOICE_ID = C.INVOICE_ID
+        INNER JOIN
+            TNT_INVOICE_GROUP D ON B.INVOICE_GROUP_ID = D.INVOICE_GROUP_ID
+        WHERE
+            A.UPLOAD_ID = #{uploadId}
+        AND A.UPLOAD_STATUS = 1
+        GROUP BY
+            B.INVOICE_NO,
+            D.KANBAN_PLAN_NO,
+            D.TRANSPORT_MODE,
+            D.ETD,
+            D.ETA,
+            D.IMP_INB_PLAN_DATE,
+            C.PARTS_ID
+        ORDER BY
+            D.KANBAN_PLAN_NO ASC,
+            D.TRANSPORT_MODE ASC,
+            D.ETD ASC,
+            D.ETA ASC,
+            D.IMP_INB_PLAN_DATE ASC,
+            B.INVOICE_NO ASC
+    </select>
+    
+</mapper>

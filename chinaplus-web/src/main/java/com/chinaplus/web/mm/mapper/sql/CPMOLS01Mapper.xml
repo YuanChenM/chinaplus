@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.mm.service.CPMOLS01Service">
+
+    <sql id="whereSql">
+        FROM
+        TNM_OFFICE A
+        INNER JOIN TNM_REGION R
+        ON A.REGION_CODE=R.REGION_CODE
+        LEFT JOIN TNM_USER C
+        ON A.CREATED_BY=C.USER_ID
+        <where>
+        <if test="null != filters">
+            <if test="null != filters.officeCode and '' != filters.officeCode">
+                AND A.OFFICE_CODE LIKE #{filters.officeCode} ESCAPE '!'
+            </if>
+            <if test="null != filters.officeName and '' != filters.officeName">
+                AND A.OFFICE_NAME LIKE #{filters.officeName} ESCAPE '!'
+            </if>
+            <if test="null != filters.regionCode and filters.regionCode.size()>0">
+                AND A.REGION_CODE IN
+                <foreach item="item" index="index" collection="filters.regionCode"
+                    open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="null != filters.createBy and '' != filters.createBy">
+                AND C.LOGIN_ID LIKE #{filters.createBy} ESCAPE '!'
+            </if>
+            <if test="null != filters.inActiveFlag and '' != filters.inActiveFlag">
+                AND A.INACTIVE_FLAG = #{filters.inActiveFlag}
+            </if>
+            <if test="null != filters.createDateFrom and '' != filters.createDateFrom">
+                and DATE(A.CREATED_DATE) <![CDATA[>=]]>
+                #{filters.createDateFrom}
+            </if>
+            <if test="null != filters.createDateTo and '' != filters.createDateTo">
+                and DATE (A.CREATED_DATE) <![CDATA[<=]]>
+                #{filters.createDateTo}
+            </if>
+        </if>
+        </where>
+    </sql>
+
+    <sql id="orderSql">
+        ORDER BY A.CREATED_DATE DESC
+    </sql>
+
+    <select id="getOfficeList" parameterType="com.chinaplus.core.bean.PageParam"
+        resultType="com.chinaplus.web.mm.entity.CPMOLS01Entity" flushCache="true">
+        Select * from (
+        SELECT
+        A.OFFICE_ID AS officeId
+        ,A.OFFICE_CODE AS officeCode
+        ,A.OFFICE_NAME AS officeName
+        ,A.REGION_CODE AS regionCode
+        <!-- ,A.SEND_DATA_TIME AS sendDateTime -->
+        ,R.REGION_NAME AS regionName
+        ,C.LOGIN_ID AS createBy
+        ,A.CREATED_DATE AS createDate
+        ,A.INACTIVE_FLAG AS inActiveFlag,
+        rownumber() over(
+        <include refid="orderSql" />
+        ) as rownum
+        <include refid="whereSql" />
+        <include refid="orderSql" />
+        ) Where
+        <include refid="com.chinaplus.const.pagingCondition" />
+    </select>
+    
+    <select id="getOfficeListCount" parameterType="com.chinaplus.core.bean.PageParam"
+        resultType="int" flushCache="true">
+        SELECT
+        COUNT(0)
+        <include refid="whereSql" />
+    </select>
+</mapper>

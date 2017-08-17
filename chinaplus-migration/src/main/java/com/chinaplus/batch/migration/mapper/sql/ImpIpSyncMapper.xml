@@ -1,0 +1,270 @@
+<!--
+@screen CPIIFB01
+@author liu_yinchuan
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.batch.migration.service.ImpIpSyncService">
+    <sql id="ConstDef">
+        <bind name="HandleFlag_UNTREATED" value="@com.chinaplus.common.consts.CodeConst$HandleFlag@UNPROCESS" />
+        <bind name="ActionType_CUSTOMS_CLEARANCE" value="@com.chinaplus.common.consts.CodeConst$ActionType@CUSTOMS_CLEARANCE" />
+        <bind name="ActionType_DEVANNED" value="@com.chinaplus.common.consts.CodeConst$ActionType@DEVANNED" />
+        <bind name="INV_CANCELLED" value="@com.chinaplus.common.consts.CodeConst$InvoiceStatus@CANCELLED" />
+    </sql>
+    
+    <!-- Get all IP information for all parts, and then make stock Ip into TNT_IF_IMP_IP -->
+    <select id="getPartsStockIPInfoListForAISIN" parameterType="com.chinaplus.batch.migration.bean.TntMgImpIpEx" resultType="com.chinaplus.batch.migration.bean.TntMgImpIpEx">
+        <include refid="ConstDef"/>
+         SELECT TMP.PARTS_ID AS partsId
+              , TMP.OFFICE_ID AS officeId
+              , TMP.CUSTOMER_ID AS customerId
+              , TMP.WHS_ID AS whsId
+              , TMP.BUSINESS_PATTERN AS businessPattern
+              , MIP.SEQ_NO AS seqNo
+              , MIP.OFFICE_CODE AS officeCode
+              , MIP.SOURCE_IP_NO AS sourceIpNo
+              , MIP.PID_NO AS pidNo
+              , MIP.PARENT_PID_NO AS parentPidNo
+              , MIP.WHS_CODE AS whsCode
+              , MIP.FROM_CUSTOMER_CODE AS originalCustCode
+              , MIP.CUSTOMER_CODE AS customerCode
+              , MIP.TTC_PARTS_NO AS ttcPartsNo
+              , MIP.ORIGINAL_QTY AS originalQty
+              , MIP.QTY AS qty
+              , MIP.INVOICE_NO AS invoiceNo
+              , MIP.MODULE_NO AS moduleNo
+              , MIP.STATUS AS status
+              , MIP.INB_DATE AS inboundDate
+              , MIP.SYS_OB_DATE_TIME AS sysObDateTime
+              , MIP.ACTUAL_OB_DATE_TIME AS actualObDateTime
+              , MIP.ADJUSTMENT_DATE AS adjustmentDate
+              , MIP.IF_DATE_TIME  AS ifDateTime
+              , TIW.WHS_CODE AS originalWhsCode
+           FROM TNT_MG_IMP_IP MIP 
+          INNER JOIN ( 
+                 SELECT DISTINCT
+                        TP.PARTS_ID
+                      , TP.OFFICE_ID
+                      , TP.CUSTOMER_ID
+                      , TW.WHS_ID
+                      , TP.TTC_PARTS_NO
+                      , TP.BUSINESS_PATTERN
+                      , TO.OFFICE_CODE
+                      , TWC.WHS_CUSTOMER_CODE
+                      , TW.WHS_CODE 
+                    FROM
+                        TNM_PARTS_MASTER TP 
+                      INNER JOIN TNM_OFFICE TO 
+                         ON TO.OFFICE_ID = TP.OFFICE_ID 
+                      INNER JOIN TNM_WHS_CUSTOMER TWC 
+                         ON TWC.OFFICE_ID = TP.OFFICE_ID 
+                        AND TWC.CUSTOMER_ID = TP.CUSTOMER_ID 
+                      INNER JOIN TNM_WAREHOUSE TW 
+                         ON TW.WHS_ID = TWC.WHS_ID 
+                      WHERE TP.BUSINESS_PATTERN = #{businessPattern}
+                        AND TO.OFFICE_ID = #{officeId}) TMP 
+             ON TMP.OFFICE_CODE = MIP.OFFICE_CODE 
+            AND TMP.WHS_CODE = MIP.WHS_CODE 
+            AND TMP.TTC_PARTS_NO = MIP.TTC_PARTS_NO 
+            AND TMP.WHS_CUSTOMER_CODE = MIP.CUSTOMER_CODE
+           LEFT JOIN (
+                 SELECT DISTINCT
+                        TIP.OFFICE_CODE
+                      , TIP.DEVAN_INVOICE_NO AS INVOICE_NO
+                      , TIP.MODULE_NO AS MODULE_NO
+                      , TIP.WHS_CODE
+                   FROM TNT_IF_IMP_IP TIP
+                  WHERE TIP.ACTION_TYPE IN (#{ActionType_DEVANNED})) TIW
+             ON TIW.OFFICE_CODE = MIP.OFFICE_CODE
+            AND TIW.INVOICE_NO = MIP.INVOICE_NO
+            AND TIW.MODULE_NO = MIP.MODULE_NO
+          WHERE MIP.HANDLE_FLAG = #{HandleFlag_UNTREATED}
+            AND MIP.OFFICE_CODE = #{officeCode}
+            AND MIP.STATUS IN (1, 8, 9)
+          ORDER BY 
+                MIP.OFFICE_CODE
+              , MIP.PID_NO
+              , MIP.SOURCE_IP_NO
+              , MIP.PARENT_PID_NO
+    </select>
+    
+    <select id="getPartsStockIPInfoListForVV" parameterType="com.chinaplus.batch.migration.bean.TntMgImpIpEx" resultType="com.chinaplus.batch.migration.bean.TntMgImpIpEx">
+        <include refid="ConstDef"/>
+        SELECT *
+          FROM ( SELECT MIP.OFFICE_CODE AS officeCode
+                      , MIP.SOURCE_IP_NO AS sourceIpNo
+                      , MIP.PID_NO AS pidNo
+                      , MIP.PARENT_PID_NO AS parentPidNo
+                      , MIP.WHS_CODE AS whsCode
+                      , MIP.FROM_CUSTOMER_CODE AS originalCustCode
+                      , MIP.CUSTOMER_CODE AS customerCode
+                      , MIP.TTC_PARTS_NO AS ttcPartsNo
+                      , MIP.ORIGINAL_QTY AS originalQty
+                      , MIP.QTY AS qty
+                      , MIP.INVOICE_NO AS invoiceNo
+                      , MIP.MODULE_NO AS moduleNo
+                      , MIP.STATUS AS status
+                      , MIP.INB_DATE AS inboundDate
+                      , MIP.SYS_OB_DATE_TIME AS sysObDateTime
+                      , MIP.ACTUAL_OB_DATE_TIME AS actualObDateTime
+                      , MIP.ADJUSTMENT_DATE AS adjustmentDate
+                      , MIP.IF_DATE_TIME AS ifDateTime
+                      , ROW_NUMBER() OVER (ORDER BY MIP.PID_NO) AS rownum
+                   FROM TNT_MG_IMP_IP MIP
+                  WHERE MIP.HANDLE_FLAG = #{HandleFlag_UNTREATED}
+                    AND MIP.OFFICE_CODE = #{officeCode}
+                    AND EXISTS ( 
+                          SELECT IP_NO 
+                            FROM TNT_IF_EXP_OUTBOUND TI
+                           WHERE TI.IP_NO = MIP.SOURCE_IP_NO)) AST
+         WHERE AST.rownum > ${startRow} 
+         FETCH FIRST ${limit} ROWS ONLY
+    </select>
+
+    <select id="getPartsStockIPInfoCount" parameterType="com.chinaplus.batch.migration.bean.TntMgImpIpEx" resultType="java.lang.Integer">
+        <include refid="ConstDef"/>
+         SELECT COUNT(1) AS cnt
+           FROM TNT_MG_IMP_IP MIP
+          INNER JOIN (
+                  SELECT IP_NO
+                    FROM TNT_IF_EXP_OUTBOUND
+                   GROUP BY IP_NO) TI
+             ON TI.IP_NO = MIP.SOURCE_IP_NO 
+          WHERE MIP.HANDLE_FLAG = #{HandleFlag_UNTREATED}
+            AND MIP.OFFICE_CODE = #{officeCode}
+            AND MIP.SOURCE_IP_NO IS NOT NULL
+    </select>
+    
+    <select id="getModuleDevanWhsCodeList" parameterType="com.chinaplus.batch.migration.bean.TntMgImpIpEx" resultType="com.chinaplus.batch.migration.bean.TntMgImpIpEx">
+        <include refid="ConstDef"/>
+        SELECT DISTINCT
+               TIP.OFFICE_CODE AS officeCode
+             , TIP.DEVAN_INVOICE_NO AS invoiceNo
+             , TIP.MODULE_NO AS moduleNo
+             , TIP.WHS_CODE AS whsCode 
+          FROM TNT_IF_IMP_IP TIP
+         WHERE TIP.ACTION_TYPE = #{ActionType_DEVANNED}
+           AND TIP.OFFICE_CODE = #{officeCode}
+    </select>
+        
+    <select id="getParentDecanWhsCodeList" parameterType="com.chinaplus.batch.migration.bean.TntMgImpIpEx" resultType="com.chinaplus.batch.migration.bean.TntMgImpIpEx">
+        <include refid="ConstDef"/>
+        SELECT TIP.PID_NO AS pidNo
+             , TIP.WHS_CODE AS whsCode 
+          FROM TNT_MG_IMP_IP TIP
+         WHERE TIP.STATUS = 99
+           AND TIP.OFFICE_CODE = #{officeCode}
+           AND TIP.HANDLE_FLAG = #{HandleFlag_UNTREATED}
+    </select>
+    
+    <insert id="addTTLogicIPIf" parameterType="com.chinaplus.common.entity.TntIfImpIp">
+        INSERT INTO 
+            TNT_IF_IMP_IP( 
+                IF_IP_ID
+              , SEQ_NO
+              , ACTION_TYPE
+              , DATA_SOURCE
+              , OFFICE_CODE
+              , SOURCE_IP_NO
+              , PID_NO
+              , FROM_WHS_CODE
+              , WHS_TRANSFER_DATE
+              , WHS_CODE
+              , SUPPLIER_CODE
+              , FROM_CUSTOMER_CODE
+              , STOCK_TRANSFER_DATE
+              , WHS_CUSTOMER_CODE
+              , TTC_PARTS_NO
+              , QTY
+              , CUSTOMS_CLR_DATE
+              , INVOICE_NO
+              , CUSTOMS_NO
+              , DEVANNED_JOB_NO
+              , DEVANNED_DATE
+              , DEVAN_INVOICE_NO
+              , MODULE_NO
+              , INB_JOB_NO
+              , INB_INVOICE_NO
+              , INB_MODULE_NO
+              , INB_TYPE
+              , INB_DATE
+              , OUTBOUND_NO
+              , OUTBOUND_TYPE
+              , OUTBOUND_PKG_NO
+              , DELIVERY_NOTE_NO
+              , OUTBOUND_DATETIME
+              , DISPATCHED_DATETIME
+              , ONHOLD_FLAG
+              , ONHOLD_DATE
+              , SA_DATE
+              , SA_QTY
+              , DECANT_DATE
+              , FROM_IP_NO
+              , STATUS
+              , PROCESS_DATE
+              , IF_DATE_TIME
+              , VALID_FLAG
+              , HANDLE_FLAG
+              , CREATED_BY
+              , CREATED_DATE
+              , UPDATED_BY
+              , UPDATED_DATE
+              , VERSION
+        ) VALUES (
+                #{ifIpId,jdbcType=INTEGER}
+              , #{seqNo,jdbcType=VARCHAR}
+              , #{actionType,jdbcType=INTEGER}
+              , #{dataSource,jdbcType=VARCHAR}
+              , #{officeCode,jdbcType=VARCHAR}
+              , #{sourceIpNo,jdbcType=VARCHAR}
+              , #{pidNo,jdbcType=VARCHAR}
+              , #{fromWhsCode,jdbcType=VARCHAR}
+              , #{whsTransferDate,jdbcType=VARCHAR}
+              , #{whsCode,jdbcType=VARCHAR}
+              , #{supplierCode,jdbcType=VARCHAR}
+              , #{fromCustomerCode,jdbcType=VARCHAR}
+              , #{stockTransferDate,jdbcType=VARCHAR}
+              , #{whsCustomerCode,jdbcType=VARCHAR}
+              , #{ttcPartsNo,jdbcType=VARCHAR}
+              , #{qty,jdbcType=VARCHAR}
+              , #{customsClrDate,jdbcType=VARCHAR}
+              , #{invoiceNo,jdbcType=VARCHAR}
+              , #{customsNo,jdbcType=VARCHAR}
+              , #{devannedJobNo,jdbcType=VARCHAR}
+              , #{devannedDate,jdbcType=VARCHAR}
+              , #{devanInvoiceNo,jdbcType=VARCHAR}
+              , #{moduleNo,jdbcType=VARCHAR}
+              , #{inbJobNo,jdbcType=VARCHAR}
+              , #{inbInvoiceNo,jdbcType=VARCHAR}
+              , #{inbModuleNo,jdbcType=VARCHAR}
+              , #{inbType,jdbcType=VARCHAR}
+              , #{inbDate,jdbcType=VARCHAR}
+              , #{outboundNo,jdbcType=VARCHAR}
+              , #{outboundType,jdbcType=VARCHAR}
+              , #{outboundPkgNo,jdbcType=VARCHAR}
+              , #{deliveryNoteNo,jdbcType=VARCHAR}
+              , #{outboundDatetime,jdbcType=VARCHAR}
+              , #{dispatchedDatetime,jdbcType=VARCHAR}
+              , #{onholdFlag,jdbcType=VARCHAR}
+              , #{onholdDate,jdbcType=VARCHAR}
+              , #{saDate,jdbcType=VARCHAR}
+              , #{saQty,jdbcType=VARCHAR}
+              , #{decantDate,jdbcType=VARCHAR}
+              , #{fromIpNo,jdbcType=VARCHAR}
+              , #{status,jdbcType=VARCHAR}
+              , #{processDate,jdbcType=TIMESTAMP}
+              , #{ifDateTime,jdbcType=TIMESTAMP}
+              , #{validFlag,jdbcType=INTEGER}
+              , #{handleFlag,jdbcType=INTEGER}
+              , #{createdBy,jdbcType=INTEGER}
+              , #{createdDate,jdbcType=TIMESTAMP}
+              , #{updatedBy,jdbcType=INTEGER}
+              , #{updatedDate,jdbcType=TIMESTAMP}
+              , #{version,jdbcType=INTEGER}
+        )
+    </insert>
+                    
+    <select id="getMaxIfIpId" resultType="java.lang.Integer">
+        SELECT MAX(IF_IP_ID) + 1 FROM TNT_IF_IMP_IP
+    </select>
+</mapper>

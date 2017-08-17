@@ -1,0 +1,125 @@
+<!--
+@screen CPOCFS01
+@author li_feng
+-->
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="com.chinaplus.web.om.service.CPOCFS01Service">
+    <sql id="ConstDef">
+        <bind name="STATUS" value="@com.chinaplus.common.consts.CodeConst$CancelCustomerForecastStatus@CANCELLED" />
+    </sql>
+    
+    <!-- get Role list -->
+    <sql id="getcustomerForecastInfo">
+       FROM  
+            TNT_CFC_MASTER A
+        LEFT JOIN 
+            TNM_USER C 
+        ON A.UPLOADED_BY = C.USER_ID    
+        INNER JOIN 
+            TNM_CUSTOMER B 
+        ON A.CUSTOMER_ID=B.CUSTOMER_ID
+        WHERE 
+           A.OFFICE_ID = #{currentOfficeId}
+        <if test="filters.status != null">
+            AND 
+                A.STATUS = #{filters.status}
+        </if>
+        <if test="filters.forecastNo != null">
+            AND 
+                A.CFC_NO
+                LIKE 
+                #{filters.forecastNo} ESCAPE '!'
+        </if>
+
+        <if test="filters.fcReceivedDateFrom != null and filters.fcReceivedDateFrom != ''">
+        AND A.FC_DATE <![CDATA[>=]]> #{filters.fcReceivedDateFrom}
+        </if>
+        <if test="filters.fcReceivedDateTo != null and filters.fcReceivedDateTo != ''">
+        AND A.FC_DATE <![CDATA[<=]]> #{filters.fcReceivedDateTo}
+        </if>
+        
+
+        <if test="filters.tTCCustomerCode != null">
+            AND 
+                B.CUSTOMER_ID IN
+            <foreach item="tTCCustomerCodeItem" index="tTCCustomerCodeIndex" collection="filters.tTCCustomerCode" open="(" separator="," close=")">  
+                    #{tTCCustomerCodeItem}
+            </foreach>
+        </if>
+        <if test="filters.userId != null">
+            AND 
+                A.UPLOADED_BY IN
+            <foreach item="userId" index="uploadIDIndex" collection="filters.userId" open="(" separator="," close=")">  
+                    #{userId}
+            </foreach>
+        </if>
+
+        <if test="filters.uploadTimeFrom != null and filters.uploadTimeFrom != ''">
+        AND A.UPLOADED_DATE <![CDATA[>=]]> #{filters.uploadTimeFrom}
+        </if>
+        <if test="filters.uploadTimeTo != null and filters.uploadTimeTo != ''">
+        AND A.UPLOADED_DATE <![CDATA[<=]]> #{filters.uploadTimeTo}
+        </if>
+    </sql>
+    
+    
+    <!-- <cache /> -->
+    <select id="findPageListCount" parameterType="com.chinaplus.core.bean.PageParam"
+        resultType="int">
+        SELECT COUNT(0)
+        <include refid="getcustomerForecastInfo" />
+    </select>
+    
+    
+    
+    
+    
+    <!-- get customer forecast info -->
+    <select id="findPageList" parameterType="com.chinaplus.core.bean.PageParam" resultType="com.chinaplus.web.om.entity.CPOCFS01Entity">
+        SELECT
+        *
+        FROM (
+        
+            SELECT
+                A.CFC_ID AS FORECASTID
+                ,A.CFC_NO AS FORECASTNO
+                ,A.FC_DATE AS FCRECEIVEDDATE
+                ,B.CUSTOMER_CODE AS TTCCUSTOMERCODE
+                ,A.FIRST_FC_MONTH AS FIRSTFCMONTH
+                ,A.LAST_FC_MONTH AS LASTFCMONTH
+                ,A.REMARK AS REMARK
+                ,A.STATUS AS STATUS
+                ,A.UPLOADED_BY AS UPLOADID
+                ,C.LOGIN_ID AS USERID
+                ,A.UPLOADED_DATE AS UPLOADTIME
+                ,ROWNUMBER() over(ORDER BY A.FC_DATE DESC) as rownum
+            <include refid="getcustomerForecastInfo" />
+            ORDER BY  
+                A.FC_DATE DESC
+                ,A.CFC_NO DESC )
+        WHERE
+        <include refid="com.chinaplus.const.pagingCondition" />
+    </select>
+        
+    <!-- cancel customer forecast -->
+    <update id="cancelCustomerForecast" parameterType="com.chinaplus.core.bean.ObjectParam">
+        <include refid="ConstDef"/>
+         UPDATE
+            TNT_CFC_MASTER
+         SET
+            STATUS = ${STATUS}
+            ,VERSION = VERSION + 1
+            ,UPDATED_BY = #{loginUserId}
+            ,UPDATED_DATE = #{swapData.UPDATE_DATE}
+         WHERE
+            CFC_ID
+         IN
+        <foreach item="CPOCFS01Entity" index="Index" collection="datas" open="(" separator="," close=")">  
+                #{CPOCFS01Entity.forecastId}
+        </foreach>
+    </update>
+    
+</mapper>

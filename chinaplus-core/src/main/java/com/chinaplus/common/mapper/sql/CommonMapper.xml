@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- CommonMapper.xml @screen common @author ma_b -->
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.common.service.CommonService">
+
+    <sql id="ConstDef">
+        <bind name="InactiveFlag_ACTIVE" value="@com.chinaplus.common.consts.CodeConst$InactiveFlag@ACTIVE" />
+        <bind name="Status_ACTIVE" value="@com.chinaplus.common.consts.CodeConst$User$Status@ACTIVE" />
+    </sql>
+    
+    <!-- get current timestamp of database -->
+    <select id="getDiffSystemDay" resultType="java.lang.Integer" >
+        <include refid="ConstDef"/>
+        SELECT DISTINCT
+            A.DATA_TYPE as dataType
+        FROM
+            TNT_SYNC_TIME A
+    </select>
+    
+    <!-- get systemdate  -->
+    <select id="getCurrentTime" parameterType="com.chinaplus.core.bean.BaseParam" resultType="java.sql.Timestamp">
+        <if test="swapData.diffDay != 0">
+        VALUES CURRENT TIMESTAMP + #{swapData.diffDay} days
+        </if>
+        <if test="swapData.diffDay == 0">
+        VALUES CURRENT TIMESTAMP
+        </if>
+    </select>
+    
+    <!-- get next sequence value for one sequence -->
+    <select id="getNextSequence" resultType="java.lang.Integer" parameterType="java.util.Map" >
+        VALUES ${seqName}.NEXTVAL
+    </select>
+    
+    <!-- get digits value according uomCode -->
+    <select id="getDecimalDigits" resultType="com.chinaplus.common.bean.UomData" >
+        SELECT
+          UOM_CODE as uomCode,
+          DECIMAL_DIGITS as decimalDigits
+        FROM
+          TNM_UOM
+    </select>
+    
+    <!-- get all active regions -->
+    <select id="getActiveRegions" resultType="com.chinaplus.common.entity.TnmRegion" >
+        <include refid="ConstDef"/>
+        SELECT
+            REGION_ID as regionId,
+            REGION_CODE as regionCode
+        FROM
+            TNM_REGION
+        WHERE
+            INACTIVE_FLAG = ${InactiveFlag_ACTIVE}
+        ORDER BY
+            REGION_CODE ASC
+    </select>
+    
+    <!-- get all active suppliers -->
+    <select id="getActiveSuppliers" resultType="com.chinaplus.common.entity.TnmSupplier" >
+        <include refid="ConstDef"/>
+        SELECT
+            SUPPLIER_ID as supplierId,
+            SUPPLIER_CODE as supplierCode
+        FROM
+            TNM_SUPPLIER
+        WHERE
+            INACTIVE_FLAG = ${InactiveFlag_ACTIVE}
+        ORDER BY
+            SUPPLIER_CODE ASC
+    </select>
+    
+    <!-- get current office customers -->
+    <select id="getCurrentOfficeCustomers" resultType="com.chinaplus.common.entity.TnmCustomer" >
+        <include refid="ConstDef"/>
+        SELECT
+            CUSTOMER_ID as customerId,
+            CUSTOMER_CODE as customerCode
+        FROM
+            TNM_CUSTOMER
+        WHERE
+            OFFICE_ID = #{currentOfficeId}
+        ORDER BY
+            CUSTOMER_CODE ASC
+    </select>
+    
+    <!-- get current office users -->
+    <select id="getCurrentOfficeUsers" parameterType="com.chinaplus.core.bean.BaseParam" resultType="com.chinaplus.common.entity.TnmUser" >
+        <include refid="ConstDef"/>
+        SELECT DISTINCT
+            A.USER_ID as userId,
+            A.LOGIN_ID as loginId
+        FROM
+            TNM_USER A
+        INNER JOIN
+            TNM_USER_OFFICE_ROLE B ON A.USER_ID = B.USER_ID
+        WHERE
+            B.OFFICE_ID = #{currentOfficeId}
+        AND A.STATUS = ${Status_ACTIVE}
+        ORDER BY
+            A.LOGIN_ID ASC
+    </select>
+    
+    <!-- get all active revision reasons -->
+    <select id="getActiveRevisionReasons" parameterType="com.chinaplus.core.bean.ObjectParam" resultType="com.chinaplus.common.entity.TnmReason" >
+        <include refid="ConstDef"/>
+        SELECT DISTINCT
+            A.REASON_CODE as reasonCode,
+            A.REASON_DESC as reasonDesc
+        FROM
+            TNM_REASON A
+        WHERE
+            A.BUSINESS_PATTERN = #{swapData.BUSINESS_PATTERN}
+        AND A.INACTIVE_FLAG = ${InactiveFlag_ACTIVE}
+        ORDER BY
+            A.REASON_CODE ASC
+    </select>
+</mapper>

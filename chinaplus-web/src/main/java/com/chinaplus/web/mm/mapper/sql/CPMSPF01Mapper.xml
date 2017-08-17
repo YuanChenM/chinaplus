@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.mm.service.CPMSPF01Service">
+    <sql id="bussinessPattern">
+        <bind name="NORMAL" value="@com.chinaplus.common.consts.CodeConst$CodeMasterCategory@BUSINESS_PATTERN" />
+    </sql>
+    <select id="getReasonList" resultType="com.chinaplus.common.entity.TnmReason"  parameterType="com.chinaplus.core.bean.BaseParam">
+     <include refid="bussinessPattern"/>
+     SELECT 
+     	C.businessPattern,
+		C.reasonDesc, 
+		C.inactiveFlag 
+     FROM
+     (SELECT
+        A.BUSINESS_PATTERN AS businessPattern,
+        A.REASON_DESC AS reasonDesc,
+	        A.INACTIVE_FLAG AS inactiveFlag,
+	        A.REASON_CODE
+     FROM 
+        TNM_REASON A
+     INNER JOIN TNM_CODE_CATEGORY B
+     ON A.BUSINESS_PATTERN = B.CODE_VALUE and B.CODE_CATEGORY = #{NORMAL}
+     WHERE 
+        A.BUSINESS_PATTERN IS NOT NULL
+        <if test="swapData.reasonBusinessPattern != null and swapData.reasonBusinessPattern != ''">
+            AND A.BUSINESS_PATTERN IN (${swapData.reasonBusinessPattern})
+        </if>
+) C
+     GROUP BY C.businessPattern, C.REASON_CODE, C.reasonDesc, C.inactiveFlag
+     ORDER BY C.businessPattern, C.REASON_CODE
+    </select>  
+</mapper>

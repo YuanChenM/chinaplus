@@ -1,0 +1,170 @@
+/** xcc 2015-10-30*/
+.x-column-header-align-left
+{
+    text-align: center;
+}
+.x-panel-header-title-default > .x-title-text-default {
+    text-align:left;
+}
+.x-panel-body-default {
+    border-left-width: 0.5px;
+    border-bottom-width: 1px;
+}
+
+.x-panel-default-framed {
+    padding: 0 0 0 0;
+    border-width: 0px;
+    background-color: #dfe9f6;
+}
+
+.x-toolbar-default {
+    border-color: #a3b9e2;
+    background-color: #daf0fb;
+    background-image: none;
+}
+
+.x-panel-header-default {
+    border: 1px solid #9db5e1;
+    background-color: #daf0fb;
+    background-image: none;
+}
+
+.x-panel .x-panel-header-default-collapsed-border-top {
+    border-bottom-width: 0px !important
+}
+
+.x-panel-body-default-framed {
+    background: #f4f9fc;
+}
+
+.x-panel-default-framed {
+    border-top-width: 0px;
+}
+
+.x-grid-item {
+    background-color: #ffffff;
+}
+
+.x-grid-item-alt {
+    background-color: #daf0fb;
+}
+
+.x-grid-item-over {
+    background-color: #addff8;
+}
+
+.x-grid-item-selected {
+    background-color: #addff8;
+}
+
+.x-column-header {
+    border-right: 1px solid rgba(213, 213, 213, 1);
+    background-color: rgba(233, 233, 235, 1);
+    background-image: none;
+}
+
+.x-column-header-over,.x-column-header-sort-ASC,.x-column-header-sort-DESC
+    {
+    background-color: inherit;
+    background-image: none;
+}
+
+.x-form-text-wrap-default {
+    border-color: #bebfc1;
+}
+
+.x-form-text-default {
+    color: #000;
+}
+
+body.x-border-layout-ct,div.x-border-layout-ct {
+    background-color: #eff5f5;
+}
+
+.x-tab-default-top {
+    background-color: #addff8;
+    background-image: none;
+}
+
+.x-tab-inner-default {
+    color: #4b82d2;
+}
+
+.x-tab-active.x-tab-default .x-tab-inner-default {
+    color: #646464;
+}
+
+.x-tab-active.x-tab-default-top,.x-tab-active.x-tab-default-left,.x-tab-active.x-tab-default-right
+    {
+    background-color: #ffffff;
+    background-image: none;
+}
+
+.x-tab-bar-default-top {
+    border-width: 0 1px 0 0
+}
+
+.x-tab-bar-default-top {
+    background-color: #daf0fb;
+    background-image: none;
+}
+
+.btn-add {
+    background-image: url(../images/icons/pic_001.png) !important;
+}
+
+.btn-refresh {
+    background-image: url(../images/icons/pic_015.png) !important;
+}
+
+.btn-logout {
+    background-image: url(../images/icons/pic_btn_exit.png) !important;
+}
+
+.btn-save {
+    background-image: url(../images/icons/pic_003.png) !important;
+}
+
+.btn-download {
+    background-image: url(../images/icons/pic_006.png) !important;
+}
+
+.btn-upload {
+    background-image: url(../images/icons/pic_005.png) !important;
+}
+
+.btn-modify {
+    background-image: url(../images/icons/pic_002.png) !important;
+}
+
+.btn-confirm {
+    background-image: url(../images/icons/pic_009.png) !important;
+}
+
+.btn-release {
+    background-image: url(../images/icons/pic_010.png) !important;
+}
+
+.btn-close {
+    background-image: url(../images/icons/pic_010.png) !important;
+}
+
+.btn-download-2 {
+    background-image: url(../images/icons/pic_008.png) !important;
+}
+
+.btn-upload-2 {
+    background-image: url(../images/icons/pic_007.png) !important;
+}
+
+.btn-excel {
+    background-image: url(../images/icons/pic_005.png) !important;
+}
+
+#logo {
+    background-image: url(../images/header.png) !important;
+    background-position: left;
+    background-repeat: no-repeat;
+    background-color: rgba(153, 225, 254, 1);
+    background-size: cover
+}

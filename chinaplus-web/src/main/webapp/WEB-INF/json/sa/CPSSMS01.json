@@ -1,0 +1,292 @@
+/**
+ * Download Shipping Status Revison History                                         
+ *                               
+ * @screen CPSSMS01
+ * @author li_feng
+ */
+
+CPSSMS01 = {
+    xtype : 'gridpanel',
+    id : chinaplus.screen.CPSSMS01,
+    title : chinaplus.label.CPSSMS01_Label_PageTitle,
+    border : true,
+    closable : false,
+    enableColumnHide : false,
+    enableColumnMove : false,
+    isControl : true,
+    autoScroll : true,
+    qtip : true,
+    selType : 'cellmodel',
+    columnLines : true,
+    selModel : Ext.create('Ext.selection.CheckboxModel', {
+                checkOnly : true
+            }),
+    viewConfig : {
+        loadMask : false
+    },
+    plugins : [{
+                ptype : 'gridheaderfilters',
+                allSingleFilter : false
+            }, {
+                ptype : 'emptystoreview'
+            }, {
+                ptype : 'headerfiltertoolbar',
+                showMore : true
+            }],
+    header : false,
+    headerPosition : 'bottom',
+    autoScroll : true,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    columns : [{
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPSSMS01_Grid_IpoOrderNo + '</div>',
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'ipoOrderNo',
+                sortable : false,
+                resizable : false,
+                width : 220,
+                filter : 'string'
+                ,
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPSSMS01_Grid_CustomerOrderNo + '</div>',
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'customerOrderNo',
+                sortable : false,
+                resizable : false,
+                width : 220,
+                filter : 'string'
+                ,
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPSSMS01_Grid_ExpCountry + '</div>',
+                align : 'center',
+                width : 100,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'expCountry',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPSSMS01, 'common/loadActiveRegions', 'Combo', chinaplus.screen.CPSSMS01 + '_TTCCustomerCode')
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPSSMS01_Grid_TtcSupplierCode + '</div>',
+                align : 'left',
+                width : 160,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'ttcSupplierCode',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPSSMS01, 'common/loadActiveSuppliersCode', 'Combo', chinaplus.screen.CPSSMS01 + '_TTCCustomerCode')
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPSSMS01_Grid_TtcCustomerCode + '</div>',
+                align : 'left',
+                width : 160,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'ttcCustomerCode',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPSSMS01, 'common/loadOfficeCustomers', 'Combo', chinaplus.screen.CPSSMS01 + '_TTCCustomerCode')
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPSSMS01_Grid_TransportMode + '</div>',
+                align : 'left',
+                width : 129,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'transportMode',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    options : chinaplus.master.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_TransportMode)
+                }
+            }, {
+                xtype : 'gridcolumn',
+                id : chinaplus.screen.CPSSMS01 + '_revisionReason',
+                text : '<div style="text-align:center">' + chinaplus.label.CPSSMS01_Grid_RevisionReason + '</div>',
+                align : 'left',
+                width : 160,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'revisionReason',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPSSMS01, 'common/loadRevisionReasonsForVv', 'Combo', chinaplus.screen.CPSSMS01 + '_revisionReason'),
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPSSMS01_Grid_UploadID + '</div>',
+                align : 'left',
+                width : 160,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'uploadID',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPSSMS01, 'common/loadOfficeUsers', 'Combo', chinaplus.screen.CPSSMS01 + '_UploadIdStore')
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" >' + chinaplus.label.CPSSMS01_Grid_UploadDateTime + '</div>',
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'uploadDateTime',
+                align : 'center',
+                width : 150,
+                sortable : false,
+                filter : 'date',
+                filterPlugins : [{
+                            ptype : 'datePickerClear'
+                        }]
+            }],
+    tbar : [ {
+                text : chinaplus.label.CPSSMS01_Button_DownloadShippingStatusRevisionHistorySheet,
+                id : chinaplus.screen.CPSSMS01 + '_DownloadShippingStatusRevisionHistorySheet',
+                iconCls : 'btn-download',
+                handler : function() {
+                    CPSSMS01.downloadShippingStatusRevisionHistorySheetFunc();
+                }
+            }, {
+                text : chinaplus.label.CPSSMS01_Button_UploadRevisedShippingStatus,
+                id : chinaplus.screen.CPSSMS01 + '_UploadRevisedShippingStatus',
+                iconCls : 'btn-upload',
+                handler : function() {
+                    CPSSMS01.uploadRevisedShippingStatusFunc();
+                }
+            },{
+                text : chinaplus.label.CPSSMS01_Button_DownloadShippingStatus,
+                id : chinaplus.screen.CPSSMS01 + '_DownloadShippingStatus',
+                iconCls : 'btn-download',
+                handler : function() {
+                    CPSSMS01.downloadShippingStatusFunc();
+                }
+            }],
+
+    store : TRF.util.createStore(chinaplus.screen.CPSSMS01, 'sa/CPSSMS01/getShippingStatusRevisonHistoryList', 'Role', chinaplus.screen.CPSSMS01 + '_projectStore'),
+
+    /**
+     * The initialize function.
+     * 
+     * @param params. the parameter object passed to this screen.
+     */
+    initialize : function(params) {
+    
+         var me = this;
+         TRF.util.addGridTip(me);
+         var gridStore = this.store;
+         
+         // mask
+         TRF.util.dataLoadStart(chinaplus.screen.CPSSMS01);
+         // load
+         TRF.util.loadStore(gridStore, null, function() {
+            TRF.util.dataLoadEnd(chinaplus.screen.CPSSMS01);
+            gridStore.on('beforeload', function() {
+                TRF.core.mask(TRF.core.maskMsg.load, null, me);
+            });
+            gridStore.on('load', function() {
+                TRF.core.unmask(me);
+            });
+         });
+         
+         this.doLayout();
+    },
+
+    /**
+     * Download Customer Forecast History Screen
+     */
+    downloadShippingStatusRevisionHistorySheetFunc : function() {
+        
+        // select check
+            var lsMsgs = [];
+            Ext.Array.push(lsMsgs, TRF.util.getMessage('w1011'));
+            var selectionArray = Ext.getCmp(chinaplus.screen.CPSSMS01).getSelectionModel().getSelection();
+            // must select two
+            if (selectionArray.length == 0) {
+                TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, lsMsgs, lsMsgs);
+                return;
+            } else {
+                var selectedDatas = new Array();
+                for (var i=0; i<selectionArray.length; i++) {            
+                    // set into data
+                    selectedDatas[i] = {
+                        'ipoOrderNo': selectionArray[i].data.ipoOrderNo,
+                        'customerOrderNo': selectionArray[i].data.customerOrderNo,
+                        'customerCode': selectionArray[i].data.ttcCustomerCode,
+                        'ssId' : selectionArray[i].data.ssId
+                    };
+                }
+     
+                var params = {
+                    'downloadFrom' : chinaplus.screen.CPSSMS01,
+                    'dataLists' : selectedDatas
+                };
+                
+                var checkUrl = 'sa/CPSSMF01/downloadcheck';
+                var url = 'sa/CPSSMF01/download';
+                TRF.util.downloadSubmit(null, chinaplus.screen.CPSSMS01, checkUrl, params, url);
+            }
+        
+
+    },
+
+    /**
+     * Upload Forecast Form Screen
+     */
+    uploadRevisedShippingStatusFunc : function() {
+    
+        TRF.util.popupApplication(chinaplus.screen.CPSSMS03, chinaplus.screen.CPSSMS03);
+    },
+
+     /**
+     * Download Customer Forecast Blank Form Screen
+     */
+    downloadShippingStatusFunc: function() {
+        TRF.util.setDetailTabMode_New();
+        TRF.util.addApplication(chinaplus.screen.CPSSMS02, chinaplus.screen.CPSSMS02, true);
+    },
+
+    /**
+     * Refresh grid data.
+     */
+    refreshData : function() {
+
+        this.store.loadPage(1);
+    }
+}

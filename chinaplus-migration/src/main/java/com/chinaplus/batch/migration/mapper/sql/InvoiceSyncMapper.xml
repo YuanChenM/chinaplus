@@ -1,0 +1,181 @@
+<!--
+@screen CPIIFB01
+@author liu_yinchuan
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.batch.migration.service.InvoiceSyncService">
+    <sql id="ConstDef">
+        <bind name="KanbanStatus_NORMAL" value="@com.chinaplus.common.consts.CodeConst$KanbanStatus@NORMAL" />
+        <bind name="BusinessPattern_AISIN" value="@com.chinaplus.common.consts.CodeConst$BusinessPattern@AISIN" />
+    </sql>
+    
+    <select id="getInvociePartsInfoList" parameterType="com.chinaplus.batch.migration.bean.TntMgInvoiceEx" resultType="com.chinaplus.batch.migration.bean.TntMgInvoiceEx">
+         <include refid="ConstDef"/>
+         SELECT TEP.OFFICE_ID AS officeId
+              , TEP.PARTS_ID AS partsId
+              , TEP.SUPPLIER_ID AS supplierId
+              , TS.REGION_CODE AS expRegion
+              , TC.REGION_CODE AS impRegion
+              , TS.SUPPLIER_CODE AS supplierCode
+              , TMI.TRANSPORT_MODE AS transportMode
+              , TMI.INVOICE_NO AS invoiceNo
+              , TMI.VESSEL_NAME AS vesselName
+              , TMI.CONTAINER_NO AS containerNo
+              , TMI.MODULE_NO AS moduleNo
+              , TMI.ETD AS etd
+              , TMI.ETA AS eta
+              , TMI.PLAN_IB_DATE AS planIbDate
+              , TMI.QTY AS qty
+              , TMI.SUPP_PARTS_NO AS suppPartsNo
+              , TMI.INV_CUST_CODE AS invCustCode
+              , TMI.ISSUED_DATE AS issuedDate
+              , TMI.BUYING_PRICE AS buyingPrice
+              , TMI.BUYING_CURRENCY AS buyingCurrency
+              , TK.KANBAN_PLAN_NO AS kanbanPlanNo
+           FROM TNT_MG_INVOICE TMI
+          INNER JOIN TNM_EXP_PARTS TEP
+             ON TEP.SUPP_PARTS_NO = TMI.SUPP_PARTS_NO
+            AND (TMI.SUPPLIER_CODE IS NULL OR TEP.TTC_SUPP_CODE = TMI.SUPPLIER_CODE)
+          INNER JOIN TNM_PARTS_MASTER TPM
+             ON TPM.PARTS_ID = TEP.PARTS_ID
+            AND LOCATE(',' || TPM.INV_CUST_CODE || ',', ',' || TMI.INV_CUST_CODE || ',') > 0
+            AND TPM.OFFICE_ID = TMI.OFFICE_ID
+          INNER JOIN TNM_CUSTOMER TC
+             ON TC.CUSTOMER_ID = TPM.CUSTOMER_ID
+          INNER JOIN TNM_SUPPLIER TS
+             ON TS.SUPPLIER_ID = TEP.SUPPLIER_ID
+          INNER JOIN TNM_KB_ISSUED_DATE TKI
+            ON TKI.CUSTOMER_ID = TPM.CUSTOMER_ID
+           AND TKI.FROM_DATE <![CDATA[<=]]> TMI.ISSUED_DATE
+           AND TKI.TO_DATE >= TMI.ISSUED_DATE
+          INNER JOIN (
+               SELECT DISTINCT
+                      TK1.CUSTOMER_ID
+                    , TK1.SUPPLIER_ID
+                    , TK1.ORDER_MONTH
+                    , TK1.KANBAN_PLAN_NO 
+                 FROM TNT_KANBAN TK1
+                WHERE TK1.OFFICE_ID = #{officeId}
+                  AND TK1.STATUS = #{KanbanStatus_NORMAL}) TK
+             ON TK.CUSTOMER_ID = TPM.CUSTOMER_ID
+            AND TK.SUPPLIER_ID = TEP.SUPPLIER_ID
+            AND TK.ORDER_MONTH = TKI.ORDER_MONTH
+          WHERE TMI.OFFICE_ID = #{officeId}
+          ORDER BY
+                TMI.ETD
+              , TMI.ETA  
+              , TMI.VESSEL_NAME
+              , TMI.INVOICE_NO
+              , TMI.CONTAINER_NO
+              , TMI.MODULE_NO
+              , TEP.PARTS_ID
+              , TEP.SUPPLIER_ID 
+              , TK.KANBAN_PLAN_NO
+              , TMI.PLAN_IB_DATE
+    </select>
+    
+    <select id="getOrderStatusInfoList" parameterType="com.chinaplus.batch.migration.bean.TntMgInvoiceEx" resultType="com.chinaplus.batch.migration.bean.TntMgInvoiceEx">
+         <include refid="ConstDef"/>
+         SELECT TTOS.ORDER_STATUS_ID AS orderStatusId
+              , SUM(TIP.QTY) AS expOnShippingQty
+           FROM TNT_INVOICE_PARTS TIP
+          INNER JOIN TNT_INVOICE TI
+             ON TI.INVOICE_ID = TIP.INVOICE_ID
+          INNER JOIN TNT_INVOICE_GROUP TIG
+             ON TIG.INVOICE_GROUP_ID = TI.INVOICE_GROUP_ID
+          INNER JOIN TNT_INVOICE_SUMMARY TIS
+             ON TIS.INVOICE_SUMMARY_ID = TI.INVOICE_SUMMARY_ID
+          INNER JOIN TNF_ORDER_STATUS TOS
+             ON TOS.KANBAN_PLAN_NO = TIG.KANBAN_PLAN_NO
+            AND TOS.PARTS_ID = TIP.PARTS_ID
+            AND TOS.SUPPLIER_ID = TIP.SUPPLIER_ID
+          WHERE TIS.OFFICE_ID = #{officeId}
+            AND TIS.BUSINESS_PATTERN = #{BusinessPattern_AISIN}
+          GROUP BY 
+                TOS.ORDER_STATUS_ID
+    </select>
+    
+    <update id="doUpdateOrderStatus" parameterType="com.chinaplus.batch.migration.bean.TntMgInvoiceEx">
+        UPDATE TNF_ORDER_STATUS
+           SET EXP_ONSHIPPING_QTY = #{expOnShippingQty,jdbcType=INTEGER}
+             , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+             , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+             , VERSION = VERSION + 1
+         WHERE ORDER_STATUS_ID = #{orderStatusId}
+    </update>
+    
+    <select id="getInvociePartsInfoListForCheck" parameterType="com.chinaplus.batch.migration.bean.TntMgInvoiceEx" resultType="com.chinaplus.batch.migration.bean.TntMgInvoiceEx">
+         <include refid="ConstDef"/>
+         SELECT TEP.PARTS_ID AS partsId
+              , TEP.SUPPLIER_ID AS supplierId
+              , TMI.MG_INVOICE_ID AS mgInvoiceId
+              , TMI.SEQ_NO AS seqNo
+              , TMI.TRANSPORT_MODE AS transportMode
+              , TMI.INVOICE_NO AS invoiceNo
+              , TMI.VESSEL_NAME AS vesselName
+              , TMI.CONTAINER_NO AS containerNo
+              , TMI.MODULE_NO AS moduleNo
+              , TMI.ETD AS etd
+              , TMI.ETA AS eta
+              , TMI.PLAN_IB_DATE AS planIbDate
+              , TMI.QTY AS qty
+              , TMI.SUPP_PARTS_NO AS suppPartsNo
+              , TMI.INV_CUST_CODE AS invCustCode
+              , TMI.ISSUED_DATE AS issuedDate
+              , TMI.BUYING_PRICE AS buyingPrice
+              , TMI.BUYING_CURRENCY AS buyingCurrency
+              , TKI.ORDER_MONTH AS orderMonth
+              , TK.KANBAN_PLAN_NO AS kanbanPlanNo
+           FROM TNT_MG_INVOICE TMI
+           LEFT JOIN (
+                  SELECT TP.SUPP_PARTS_NO
+                       , TP.TTC_SUPP_CODE
+                       , TM.INV_CUST_CODE
+                       , TM.OFFICE_ID
+                       , TM.CUSTOMER_ID
+                       , TP.SUPPLIER_ID
+                       , TP.PARTS_ID
+                    FROM TNM_EXP_PARTS TP
+                   INNER JOIN TNM_PARTS_MASTER TM
+                      ON TP.PARTS_ID = TM.PARTS_ID
+                     AND TP.BUSINESS_PATTERN = 2)TEP
+             ON TEP.SUPP_PARTS_NO = TMI.SUPP_PARTS_NO
+            AND (TMI.SUPPLIER_CODE IS NULL OR TEP.TTC_SUPP_CODE = TMI.SUPPLIER_CODE)
+            AND TEP.OFFICE_ID = TMI.OFFICE_ID
+            AND LOCATE(',' || TEP.INV_CUST_CODE || ',', ',' || TMI.INV_CUST_CODE || ',') > 0
+            AND TEP.OFFICE_ID = TMI.OFFICE_ID
+           LEFT JOIN TNM_KB_ISSUED_DATE TKI
+            ON TKI.CUSTOMER_ID = TEP.CUSTOMER_ID
+           AND TKI.FROM_DATE <![CDATA[<=]]> TMI.ISSUED_DATE
+           AND TKI.TO_DATE >= TMI.ISSUED_DATE
+          LEFT JOIN (
+               SELECT DISTINCT
+                      TK1.CUSTOMER_ID
+                    , TK1.SUPPLIER_ID
+                    , TK1.ORDER_MONTH
+                    , TK1.KANBAN_PLAN_NO 
+                 FROM TNT_KANBAN TK1
+                WHERE TK1.OFFICE_ID = #{officeId}
+                  AND TK1.STATUS = #{KanbanStatus_NORMAL}) TK
+             ON TK.CUSTOMER_ID = TEP.CUSTOMER_ID
+            AND TK.SUPPLIER_ID = TEP.SUPPLIER_ID
+            AND TK.ORDER_MONTH = TKI.ORDER_MONTH
+          WHERE TMI.OFFICE_ID = #{officeId}
+            AND (TEP.PARTS_ID IS NULL
+             OR  TKI.ORDER_MONTH IS NULL
+             OR  TK.KANBAN_PLAN_NO IS NULL)
+          ORDER BY
+                TMI.ETD
+              , TMI.ETA  
+              , TMI.VESSEL_NAME
+              , TMI.INVOICE_NO
+              , TMI.CONTAINER_NO
+              , TMI.MODULE_NO
+              , TEP.PARTS_ID
+              , TEP.SUPPLIER_ID 
+              , TK.KANBAN_PLAN_NO
+              , TMI.PLAN_IB_DATE
+    </select>
+    
+</mapper>

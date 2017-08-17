@@ -1,0 +1,654 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chinaplus.web.mm.service.CPMCMS01Service">
+	<sql id="ConstDef">
+		<bind name="EXPORT_WH_CALENDER" value="@com.chinaplus.common.consts.CodeConst$CodeMasterCategory@EXPORT_WH_CALENDER" />
+	    <bind name="Y" value="@com.chinaplus.common.consts.CodeConst$ActiveFlag@Y" />
+	</sql>
+    <select id="getCombYear"  parameterType="com.chinaplus.core.bean.BaseParam"
+        resultType="com.chinaplus.common.entity.TnmCalendarDetail">
+    Select  DISTINCT  A.CALENDAR_YEAR as calendarYear
+    From TNM_CALENDAR_DETAIL A,TNM_CALENDAR_MASTER B
+    Where
+         B.CALENDAR_CODE = #{filters.calendarCode}
+         <if test="filters.calendarCode != 'TLS' and filters.calendarCode != 'KUC' and filters.calendarCode != 'JPBC'">
+          and
+         B.OFFICE_ID = #{filters.officeId}
+         </if>
+          and
+         A.CALENDAR_ID = B.CALENDAR_ID
+    Order By A.CALENDAR_YEAR desc
+    </select>
+    
+    <select id="getYearCalendar"  parameterType="com.chinaplus.core.bean.BaseParam"
+        resultType="com.chinaplus.web.mm.entity.CPMCMS01Entity">
+    SELECT  B.CALENDAR_DATE as calendarDate,                                                                                                
+            B.WORKING_FLAG as workingFlag                                                                                        
+    FROM                                                                                                            
+        TNM_CALENDAR_MASTER A                                                                                                   
+        INNER JOIN TNM_CALENDAR_DETAIL B ON B.CALENDAR_ID = A.CALENDAR_ID
+    WHERE                                                                                                                                                                         
+        B.CALENDAR_YEAR = #{filters.year}  and                                                             
+        A.CALENDAR_CODE = #{filters.calendarCode}
+        <if test="filters.calendarCode != 'TLS' and filters.calendarCode != 'KUC' and filters.calendarCode != 'JPBC'">
+         and
+        A.OFFICE_ID = #{filters.officeId}
+        </if>
+         and
+        B.WORKING_FLAG = #{filters.workingFlag}                                                        
+    </select>
+    
+    <select id="getSupplierRegion"  parameterType="com.chinaplus.core.bean.ObjectParam"
+        resultType="com.chinaplus.web.mm.entity.CPMCMS01Entity">
+        SELECT 
+            s.REGION_CODE AS country
+        FROM 
+            TNM_SUPPLIER s
+        WHERE 
+            s.SUPPLIER_ID = #{swapData.partyCodeOne}
+    </select>
+    
+    <select id="getWareHouseRegion"  parameterType="com.chinaplus.core.bean.ObjectParam"
+        resultType="com.chinaplus.web.mm.entity.CPMCMS01Entity">
+        SELECT 
+            w.REGION_CODE AS country
+        FROM 
+            TNM_WAREHOUSE w
+        WHERE 
+            w.WHS_ID = #{swapData.partyCodeOne}
+    </select>
+    
+    <select id="getCustomerRegion"  parameterType="com.chinaplus.core.bean.ObjectParam"
+        resultType="com.chinaplus.web.mm.entity.CPMCMS01Entity">
+        SELECT 
+            c.REGION_CODE AS country
+        FROM 
+            TNM_CUSTOMER c
+        WHERE 
+            c.CUSTOMER_ID = #{swapData.partyCodeOne}
+    </select>
+    <select id="getOffices" parameterType="com.chinaplus.core.bean.ObjectParam"
+        resultType="com.chinaplus.web.mm.entity.CPMCMS01Entity">
+        SELECT 
+            A.OFFICE_ID AS officeId
+            FROM 
+               TNM_PARTS_MASTER A
+            INNER JOIN 
+               TNM_EXP_PARTS B 
+            ON 
+               A.PARTS_ID = B.PARTS_ID
+            WHERE 
+               B.SUPPLIER_ID = #{swapData.partyCodeOne}
+    </select>
+    
+    <select id="getCalendarInfo"  parameterType="com.chinaplus.core.bean.ObjectParam"
+        resultType="com.chinaplus.web.mm.entity.CPMCMS01Entity">
+        SELECT 
+            A.CALENDAR_ID AS calendarId, 
+            B.CALENDAR_DETAIL_ID AS calendarDetailId
+            
+        FROM 
+            TNM_CALENDAR_MASTER A 
+            LEFT JOIN TNM_CALENDAR_DETAIL B ON A.CALENDAR_ID=B.CALENDAR_ID
+            <if test="swapData.party != 7 ">
+                INNER JOIN TNM_OFFICE C ON A.OFFICE_ID = C.OFFICE_ID
+            </if>
+            INNER JOIN TNM_CALENDAR_PARTY D ON D.CALENDAR_ID = A.CALENDAR_ID
+            WHERE 1=1
+            <if test="swapData.entity.ttcOfficeCode != null and swapData.entity.ttcOfficeCode != ''">
+            	<if test="swapData.party != 7 ">
+                    AND C.OFFICE_ID = #{swapData.entity.ttcOfficeCode}
+            	</if>
+            </if>
+            <if test="swapData.entity.party != null and swapData.entity.party != ''">
+                AND D.PARTY_TYPE = #{swapData.party}
+            </if>
+            <if test="swapData.entity.calendarId != null and swapData.entity.calendarId != ''">
+                 AND A.CALENDAR_ID = #{swapData.entity.calendarId}
+            </if>
+            <if test="swapData.entity.calendarCode != null and swapData.entity.calendarCode != ''">
+                 AND A.CALENDAR_CODE = #{swapData.entity.calendarCode}
+            </if>
+            <if test="swapData.entity.year != null and swapData.entity.year != ''">
+                AND B.CALENDAR_YEAR = #{swapData.entity.year}
+            </if>
+            <!-- Party Code if Party is TTC Import Office -->
+            <if test="swapData.entity.party == 2 || swapData.entity.party == 5 || swapData.entity.party == 6">
+                AND D.OFFICE_ID = #{swapData.entity.ttcOfficeCode}
+            </if>
+            <!-- Party Code if Party is Supplier -->
+            <if test="swapData.entity.party == 1">
+                AND D.SUPPLIER_ID IN (${swapData.partyCode})
+            </if>
+            <!-- Party Code if Party is Customer -->
+            <if test="swapData.entity.party == 4">
+                AND D.CUSTOMER_ID IN (${swapData.partyCode})
+            </if>
+            <!-- Party Code if Party is TTC Imp Warehouse -->
+            <if test="swapData.entity.party == 3">
+                AND D.WHS_ID IN (${swapData.partyCode})
+            </if>
+    </select>
+    
+    <select id="getCalendarInfoInMaster"  parameterType="com.chinaplus.core.bean.ObjectParam"
+        resultType="com.chinaplus.web.mm.entity.CPMCMS01Entity">
+        SELECT 
+            A.CALENDAR_ID AS calendarId
+        FROM 
+            TNM_CALENDAR_MASTER A 
+            WHERE 1=1
+            <if test="swapData.entity.ttcOfficeCode != null and swapData.entity.ttcOfficeCode != ''">
+            	<if test="swapData.party != 7 ">
+                    AND A.OFFICE_ID = #{swapData.entity.ttcOfficeCode}
+            	</if>
+            </if>
+            <if test="swapData.entity.calendarId != null and swapData.entity.calendarId != ''">
+                 AND A.CALENDAR_ID = #{swapData.entity.calendarId}
+            </if>
+            <if test="swapData.entity.calendarCode != null and swapData.entity.calendarCode != ''">
+                 AND A.CALENDAR_CODE = #{swapData.entity.calendarCode}
+            </if>
+    </select>
+    
+    <insert id="addCalendarParty" parameterType="com.chinaplus.web.mm.entity.CalendarPartyEntity">
+        INSERT 
+        INTO 
+        TNM_CALENDAR_PARTY (
+            CALENDAR_PARTY_ID,
+            CALENDAR_ID,
+            PARTY_TYPE,
+            <if test="swapData.CalendarParty.officeId != null and swapData.CalendarParty.officeId != ''">
+            	<if test="swapData.party != 7 ">
+                OFFICE_ID,
+            	</if>
+            </if>
+            <if test="swapData.CalendarParty.supplierId != null and swapData.CalendarParty.supplierId != ''">
+                SUPPLIER_ID,
+            </if>
+            <if test="swapData.CalendarParty.customerId != null and swapData.CalendarParty.customerId != ''">
+                CUSTOMER_ID,
+            </if>
+            <if test="swapData.CalendarParty.whsId != null and swapData.CalendarParty.whsId != ''">
+                WHS_ID,
+            </if>
+            CREATED_BY,
+            UPDATED_BY,
+            CREATED_DATE,
+            UPDATED_DATE,
+            VERSION
+        )
+        VALUES
+        (
+            SEQ_TNM_CALENDAR_PARTY.nextval,
+            #{swapData.CalendarParty.calendarId},
+            #{swapData.CalendarParty.partyType},
+            <if test="swapData.CalendarParty.officeId != null and swapData.CalendarParty.officeId != ''">
+            	<if test="swapData.party != 7 ">
+                    #{swapData.CalendarParty.officeId},
+            	</if>
+            </if>
+            <if test="swapData.CalendarParty.supplierId != null and swapData.CalendarParty.supplierId != ''">
+                #{swapData.CalendarParty.supplierId},
+            </if>
+            <if test="swapData.CalendarParty.customerId != null and swapData.CalendarParty.customerId != ''">
+                #{swapData.CalendarParty.customerId},
+            </if>
+            <if test="swapData.CalendarParty.whsId != null and swapData.CalendarParty.whsId != ''">
+                #{swapData.CalendarParty.whsId},
+            </if>
+            #{loginUserId},
+            #{loginUserId},
+            #{swapData.CalendarParty.createdDate},
+            #{swapData.CalendarParty.updatedDate},
+            #{swapData.CalendarParty.version}
+        )
+    </insert>
+    <select id="isRelated"  parameterType="com.chinaplus.core.bean.BaseParam"
+        resultType="com.chinaplus.web.mm.entity.CalendarPartyEntity">
+        SELECT
+            A.CALENDAR_PARTY_ID AS calendarPartyId
+        FROM 
+            TNM_CALENDAR_PARTY A
+        WHERE 1=1
+        <!-- Party Code if Party is TTC Import Office -->
+        AND
+            A.PARTY_TYPE = #{swapData.party}
+            <if test="swapData.party != 7 ">
+            AND
+                A.OFFICE_ID = #{swapData.ttcOfficeCode}
+            </if>
+        <if test="swapData.party == 2 or swapData.party == 5 or swapData.party == 6">
+            AND A.OFFICE_ID = #{swapData.ttcOfficeCode}
+        </if>
+        <!-- Party Code if Party is Supplier -->
+        <if test="swapData.party == 1">
+            AND A.SUPPLIER_ID = #{swapData.partyCodeOne}
+        </if>
+        <!-- Party Code if Party is Customer -->
+        <if test="swapData.party == 4">
+            AND A.CUSTOMER_ID = #{swapData.partyCodeOne}
+        </if>
+        <!-- Party Code if Party is TTC Imp Warehouse -->
+        <if test="swapData.party == 3 or swapData.party == 7">
+            AND A.WHS_ID = #{swapData.partyCodeOne}
+        </if>
+    </select>
+    
+    <delete id="deleteParty" parameterType="com.chinaplus.core.bean.BaseParam">
+        DELETE 
+        FROM
+            TNM_CALENDAR_PARTY
+        WHERE 
+            CALENDAR_PARTY_ID = #{swapData.calendarParty.calendarPartyId}
+    </delete>
+    
+    <select id="checkCalCodeAndCounty" parameterType="com.chinaplus.core.bean.BaseParam"
+        resultType="com.chinaplus.web.mm.entity.CPMCMS01Entity">
+        SELECT 
+            calendar_id AS calendarId
+        FROM
+            TNM_CALENDAR_MASTER
+        WHERE 1=1
+        <if test="swapData.data.calendarId != null and swapData.data.calendarId != ''">
+            AND calendar_id = #{swapData.data.calendarId}
+        </if>    
+        <if test="swapData.data.calendarCode != null and swapData.data.calendarCode != ''">
+            AND calendar_code = #{swapData.data.calendarCode}
+        </if> 
+        <if test="swapData.data.ttcOfficeCode != null and swapData.data.ttcOfficeCode != ''">
+            AND office_id = #{swapData.data.ttcOfficeCode}
+        </if>
+        <if test="swapData.data.country != null and swapData.data.country != ''">
+            AND region_code = #{swapData.data.country}
+        </if>
+    </select>
+    
+    <select id="getCalDetial" parameterType="com.chinaplus.core.bean.BaseParam"
+        resultType="com.chinaplus.common.entity.TnmCalendarDetail">
+        SELECT 
+            calendar_detail_id AS calendarDetailId,
+            calendar_id AS calendarId,
+            calendar_year AS calendarYear,
+            calendar_date AS calendarDate,
+            working_flag AS workingFlag,
+            created_by AS createdBy,
+            created_date AS createdDate,
+            version AS version
+        FROM
+            TNM_CALENDAR_DETAIL
+        WHERE
+            calendar_id = #{swapData.calendarId}
+        AND
+            calendar_date = #{swapData.date}
+    </select>
+    
+    <select id="getPartyCodeSupp" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+      SELECT   
+          distinct 
+          A.SUPPLIER_ID AS id,
+          A.SUPPLIER_CODE  AS  text
+       FROM   
+          TNM_SUPPLIER  A 
+       <if test="swapData.country != null and swapData.country != ''">     
+           WHERE     
+                A.REGION_CODE = #{swapData.country} 
+       </if>
+        ORDER  BY  A.SUPPLIER_CODE 
+   </select>
+ 
+   <select id="getPartyCodeTtcImpWah" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+      SELECT   
+           A.WHS_ID AS id,
+           A.WHS_CODE  AS  text
+       FROM   
+           TNM_WAREHOUSE  A     
+       <if test="swapData.country != null and swapData.country != ''">     
+          WHERE     
+            A.REGION_CODE = #{swapData.country} 
+       </if>      
+        ORDER  BY  A.WHS_CODE 
+   </select>    
+ 
+   <select id="getPartyCodeTtcImpOff" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+       SELECT   
+           A.OFFICE_ID AS id,
+           A.OFFICE_CODE  AS  text
+       FROM   
+           TNM_OFFICE  A     
+       WHERE        
+           A.REGION_CODE =  #{swapData.country} 
+           AND  A.OFFICE_ID IN 
+           <foreach item="item" index="index" collection="swapData.userOffIds" open="(" separator="," close=")">  
+               #{item}
+           </foreach>       
+        ORDER  BY  A.OFFICE_CODE 
+   </select>   
+   
+
+   <select id="getPartyCodeCust" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+      SELECT   
+      	  DISTINCT 
+          A.CUSTOMER_ID  AS id,
+          A.CUSTOMER_CODE AS  text      
+       FROM   
+          TNM_CUSTOMER  A
+
+            INNER JOIN   TNM_OFFICE B ON  A.OFFICE_ID =B.OFFICE_ID     
+
+        <where> 
+            <if test="swapData.userOffIds != null  and swapData.userOffIds.size()>0" >
+                A.OFFICE_ID IN 
+                <foreach item="item" index="index" collection="swapData.userOffIds" open="(" separator="," close=")">  
+                    #{item}
+                </foreach>
+            </if> 
+            <if test="swapData.country != null and swapData.country != ''">     
+              AND A.REGION_CODE = #{swapData.country} 
+            </if>    
+        </where> 
+        ORDER  BY  A.CUSTOMER_CODE 
+   </select>  
+   
+   <select id="getPartyCodeCustAll" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+       SELECT   
+          DISTINCT
+          A.CUSTOMER_ID  AS id,
+          A.CUSTOMER_CODE AS  text      
+       FROM   
+          TNM_CUSTOMER  A
+          INNER JOIN  TNM_USER_CUSTOMER B ON  B.OFFICE_ID = A.OFFICE_ID    
+       <where> 
+          B.ALL_CUSTOMER_FLAG = 1
+       AND
+          B.OFFICE_ID 
+       IN
+            <foreach item="item" index="index" collection="swapData.userOffIds" open="(" separator="," close=")">  
+                #{item}
+            </foreach>
+       </where>
+       ORDER  BY  A.CUSTOMER_CODE
+   </select> 
+   
+   <select id="getPartyCodeCustByOffice" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+       SELECT   
+          A.CUSTOMER_ID  AS id,
+          A.CUSTOMER_CODE AS  text      
+       FROM   
+          TNM_CUSTOMER  A
+       INNER JOIN  TNM_USER_CUSTOMER B ON  B.CUSTOMER_ID = A.CUSTOMER_ID     
+
+       WHERE     
+          B.USER_ID =   #{swapData.userId}     
+       	AND
+          B.OFFICE_ID 
+        IN
+            <foreach item="item" index="index" collection="swapData.userOffIds" open="(" separator="," close=")">  
+                #{item}
+            </foreach>
+       <if test="swapData.country != null and swapData.country != ''">     
+              AND A.REGION_CODE = #{swapData.country} 
+       </if>
+       ORDER  BY  A.CUSTOMER_CODE 
+   </select>
+   
+   
+   <select id="getPartyCodeCustByOfficeList" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+       SELECT   
+          A.CUSTOMER_ID  AS id,
+          A.CUSTOMER_CODE AS  text      
+       FROM   
+          TNM_CUSTOMER  A
+       INNER JOIN  TNM_USER_CUSTOMER B ON  B.CUSTOMER_ID = A.CUSTOMER_ID     
+
+       WHERE     
+          B.USER_ID =   #{swapData.userId}     
+       AND
+          B.OFFICE_ID
+       IN
+            <foreach item="item" index="index" collection="swapData.userOffIds" open="(" separator="," close=")">  
+                #{item}
+            </foreach>
+       ORDER  BY  A.CUSTOMER_CODE 
+   </select>
+   
+   
+   
+   
+   <select id="getPartyCodeExpWah" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+     <include refid="ConstDef"/> 
+     SELECT   
+          A.CODE_VALUE   AS id,
+          A.CODE_NAME  AS  text
+     FROM  
+          TNM_CODE_CATEGORY  A 
+     WHERE  
+          A.LANGUAGE_FLAG  =  #{swapData.language}     
+          AND   A.CODE_CATEGORY  =  #{EXPORT_WH_CALENDER}     
+     ORDER  BY  A.CODE_VALUE 
+   </select>
+   
+   <select id="getCalendarCode" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+     SELECT
+          distinct
+          B.CALENDAR_ID   AS id,
+          B.CALENDAR_CODE  AS  text
+     FROM  
+          TNM_CALENDAR_PARTY A 
+     INNER JOIN 
+          TNM_CALENDAR_MASTER B ON B.CALENDAR_ID = A.CALENDAR_ID     
+     WHERE  
+
+     <if test="swapData.party != 7 ">
+          A.OFFICE_ID = #{swapData.officeId}
+     </if>
+     <if test="swapData.pageFrom != 'modify' and swapData.party != 7">
+          AND
+     </if>
+     <if test="swapData.pageFrom != 'modify' or swapData.party == 7">
+
+          A.PARTY_TYPE = #{swapData.party}
+     </if>
+     <if test="swapData.partyCode != null and swapData.partyCode != '' ">     
+         <if test="swapData.party == 1 ">
+
+         	<if test="swapData.pageFrom == null or swapData.pageFrom == '' or swapData.pageFrom != 'modify' ">
+              AND
+                A.SUPPLIER_ID = #{swapData.partyCode}
+            </if>
+         	
+         </if>
+         <if test="swapData.party == 3">
+
+            <if test="swapData.pageFrom == null or swapData.pageFrom == '' or swapData.pageFrom != 'modify' ">
+              AND
+                A.WHS_ID = #{swapData.partyCode}
+            </if>
+         </if>
+         <if test="swapData.party == 7">
+              AND
+                A.WHS_ID = #{swapData.partyCode}
+         </if>
+         
+         <if test="swapData.party == 4 ">
+
+            <if test="swapData.pageFrom == null or swapData.pageFrom == '' or swapData.pageFrom != 'modify' ">
+              AND
+                A.CUSTOMER_ID = #{swapData.partyCode}
+            </if>
+         </if>
+         <if test="swapData.party == 2 or swapData.party == 5 or swapData.party == 6 ">
+
+            <if test="swapData.pageFrom == null or swapData.pageFrom == '' or swapData.pageFrom != 'modify' ">
+              AND
+                A.OFFICE_ID = #{swapData.partyCode}
+            </if>
+              
+         </if>
+     </if>
+     <if test="swapData.party != 7 ">
+        ORDER  BY  B.CALENDAR_CODE
+     </if>
+     <if test="swapData.party == 7 ">
+        ORDER  BY  B.CALENDAR_ID
+     </if>
+   </select>
+   
+   
+   <select id="getSrMasterInfo" resultType="com.chinaplus.web.mm.entity.AisinCommonEntity" parameterType="com.chinaplus.core.bean.BaseParam">
+        SELECT
+            DISTINCT
+            A.SR_ID AS srId
+            ,B.SUPPLIER_ID AS supplierId
+            ,A.INACTIVE_FLAG AS inactiveFlag
+            ,A.SHIPPING_ROUTE_CODE AS shippingRouteCode
+            ,A.VANNING_DAY AS vanningDay
+            ,A.EXP_VANNING_LEADTIME AS expVanningLeadtime
+            ,A.ETD_WEEK AS etdWeek
+            ,A.ETD_DAY AS etdDate
+            ,A.DELIVERY_LEADTIME AS deliveryLeadtime
+            ,A.DELIVERY_START_DATE AS deliveryStartDate
+            ,A.OFFICE_ID AS officeId 
+            ,A.EXP_REGION AS expRegion
+            ,A.FROM_ETD AS firstEtd
+            ,A.TO_ETD AS lastEtd
+            ,A.EXP_INBOUND_LEADTIME AS workingDays
+            ,A.SHIPPING_ROUTE_TYPE AS shippingRouteType
+        FROM 
+            TNM_SR_MASTER A
+        INNER JOIN
+            (SELECT DISTINCT
+                  B.SUPPLIER_ID
+                  , A.SHIPPING_ROUTE_CODE  
+                FROM
+                  TNM_SR_MASTER A 
+                  INNER JOIN TNM_SR_DETAIL B 
+                    ON B.SR_ID = A.SR_ID 
+        WHERE
+                  B.SUPPLIER_ID IN ( 
+            SELECT
+                SUPPLIER_ID
+            FROM
+                TNM_CALENDAR_PARTY
+            WHERE
+                CALENDAR_ID = #{swapData.CalendarId}
+            AND PARTY_TYPE = 1
+            AND OFFICE_ID = #{swapData.OfficeId}
+            )) B
+         ON
+            B.SHIPPING_ROUTE_CODE = A.SHIPPING_ROUTE_CODE 
+        WHERE
+            A.FROM_ETD <![CDATA[<=]]> #{swapData.LastDate} 
+        AND 
+            A.TO_ETD <![CDATA[>=]]> #{swapData.FistDate}
+        AND
+            A.OFFICE_ID = #{swapData.OfficeId}
+        ORDER BY
+            A.FROM_ETD
+
+   </select>
+   
+   
+    <select id="getLastYearcalendarDateList" resultType="com.chinaplus.web.mm.entity.CalendarDateEntity" parameterType="com.chinaplus.core.bean.BaseParam"> 
+    <include refid="ConstDef"/>   
+        SELECT
+            A.OFFICE_ID AS officeId,
+            A.SUPPLIER_ID AS supplierId,
+            B.CALENDAR_DATE AS CalendarDate
+        FROM  
+            TNM_CALENDAR_PARTY A
+        INNER JOIN  
+            TNM_CALENDAR_DETAIL B ON  A.CALENDAR_ID = B.CALENDAR_ID
+        WHERE 
+            A.PARTY_TYPE =  1
+        AND A.OFFICE_ID = #{swapData.OfficeId}
+        AND A.SUPPLIER_ID IN
+            <foreach collection="swapData.dataAllList" item="item" index="index" open="(" close=")" separator="," >
+                #{item.supplierId}
+            </foreach>  
+        AND B.CALENDAR_YEAR IN
+            <foreach collection="swapData.yearList" item="yearItem" index="yearIndex" open="(" close=")" separator="," >
+                #{yearItem}
+            </foreach>
+        AND B.WORKING_FLAG = ${Y}    
+        ORDER BY  
+            A.OFFICE_ID, 
+            A.SUPPLIER_ID, 
+            B.CALENDAR_DATE
+   </select> 
+   
+   <delete id="deleteDataList"  parameterType="com.chinaplus.core.bean.BaseParam"> 
+     DELETE  
+         FROM  
+              TNM_SR_DETAIL  
+     WHERE  
+         SR_ID IN (
+            SELECT 
+                SR_ID 
+            FROM 
+                TNM_SR_MASTER 
+            WHERE 
+                SHIPPING_ROUTE_TYPE  =  #{swapData.type}
+            AND 
+                <if test="swapData.type == 2 " >
+                <foreach collection="swapData.dataLists" item="item" index="index" open="(" close=")" separator="OR" >
+                    (SHIPPING_ROUTE_CODE = #{item.shippingRouteCode}
+                    AND FROM_ETD = #{item.firstEtd}
+                    AND TO_ETD = #{item.lastEtd}
+                    AND VANNING_DAY = #{item.vanningDay})
+                </foreach>
+                </if>
+                <if test="swapData.type == 3 " >
+                <foreach collection="swapData.dataLists" item="item" index="index" open="(" close=")" separator="OR" >
+                    (SHIPPING_ROUTE_CODE = #{item.shippingRouteCode}
+                    AND FROM_ETD = #{item.firstEtd}
+                    AND TO_ETD = #{item.lastEtd}
+                    AND DELIVERY_START_DATE = #{item.deliveryStartDate})
+                </foreach>
+                </if>
+         )
+     AND 
+        SUPPLIER_ID IN 
+            <foreach collection="swapData.dataLists" item="supItem" index="supIndex" open="(" close=")" separator="," >
+                #{supItem.supplierId}
+            </foreach>  
+   </delete> 
+   
+   <insert id="insertDataList"  parameterType="com.chinaplus.web.mm.entity.AisinCommonEntity"> 
+     INSERT INTO  
+          TNM_SR_DETAIL
+            (  SR_DETAIL_ID,
+               SR_ID,
+               SUPPLIER_ID,                
+               LAST_VANNING,
+               KANBAN_ISSUE_DATE,
+               EXP_INBOUND_DATE,
+               ETD,
+               ETA,
+               INACTIVE_FLAG,
+               CREATED_BY,
+               CREATED_DATE,
+               UPDATED_BY,
+               UPDATED_DATE,
+               VERSION             
+            )
+          VALUES
+            (                     
+                NEXTVAL FOR  SEQ_TNM_SR_DETAIL,
+                #{srId},
+                #{supplierId},
+                #{lastVanning},
+                #{kanbanIssueDate},
+                #{expInboundDate},
+                #{etd},
+                #{eta},
+                #{inactiveFlag},              
+                #{createdBy},
+                #{createdDate,jdbcType=TIMESTAMP},
+                #{updatedBy},
+                #{updatedDate,jdbcType=TIMESTAMP},
+                 1  
+              )
+   </insert> 
+   
+   
+</mapper>

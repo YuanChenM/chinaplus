@@ -1,0 +1,114 @@
+<!--
+@screen YMCUDS01
+@author liu_yinchuan
+-->
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.com.service.CPCUMS02Service">
+        
+    <sql id="ConstDef">
+        <bind name="Active_Y" value="@com.chinaplus.common.consts.CodeConst$ActiveFlag@Y" />
+        <bind name="Active_N" value="@com.chinaplus.common.consts.CodeConst$ActiveFlag@N" />
+    </sql>
+    <!-- get user Detail -->
+    <select id="getUserDetail" parameterType="com.chinaplus.core.bean.PageParam" resultType="com.chinaplus.web.com.entity.CPCUMS02Entity">
+        SELECT DISTINCT
+             A.USER_ID userId
+            ,A.LOGIN_ID loginId
+            ,A.USER_NAME userName
+            ,A.MAIL_ADDR mailAddr
+            ,A.DEFAULT_LANG defaultLang
+            ,A.STATUS status
+            ,c.OFFICE_ID defaultOfficeId
+            ,C.OFFICE_CODE officeCode
+            ,A.VERSION version
+        FROM  TNM_USER A
+        LEFT JOIN TNM_OFFICE C ON A.DEFAULT_OFFICE_ID=C.OFFICE_ID
+        WHERE A.USER_ID = #{swapData.userId}
+    </select>
+    
+    <!-- get Role Detail -->
+    <select id="findAllList" parameterType="com.chinaplus.core.bean.PageParam" resultType="com.chinaplus.web.com.entity.CPCUMS02DetailEntity">
+        SELECT DISTINCT
+             A.USER_OFFICE_ROLE_ID userOfficeRoleId
+            ,A.ROLE_ID roleId
+            ,A.OFFICE_ID officeId
+            ,B.ROLE_NAME roleName
+            ,C.OFFICE_CODE officeCode
+        FROM  TNM_USER_OFFICE_ROLE  A
+        INNER JOIN TNM_ROLE B ON A.ROLE_ID = B.ROLE_ID
+        INNER JOIN TNM_OFFICE C ON A.OFFICE_ID=C.OFFICE_ID
+        WHERE A.USER_ID = #{swapData.userId}
+        ORDER BY C.OFFICE_CODE, B.ROLE_NAME
+    </select>
+         
+    <!-- delete office role by userId -->
+    <delete id="deleteRoleOfficeByUser" parameterType="com.chinaplus.web.com.entity.CPCUMS02Entity">
+        DELETE FROM TNM_USER_OFFICE_ROLE A
+        WHERE A.USER_ID = #{userId}
+    </delete>
+    
+    <!-- get office role by userId -->
+    <select id="getRoleOfficeByUser" parameterType="com.chinaplus.core.bean.BaseParam" resultType="com.chinaplus.common.entity.TnmUserOfficeRole">
+        SELECT A.OFFICE_ID AS officeId
+        FROM TNM_USER_OFFICE_ROLE A
+        WHERE A.USER_ID = #{swapData.userId}
+    </select>
+         
+    <!-- delete customer role by office role and userId -->
+    <delete id="deleteCustomerByRoleOfficeandUser" parameterType="com.chinaplus.core.bean.BaseParam">
+        DELETE FROM TNM_USER_CUSTOMER A
+        WHERE A.USER_ID = #{swapData.userId}
+          AND A.OFFICE_ID IN
+          <foreach item="item" index="index" collection="swapData.delectedRoleList" open="(" separator="," close=")">  
+                #{item}
+          </foreach>     
+    </delete>
+
+   <select id="loadStatus" resultType="com.chinaplus.web.com.entity.CPCUMS02ComboEntity" parameterType="com.chinaplus.core.bean.BaseParam">
+     select   
+          A.CODE_VALUE AS  id,
+          A.CODE_NAME  AS  text
+     FROM  
+           TNM_CODE_CATEGORY  A 
+     where  
+          A.LANGUAGE_FLAG  =  #{swapData.language}     
+          AND  A.CODE_CATEGORY  =  'USER_STATUS' 
+          AND  A.CODE_VALUE  IN
+          <foreach item="item" index="index" collection="swapData.idList" open="(" separator="," close=")">  
+                #{item}
+          </foreach>      
+     ORDER  BY  A.CODE_VALUE 
+   </select> 
+	
+	<select id="loadAllCustomers" resultType="com.chinaplus.web.com.entity.CPCUMS02ComboEntity" parameterType="com.chinaplus.core.bean.BaseParam">
+        <include refid="ConstDef"/>
+		SELECT 
+			A.CUSTOMER_ID AS id,
+			A.CUSTOMER_CODE AS text
+		FROM 
+			TNM_CUSTOMER A
+			INNER JOIN TNM_OFFICE B ON B.OFFICE_ID = A.OFFICE_ID
+		WHERE
+			A.INACTIVE_FLAG = ${Active_N}
+			AND B.INACTIVE_FLAG = ${Active_N}
+		ORDER BY 
+			A.CUSTOMER_CODE
+	</select>
+	
+	<select id="loadAllOffice" resultType="com.chinaplus.web.com.entity.CPCUMS02ComboEntity" parameterType="com.chinaplus.core.bean.BaseParam">
+        <include refid="ConstDef"/>
+		SELECT 
+			A.OFFICE_ID AS id,
+			A.OFFICE_CODE AS text
+		FROM 
+			TNM_OFFICE A
+		WHERE
+			A.INACTIVE_FLAG = ${Active_N}
+		ORDER BY 
+			A.OFFICE_ID
+	</select>
+</mapper>
+

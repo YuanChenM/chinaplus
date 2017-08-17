@@ -1,0 +1,163 @@
+/**
+ * Download Kanban Plan
+ * 
+ * @screen CPKKPS03
+ * @author shiyang
+ */
+CPKKPS03 = {
+    id : chinaplus.screen.CPKKPS03,
+    title : chinaplus.label.CPKKPS03_Label_PageTitle,
+    xtype : 'form',
+    frame : true,
+    autoHeight : false,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    autoScroll : true,
+    fieldDefaults : {
+        labelAlign : 'right',
+        labelWidth : 150
+    },
+    items : [{
+                xtype : 'textfield',
+                fieldLabel : chinaplus.label.CPKKPS03_Label_KanbanId,
+                margin : '20 auto 0 10',
+                msgTarget : 'side',
+                name : 'kanbanId',
+                hidden : true,
+                width : 500,
+                labelSeparator : '',
+                autoFitErrors : false,
+                allowBlank : false,
+                id : chinaplus.screen.CPKKPS03 + '_kanbanId',
+                listeners : {
+                    afterrender : function(o) {
+                        TRF.util.makeCmpReadOnly(o);
+                    }
+                }
+            }, {
+                xtype : 'textfield',
+                fieldLabel : chinaplus.label.CPKKPS03_Label_KanbanPlanNo,
+                margin : '20 auto 0 10',
+                msgTarget : 'side',
+                name : 'kanbanPlanNo',
+                width : 500,
+                labelSeparator : '',
+                autoFitErrors : false,
+                allowBlank : false,
+                id : chinaplus.screen.CPKKPS03 + '_kanbanPlanNo',
+                listeners : {
+                    afterrender : function(o) {
+                        TRF.util.makeCmpReadOnly(o);
+                    }
+                }
+            }, {
+                xtype : 'checkboxfield',
+                boxLabel : chinaplus.label.CPKKPS03_Label_KanbanPlanDoc1,
+                name : 'KanbanPlanDoc1',
+                id : chinaplus.screen.CPKKPS03 + '_kanbanPlanDoc1',
+                checked : false,
+                margin : '30 auto 0 72'
+            }, {
+                xtype : 'checkboxfield',
+                boxLabel : chinaplus.label.CPKKPS03_Label_KanbanPlanDoc2,
+                name : 'KanbanPlanDoc2',
+                id : chinaplus.screen.CPKKPS03 + '_kanbanPlanDoc2',
+                checked : false,
+                margin : '5 auto 0 72'
+            }, {
+                xtype : 'button',
+                iconCls : 'btn-download',
+                width : 200,
+                height : 25,
+                text : chinaplus.label.CPKKPS03_Button_DownloadKanban,
+                margin : '30 auto 0 72',
+                handler : function() {
+                    CPKKPS03.btnDownloadKanbanAction();
+                }
+            }],
+
+    /**
+     * initialize
+     */
+    initialize : function(params) {
+        Ext.getCmp(chinaplus.screen.CPKKPS03 + '_kanbanPlanNo').setValue(params[0]);
+        Ext.getCmp(chinaplus.screen.CPKKPS03 + '_kanbanId').setValue(params[1]);
+        TRF.util.addFieldTipToPanel(this);
+    },
+
+    /**
+     * btn[Download Kanban] Click
+     */
+    btnDownloadKanbanAction : function() {
+        CPKKPS03.check();
+
+        var kanbanId = Ext.getCmp(chinaplus.screen.CPKKPS03 + '_kanbanId').getValue();
+        var kanbanPlanNo = Ext.getCmp(chinaplus.screen.CPKKPS03 + '_kanbanPlanNo').getValue();
+        var kanbanPlanDoc1 = Ext.getCmp(chinaplus.screen.CPKKPS03 + '_kanbanPlanDoc1').getValue();
+        var kanbanPlanDoc2 = Ext.getCmp(chinaplus.screen.CPKKPS03 + '_kanbanPlanDoc2').getValue();
+
+        var kanbanIds = kanbanId.split(",");
+        var kanbanPlanNos = kanbanPlanNo.split(",");
+
+        var selectedDatas = [];
+        for (var i = 0; i < kanbanIds.length; i++) {
+            selectedDatas.push(kanbanIds[i] + "#%!" + kanbanPlanNos[i]);
+        }
+        var params = {};
+        params[TRF.cnst.SELECTEDDATAS] = selectedDatas;
+
+        var backFun = function(applicationData) {
+            if (applicationData.success) {
+                if (kanbanPlanDoc1 && kanbanPlanDoc2) {
+                    // Compress all generated files into a zip file.
+                    // File Name:"KanbanPlan_" + yyyyMMddHHmmssSSS + ".zip"
+                    Ext.getCmp(chinaplus.screen.CPKKPS03).downloadCommon('kbp/CPKKPF01_CPKKPF02/downloadcheck', 'kbp/CPKKPF01_CPKKPF02/download', params);
+                } else if (kanbanPlanDoc1) {
+                    // including latest plan and actual information - Kanban
+                    // Plan Doc 1
+                    Ext.getCmp(chinaplus.screen.CPKKPS03).downloadCommon('kbp/CPKKPF01/downloadcheck', 'kbp/CPKKPF01/download', params);
+                } else if (kanbanPlanDoc2) {
+                    // including all plan before / after revison and actual
+                    // information-Kanban Plan Doc 2
+                    Ext.getCmp(chinaplus.screen.CPKKPS03).downloadCommon('kbp/CPKKPF02/downloadcheck', 'kbp/CPKKPF02/download', params);
+                }
+            }
+        }
+
+        TRF.util.ajaxSubmit(backFun, chinaplus.screen.CPKKPS03, 'kbp/CPKKPF01_CPKKPF02/adjustNirdPlan', null, params);
+
+        if (kanbanPlanDoc1 && kanbanPlanDoc2) {
+            // Compress all generated files into a zip file.
+            // File Name:"Kanban Plan_" + yyyyMMddHHmmssSSS + ".zip"
+            Ext.getCmp(chinaplus.screen.CPKKPS03).downloadCommon('kbp/CPKKPF01_CPKKPF02/downloadcheck', 'kbp/CPKKPF01_CPKKPF02/download', params);
+        } else if (kanbanPlanDoc1) {
+            // including latest plan and actual information - Kanban
+            // Plan Doc 1
+            Ext.getCmp(chinaplus.screen.CPKKPS03).downloadCommon('kbp/CPKKPF01/downloadcheck', 'kbp/CPKKPF01/download', params);
+        } else if (kanbanPlanDoc2) {
+            // including all plan before / after revison and actual
+            // information-
+            // Kanban Plan Doc 2
+            Ext.getCmp(chinaplus.screen.CPKKPS03).downloadCommon('kbp/CPKKPF02/downloadcheck', 'kbp/CPKKPF02/download', params);
+        }
+    },
+
+    /**
+     * Check Input
+     */
+    check : function() {
+        var kanbanPlanDoc1 = Ext.getCmp(chinaplus.screen.CPKKPS03 + '_kanbanPlanDoc1').getValue();
+        var kanbanPlanDoc2 = Ext.getCmp(chinaplus.screen.CPKKPS03 + '_kanbanPlanDoc2').getValue();
+        if (!kanbanPlanDoc1 && !kanbanPlanDoc2) {
+            // No doc has been selected.
+            TRF.util.showMessageBoxByMsgIdAndArgs('w1025');
+            return;
+        }
+    },
+
+    /**
+     * Download Common
+     */
+    downloadCommon : function(checkUrl, url, params) {
+        TRF.util.downloadSubmit(null, chinaplus.screen.CPKKPS03, checkUrl, params, url);
+    }
+}

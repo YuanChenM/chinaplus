@@ -1,0 +1,127 @@
+/**
+ * Upload Revised Shipping Status
+ * 
+ * @screen CPSSMS03
+ * @author gu_chengchen
+ */
+CPSSMS03 = {
+    id : chinaplus.screen.CPSSMS03,
+    title : chinaplus.label.CPSSMS03_Label_PageTitle,
+    xtype : 'form',
+    frame : true,
+    autoHeight : false,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    autoScroll : true,
+    fieldDefaults : {
+        labelAlign : 'right',
+        labelWidth : 150
+    },
+    items : [{
+                xtype : 'fileuploadfield',
+                fieldLabel : chinaplus.label.CPSSMS03_Label_FileName,
+                buttonText : chinaplus.label.CPSSMS03_Button_Browse,
+                name : 'fileData',
+                width : 500,
+                labelSeparator : '',
+                margin : '30 0 0 10',
+                editable : false,
+                fieldStyle : 'background:rgb(255,255,153)',
+                hideLabel : false,
+                autoFitErrors : false
+            }, {
+                xtype : 'checkcombo',
+                fieldLabel : chinaplus.label.CPSSMS03_Label_RevisionReason,
+                id : chinaplus.screen.CPSSMS03 + '_revisionReason',
+                margin : '20 0 0 10',
+                width : 500,
+                addAllSelector : true,
+                multiSelect : true,
+                labelSeparator : '',
+                store : TRF.util.createStore(chinaplus.screen.CPSSMS03, 'common/loadRevisionReasonsForVv', 'Combo', chinaplus.screen.CPSSMS03 + '_revisionReasonStore'),
+                displayField : 'text',
+                queryMode : 'local',
+                valueField : 'id',
+                fieldStyle : 'background:rgb(255,255,153)',
+                autoFitErrors : false,
+                allowBlank : true,
+                editable : false,
+                enableKeyEvents : true,
+                forceSelection : true,
+                listeners : {
+                    change : function() {
+                        Ext.getCmp(chinaplus.screen.CPSSMS03).changeRevisionReason();
+                    }
+                }
+            }, {
+                xtype : 'textfield',
+                fieldLabel : chinaplus.label.CPSSMS03_Label_DetailedRevisionReason,
+                id : chinaplus.screen.CPSSMS03 + '_detailedReason',
+                margin : '20 0 0 10',
+                width : 500,
+                labelSeparator : '',
+                autoFitErrors : false
+            }, {
+                xtype : 'button',
+                iconCls : 'btn-upload',
+                width : 200,
+                height : 25,
+                text : chinaplus.label.CPSSMS03_Button_UploadRevisedShippingPlan,
+                margin : '50 0 0 28',
+                handler : function() {
+                    Ext.getCmp(chinaplus.screen.CPSSMS03).upload();
+                }
+            }],
+
+    /**
+     * The initialize function.
+     */
+    initialize : function() {
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPSSMS03 + '_revisionReasonStore'));
+        Ext.getCmp(chinaplus.screen.CPSSMS03 + '_detailedReason').setReadOnly(true);
+        Ext.getCmp(chinaplus.screen.CPSSMS03 + '_detailedReason').setFieldStyle('background:#cccccc;');
+    },
+
+    /**
+     * Change Revision Reason.
+     */
+    changeRevisionReason : function() {
+
+        var revisionReason = Ext.getCmp(chinaplus.screen.CPSSMS03 + '_revisionReason').getValue();
+        if (revisionReason.indexOf(chinaplus.consts.code.RevisionReason.OTHER) > -1) {
+            Ext.getCmp(chinaplus.screen.CPSSMS03 + '_detailedReason').setReadOnly(false);
+            Ext.getCmp(chinaplus.screen.CPSSMS03 + '_detailedReason').setFieldStyle('background:rgb(255,255,153);');
+        } else {
+            Ext.getCmp(chinaplus.screen.CPSSMS03 + '_detailedReason').setValue('');
+            Ext.getCmp(chinaplus.screen.CPSSMS03 + '_detailedReason').setReadOnly(true);
+            Ext.getCmp(chinaplus.screen.CPSSMS03 + '_detailedReason').setFieldStyle('background:#cccccc;');
+        }
+    },
+
+    /**
+     * Upload Revised Shipping Plan
+     */
+    upload : function() {
+
+        var form = this.getForm();
+        var params = {
+            'revisionCodeSet' : Ext.getCmp(chinaplus.screen.CPSSMS03 + '_revisionReason').getValue(),
+            'detailedReason' : Ext.getCmp(chinaplus.screen.CPSSMS03 + '_detailedReason').getValue()
+        };
+
+        var backFun = function(applicationData) {
+            if (applicationData.success || (applicationData.messageCodes != null && applicationData.messageCodes.length == 0)) {
+                var uploadResult = applicationData.result.uploadResult;
+                if (uploadResult == 1) {
+                    TRF.util.showMessageBoxByMsgIdAndArgs('i1006');
+                } else {
+                    TRF.util.showMessageBoxByMsgIdAndArgs('i1001');
+                }
+                Ext.getCmp(chinaplus.screen.CPSSMS01).refreshData();
+                TRF.util.removePopupApplication(chinaplus.screen.CPSSMS03);
+            }
+        }
+
+        TRF.util.uploadSubmit(form, backFun, chinaplus.screen.CPSSMS03, 'sa/CPSSMF11/upload', params);
+    }
+
+}

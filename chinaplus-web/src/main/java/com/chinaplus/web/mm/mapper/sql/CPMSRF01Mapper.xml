@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.mm.service.CPMSRF01Service">
+
+    <sql id="ConstDef">
+        <bind name="VV" value="@com.chinaplus.common.consts.CodeConst$ShippingRouteType@VV" />  
+    </sql>   
+
+   <select id="getCPMSRF01EntityList" resultType="com.chinaplus.web.mm.entity.CPMSRF01Entity" parameterType="com.chinaplus.core.bean.BaseParam"> 
+    <include refid="ConstDef"/>
+    SELECT 
+         A.SHIPPING_ROUTE_CODE AS  shippingRouteCode,
+         A.IMP_CC_LEADTIME AS impCcLeadtime,
+         A.IMP_INBOUND_LEADTIME AS impInboundLeadtime,              
+         B.DELIVERY_START AS deliveryStart,
+         B.DELIVERY_END AS deliveryEnd,
+         B.PACKING_END AS packingEnd,
+         B.LAST_VANNING AS lastVanning,
+         B.SHIPPING_INSTRUCTION AS shippingInstruction,
+         B.DOCS_PREPARATION AS docsPreparation,
+         B.CUSTOM_CLEARANCE AS customClearance,
+         B.CY_CUT AS cyCut,
+         B.PORT_IN AS portIn,
+         B.ETD AS etd,
+         B.ETA AS eta,
+         B.INACTIVE_FLAG AS inactiveFlag
+    FROM
+         TNM_SR_MASTER A
+         INNER JOIN TNM_SR_DETAIL   B  ON  A.SR_ID  =  B.SR_ID           
+    WHERE
+          A.SHIPPING_ROUTE_TYPE   =  ${VV}   
+        <if test="swapData.impOfficeId != null  and swapData.impOfficeId.size()>0" >
+                AND  (
+                <foreach item="item" index="index" collection="swapData.impOfficeId" open="" separator="OR" close="">                      
+                     <if test="999 != item">
+                        A.OFFICE_ID = #{item}
+                     </if>  
+                     <if test="999 == item">
+                        A.OFFICE_ID IS  NULL
+                     </if> 
+                </foreach>
+                )
+        </if> 
+        <if test="swapData.shipRouteCode != null  and swapData.shipRouteCode.size()>0" >
+              AND  A.SHIPPING_ROUTE_CODE IN 
+            <foreach item="item" index="index" collection="swapData.shipRouteCode" open="(" separator="," close=")">  
+                #{item}
+             </foreach>      
+        </if> 
+        <if test="swapData.effFromEtd != null" > 
+            AND B.ETD >= #{swapData.effFromEtd}
+        </if> 
+        <if test="swapData.effToEtd != null" > 
+            AND B.ETD <![CDATA[<=]]> #{swapData.effToEtd}
+        </if>                 
+     ORDER BY  A.SHIPPING_ROUTE_CODE,
+               B.DELIVERY_START,
+               B.DELIVERY_END
+   </select>  
+    
+</mapper>

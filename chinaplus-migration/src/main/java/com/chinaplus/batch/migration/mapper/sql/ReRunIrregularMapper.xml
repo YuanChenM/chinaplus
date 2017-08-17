@@ -1,0 +1,2360 @@
+<!--
+@screen CPIIFB01
+@author yang_jia1
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.chinaplus.batch.migration.service.ReRunIrregularService">
+     <sql id="ConstDef">
+        <bind name="HandleFlag_UNTREATED" value="@com.chinaplus.common.consts.CodeConst$HandleFlag@UNPROCESS" />
+        <bind name="HandleFlag_SUCCESS" value="@com.chinaplus.common.consts.CodeConst$HandleFlag@PROCESS_SUCCESS" />
+        <bind name="HandleFlag_INVOICE_MISMATCHED" value="@com.chinaplus.common.consts.CodeConst$HandleFlag@INVOICE_MISMATCH" />
+        <bind name="HandleFlag_INVOICE_ALREADY_POST_GRGI" value="@com.chinaplus.common.consts.CodeConst$HandleFlag@INVOICE_IS_ALREADY_POST_GRGI" />
+        <bind name="HandleFlag_CUSTOMER_ISNOT_EXIST" value="@com.chinaplus.common.consts.CodeConst$HandleFlag@CUSTOMER_ISNOT_EXIST" />
+        <bind name="HandleFlag_SUPPLIER_PARTS_ISNOT_EXIST" value="@com.chinaplus.common.consts.CodeConst$HandleFlag@SUPPLIER_PARTS_ISNOT_EXIST" />
+        <bind name="ValidFlag_OTHER" value="@com.chinaplus.common.consts.CodeConst$ValidFlag@OTHER" />
+        <bind name="ValidFlag_SYSTEM_DATA" value="@com.chinaplus.common.consts.CodeConst$ValidFlag@SYSTEM_DATA" />
+        <bind name="ActionType_CC" value="@com.chinaplus.common.consts.CodeConst$ActionType@CUSTOMS_CLEARANCE" />
+        <bind name="ActionType_DEVANNED" value="@com.chinaplus.common.consts.CodeConst$ActionType@DEVANNED" />
+        <bind name="ActionType_IMPIB" value="@com.chinaplus.common.consts.CodeConst$ActionType@IMP_INBOUND" />
+        <bind name="ActionType_DECANT" value="@com.chinaplus.common.consts.CodeConst$ActionType@DECANT" />
+        <bind name="ActionType_STOCK_TRANSFER" value="@com.chinaplus.common.consts.CodeConst$ActionType@STOCK_TRANSFER" />
+        <bind name="ActionType_CANCEL_INVOICE" value="@com.chinaplus.common.consts.CodeConst$ActionType@CANCEL_INVOICE" />
+        <bind name="InvoiceStatus_PENDING" value="@com.chinaplus.common.consts.CodeConst$InvoiceStatus@PENDING" />
+        <bind name="InvoiceStatus_INBOUND_COMPLETED" value="@com.chinaplus.common.consts.CodeConst$InvoiceStatus@INBOUND_COMPLETED" />
+        <bind name="InvoiceStatus_NOT_APPROVED" value="@com.chinaplus.common.consts.CodeConst$InvoiceStatus@NOT_APPROVED" />
+        <bind name="InvoiceStatus_CANCELLED" value="@com.chinaplus.common.consts.CodeConst$InvoiceStatus@CANCELLED" />
+        <bind name="IpStatus_INVOICE" value="@com.chinaplus.common.consts.CodeConst$IpStatus@INVOICE" />
+        <bind name="IpStatus_CUSTOMS_CLEARANCE" value="@com.chinaplus.common.consts.CodeConst$IpStatus@CUSTOMS_CLEARANCE" />
+        <bind name="IpStatus_DEVANNED" value="@com.chinaplus.common.consts.CodeConst$IpStatus@DEVANNED" />
+        <bind name="IpStatus_IMP_ACTUAL_OUTBOUND" value="@com.chinaplus.common.consts.CodeConst$IpStatus@IMP_ACTUAL_OUTBOUND" />
+        <bind name="IpStatus_IMP_INBOUND" value="@com.chinaplus.common.consts.CodeConst$IpStatus@IMP_INBOUND" />
+        <bind name="IpStatus_IMP_OUTBOUND" value="@com.chinaplus.common.consts.CodeConst$IpStatus@IMP_OUTBOUND" />
+        <bind name="IpStatus_WHS_TRANSFER" value="@com.chinaplus.common.consts.CodeConst$IpStatus@WHS_TRANSFER" />
+        <bind name="IpStatus_STOCK_TRANSFER" value="@com.chinaplus.common.consts.CodeConst$IpStatus@STOCK_TRANSFER" />
+        <bind name="IpStatus_CANCELLED" value="@com.chinaplus.common.consts.CodeConst$IpStatus@CANCELLED" />
+        <bind name="PartsStatus_COMPLETED" value="@com.chinaplus.common.consts.CodeConst$PartsStatus@COMPLETED" />
+        <bind name="PostRiFlag_N" value="@com.chinaplus.common.consts.CodeConst$PostRiFlag@N" />
+        <bind name="BusinessPattern_VV" value="@com.chinaplus.common.consts.CodeConst$BusinessPattern@V_V" />
+        <bind name="BusinessPattern_AISIN" value="@com.chinaplus.common.consts.CodeConst$BusinessPattern@AISIN" />
+        <bind name="InvoiceUploadStatus_DONE" value="@com.chinaplus.common.consts.CodeConst$InvoiceUploadStatus@DONE" />
+        <bind name="Irregulars_DONE" value="@com.chinaplus.common.consts.CodeConst$InvoiceIrregularsStatus@DONE" />
+        <bind name="InvoiceMatchStatus_MATCHED" value="@com.chinaplus.common.consts.CodeConst$InvoiceMatchStatus@MATCHED" />
+        <bind name="WITH_CLEARANCE" value="@com.chinaplus.common.consts.CodeConst$ImpStockFlag@WITH_CLEARANCE" />
+        <bind name="WITHOUT_CLEARANCE" value="@com.chinaplus.common.consts.CodeConst$ImpStockFlag@WITHOUT_CLEARANCE" />
+        <bind name="IpKbDataType_CUSTOMS" value="@com.chinaplus.common.consts.CodeConst$IpKbDataType@CUSTOMS_CLEARANCE" />
+        <bind name="IpKbDataType_DEVANNED" value="@com.chinaplus.common.consts.CodeConst$IpKbDataType@DEVANNED" />
+        <bind name="IpKbDataType_INBOUND" value="@com.chinaplus.common.consts.CodeConst$IpKbDataType@INBOUND" />
+        <bind name="IpKbDataType_OUTBOUND" value="@com.chinaplus.common.consts.CodeConst$IpKbDataType@OUTBOUND" />
+        <bind name="IpKbDataType_CANCELLED" value="@com.chinaplus.common.consts.CodeConst$IpKbDataType@CANCELLED" />
+        <bind name="InvoiceGroupStatus_NORMAL" value="@com.chinaplus.common.consts.CodeConst$InvoiceGroupStatus@NORMAL" />
+        <bind name="TransportMode_AIR" value="@com.chinaplus.common.consts.CodeConst$TransportMode@AIR" />
+     </sql>
+
+     <select id="checkExistErrorInfoCnt" parameterType="com.chinaplus.common.bean.ReceiveData" resultType="java.lang.Integer">
+        <include refid="ConstDef"/>
+        SELECT 
+               COUNT(TIP.IF_IP_ID) AS CNT
+        FROM (SELECT 
+                     IFIP.IF_IP_ID
+                FROM 
+                     TNT_IF_IMP_IP IFIP
+               INNER JOIN TNM_OFFICE TOF
+                  ON TOF.OFFICE_CODE = IFIP.OFFICE_CODE
+               INNER JOIN TNT_IP IP
+                  ON (IP.PID_NO = IFIP.PID_NO OR IP.IP_NO = IFIP.SOURCE_IP_NO OR IP.PID_NO = IFIP.FROM_IP_NO)
+                 AND IP.BUSINESS_PATTERN = #{businessPattern}
+               WHERE IFIP.IF_DATE_TIME = #{ifDateTime}
+                 AND IFIP.HANDLE_FLAG > #{HandleFlag_SUCCESS}
+                 AND TOF.OFFICE_ID = #{officeId}
+
+               UNION ALL 
+
+               SELECT 
+                     IFIP.IF_IP_ID
+                FROM 
+                     TNT_IF_IMP_IP IFIP
+               INNER JOIN TNM_OFFICE TOF
+                  ON TOF.OFFICE_CODE = IFIP.OFFICE_CODE
+               INNER JOIN (
+                        SELECT DISTINCT
+                               TOF.OFFICE_CODE
+                             , TW.WHS_CODE
+                             , TP.TTC_PARTS_NO
+                             , TWC.WHS_CUSTOMER_CODE
+                          FROM
+                               TNM_PARTS_MASTER TP
+                         INNER JOIN TNM_OFFICE TOF
+                            ON TOF.OFFICE_ID = TP.OFFICE_ID
+                         INNER JOIN TNM_WHS_CUSTOMER TWC
+                            ON TWC.CUSTOMER_ID = TP.CUSTOMER_ID
+                         INNER JOIN TNM_WAREHOUSE TW
+                            ON TW.WHS_ID = TWC.WHS_ID
+                         WHERE TP.BUSINESS_PATTERN = #{businessPattern}) EP
+                  ON EP.OFFICE_CODE = IFIP.OFFICE_CODE
+                 AND EP.WHS_CUSTOMER_CODE = IFIP.WHS_CUSTOMER_CODE
+                 AND EP.WHS_CODE = IFIP.WHS_CODE
+                 AND EP.TTC_PARTS_NO = IFIP.TTC_PARTS_NO
+               WHERE IFIP.IF_DATE_TIME = #{ifDateTime}
+                 AND IFIP.HANDLE_FLAG > #{HandleFlag_SUCCESS}
+                 AND TOF.OFFICE_ID = #{officeId}
+                 
+               UNION ALL 
+             
+              SELECT 
+                     IFIP.IF_IP_ID
+                FROM 
+                     TNT_IF_IMP_IP IFIP
+               INNER JOIN TNM_OFFICE TOF
+                  ON TOF.OFFICE_CODE = IFIP.OFFICE_CODE
+               INNER JOIN (
+                        SELECT DISTINCT
+                               B.OFFICE_CODE
+                             , NVL(TMI.WHS_INVOICE_NO, A.INVOICE_NO) AS INVOICE_NO
+                          FROM TNT_INVOICE_SUMMARY A
+                         INNER JOIN TNM_OFFICE B
+                            ON A.OFFICE_ID = B.OFFICE_ID
+                          LEFT JOIN TNT_MATCH_INVOICE TMI
+                            ON TMI.OFFICE_ID = A.OFFICE_ID
+                           AND TMI.INVOICE_NO = A.INVOICE_NO
+                           AND TMI.STATUS = #{InvoiceMatchStatus_MATCHED}
+                         WHERE A.INVOICE_STATUS <![CDATA[<]]> #{InvoiceStatus_CANCELLED}
+                           AND A.INVOICE_STATUS > #{InvoiceStatus_NOT_APPROVED}
+                           AND (A.UPLOAD_STATUS = #{InvoiceUploadStatus_DONE} OR A.UPLOAD_STATUS IS NULL)
+                           AND (A.NON_SHIPPING_ROUTE = #{Irregulars_DONE} OR A.NON_SHIPPING_ROUTE IS NULL)
+                           AND A.BUSINESS_PATTERN = #{businessPattern}
+                      ) EI
+                   ON EI.OFFICE_CODE = IFIP.OFFICE_CODE
+                  AND (EI.INVOICE_NO = IFIP.INVOICE_NO OR EI.INVOICE_NO = IFIP.DEVAN_INVOICE_NO)
+               WHERE IFIP.IF_DATE_TIME = #{ifDateTime}
+                 AND IFIP.HANDLE_FLAG > #{HandleFlag_SUCCESS}
+                 AND TOF.OFFICE_ID = #{officeId}
+             
+               UNION ALL 
+                 
+              SELECT 
+                     IFIP.IF_IP_ID
+                FROM 
+                     TNT_IF_IMP_IP IFIP
+               INNER JOIN TNM_OFFICE TOF
+                  ON TOF.OFFICE_CODE = IFIP.OFFICE_CODE
+                LEFT JOIN (
+                        SELECT DISTINCT
+                               B.OFFICE_CODE
+                             , NVL(TMI.WHS_INVOICE_NO, A.INVOICE_NO) AS INVOICE_NO
+                             , A.BUSINESS_PATTERN
+                          FROM TNT_INVOICE_SUMMARY A
+                         INNER JOIN TNM_OFFICE B
+                            ON A.OFFICE_ID = B.OFFICE_ID
+                          LEFT JOIN TNT_MATCH_INVOICE TMI
+                            ON TMI.OFFICE_ID = A.OFFICE_ID
+                           AND TMI.INVOICE_NO = A.INVOICE_NO
+                           AND TMI.STATUS = #{InvoiceMatchStatus_MATCHED}
+                         WHERE A.INVOICE_STATUS <![CDATA[<]]> #{InvoiceStatus_CANCELLED}
+                           AND A.INVOICE_STATUS > #{InvoiceStatus_NOT_APPROVED}
+                           AND (A.UPLOAD_STATUS = #{InvoiceUploadStatus_DONE} OR A.UPLOAD_STATUS IS NULL)
+                           AND (A.NON_SHIPPING_ROUTE = #{Irregulars_DONE} OR A.NON_SHIPPING_ROUTE IS NULL)
+                      ) EI
+                   ON EI.OFFICE_CODE = IFIP.OFFICE_CODE
+                  AND (EI.INVOICE_NO = IFIP.INVOICE_NO OR EI.INVOICE_NO = IFIP.DEVAN_INVOICE_NO)
+               WHERE EI.INVOICE_NO IS NULL
+                 AND IFIP.ACTION_TYPE IN (#{ActionType_CC}, #{ActionType_DEVANNED})
+                 AND ${BusinessPattern_AISIN} = ${businessPattern}
+                 AND IFIP.IF_DATE_TIME = #{ifDateTime}
+                 AND IFIP.HANDLE_FLAG > #{HandleFlag_SUCCESS}
+                 AND TOF.OFFICE_ID = #{officeId}
+        ) TIP
+     </select>
+
+     <update id="updateValidFlag" parameterType="com.chinaplus.common.bean.ReceiveData">
+        <include refid="ConstDef"/>
+        UPDATE 
+            TNT_IF_IMP_IP
+        SET 
+              VALID_FLAG = #{ValidFlag_SYSTEM_DATA}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+        WHERE
+            IF_IP_ID IN (
+               SELECT 
+                     IFIP.IF_IP_ID
+                FROM 
+                     TNT_IF_IMP_IP IFIP
+               INNER JOIN TNM_OFFICE TOF
+                  ON TOF.OFFICE_CODE = IFIP.OFFICE_CODE
+               INNER JOIN TNT_IP IP
+                  ON (IP.PID_NO = IFIP.PID_NO OR IP.IP_NO = IFIP.SOURCE_IP_NO OR IP.PID_NO = IFIP.FROM_IP_NO)
+                 AND IP.BUSINESS_PATTERN = #{businessPattern}
+               WHERE IFIP.IF_DATE_TIME = #{ifDateTime}
+                 AND IFIP.HANDLE_FLAG = #{HandleFlag_UNTREATED}
+                 AND IFIP.VALID_FLAG = #{ValidFlag_OTHER}
+                 AND TOF.OFFICE_ID = #{officeId}
+
+               UNION ALL 
+
+              SELECT 
+                     IFIP.IF_IP_ID
+                FROM 
+                     TNT_IF_IMP_IP IFIP
+               INNER JOIN TNM_OFFICE TOF
+                  ON TOF.OFFICE_CODE = IFIP.OFFICE_CODE
+               INNER JOIN (
+                        SELECT DISTINCT
+                               TOF.OFFICE_CODE
+                             , TW.WHS_CODE
+                             , TP.TTC_PARTS_NO
+                             , TWC.WHS_CUSTOMER_CODE
+                          FROM
+                               TNM_PARTS_MASTER TP
+                         INNER JOIN TNM_OFFICE TOF
+                            ON TOF.OFFICE_ID = TP.OFFICE_ID
+                         INNER JOIN TNM_WHS_CUSTOMER TWC
+                            ON TWC.CUSTOMER_ID = TP.CUSTOMER_ID
+                         INNER JOIN TNM_WAREHOUSE TW
+                            ON TW.WHS_ID = TWC.WHS_ID
+                         WHERE TP.BUSINESS_PATTERN = #{businessPattern}) EP
+                  ON EP.OFFICE_CODE = IFIP.OFFICE_CODE
+                 AND EP.WHS_CUSTOMER_CODE = IFIP.WHS_CUSTOMER_CODE
+                 AND EP.WHS_CODE = IFIP.WHS_CODE
+                 AND EP.TTC_PARTS_NO = IFIP.TTC_PARTS_NO
+               WHERE IFIP.IF_DATE_TIME = #{ifDateTime}
+                 AND IFIP.HANDLE_FLAG = #{HandleFlag_UNTREATED}
+                 AND IFIP.VALID_FLAG = #{ValidFlag_OTHER}
+                 AND TOF.OFFICE_ID = #{officeId}
+                 AND ${businessPattern} = ${BusinessPattern_AISIN}
+                 
+               UNION ALL 
+             
+              SELECT 
+                     IFIP.IF_IP_ID
+                FROM 
+                     TNT_IF_IMP_IP IFIP
+               INNER JOIN TNM_OFFICE TOF
+                  ON TOF.OFFICE_CODE = IFIP.OFFICE_CODE
+               INNER JOIN (
+                        SELECT DISTINCT
+                               B.OFFICE_CODE
+                             , NVL(TMI.WHS_INVOICE_NO, A.INVOICE_NO) AS INVOICE_NO
+                             , A.TRANSPORT_MODE
+                             , TIC.CONTAINER_NO
+                          FROM TNT_INVOICE_SUMMARY A
+                         INNER JOIN TNT_INVOICE_CONTAINER TIC
+                            ON TIC.INVOICE_SUMMARY_ID = A.INVOICE_SUMMARY_ID
+                         INNER JOIN TNM_OFFICE B
+                            ON A.OFFICE_ID = B.OFFICE_ID
+                          LEFT JOIN TNT_MATCH_INVOICE TMI
+                            ON TMI.OFFICE_ID = A.OFFICE_ID
+                           AND TMI.INVOICE_NO = A.INVOICE_NO
+                           AND TMI.STATUS = #{InvoiceMatchStatus_MATCHED}
+                         WHERE A.INVOICE_STATUS <![CDATA[<]]> #{InvoiceStatus_CANCELLED}
+                           AND A.INVOICE_STATUS > #{InvoiceStatus_NOT_APPROVED}
+                           AND (A.UPLOAD_STATUS = #{InvoiceUploadStatus_DONE} OR A.UPLOAD_STATUS IS NULL)
+                           AND (A.NON_SHIPPING_ROUTE = #{Irregulars_DONE} OR A.NON_SHIPPING_ROUTE IS NULL)
+                           AND A.BUSINESS_PATTERN = #{businessPattern}
+                           AND A.OFFICE_ID = #{officeId}
+                      ) EI
+                   ON EI.OFFICE_CODE = IFIP.OFFICE_CODE
+                  AND EI.INVOICE_NO = IFIP.INVOICE_NO 
+                  AND (EI.CONTAINER_NO = IFIP.CONTAINER_NO
+                   OR  EI.TRANSPORT_MODE = #{TransportMode_AIR})
+               WHERE IFIP.IF_DATE_TIME = #{ifDateTime}
+                 AND IFIP.HANDLE_FLAG = #{HandleFlag_UNTREATED}
+                 AND IFIP.VALID_FLAG = #{ValidFlag_OTHER}
+                 AND IFIP.ACTION_TYPE = #{ActionType_CC}
+                 AND TOF.OFFICE_ID = #{officeId}
+
+              UNION ALL 
+             
+              SELECT 
+                     IFIP.IF_IP_ID
+                FROM 
+                     TNT_IF_IMP_IP IFIP
+               INNER JOIN TNM_OFFICE TOF
+                  ON TOF.OFFICE_CODE = IFIP.OFFICE_CODE
+               INNER JOIN (
+                        SELECT DISTINCT
+                               B.OFFICE_CODE
+                             , NVL(TMI.WHS_INVOICE_NO, A.INVOICE_NO) AS INVOICE_NO
+                             , TIC.MODULE_NO
+                          FROM TNT_INVOICE_SUMMARY A
+                         INNER JOIN TNT_INVOICE_CONTAINER TIC
+                            ON TIC.INVOICE_SUMMARY_ID = A.INVOICE_SUMMARY_ID
+                         INNER JOIN TNM_OFFICE B
+                            ON A.OFFICE_ID = B.OFFICE_ID
+                          LEFT JOIN TNT_MATCH_INVOICE TMI
+                            ON TMI.OFFICE_ID = A.OFFICE_ID
+                           AND TMI.INVOICE_NO = A.INVOICE_NO
+                           AND TMI.STATUS = #{InvoiceMatchStatus_MATCHED}
+                         WHERE A.INVOICE_STATUS <![CDATA[<]]> #{InvoiceStatus_CANCELLED}
+                           AND A.INVOICE_STATUS > #{InvoiceStatus_NOT_APPROVED}
+                           AND (A.UPLOAD_STATUS = #{InvoiceUploadStatus_DONE} OR A.UPLOAD_STATUS IS NULL)
+                           AND (A.NON_SHIPPING_ROUTE = #{Irregulars_DONE} OR A.NON_SHIPPING_ROUTE IS NULL)
+                           AND A.BUSINESS_PATTERN = #{businessPattern}
+                           AND A.OFFICE_ID = #{officeId}
+                      ) EI
+                   ON EI.OFFICE_CODE = IFIP.OFFICE_CODE
+                  AND EI.INVOICE_NO = IFIP.DEVAN_INVOICE_NO 
+                  AND EI.MODULE_NO = IFIP.MODULE_NO
+               WHERE IFIP.IF_DATE_TIME = #{ifDateTime}
+                 AND IFIP.HANDLE_FLAG = #{HandleFlag_UNTREATED}
+                 AND IFIP.VALID_FLAG = #{ValidFlag_OTHER}
+                 AND IFIP.ACTION_TYPE = #{ActionType_DEVANNED}
+                 AND TOF.OFFICE_ID = #{officeId}
+             
+               UNION ALL 
+                 
+              SELECT 
+                     IFIP.IF_IP_ID
+                FROM 
+                     TNT_IF_IMP_IP IFIP
+               INNER JOIN TNM_OFFICE TOF
+                  ON TOF.OFFICE_CODE = IFIP.OFFICE_CODE
+                LEFT JOIN (
+                        SELECT DISTINCT
+                               B.OFFICE_CODE
+                             , NVL(TMI.WHS_INVOICE_NO, A.INVOICE_NO) AS INVOICE_NO
+                             , A.BUSINESS_PATTERN
+                          FROM TNT_INVOICE_SUMMARY A
+                         INNER JOIN TNM_OFFICE B
+                            ON A.OFFICE_ID = B.OFFICE_ID
+                          LEFT JOIN TNT_MATCH_INVOICE TMI
+                            ON TMI.OFFICE_ID = A.OFFICE_ID
+                           AND TMI.INVOICE_NO = A.INVOICE_NO
+                           AND TMI.STATUS = #{InvoiceMatchStatus_MATCHED}
+                         WHERE A.INVOICE_STATUS <![CDATA[<]]> #{InvoiceStatus_CANCELLED}
+                           AND A.INVOICE_STATUS > #{InvoiceStatus_NOT_APPROVED}
+                           AND (A.UPLOAD_STATUS = #{InvoiceUploadStatus_DONE} OR A.UPLOAD_STATUS IS NULL)
+                           AND (A.NON_SHIPPING_ROUTE = #{Irregulars_DONE} OR A.NON_SHIPPING_ROUTE IS NULL)
+                      ) EI
+                   ON EI.OFFICE_CODE = IFIP.OFFICE_CODE
+                  AND (EI.INVOICE_NO = IFIP.INVOICE_NO OR EI.INVOICE_NO = IFIP.DEVAN_INVOICE_NO)
+               WHERE EI.INVOICE_NO IS NULL
+                 AND IFIP.ACTION_TYPE IN (#{ActionType_CC}, #{ActionType_DEVANNED})
+                 AND ${BusinessPattern_AISIN} = ${businessPattern}
+                 AND IFIP.IF_DATE_TIME = #{ifDateTime}
+                 AND IFIP.HANDLE_FLAG = #{HandleFlag_UNTREATED}
+                 AND IFIP.VALID_FLAG = #{ValidFlag_OTHER}
+                 AND TOF.OFFICE_ID = #{officeId}
+            )
+     </update>
+     
+     <update id="updateIrregularValidFlag" parameterType="com.chinaplus.common.bean.ReceiveData">
+        <include refid="ConstDef"/>
+        UPDATE 
+            TNT_IF_IMP_IP
+        SET 
+              VALID_FLAG = #{ValidFlag_OTHER}
+            , HANDLE_FLAG = #{HandleFlag_UNTREATED}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+        WHERE
+            IF_IP_ID IN (
+              SELECT 
+                     IFIP.IF_IP_ID
+                FROM 
+                     TNT_IF_IMP_IP IFIP
+               INNER JOIN TNM_OFFICE TOF
+                  ON TOF.OFFICE_CODE = IFIP.OFFICE_CODE
+               INNER JOIN TNT_IP IP
+                  ON (IP.PID_NO = IFIP.PID_NO OR IP.IP_NO = IFIP.SOURCE_IP_NO OR IP.PID_NO = IFIP.FROM_IP_NO)
+                 AND IP.BUSINESS_PATTERN = #{businessPattern}
+               WHERE IFIP.IF_DATE_TIME <![CDATA[<=]]> #{ifDateTime}
+                <if test = "handleFlag != null">
+                 AND IFIP.HANDLE_FLAG = #{handleFlag}
+                </if>
+                <if test = "handleFlag == null">
+                 AND IFIP.HANDLE_FLAG IN (#{HandleFlag_CUSTOMER_ISNOT_EXIST}, #{HandleFlag_SUPPLIER_PARTS_ISNOT_EXIST})
+                </if>
+                 AND TOF.OFFICE_ID = #{officeId}
+
+               UNION ALL 
+
+              SELECT 
+                     IFIP.IF_IP_ID
+                FROM 
+                     TNT_IF_IMP_IP IFIP
+               INNER JOIN TNM_OFFICE TOF
+                  ON TOF.OFFICE_CODE = IFIP.OFFICE_CODE
+               INNER JOIN (
+                        SELECT DISTINCT
+                               TOF.OFFICE_CODE
+                             , TW.WHS_CODE
+                             , TP.TTC_PARTS_NO
+                             , TWC.WHS_CUSTOMER_CODE
+                          FROM
+                               TNM_PARTS_MASTER TP
+                         INNER JOIN TNM_OFFICE TOF
+                            ON TOF.OFFICE_ID = TP.OFFICE_ID
+                         INNER JOIN TNM_WHS_CUSTOMER TWC
+                            ON TWC.CUSTOMER_ID = TP.CUSTOMER_ID
+                         INNER JOIN TNM_WAREHOUSE TW
+                            ON TW.WHS_ID = TWC.WHS_ID
+                         WHERE TP.BUSINESS_PATTERN = #{businessPattern}) EP
+                  ON EP.OFFICE_CODE = IFIP.OFFICE_CODE
+                 AND EP.WHS_CUSTOMER_CODE = IFIP.WHS_CUSTOMER_CODE
+                 AND EP.WHS_CODE = IFIP.WHS_CODE
+                 AND EP.TTC_PARTS_NO = IFIP.TTC_PARTS_NO
+               WHERE IFIP.IF_DATE_TIME <![CDATA[<=]]> #{ifDateTime}
+                <if test = "handleFlag != null">
+                 AND IFIP.HANDLE_FLAG = #{handleFlag}
+                </if>
+                <if test = "handleFlag == null">
+                 AND IFIP.HANDLE_FLAG IN (#{HandleFlag_CUSTOMER_ISNOT_EXIST}, #{HandleFlag_SUPPLIER_PARTS_ISNOT_EXIST})
+                </if>
+                 AND TOF.OFFICE_ID = #{officeId}
+            )
+     </update>
+     
+     <update id="updateValidFlagForIrregular" parameterType="com.chinaplus.common.bean.ReceiveData">
+        <include refid="ConstDef"/>
+        UPDATE 
+            TNT_IF_IMP_IP
+        SET 
+              VALID_FLAG = #{ValidFlag_SYSTEM_DATA}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+        WHERE
+            IF_IP_ID IN (
+               SELECT 
+                     IFIP.IF_IP_ID
+                FROM 
+                     TNT_IF_IMP_IP IFIP
+               INNER JOIN TNM_OFFICE TOF
+                  ON TOF.OFFICE_CODE = IFIP.OFFICE_CODE
+               INNER JOIN TNT_IP IP
+                  ON (IP.PID_NO = IFIP.PID_NO OR IP.IP_NO = IFIP.SOURCE_IP_NO OR IP.PID_NO = IFIP.FROM_IP_NO)
+                 AND IP.BUSINESS_PATTERN = #{businessPattern}
+               WHERE IFIP.IF_DATE_TIME <![CDATA[<=]]> #{ifDateTime}
+                 AND IFIP.HANDLE_FLAG = #{HandleFlag_UNTREATED}
+                 AND IFIP.VALID_FLAG = #{ValidFlag_OTHER}
+                 AND TOF.OFFICE_ID = #{officeId}
+
+               UNION ALL 
+
+              SELECT 
+                     IFIP.IF_IP_ID
+                FROM 
+                     TNT_IF_IMP_IP IFIP
+               INNER JOIN TNM_OFFICE TOF
+                  ON TOF.OFFICE_CODE = IFIP.OFFICE_CODE
+               INNER JOIN (
+                        SELECT DISTINCT
+                               TOF.OFFICE_CODE
+                             , TW.WHS_CODE
+                             , TP.TTC_PARTS_NO
+                             , TWC.WHS_CUSTOMER_CODE
+                          FROM
+                               TNM_PARTS_MASTER TP
+                         INNER JOIN TNM_OFFICE TOF
+                            ON TOF.OFFICE_ID = TP.OFFICE_ID
+                         INNER JOIN TNM_WHS_CUSTOMER TWC
+                            ON TWC.CUSTOMER_ID = TP.CUSTOMER_ID
+                         INNER JOIN TNM_WAREHOUSE TW
+                            ON TW.WHS_ID = TWC.WHS_ID
+                         WHERE TP.BUSINESS_PATTERN = #{businessPattern}) EP
+                  ON EP.OFFICE_CODE = IFIP.OFFICE_CODE
+                 AND EP.WHS_CUSTOMER_CODE = IFIP.WHS_CUSTOMER_CODE
+                 AND EP.WHS_CODE = IFIP.WHS_CODE
+                 AND EP.TTC_PARTS_NO = IFIP.TTC_PARTS_NO
+               WHERE IFIP.IF_DATE_TIME <![CDATA[<=]]> #{ifDateTime}
+                 AND IFIP.HANDLE_FLAG = #{HandleFlag_UNTREATED}
+                 AND IFIP.VALID_FLAG = #{ValidFlag_OTHER}
+                 AND TOF.OFFICE_ID = #{officeId}
+                 AND ${businessPattern} = ${BusinessPattern_AISIN}
+                 
+               UNION ALL 
+             
+              SELECT 
+                     IFIP.IF_IP_ID
+                FROM 
+                     TNT_IF_IMP_IP IFIP
+               INNER JOIN TNM_OFFICE TOF
+                  ON TOF.OFFICE_CODE = IFIP.OFFICE_CODE
+               INNER JOIN (
+                        SELECT DISTINCT
+                               B.OFFICE_CODE
+                             , NVL(TMI.WHS_INVOICE_NO, A.INVOICE_NO) AS INVOICE_NO
+                             , A.TRANSPORT_MODE
+                             , TIC.CONTAINER_NO
+                          FROM TNT_INVOICE_SUMMARY A
+                         INNER JOIN TNT_INVOICE_CONTAINER TIC
+                            ON TIC.INVOICE_SUMMARY_ID = A.INVOICE_SUMMARY_ID
+                         INNER JOIN TNM_OFFICE B
+                            ON A.OFFICE_ID = B.OFFICE_ID
+                          LEFT JOIN TNT_MATCH_INVOICE TMI
+                            ON TMI.OFFICE_ID = A.OFFICE_ID
+                           AND TMI.INVOICE_NO = A.INVOICE_NO
+                           AND TMI.STATUS = #{InvoiceMatchStatus_MATCHED}
+                         WHERE A.INVOICE_STATUS <![CDATA[<]]> #{InvoiceStatus_CANCELLED}
+                           AND A.INVOICE_STATUS > #{InvoiceStatus_NOT_APPROVED}
+                           AND (A.UPLOAD_STATUS = #{InvoiceUploadStatus_DONE} OR A.UPLOAD_STATUS IS NULL)
+                           AND (A.NON_SHIPPING_ROUTE = #{Irregulars_DONE} OR A.NON_SHIPPING_ROUTE IS NULL)
+                           AND A.BUSINESS_PATTERN = #{businessPattern}
+                           AND A.OFFICE_ID = #{officeId}
+                      ) EI
+                   ON EI.OFFICE_CODE = IFIP.OFFICE_CODE
+                  AND EI.INVOICE_NO = IFIP.INVOICE_NO 
+                  AND (EI.CONTAINER_NO = IFIP.CONTAINER_NO
+                   OR  EI.TRANSPORT_MODE = #{TransportMode_AIR})
+               WHERE IFIP.IF_DATE_TIME <![CDATA[<=]]> #{ifDateTime}
+                 AND IFIP.HANDLE_FLAG = #{HandleFlag_UNTREATED}
+                 AND IFIP.VALID_FLAG = #{ValidFlag_OTHER}
+                 AND IFIP.ACTION_TYPE = #{ActionType_CC}
+                 AND TOF.OFFICE_ID = #{officeId}
+
+              UNION ALL 
+             
+              SELECT 
+                     IFIP.IF_IP_ID
+                FROM 
+                     TNT_IF_IMP_IP IFIP
+               INNER JOIN TNM_OFFICE TOF
+                  ON TOF.OFFICE_CODE = IFIP.OFFICE_CODE
+               INNER JOIN (
+                        SELECT DISTINCT
+                               B.OFFICE_CODE
+                             , NVL(TMI.WHS_INVOICE_NO, A.INVOICE_NO) AS INVOICE_NO
+                             , TIC.MODULE_NO
+                          FROM TNT_INVOICE_SUMMARY A
+                         INNER JOIN TNT_INVOICE_CONTAINER TIC
+                            ON TIC.INVOICE_SUMMARY_ID = A.INVOICE_SUMMARY_ID
+                         INNER JOIN TNM_OFFICE B
+                            ON A.OFFICE_ID = B.OFFICE_ID
+                          LEFT JOIN TNT_MATCH_INVOICE TMI
+                            ON TMI.OFFICE_ID = A.OFFICE_ID
+                           AND TMI.INVOICE_NO = A.INVOICE_NO
+                           AND TMI.STATUS = #{InvoiceMatchStatus_MATCHED}
+                         WHERE A.INVOICE_STATUS <![CDATA[<]]> #{InvoiceStatus_CANCELLED}
+                           AND A.INVOICE_STATUS > #{InvoiceStatus_NOT_APPROVED}
+                           AND (A.UPLOAD_STATUS = #{InvoiceUploadStatus_DONE} OR A.UPLOAD_STATUS IS NULL)
+                           AND (A.NON_SHIPPING_ROUTE = #{Irregulars_DONE} OR A.NON_SHIPPING_ROUTE IS NULL)
+                           AND A.BUSINESS_PATTERN = #{businessPattern}
+                           AND A.OFFICE_ID = #{officeId}
+                      ) EI
+                   ON EI.OFFICE_CODE = IFIP.OFFICE_CODE
+                  AND EI.INVOICE_NO = IFIP.DEVAN_INVOICE_NO 
+                  AND EI.MODULE_NO = IFIP.MODULE_NO
+               WHERE IFIP.IF_DATE_TIME <![CDATA[<=]]> #{ifDateTime}
+                 AND IFIP.HANDLE_FLAG = #{HandleFlag_UNTREATED}
+                 AND IFIP.VALID_FLAG = #{ValidFlag_OTHER}
+                 AND IFIP.ACTION_TYPE = #{ActionType_DEVANNED}
+                 AND TOF.OFFICE_ID = #{officeId}
+             
+               UNION ALL 
+                 
+              SELECT 
+                     IFIP.IF_IP_ID
+                FROM 
+                     TNT_IF_IMP_IP IFIP
+               INNER JOIN TNM_OFFICE TOF
+                  ON TOF.OFFICE_CODE = IFIP.OFFICE_CODE
+                LEFT JOIN (
+                        SELECT DISTINCT
+                               B.OFFICE_CODE
+                             , NVL(TMI.WHS_INVOICE_NO, A.INVOICE_NO) AS INVOICE_NO
+                             , A.BUSINESS_PATTERN
+                          FROM TNT_INVOICE_SUMMARY A
+                         INNER JOIN TNM_OFFICE B
+                            ON A.OFFICE_ID = B.OFFICE_ID
+                          LEFT JOIN TNT_MATCH_INVOICE TMI
+                            ON TMI.OFFICE_ID = A.OFFICE_ID
+                           AND TMI.INVOICE_NO = A.INVOICE_NO
+                           AND TMI.STATUS = #{InvoiceMatchStatus_MATCHED}
+                         WHERE A.INVOICE_STATUS <![CDATA[<]]> #{InvoiceStatus_CANCELLED}
+                           AND A.INVOICE_STATUS > #{InvoiceStatus_NOT_APPROVED}
+                           AND (A.UPLOAD_STATUS = #{InvoiceUploadStatus_DONE} OR A.UPLOAD_STATUS IS NULL)
+                           AND (A.NON_SHIPPING_ROUTE = #{Irregulars_DONE} OR A.NON_SHIPPING_ROUTE IS NULL)
+                      ) EI
+                   ON EI.OFFICE_CODE = IFIP.OFFICE_CODE
+                  AND (EI.INVOICE_NO = IFIP.INVOICE_NO OR EI.INVOICE_NO = IFIP.DEVAN_INVOICE_NO)
+               WHERE EI.INVOICE_NO IS NULL
+                 AND IFIP.ACTION_TYPE IN (#{ActionType_CC}, #{ActionType_DEVANNED})
+                 AND ${BusinessPattern_AISIN} = ${businessPattern}
+                 AND IFIP.IF_DATE_TIME <![CDATA[<=]]> #{ifDateTime}
+                 AND IFIP.HANDLE_FLAG = #{HandleFlag_UNTREATED}
+                 AND IFIP.VALID_FLAG = #{ValidFlag_OTHER}
+                 AND TOF.OFFICE_ID = #{officeId}
+            )
+     </update>
+     
+     <update id="updateValidFlagForRegister" parameterType="com.chinaplus.common.bean.ReceiveData">
+        <include refid="ConstDef"/>
+        UPDATE 
+            TNT_IF_IMP_IP
+        SET 
+              VALID_FLAG = #{ValidFlag_SYSTEM_DATA}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+        WHERE
+            IF_IP_ID IN (
+                SELECT IFIP.IF_IP_ID
+                  FROM TNT_IP IP
+                 INNER JOIN TNT_IF_IMP_IP IFIP
+                    ON IFIP.SOURCE_IP_NO = IP.IP_NO
+                 WHERE IP.EXP_PARTS_ID IN 
+                    <foreach item="item" index="index" collection="expPartsIdList" open="(" separator="," close=")">
+                      #{item}
+                    </foreach>
+                  AND IP.STATUS = #{IpStatus_INVOICE}
+                  AND IFIP.VALID_FLAG = #{ValidFlag_OTHER}
+                  AND IFIP.HANDLE_FLAG = #{HandleFlag_UNTREATED}
+
+                UNION ALL
+                
+                SELECT IFIP.IF_IP_ID
+                  FROM TNT_IF_IMP_IP IFIP
+                 INNER JOIN (
+                        SELECT DISTINCT 
+                               A.INVOICE_NO
+                             , A.CONTAINER_NO
+                             , B.TRANSPORT_MODE
+                          FROM TNT_IP A
+                         INNER JOIN TNT_INVOICE_SUMMARY B
+                            ON B.INVOICE_NO = A.INVOICE_NO
+                           AND B.INVOICE_STATUS <![CDATA[<]]> #{InvoiceStatus_CANCELLED}
+                         WHERE A.STATUS = #{IpStatus_INVOICE}
+                           AND A.EXP_PARTS_ID IN
+                            <foreach item="item" index="index" collection="expPartsIdList" open="(" separator="," close=")">
+                              #{item}
+                            </foreach>) IP
+                    ON IFIP.INVOICE_NO = IP.INVOICE_NO
+                   AND (IFIP.CONTAINER_NO = IP.CONTAINER_NO
+                    OR  IP.TRANSPORT_MODE = #{TransportMode_AIR})
+                 WHERE IFIP.VALID_FLAG = #{ValidFlag_OTHER}
+                   AND IFIP.HANDLE_FLAG = #{HandleFlag_UNTREATED}
+
+                UNION ALL
+                
+                SELECT IFIP.IF_IP_ID
+                  FROM TNT_IF_IMP_IP IFIP
+                 INNER JOIN (
+                        SELECT DISTINCT 
+                               INVOICE_NO
+                             , MODULE_NO
+                          FROM TNT_IP 
+                         WHERE STATUS = #{IpStatus_INVOICE}
+                           AND EXP_PARTS_ID IN
+                            <foreach item="item" index="index" collection="expPartsIdList" open="(" separator="," close=")">
+                              #{item}
+                            </foreach>) IP
+                    ON IFIP.DEVAN_INVOICE_NO = IP.INVOICE_NO
+                   AND IFIP.MODULE_NO = IP.MODULE_NO
+                 WHERE IFIP.VALID_FLAG = #{ValidFlag_OTHER}
+                   AND IFIP.HANDLE_FLAG = #{HandleFlag_UNTREATED}
+
+                UNION ALL
+
+                 SELECT IFIP.IF_IP_ID
+                   FROM TNT_IF_IMP_IP IFIP
+                  INNER JOIN TNT_IP IP
+                     ON IFIP.PID_NO = IP.PID_NO
+                  INNER JOIN TNM_EXP_PARTS TEP1
+                     ON TEP1.EXP_PARTS_ID = IP.EXP_PARTS_ID
+                  INNER JOIN TNM_EXP_PARTS TEP2
+                     ON TEP2.TTC_PARTS_NO = TEP1.TTC_PARTS_NO
+                    AND TEP2.SUPPLIER_ID = TEP1.SUPPLIER_ID
+                    AND TEP2.SSMS_MAIN_ROUTE = TEP1.SSMS_MAIN_ROUTE
+                    AND TEP2.EXP_SUPP_CODE = TEP1.EXP_SUPP_CODE
+                    AND TEP2.OFFICE_ID = TEP1.OFFICE_ID
+                  INNER JOIN TNM_PARTS_MASTER TP
+                     ON TP.PARTS_ID = TEP2.PARTS_ID
+                  INNER JOIN TNM_OFFICE TOF
+                     ON TOF.OFFICE_CODE = IFIP.OFFICE_CODE
+                    AND TOF.OFFICE_ID = TP.OFFICE_ID
+                  INNER JOIN TNM_WHS_CUSTOMER TWC
+                     ON TWC.OFFICE_ID = TP.OFFICE_ID
+                    AND TWC.CUSTOMER_ID = TP.CUSTOMER_ID
+                    AND TWC.WHS_CUSTOMER_CODE = IFIP.WHS_CUSTOMER_CODE
+                  INNER JOIN TNM_WAREHOUSE TW
+                     ON TW.WHS_ID = TWC.WHS_ID
+                    AND TW.WHS_CODE = IFIP.WHS_CODE
+                  WHERE IFIP.HANDLE_FLAG > #{HandleFlag_SUCCESS}
+                    AND IP.EXP_PARTS_ID IN 
+                    <foreach item="item" index="index" collection="expPartsIdList" open="(" separator="," close=")">
+                      #{item}
+                    </foreach>
+            )
+            AND IF_DATE_TIME <![CDATA[<=]]> #{ifDateTime}
+     </update>
+          
+     <!--<update id="updateHandleFlagForVV" parameterType="com.chinaplus.common.bean.ReceiveData">
+        <include refid="ConstDef"/>
+        UPDATE 
+            TNT_IF_IMP_IP
+        SET 
+            HANDLE_FLAG = ${HandleFlag_INVOICE_MISMATCHED}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+            , UPDATED_DATE = CURRENT TIMESTAMP
+        WHERE
+            IF_IP_ID IN (
+                SELECT 
+                      IF.IF_IP_ID
+                 FROM 
+                      TNT_IF_IMP_IP IF
+                 LEFT JOIN TNT_IP IP
+                   ON IP.IP_NO = IF.SOURCE_IP_NO
+                  AND IF.INVOICE_NO = IP.INVOICE_NO
+                  AND IP.STATUS <![CDATA[<]]> ${IpStatus_CANCELLED}
+                  AND IP.BUSINESS_PATTERN = ${BusinessPattern_VV}
+                 LEFT JOIN (
+                        SELECT DISTINCT
+                               B.OFFICE_CODE
+                             , A.INVOICE_NO
+                          FROM TNT_INVOICE_SUMMARY A
+                         INNER JOIN TNM_OFFICE B
+                            ON A.OFFICE_ID = B.OFFICE_ID
+                         WHERE A.INVOICE_STATUS <![CDATA[<]]> #{InvoiceStatus_CANCELLED}
+                           AND A.INVOICE_STATUS > #{InvoiceStatus_NOT_APPROVED}
+                           AND (A.UPLOAD_STATUS = #{InvoiceUploadStatus_DONE} OR A.UPLOAD_STATUS IS NULL)
+                           AND (A.NON_SHIPPING_ROUTE = #{Irregulars_DONE} OR A.NON_SHIPPING_ROUTE IS NULL)
+                      ) EI
+                   ON EI.OFFICE_CODE = IF.OFFICE_CODE
+                  AND EI.INVOICE_NO = IF.INVOICE_NO
+                  AND IF.ACTION_TYPE IN (#{ActionType_CC}, #{ActionType_DEVANNED})
+                 LEFT JOIN TNT_MATCH_INVOICE TMI
+                   ON TMI.WHS_INVOICE_NO = IF.INVOICE_NO
+                  AND TMI.STATUS = #{InvoiceMatchStatus_MATCHED}
+                WHERE IP.INVOICE_NO IS NULL
+                  AND EI.INVOICE_NO IS NULL
+                  AND TMI.WHS_INVOICE_NO IS NULL
+                  AND IF.IF_DATE_TIME = #{ifDateTime,jdbcType=TIMESTAMP}
+                  AND IF.HANDLE_FLAG = ${HandleFlag_UNTREATED}
+                  AND IF.VALID_FLAG = ${ValidFlag_SYSTEM_DATA}
+            )
+    </update> -->
+    
+    <update id="updateHandleFlagForAisin" parameterType="com.chinaplus.common.bean.ReceiveData">
+        <include refid="ConstDef"/>
+        UPDATE 
+            TNT_IF_IMP_IP
+        SET 
+              HANDLE_FLAG = ${HandleFlag_INVOICE_MISMATCHED}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+       WHERE
+            IF_IP_ID IN (
+                SELECT 
+                      IF.IF_IP_ID
+                 FROM 
+                      TNT_IF_IMP_IP IF
+                INNER JOIN TNM_OFFICE TOF
+                   ON TOF.OFFICE_CODE = IF.OFFICE_CODE
+                 LEFT JOIN TNT_IP IP
+                   ON IP.PID_NO = IF.PID_NO
+                 LEFT JOIN TNT_MATCH_INVOICE TMI
+                   ON (TMI.WHS_INVOICE_NO = IF.INVOICE_NO OR TMI.INVOICE_NO = IF.DEVAN_INVOICE_NO OR TMI.INVOICE_NO = IF.INB_INVOICE_NO)
+                  AND TMI.STATUS = #{InvoiceMatchStatus_MATCHED}
+                 LEFT JOIN (
+                        SELECT DISTINCT
+                               B.OFFICE_CODE
+                             , A.INVOICE_NO
+                          FROM TNT_INVOICE_SUMMARY A
+                         INNER JOIN TNM_OFFICE B
+                            ON A.OFFICE_ID = B.OFFICE_ID
+                         WHERE A.INVOICE_STATUS <![CDATA[<]]> #{InvoiceStatus_CANCELLED}
+                           AND A.INVOICE_STATUS > #{InvoiceStatus_NOT_APPROVED}
+                           AND A.UPLOAD_STATUS = #{InvoiceUploadStatus_DONE}<!-- AISIN INVOICE MUST HAS UPLOAD STATUS, CUASE AISIN INVOICE FORM UPLOAD -->
+                           AND (A.NON_SHIPPING_ROUTE = #{Irregulars_DONE} OR A.NON_SHIPPING_ROUTE IS NULL)
+                           AND A.BUSINESS_PATTERN = #{BusinessPattern_AISIN}
+                      ) EI
+                   ON EI.OFFICE_CODE = IF.OFFICE_CODE
+                  AND (EI.INVOICE_NO = IF.INVOICE_NO OR EI.INVOICE_NO = IF.DEVAN_INVOICE_NO OR EI.INVOICE_NO = IF.INB_INVOICE_NO)
+                WHERE IP.PID_NO IS NULL
+                  AND TMI.WHS_INVOICE_NO IS NULL
+                  AND EI.INVOICE_NO IS NULL
+                  AND IF.ACTION_TYPE IN (#{ActionType_CC}, #{ActionType_DEVANNED}, #{ActionType_IMPIB})
+                  AND IF.IF_DATE_TIME = #{ifDateTime,jdbcType=TIMESTAMP}
+                  AND IF.HANDLE_FLAG = ${HandleFlag_UNTREATED}
+                  AND IF.VALID_FLAG = ${ValidFlag_SYSTEM_DATA}
+                  AND TOF.OFFICE_ID = #{officeId}
+            )    
+    </update>
+    
+    <update id="updateHandleFlagForPostGRGI" parameterType="com.chinaplus.common.bean.ReceiveData">
+        <include refid="ConstDef"/>
+        UPDATE 
+            TNT_IF_IMP_IP
+        SET 
+              HANDLE_FLAG = ${HandleFlag_INVOICE_ALREADY_POST_GRGI}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+        WHERE
+            IF_DATE_TIME <![CDATA[<=]]> #{ifDateTime,jdbcType=TIMESTAMP}
+            AND HANDLE_FLAG = ${HandleFlag_UNTREATED}
+            AND VALID_FLAG = ${ValidFlag_SYSTEM_DATA}
+            AND INVOICE_NO IN (
+                SELECT 
+                    TIS.INVOICE_NO
+                FROM 
+                    TNT_INVOICE_SUMMARY TIS
+                WHERE
+                    TIS.POST_RI_FLAG > ${PostRiFlag_N}
+                   <!-- REMOVE BY LYC, CAUSE POST GR/GI INVOICE DOES NOT HAS ANY OTHER STATUS EXCEPT APPROVED -->
+                   <!-- AND TIS.INVOICE_STATUS  <![CDATA[>]]> ${InvoiceStatus_NOT_APPROVED}
+                    AND TIS.INVOICE_STATUS  <![CDATA[<]]> ${InvoiceStatus_CANCELLED} --> 
+                    AND TIS.BUSINESS_PATTERN = #{businessPattern,jdbcType=INTEGER}
+                    AND TIS.OFFICE_ID = #{officeId}
+            )
+    </update>
+    
+    <select id="selectExpPartsInfoByIds" parameterType="com.chinaplus.common.bean.ReceiveData" resultType="com.chinaplus.common.bean.ReceiveData">
+        SELECT TEP.OFFICE_ID AS officeId
+             , TEP.EXP_PARTS_ID AS expPartsId
+          FROM TNM_EXP_PARTS TEP
+         WHERE TEP.EXP_PARTS_ID IN 
+          <foreach item="item" index="index" collection="expPartsIdList" open="(" separator="," close=")">
+             #{item}
+          </foreach>
+         ORDER BY TEP.OFFICE_ID
+    </select>
+        
+    <select id="selectMatchInvoiceInfoByIds" parameterType="com.chinaplus.common.bean.ReceiveData" resultType="com.chinaplus.common.bean.ReceiveData">
+        SELECT TMI.OFFICE_ID AS officeId
+             , TMI.MATCH_INVOICE_ID AS matchInvId
+          FROM TNT_MATCH_INVOICE TMI
+         WHERE TMI.MATCH_INVOICE_ID IN 
+          <foreach item="item" index="index" collection="matchInvIdList" open="(" separator="," close=")">
+             #{item}
+          </foreach>
+         ORDER BY TMI.OFFICE_ID
+    </select>
+    
+    <select id="selectPIDMissInvoice" parameterType="com.chinaplus.common.bean.IfIpEntity" resultType="com.chinaplus.common.bean.IfIpEntity">
+        <include refid="ConstDef"/>
+        SELECT A.IF_IP_ID AS ifIpId
+             , A.HANDLE_FLAG AS handleFlag
+          FROM TNT_IF_IMP_IP A
+         WHERE A.PID_NO = #{pidNo}
+           AND A.HANDLE_FLAG IN (${HandleFlag_INVOICE_MISMATCHED}, ${HandleFlag_INVOICE_ALREADY_POST_GRGI})
+           AND A.ACTION_TYPE = #{ActionType_IMPIB}
+    </select>
+       
+    <select id="selectIfDataDateTime" parameterType="com.chinaplus.common.bean.ReceiveData" resultType="com.chinaplus.common.entity.TntIfImpIp">
+        SELECT 
+               DISTINCT 
+               A.IF_DATE_TIME AS ifDateTime 
+          FROM 
+               TNT_IF_IMP_IP A 
+         INNER JOIN TNM_OFFICE B
+            ON B.OFFICE_CODE = A.OFFICE_CODE
+         WHERE 
+               B.OFFICE_ID = #{officeId}
+           <if test="lastBatchStatus != null and lastBatchStatus == 0">
+           AND 
+               A.IF_DATE_TIME >= #{batchProcessTime} 
+           </if>
+           <if test="lastBatchStatus != null and lastBatchStatus == 1">
+           AND 
+               A.IF_DATE_TIME > #{batchProcessTime} 
+           </if>
+           
+           <if test="ssmsProcessTime != null">
+              <if test="ssmsProcessStatus == null">
+              AND 
+                  A.IF_DATE_TIME <![CDATA[<]]> #{ssmsProcessTime}
+              </if>
+              <if test="ssmsProcessStatus != null">
+              AND 
+                  A.IF_DATE_TIME <![CDATA[<=]]> #{ssmsProcessTime}
+              </if>
+           </if>
+         ORDER BY 
+               A.IF_DATE_TIME
+    </select>
+    
+    <select id="selectIfImpIpForRegister" parameterType="com.chinaplus.common.bean.ReceiveData" resultType="com.chinaplus.common.entity.TntIfImpIp">
+        <include refid="ConstDef"/>
+        SELECT DISTINCT
+               IFIP.IF_IP_ID AS ifIpId
+             , IFIP.ACTION_TYPE AS actionType
+             , IFIP.PROCESS_DATE AS processDate
+             , IFIP.PID_NO AS pidNo
+          FROM (SELECT IFIP.IF_IP_ID
+                     , IFIP.ACTION_TYPE
+                     , IFIP.PROCESS_DATE
+                     , IFIP.PID_NO
+                  FROM TNT_IF_IMP_IP IFIP
+                 WHERE IFIP.UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+                   AND IFIP.HANDLE_FLAG = #{HandleFlag_UNTREATED}
+                   AND IFIP.VALID_FLAG = #{ValidFlag_SYSTEM_DATA}
+                   AND IFIP.IF_DATE_TIME <![CDATA[<=]]> #{ifDateTime}
+
+                 UNION ALL 
+
+                SELECT IFIP.IF_IP_ID 
+                     , IFIP.ACTION_TYPE
+                     , IFIP.PROCESS_DATE
+                     , IFIP.PID_NO
+                  FROM TNT_IP IP
+                 INNER JOIN TNT_INVOICE_SUMMARY TIS
+                    ON TIS.INVOICE_NO = IP.INVOICE_NO
+                   AND TIS.INVOICE_STATUS <![CDATA[<]]> #{InvoiceStatus_CANCELLED}
+                 INNER JOIN TNT_IF_IMP_IP IFIP
+                    ON (IFIP.INVOICE_NO = IP.INVOICE_NO AND (IFIP.CONTAINER_NO = IP.CONTAINER_NO OR TIS.TRANSPORT_MODE = #{TransportMode_AIR})) 
+                    OR (IFIP.DEVAN_INVOICE_NO = IP.INVOICE_NO AND IFIP.MODULE_NO = IP.MODULE_NO)
+                 WHERE IP.EXP_PARTS_ID IN 
+                    <foreach item="item" index="index" collection="expPartsIdList" open="(" separator="," close=")">
+                       #{item}
+                    </foreach>
+                   AND IP.STATUS = #{IpStatus_INVOICE}
+                   AND IFIP.HANDLE_FLAG = #{HandleFlag_SUCCESS}
+                   AND IFIP.VALID_FLAG = #{ValidFlag_SYSTEM_DATA}
+                   AND IFIP.IF_DATE_TIME <![CDATA[<=]]> #{ifDateTime}) IFIP
+        ORDER BY
+              IFIP.PROCESS_DATE
+            , IFIP.PID_NO
+    </select>
+    
+    <select id="selectIfImpIpForMatchInvoice" parameterType="com.chinaplus.common.bean.ReceiveData" resultType="com.chinaplus.common.entity.TntIfImpIp">
+        <include refid="ConstDef"/>
+        WITH FSTTAB AS (
+                SELECT DISTINCT
+                       IFIP.PID_NO
+                     , IFIP.FROM_IP_NO
+                     , IFIP.PROCESS_DATE 
+                  FROM TNT_IF_IMP_IP IFIP
+                 WHERE IFIP.HANDLE_FLAG = #{HandleFlag_INVOICE_MISMATCHED}
+                   AND IFIP.VALID_FLAG = #{ValidFlag_SYSTEM_DATA}
+                   AND IFIP.ACTION_TYPE > #{ActionType_DEVANNED}
+          ), SECTAB (PID_NO, FROM_IP_NO, PROCESS_DATE) AS (
+                SELECT FST.PID_NO
+                     , FST.FROM_IP_NO
+                     , FST.PROCESS_DATE
+                  FROM FSTTAB FST
+                 WHERE EXISTS (
+                          SELECT PIP.PID_NO
+                            FROM TNT_IF_IMP_IP PIP
+                           INNER JOIN TNT_MATCH_INVOICE TMI
+                              ON TMI.WHS_INVOICE_NO = PIP.INB_INVOICE_NO
+                             AND TMI.MATCH_INVOICE_ID IN
+                             <foreach item="item" index="index" collection="matchInvIdList" open="(" separator="," close=")">
+                                #{item} 
+                             </foreach>
+                           WHERE PIP.PID_NO = FST.PID_NO
+                             AND PIP.HANDLE_FLAG = #{HandleFlag_INVOICE_MISMATCHED}
+                             AND PIP.VALID_FLAG = #{ValidFlag_SYSTEM_DATA}
+                             AND PIP.ACTION_TYPE = #{ActionType_IMPIB}
+                             AND PIP.IF_DATE_TIME <![CDATA[<=]]> #{ifDateTime}
+                       )
+                 UNION ALL
+                SELECT FST.PID_NO
+                     , FST.FROM_IP_NO
+                     , FST.PROCESS_DATE
+                  FROM FSTTAB FST,
+                       SECTAB SEC
+                 WHERE SEC.PID_NO = FST.FROM_IP_NO
+                   AND SEC.PROCESS_DATE <![CDATA[<]]> FST.PROCESS_DATE
+         )
+         SELECT DISTINCT
+                IP.IF_IP_ID AS ifIpId
+              , IP.ACTION_TYPE AS actionType
+              , IP.PROCESS_DATE AS processDate
+              , IP.PID_NO AS pidNo 
+           FROM (SELECT IFIP.IF_IP_ID
+                      , IFIP.ACTION_TYPE
+                      , IFIP.PROCESS_DATE
+                      , IFIP.PID_NO
+                   FROM TNT_IF_IMP_IP IFIP
+                  INNER JOIN SECTAB SEC
+                     ON SEC.PID_NO = IFIP.PID_NO
+                  UNION ALL 
+                 SELECT IFIP.IF_IP_ID
+                      , IFIP.ACTION_TYPE
+                      , IFIP.PROCESS_DATE
+                      , IFIP.PID_NO
+                   FROM TNT_IF_IMP_IP IFIP 
+                  INNER JOIN TNT_MATCH_INVOICE TMI 
+                     ON (TMI.WHS_INVOICE_NO = IFIP.INVOICE_NO 
+                     OR  TMI.WHS_INVOICE_NO = IFIP.DEVAN_INVOICE_NO)
+                    AND TMI.MATCH_INVOICE_ID IN 
+                    <foreach item="item" index="index" collection="matchInvIdList" open="(" separator="," close=")">
+                        #{item} 
+                    </foreach>
+                  WHERE IFIP.HANDLE_FLAG = #{HandleFlag_INVOICE_MISMATCHED}
+                    AND IFIP.VALID_FLAG = #{ValidFlag_SYSTEM_DATA}
+                    AND IFIP.IF_DATE_TIME <![CDATA[<=]]> #{ifDateTime} )IP
+          ORDER BY
+                IP.PROCESS_DATE
+              , IP.ACTION_TYPE
+              , IP.PID_NO
+    </select>
+    
+    <select id="selectIfImpIpForVV" parameterType="com.chinaplus.common.bean.ReceiveData" resultType="com.chinaplus.common.entity.TntIfImpIp">
+        <include refid="ConstDef"/>
+        SELECT DISTINCT
+               TIF.IF_IP_ID AS ifIpId
+             , TIF.ACTION_TYPE AS actionType
+             , TIF.PROCESS_DATE AS processDate
+             , TIF.PID_NO AS pidNo 
+          FROM (SELECT IF.IF_IP_ID
+                     , IF.ACTION_TYPE
+                     , IF.PROCESS_DATE
+                     , IF.PID_NO
+                  FROM TNT_IF_IMP_IP IF
+                 INNER JOIN TNM_OFFICE TOF
+                    ON TOF.OFFICE_CODE = IF.OFFICE_CODE
+                 INNER JOIN TNT_IP IP
+                    ON (IP.IP_NO = IF.SOURCE_IP_NO
+                    OR IP.PID_NO = IF.PID_NO
+                    OR IP.PID_NO = IF.FROM_IP_NO)
+                   AND IP.BUSINESS_PATTERN = ${BusinessPattern_VV}
+                   AND IP.OFFICE_ID = TOF.OFFICE_ID
+                 WHERE IF.IF_DATE_TIME <![CDATA[<=]]> #{ifDateTime}
+                   AND IF.HANDLE_FLAG = ${HandleFlag_UNTREATED}
+                   AND IF.VALID_FLAG = ${ValidFlag_SYSTEM_DATA}
+                   AND IF.ACTION_TYPE > ${ActionType_DEVANNED}
+                   AND TOF.OFFICE_ID = #{officeId}
+                 UNION ALL 
+                SELECT IF.IF_IP_ID
+                     , IF.ACTION_TYPE 
+                     , IF.PROCESS_DATE 
+                     , IF.PID_NO
+                  FROM TNT_IF_IMP_IP IF
+                 INNER JOIN TNM_OFFICE TOF
+                    ON TOF.OFFICE_CODE = IF.OFFICE_CODE
+                 INNER JOIN TNT_INVOICE_SUMMARY TIS
+                    ON (TIS.INVOICE_NO = IF.INVOICE_NO
+                    OR  TIS.INVOICE_NO = IF.DEVAN_INVOICE_NO)
+                   AND TIS.INVOICE_STATUS <![CDATA[<]]> ${InvoiceStatus_CANCELLED}
+                   AND TIS.INVOICE_STATUS > #{InvoiceStatus_NOT_APPROVED}
+                   AND (TIS.UPLOAD_STATUS = #{InvoiceUploadStatus_DONE} OR TIS.UPLOAD_STATUS IS NULL)
+                   AND (TIS.NON_SHIPPING_ROUTE = #{Irregulars_DONE} OR TIS.NON_SHIPPING_ROUTE IS NULL)
+                   AND TIS.BUSINESS_PATTERN = ${BusinessPattern_VV}
+                 WHERE IF.IF_DATE_TIME <![CDATA[<=]]> #{ifDateTime}
+                   AND IF.HANDLE_FLAG = ${HandleFlag_UNTREATED}
+                   AND IF.VALID_FLAG = ${ValidFlag_SYSTEM_DATA}
+                   AND TOF.OFFICE_ID = #{officeId}
+                   AND IF.ACTION_TYPE IN (${ActionType_CC}, ${ActionType_DEVANNED})) TIF
+         ORDER BY
+               TIF.PROCESS_DATE
+             , TIF.ACTION_TYPE
+             , TIF.PID_NO
+    </select>
+    
+    <update id="updateHandleFlagForMainInfoNotMatched" parameterType="com.chinaplus.common.bean.ReceiveData">
+        <include refid="ConstDef"/>
+        UPDATE 
+            TNT_IF_IMP_IP
+        SET 
+              HANDLE_FLAG = #{handleFlag}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+        WHERE
+            IF_DATE_TIME <![CDATA[<=]]> #{ifDateTime,jdbcType=TIMESTAMP}
+            AND HANDLE_FLAG = ${HandleFlag_UNTREATED}
+            AND VALID_FLAG = ${ValidFlag_SYSTEM_DATA}
+    </update>
+    
+    <select id="selectIfImpIpForAisin" parameterType="com.chinaplus.common.bean.ReceiveData" resultType="com.chinaplus.common.entity.TntIfImpIp">
+        <include refid="ConstDef"/>
+        SELECT DISTINCT
+               TIF.IF_IP_ID AS ifIpId
+             , TIF.ACTION_TYPE AS actionType
+             , TIF.PROCESS_DATE AS processDate
+             , TIF.PID_NO AS pidNo
+          FROM (SELECT IF.IF_IP_ID 
+                     , IF.ACTION_TYPE
+                     , IF.PROCESS_DATE 
+                     , IF.PID_NO
+                 FROM TNT_IF_IMP_IP IF
+                INNER JOIN TNM_OFFICE TOF
+                   ON TOF.OFFICE_CODE = IF.OFFICE_CODE
+                INNER JOIN TNT_IP IP
+                   ON (IP.PID_NO = IF.PID_NO OR IP.PID_NO = IF.FROM_IP_NO)
+                  AND IP.BUSINESS_PATTERN = ${BusinessPattern_AISIN}
+                WHERE IF.IF_DATE_TIME <![CDATA[<=]]> #{ifDateTime,jdbcType=TIMESTAMP}
+                  AND IF.HANDLE_FLAG = ${HandleFlag_UNTREATED}
+                  AND IF.VALID_FLAG = ${ValidFlag_SYSTEM_DATA}
+                  AND TOF.OFFICE_ID = #{officeId}
+                  AND IF.ACTION_TYPE > #{ActionType_IMPIB}
+                UNION ALL
+               SELECT IF.IF_IP_ID 
+                    , IF.ACTION_TYPE
+                    , IF.PROCESS_DATE 
+                    , IF.PID_NO
+                 FROM TNT_IF_IMP_IP IF
+                INNER JOIN TNM_OFFICE TOF
+                   ON TOF.OFFICE_CODE = IF.OFFICE_CODE
+                INNER JOIN (SELECT DISTINCT
+                                   TOF.OFFICE_CODE
+                                 , TW.WHS_CODE
+                                 , TP.TTC_PARTS_NO
+                                 , TWC.WHS_CUSTOMER_CODE
+                              FROM TNM_PARTS_MASTER TP
+                             INNER JOIN TNM_OFFICE TOF
+                                ON TOF.OFFICE_ID = TP.OFFICE_ID
+                             INNER JOIN TNM_WHS_CUSTOMER TWC
+                                ON TWC.CUSTOMER_ID = TP.CUSTOMER_ID
+                             INNER JOIN TNM_WAREHOUSE TW
+                                ON TW.WHS_ID = TWC.WHS_ID
+                             WHERE TP.BUSINESS_PATTERN = ${BusinessPattern_AISIN}) EP
+                   ON EP.OFFICE_CODE = IF.OFFICE_CODE
+                  AND EP.WHS_CUSTOMER_CODE = IF.WHS_CUSTOMER_CODE
+                  AND EP.WHS_CODE = IF.WHS_CODE
+                  AND EP.TTC_PARTS_NO = IF.TTC_PARTS_NO
+                WHERE IF.IF_DATE_TIME <![CDATA[<=]]> #{ifDateTime,jdbcType=TIMESTAMP}
+                  AND IF.HANDLE_FLAG = ${HandleFlag_UNTREATED}
+                  AND IF.VALID_FLAG = ${ValidFlag_SYSTEM_DATA}
+                  AND TOF.OFFICE_ID = #{officeId}
+                  <!-- AND IF.ACTION_TYPE = #{ActionType_IMPIB} -->
+                UNION ALL
+               SELECT  IF.IF_IP_ID 
+                    , IF.ACTION_TYPE
+                    , IF.PROCESS_DATE 
+                    , IF.PID_NO
+                 FROM TNT_IF_IMP_IP IF
+                INNER JOIN TNM_OFFICE TOF
+                   ON TOF.OFFICE_CODE = IF.OFFICE_CODE
+                 LEFT JOIN TNT_MATCH_INVOICE TMI
+                   ON (TMI.WHS_INVOICE_NO = IF.INVOICE_NO 
+                   OR  TMI.WHS_INVOICE_NO = IF.DEVAN_INVOICE_NO)
+                  AND TMI.STATUS = #{InvoiceMatchStatus_MATCHED}
+                 LEFT JOIN TNT_INVOICE_SUMMARY TIS
+                   ON (TIS.INVOICE_NO = IF.INVOICE_NO
+                   OR  TIS.INVOICE_NO = IF.DEVAN_INVOICE_NO
+                   OR  TIS.INVOICE_NO = TMI.INVOICE_NO)
+                  AND TIS.INVOICE_STATUS <![CDATA[<]]> ${InvoiceStatus_CANCELLED}
+                  AND TIS.INVOICE_STATUS > #{InvoiceStatus_NOT_APPROVED}
+                  AND (TIS.UPLOAD_STATUS = #{InvoiceUploadStatus_DONE} OR TIS.UPLOAD_STATUS IS NULL)
+                  AND (TIS.NON_SHIPPING_ROUTE = #{Irregulars_DONE} OR TIS.NON_SHIPPING_ROUTE IS NULL)
+                  AND TIS.BUSINESS_PATTERN = ${BusinessPattern_AISIN}
+                WHERE IF.IF_DATE_TIME <![CDATA[<=]]> #{ifDateTime,jdbcType=TIMESTAMP}
+                  AND IF.HANDLE_FLAG = ${HandleFlag_UNTREATED}
+                  AND IF.VALID_FLAG = ${ValidFlag_SYSTEM_DATA}
+                  AND TOF.OFFICE_ID = #{officeId}
+                  AND IF.ACTION_TYPE <![CDATA[<]]> #{ActionType_IMPIB})TIF
+         ORDER BY
+               TIF.PROCESS_DATE
+             , TIF.ACTION_TYPE
+             , TIF.PID_NO
+    </select>
+    
+    <select id="selectIfImpIpInfoById" parameterType="com.chinaplus.common.bean.IfIpEntity" resultType="com.chinaplus.common.bean.IfIpEntity">
+        <include refid="ConstDef"/>
+        SELECT 
+               IF.IF_IP_ID AS ifIpId,
+               NVL(TMI.INVOICE_NO, NVL(IF.INVOICE_NO, NVL(IF.DEVAN_INVOICE_NO, IF.INB_INVOICE_NO))) AS invoiceNo,
+               IF.ACTION_TYPE AS actionType,
+               IF.CUSTOMS_CLR_DATE AS customsClrDate,
+               IF.DEVANNED_DATE AS devannedDate,
+               NVL(IF.MODULE_NO, IF.INB_MODULE_NO) as moduleNo,
+               IF.INB_DATE AS inbDate,
+               IF.STOCK_TRANSFER_DATE AS stockTransferDate,
+               IF.WHS_TRANSFER_DATE AS whsTransferDate,
+               IF.DELIVERY_NOTE_NO AS deliveryNoteNo,
+               IF.SA_DATE AS saDate,
+               IF.SA_QTY AS saQty,
+               IF.DECANT_DATE AS decantDate,
+               IF.OUTBOUND_DATETIME AS outboundDatetime,
+               IF.DISPATCHED_DATETIME AS dispatchedDatetime,
+               IF.ONHOLD_DATE AS onholdDate,
+               IF.ONHOLD_FLAG AS onholdFlag,
+               IF.PID_NO AS pidNo,
+               IF.FROM_IP_NO AS fromIpNo,
+               NVL(IF.SOURCE_IP_NO, IP.IP_NO) AS sourceIpNo,
+               IF.PROCESS_DATE AS processDate,
+               IF.QTY as qty,
+               IP.IP_ID AS ipId,
+               IP.PID_NO AS ipPidNo,
+               IP.PARTS_ID AS partsId,
+               IP.OFFICE_ID AS officeId,
+               IP.CUSTOMER_ID AS customerId,
+               IP.SUPPLIER_ID AS supplierId,
+               IP.EXP_PARTS_ID AS expPartsId,
+               IP.WHS_ID AS whsId,
+               IP.STATUS AS decantActionType,
+               IP.ORIGINAL_PARTS_ID AS decantOriginalPartsId,
+               TPM.CUSTOMER_ID AS decantOriginalCustId,
+               IP.IMP_PO_NO AS decantImpPoNo,
+               IP.CUSTOMER_ORDER_NO AS decantCustomerOrderNo,
+               IP.EXP_PO_NO AS decantExpPoNo,
+               IP.EXP_PO_ITEM_NO AS decantExpPoItemNo,
+               IP.INVOICE_NO AS decantInvoiceNo,
+               IP.CONTAINER_NO AS decantContainerNo,
+               IP.MODULE_NO AS decantModuleNo,
+               IP.ONHOLD_FLAG AS ipOnholdFlag,
+               IP.IMP_ST_DATE AS impStDate,
+               IP.EXP_INB_PLAN_DATE AS expInbPlanDate,
+               IP.CUSTOMS_CLR_DATE AS decantCcDate,
+               IP.DEVANNED_DATE AS decantDevanDate,
+               IP.EXP_OB_ACTUAL_DATE AS expObActualDate,
+               IP.IMP_INB_ACTUAL_DATE AS impInbActualDate,
+               IP.IMP_WT_DATE AS impWtDate,
+               IP.IMP_SA_DATE AS impSaDate,
+               IP.ONHOLD_DATE AS ipOnholdDate,
+               IP.QTY AS originalQty,
+               SUB.PARTS_ID AS ifPartsId,
+               TOF.OFFICE_ID AS ifOfficeId,
+               SUB.CUSTOMER_ID AS ifCustomerId,
+               SUB.BUSINESS_PATTERN AS businessPattern,
+               CTP.EXP_PARTS_ID AS ifExpPartsId,
+               TW.WHS_ID AS ifWhsId,
+               NVL(TIS.INVOICE_NO, IP.INVOICE_NO) AS actualInvoiceNo,
+               NVL(TIC.CONTAINER_NO, IP.CONTAINER_NO) AS containerNo,
+               NVL(TIC.CC_DATE, IP.CUSTOMS_CLR_DATE) AS ccDate,
+               NVL(TIC.DEVANNED_DATE, IP.DEVANNED_DATE) AS invDevanDate,
+               TOF.IMP_STOCK_FLAG AS impStockFlag
+          FROM
+               TNT_IF_IMP_IP IF
+          LEFT JOIN TNM_OFFICE TOF
+            ON TOF.OFFICE_CODE = IF.OFFICE_CODE
+          LEFT JOIN TNT_IP IP
+            ON IP.PID_NO = IF.PID_NO 
+            OR (IF.ACTION_TYPE = #{ActionType_DECANT} AND IP.PID_NO = IF.FROM_IP_NO)
+            OR (IF.ACTION_TYPE = #{ActionType_IMPIB} AND IP.IP_NO = IF.SOURCE_IP_NO)
+            OR (IF.ACTION_TYPE = #{ActionType_CANCEL_INVOICE} AND IP.IP_NO = IF.SOURCE_IP_NO)
+          LEFT JOIN TNM_WAREHOUSE TW
+            ON TW.WHS_CODE = IF.WHS_CODE
+          LEFT JOIN TNT_MATCH_INVOICE TMI
+            ON TMI.WHS_INVOICE_NO = IF.INB_INVOICE_NO
+           AND TMI.STATUS = #{InvoiceMatchStatus_MATCHED}
+          LEFT JOIN TNM_PARTS_MASTER TPM
+            ON TPM.PARTS_ID = IP.ORIGINAL_PARTS_ID
+          LEFT JOIN TNM_EXP_PARTS TEP
+            ON TEP.EXP_PARTS_ID = IP.EXP_PARTS_ID
+          LEFT JOIN TNT_INVOICE_SUMMARY TIS
+            ON TIS.INVOICE_STATUS <![CDATA[<]]> ${InvoiceStatus_CANCELLED}
+           AND TIS.BUSINESS_PATTERN = #{businessPattern}
+           AND (TIS.INVOICE_NO = IF.INB_INVOICE_NO OR TIS.INVOICE_NO = IP.INVOICE_NO OR TIS.INVOICE_NO = TMI.INVOICE_NO)
+          LEFT JOIN TNT_INVOICE_CONTAINER TIC 
+            ON TIC.INVOICE_SUMMARY_ID = TIS.INVOICE_SUMMARY_ID
+           AND TIC.MODULE_NO = IF.INB_MODULE_NO
+          LEFT JOIN (
+                 SELECT DISTINCT
+                        TP.PARTS_ID,
+                        TP.OFFICE_ID,
+                        TP.CUSTOMER_ID,
+                        TP.TTC_PARTS_NO,
+                        TP.BUSINESS_PATTERN,
+                        TO.OFFICE_CODE,
+                        TWC.WHS_CUSTOMER_CODE,
+                        TW.WHS_CODE
+                   FROM TNM_PARTS_MASTER TP
+                  INNER JOIN TNM_OFFICE TO
+                     ON TO.OFFICE_ID = TP.OFFICE_ID
+                  INNER JOIN TNM_WHS_CUSTOMER TWC
+                     ON TWC.OFFICE_ID = TP.OFFICE_ID
+                    AND TWC.CUSTOMER_ID = TP.CUSTOMER_ID
+                  INNER JOIN TNM_WAREHOUSE TW
+                     ON TW.WHS_ID = TWC.WHS_ID
+                  WHERE TP.BUSINESS_PATTERN = #{businessPattern}) SUB
+            ON SUB.OFFICE_CODE = IF.OFFICE_CODE    
+           AND SUB.WHS_CUSTOMER_CODE = IF.WHS_CUSTOMER_CODE    
+           AND SUB.WHS_CODE = IF.WHS_CODE
+           AND (SUB.TTC_PARTS_NO = TEP.TTC_PARTS_NO
+            OR  SUB.TTC_PARTS_NO = IF.TTC_PARTS_NO)
+          LEFT JOIN TNM_EXP_PARTS CTP
+            ON ${actionType} = ${ActionType_STOCK_TRANSFER}
+           AND CTP.PARTS_ID = SUB.PARTS_ID
+           AND CTP.SUPPLIER_ID = TEP.SUPPLIER_ID
+           AND (TEP.SSMS_MAIN_ROUTE IS NULL 
+            OR  (CTP.SSMS_MAIN_ROUTE = TEP.SSMS_MAIN_ROUTE AND CTP.EXP_SUPP_CODE = TEP.EXP_SUPP_CODE))
+         WHERE IF.IF_IP_ID = #{ifIpId,jdbcType=INTEGER}
+         FETCH FIRST 1 ROWS ONLY
+    </select>
+    
+    <select id="selectIfImpIpInfoByIdForCC" parameterType="com.chinaplus.common.bean.IfIpEntity" resultType="com.chinaplus.common.bean.IfIpEntity">
+        <include refid="ConstDef"/>
+        SELECT 
+               IF.IF_IP_ID AS ifIpId,
+               NVL(TMI.INVOICE_NO, IF.INVOICE_NO) AS invoiceNo,
+               IF.ACTION_TYPE AS actionType,
+               IF.HANDLE_FLAG AS handleFlag,
+               IF.CUSTOMS_CLR_DATE AS customsClrDate,
+               IF.CONTAINER_NO AS containerNo,
+               TIS.TRANSPORT_MODE AS transportMode,
+               TW.WHS_ID AS ifWhsId,
+               TOF.OFFICE_ID AS ifOfficeId,
+               TOF.IMP_STOCK_FLAG AS impStockFlag,
+               <!-- NVL(TIS.INVOICE_NO, IP.INVOICE_NO) AS inbInvoiceNo -->
+               (CASE WHEN TIC.INVOICE_SUMMARY_ID IS NOT NULL THEN TIS.INVOICE_NO
+                    ELSE IP.INVOICE_NO
+                END) AS inbInvoiceNo
+          FROM TNT_IF_IMP_IP IF
+          LEFT JOIN TNM_OFFICE TOF
+            ON TOF.OFFICE_CODE = IF.OFFICE_CODE
+          LEFT JOIN TNM_WAREHOUSE TW
+            ON TW.WHS_CODE = IF.WHS_CODE
+          LEFT JOIN TNT_MATCH_INVOICE TMI
+            ON TMI.WHS_INVOICE_NO = IF.INVOICE_NO
+           AND TMI.STATUS = #{InvoiceMatchStatus_MATCHED}
+          LEFT JOIN TNT_INVOICE_SUMMARY TIS
+            ON TIS.INVOICE_STATUS <![CDATA[<]]> ${InvoiceStatus_CANCELLED}
+           AND TIS.BUSINESS_PATTERN = #{businessPattern}
+           AND (TIS.INVOICE_NO = IF.INVOICE_NO OR TIS.INVOICE_NO = TMI.INVOICE_NO)
+          LEFT JOIN TNT_INVOICE_CONTAINER TIC
+            ON TIC.INVOICE_SUMMARY_ID = TIS.INVOICE_SUMMARY_ID
+           AND (TIC.CONTAINER_NO = IF.CONTAINER_NO  
+            OR  TIS.TRANSPORT_MODE = #{TransportMode_AIR})
+           AND (TIC.DEVANNED_DATE IS NOT NULL
+            OR  TIC.CC_DATE IS NOT NULL)
+          LEFT JOIN TNT_IP IP
+            ON IP.STATUS <![CDATA[<]]> ${IpStatus_CANCELLED}
+           AND IP.BUSINESS_PATTERN = #{businessPattern}
+           AND IP.INVOICE_NO = TIS.INVOICE_NO
+           AND (IP.CONTAINER_NO = TIC.CONTAINER_NO
+            OR  TIS.TRANSPORT_MODE = #{TransportMode_AIR})
+           AND IP.PID_NO IS NOT NULL
+         WHERE IF.IF_IP_ID = #{ifIpId}
+         FETCH FIRST 1 ROWS ONLY
+    </select>
+
+    <select id="selectIfImpIpInfoByIdForDevan" parameterType="com.chinaplus.common.bean.IfIpEntity" resultType="com.chinaplus.common.bean.IfIpEntity">
+        <include refid="ConstDef"/>
+        SELECT 
+               IF.IF_IP_ID AS ifIpId,
+               NVL(TMI.INVOICE_NO, IF.DEVAN_INVOICE_NO) AS invoiceNo,
+               IF.ACTION_TYPE AS actionType,
+               IF.HANDLE_FLAG AS handleFlag,
+               IF.DEVANNED_DATE AS devannedDate,
+               <!-- IF.MODULE_NO AS moduleNo, -->
+               TW.WHS_ID AS ifWhsId,
+               TOF.OFFICE_ID AS ifOfficeId,
+               TOF.IMP_STOCK_FLAG AS impStockFlag,
+               TIC.CC_DATE AS ccDate,
+               TIC.DEVANNED_DATE AS invDevanDate,
+               TIC.CONTAINER_NO AS containerNo,
+               TIC.MODULE_NO AS moduleNo,
+               IP.MODULE_NO AS inbModuleNo
+          FROM TNT_IF_IMP_IP IF
+          LEFT JOIN TNM_WAREHOUSE TW
+            ON TW.WHS_CODE = IF.WHS_CODE
+          LEFT JOIN TNM_OFFICE TOF
+            ON TOF.OFFICE_CODE = IF.OFFICE_CODE
+          LEFT JOIN TNT_MATCH_INVOICE TMI
+            ON TMI.WHS_INVOICE_NO = IF.DEVAN_INVOICE_NO
+           AND TMI.STATUS = #{InvoiceMatchStatus_MATCHED}
+          LEFT JOIN TNT_INVOICE_SUMMARY TIS
+            ON TIS.INVOICE_STATUS <![CDATA[<]]> ${InvoiceStatus_CANCELLED}
+           AND TIS.BUSINESS_PATTERN = #{businessPattern}
+           AND (TIS.INVOICE_NO = IF.DEVAN_INVOICE_NO OR TIS.INVOICE_NO = TMI.INVOICE_NO)
+          LEFT JOIN TNT_INVOICE_CONTAINER TIC
+            ON TIC.INVOICE_SUMMARY_ID = TIS.INVOICE_SUMMARY_ID
+           AND TIC.MODULE_NO = IF.MODULE_NO  
+          LEFT JOIN TNT_IP IP
+            ON IP.STATUS <![CDATA[<]]> ${IpStatus_CANCELLED}
+           AND IP.BUSINESS_PATTERN = #{businessPattern}
+           AND IP.INVOICE_NO = TIS.INVOICE_NO
+           AND IP.MODULE_NO = TIC.MODULE_NO
+           AND IP.PID_NO IS NOT NULL
+         WHERE IF.IF_IP_ID = #{ifIpId}
+         FETCH FIRST 1 ROWS ONLY
+    </select>
+    
+    <update id="updateHandleFlagByIFIPId" parameterType="com.chinaplus.common.bean.ReceiveData">
+        UPDATE 
+            TNT_IF_IMP_IP
+        SET 
+              HANDLE_FLAG = #{handleFlag,jdbcType=INTEGER}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+        WHERE IF_IP_ID = #{ifIpId,jdbcType=INTEGER}
+    </update>
+        
+    <select id="selectModulePartsInfo" parameterType="com.chinaplus.common.bean.ReceiveData" resultType="com.chinaplus.common.bean.ReceiveData">
+        <include refid="ConstDef"/>
+        SELECT TIC.PARTS_ID AS partsId
+             , SUM(TIC.QTY) AS sumQty
+          FROM TNT_INVOICE_SUMMARY TIS 
+         INNER JOIN TNT_INVOICE_CONTAINER TIC 
+            ON TIC.INVOICE_SUMMARY_ID = TIS.INVOICE_SUMMARY_ID 
+         WHERE TIS.INVOICE_STATUS <![CDATA[<]]> ${InvoiceStatus_CANCELLED}
+           AND TIS.INVOICE_NO = #{invoiceNo}
+           AND TIC.MODULE_NO = #{moduleNo}
+         GROUP BY
+               TIC.PARTS_ID
+         ORDER BY 
+               TIC.PARTS_ID
+    </select>
+            
+    <select id="selectContainerPartsInfo" parameterType="com.chinaplus.common.bean.ReceiveData" resultType="com.chinaplus.common.bean.ReceiveData">
+        <include refid="ConstDef"/>
+        SELECT TIC.PARTS_ID AS partsId
+             , SUM(TIC.QTY) AS sumQty
+          FROM TNT_INVOICE_SUMMARY TIS 
+         INNER JOIN TNT_INVOICE_CONTAINER TIC 
+            ON TIC.INVOICE_SUMMARY_ID = TIS.INVOICE_SUMMARY_ID 
+         WHERE TIS.INVOICE_STATUS <![CDATA[<]]> ${InvoiceStatus_CANCELLED}
+           AND TIS.INVOICE_NO = #{invoiceNo}
+           <if test="containerNo != null and containerNo != ''">
+           AND TIC.CONTAINER_NO = #{containerNo}
+           </if>
+         GROUP BY
+               TIC.PARTS_ID
+         ORDER BY 
+               TIC.PARTS_ID
+    </select>
+
+    <select id="selectKanbanPlanData" parameterType="com.chinaplus.common.bean.ReceiveData" resultType="com.chinaplus.common.bean.ReceiveData">
+         <include refid="ConstDef"/>
+         SELECT IKQ.PARTS_ID AS partsId
+              , IKQ.SUPPLIER_ID AS supplierId
+              , IKQ.EXP_PARTS_ID AS expPartsId
+              , IKQ.ORDER_MONTH AS orderMonth
+              , IKQ.KANBAN_PLAN_NO AS kanbanPlanNo
+              , IKQ.QTY AS invoiceQty
+              , NVL(IPQ.QTY, 0) AS splitQty
+           FROM (SELECT TIG.KANBAN_PLAN_NO
+                      , TIS.INVOICE_NO
+                      , TK.ORDER_MONTH
+                      , TIP.PARTS_ID
+                      , TIP.SUPPLIER_ID
+                      , TEP.EXP_PARTS_ID
+                      , SUM(NVL(TIP.ORIGINAL_QTY, TIP.QTY)) AS QTY 
+                   FROM TNT_INVOICE_SUMMARY TIS 
+                  INNER JOIN (
+                           SELECT INVOICE_SUMMARY_ID
+                                , INVOICE_GROUP_ID
+                                , MIN(INVOICE_ID) AS INVOICE_ID 
+                             FROM TNT_INVOICE 
+                            GROUP BY
+                                  INVOICE_SUMMARY_ID
+                                , INVOICE_GROUP_ID) TI 
+                     ON TI.INVOICE_SUMMARY_ID = TIS.INVOICE_SUMMARY_ID 
+                  INNER JOIN TNT_INVOICE_GROUP TIG 
+                     ON TIG.INVOICE_GROUP_ID = TI.INVOICE_GROUP_ID 
+                  INNER JOIN TNT_INVOICE_PARTS TIP 
+                     ON TIP.INVOICE_ID = TI.INVOICE_ID 
+                  INNER JOIN TNM_EXP_PARTS TEP
+                     ON TEP.PARTS_ID = TIP.PARTS_ID
+                    AND TEP.SUPPLIER_ID = TIP.SUPPLIER_ID
+                  INNER JOIN ( 
+                          SELECT DISTINCT
+                                 KANBAN_PLAN_NO
+                               , ORDER_MONTH 
+                            FROM TNF_ORDER_STATUS 
+                           WHERE KANBAN_PLAN_NO IS NOT NULL) TK 
+                     ON TK.KANBAN_PLAN_NO = TIG.KANBAN_PLAN_NO 
+                  WHERE TIS.INVOICE_STATUS <![CDATA[<]]> ${InvoiceStatus_CANCELLED}
+                   <if test="partsId != null">
+                    AND TIP.PARTS_ID = #{partsId}
+                   </if>
+                    AND TIS.INVOICE_NO = #{invoiceNo}
+                  GROUP BY
+                        TIG.KANBAN_PLAN_NO
+                      , TIS.INVOICE_NO
+                      , TK.ORDER_MONTH
+                      , TIP.PARTS_ID
+                      , TIP.SUPPLIER_ID
+                      , TEP.EXP_PARTS_ID) IKQ 
+           LEFT JOIN ( 
+                  SELECT IP.KANBAN_PLAN_NO
+                       , IP.INVOICE_NO
+                       , IP.PARTS_ID
+                       , IP.SUPPLIER_ID
+                       , SUM(IP.QTY) AS QTY 
+                    FROM TNT_IP_KANBAN IP 
+                   WHERE IP.DATA_TYPE = #{dataType}
+                   <if test="partsId != null">
+                     AND IP.PARTS_ID = #{partsId}
+                   </if>
+                     AND IP.INVOICE_NO = #{invoiceNo}
+                   GROUP BY
+                         IP.KANBAN_PLAN_NO
+                       , IP.INVOICE_NO
+                       , IP.PARTS_ID
+                       , IP.SUPPLIER_ID) IPQ 
+             ON IPQ.KANBAN_PLAN_NO = IKQ.KANBAN_PLAN_NO 
+            AND IPQ.INVOICE_NO = IKQ.INVOICE_NO 
+            AND IPQ.PARTS_ID = IKQ.PARTS_ID 
+            AND IPQ.SUPPLIER_ID = IKQ.SUPPLIER_ID 
+          WHERE (IPQ.QTY IS NULL OR IKQ.QTY > IPQ.QTY)
+          ORDER BY
+                IKQ.PARTS_ID
+              , IKQ.EXP_PARTS_ID
+              , IKQ.ORDER_MONTH
+    </select>
+    
+    <select id="selectAllocatedKanbanList" parameterType="com.chinaplus.common.bean.IfIpEntity" resultType="com.chinaplus.common.entity.TntIpKanban">
+        <include refid="ConstDef"/>
+         SELECT A.DATA_TYPE AS dataType
+              , A.KANBAN_PLAN_NO AS kanbanPlanNo
+              , A.INVOICE_NO AS invoiceNo
+              , A.MODULE_NO AS moduleNo
+              , A.PID_NO AS pidNo
+              , A.PARTS_ID AS partsId
+              , A.SUPPLIER_ID AS supplierId
+              , A.EXP_PARTS_ID AS expPartsId
+              , A.QTY AS qty
+           FROM TNT_IP_KANBAN A 
+          INNER JOIN ( 
+                  SELECT MAX(IF_IP_ID) AS IF_IP_ID 
+                    FROM TNT_IP_KANBAN 
+                   WHERE PID_NO = #{pidNo}) B 
+             ON B.IF_IP_ID = A.IF_IP_ID
+          WHERE A.QTY > 0
+    </select>
+    
+    <select id="selectAllocatedKanbanListForInbound" parameterType="com.chinaplus.common.bean.IfIpEntity" resultType="com.chinaplus.common.entity.TntIpKanban">
+        <include refid="ConstDef"/>
+        SELECT IP.KANBAN_PLAN_NO AS kanbanPlanNo
+             , IP.INVOICE_NO AS invoiceNo
+             , IP.MODULE_NO AS moduleNo
+             , IP.PARTS_ID AS partsId
+             , IP.SUPPLIER_ID AS supplierId
+             , IP.EXP_PARTS_ID AS expPartsId
+             , SUM(CASE WHEN DATA_TYPE = ${IpKbDataType_DEVANNED} THEN IP.QTY ELSE 0 - IP.QTY END) AS QTY 
+          FROM TNT_IP_KANBAN IP
+         WHERE IP.DATA_TYPE IN (#{IpKbDataType_DEVANNED}, #{IpKbDataType_INBOUND}, #{IpKbDataType_CANCELLED})
+           AND IP.PARTS_ID = #{partsId}
+           AND IP.INVOICE_NO = #{invoiceNo}
+           AND IP.MODULE_NO = #{moduleNo}
+         GROUP BY
+               IP.KANBAN_PLAN_NO
+             , IP.INVOICE_NO
+             , IP.MODULE_NO
+             , IP.PARTS_ID
+             , IP.SUPPLIER_ID
+             , IP.EXP_PARTS_ID
+    </select>
+        
+    <select id="selectAllocatedKanbanListForModule" parameterType="com.chinaplus.common.bean.IfIpEntity" resultType="com.chinaplus.common.entity.TntIpKanban">
+        <include refid="ConstDef"/>
+        SELECT IP.KANBAN_PLAN_NO AS kanbanPlanNo
+             , IP.INVOICE_NO AS invoiceNo
+             , IP.CONTAINER_NO AS containerNo
+             , IP.PARTS_ID AS partsId
+             , IP.SUPPLIER_ID AS supplierId
+             , IP.EXP_PARTS_ID AS expPartsId
+             , SUM(CASE WHEN DATA_TYPE = ${IpKbDataType_CUSTOMS} THEN IP.QTY ELSE 0 - IP.QTY END) AS QTY 
+          FROM TNT_IP_KANBAN IP
+         WHERE IP.DATA_TYPE IN (#{IpKbDataType_CUSTOMS}, #{IpKbDataType_DEVANNED})
+           AND IP.INVOICE_NO = #{invoiceNo}
+           <if test="containerNo != null and containerNo != ''">
+           AND IP.CONTAINER_NO = #{containerNo}
+           </if>
+         GROUP BY
+               IP.KANBAN_PLAN_NO
+             , IP.INVOICE_NO
+             , IP.CONTAINER_NO
+             , IP.PARTS_ID
+             , IP.SUPPLIER_ID
+             , IP.EXP_PARTS_ID
+    </select>
+    
+    <select id="selectInbDate" parameterType="com.chinaplus.common.bean.ReceiveData" resultType="com.chinaplus.common.bean.ReceiveData">
+        <include refid="ConstDef"/>
+        SELECT DISTINCT
+               (CASE WHEN IFIP.CUSTOMS_CLR_DATE IS NOT NULL THEN LEFT(IFIP.CUSTOMS_CLR_DATE, 8) 
+                     WHEN IFIP.DEVANNED_DATE IS NOT NULL THEN LEFT(IFIP.DEVANNED_DATE, 8) 
+                     ELSE LEFT(IFIP.INB_DATE, 8) 
+               END) AS inbDate
+          FROM TNT_IF_IMP_IP IFIP
+         INNER JOIN TNM_OFFICE TOF
+            ON TOF.OFFICE_CODE = IFIP.OFFICE_CODE
+          LEFT JOIN TNT_MATCH_INVOICE TMI
+            ON TMI.WHS_INVOICE_NO = IFIP.DEVAN_INVOICE_NO
+           AND TMI.STATUS = #{InvoiceMatchStatus_MATCHED}
+          LEFT JOIN 
+                (SELECT DISTINCT
+                        B.INVOICE_NO
+                      , A.MODULE_NO
+                      , A.CC_DATE AS CC_DATE
+                   FROM TNT_INVOICE_CONTAINER A
+                  INNER JOIN TNT_INVOICE_SUMMARY B
+                     ON B.INVOICE_SUMMARY_ID = A.INVOICE_SUMMARY_ID
+                  WHERE A.CC_DATE IS NOT NULL) TIS
+            ON (TIS.INVOICE_NO = IFIP.DEVAN_INVOICE_NO OR TIS.INVOICE_NO = TMI.INVOICE_NO)
+           AND TIS.MODULE_NO = IFIP.MODULE_NO
+          LEFT JOIN TNT_IP IP
+            ON IP.PID_NO = IFIP.PID_NO
+         WHERE IFIP.UPDATED_DATE = #{updatedDate, jdbcType=TIMESTAMP}
+           AND IFIP.HANDLE_FLAG = #{HandleFlag_SUCCESS}
+           AND IFIP.VALID_FLAG = #{ValidFlag_SYSTEM_DATA}
+           AND ((IFIP.ACTION_TYPE = #{ActionType_CC} AND TOF.IMP_STOCK_FLAG = #{WITH_CLEARANCE})
+            OR  (IFIP.ACTION_TYPE = #{ActionType_DEVANNED} AND (TIS.CC_DATE IS NULL OR TOF.IMP_STOCK_FLAG = #{WITHOUT_CLEARANCE}))
+            OR  (IFIP.ACTION_TYPE = #{ActionType_IMPIB} AND (IP.CUSTOMS_CLR_DATE IS NULL OR TOF.IMP_STOCK_FLAG = #{WITHOUT_CLEARANCE}) AND IP.DEVANNED_DATE IS NULL))
+         ORDER BY inbDate
+    </select>
+    
+    <select id="selectInbInvocieQty" parameterType="com.chinaplus.common.bean.ReceiveData" resultType="com.chinaplus.common.bean.ReceiveData">
+        <include refid="ConstDef"/>
+        SELECT 
+               INV.INVOICE_NO inbInvoiceNo
+             , SUM(INV.INVOICE_QTY) AS sumQty
+          FROM 
+               (SELECT TIS.INVOICE_NO,
+                       SUM(TIC.QTY) AS INVOICE_QTY
+                  FROM TNT_IF_IMP_IP IFIP
+                 INNER JOIN TNM_OFFICE TOF
+                    ON TOF.OFFICE_CODE = IFIP.OFFICE_CODE
+                  LEFT JOIN TNT_MATCH_INVOICE TMI
+                    ON TMI.WHS_INVOICE_NO = IFIP.INVOICE_NO
+                  LEFT JOIN TNT_INVOICE_SUMMARY TIS
+                    ON (TIS.INVOICE_NO = IFIP.INVOICE_NO OR TIS.INVOICE_NO = TMI.INVOICE_NO)
+                   AND TIS.INVOICE_STATUS <![CDATA[<]]> ${InvoiceStatus_CANCELLED}
+                  LEFT JOIN TNT_INVOICE_CONTAINER TIC
+                    ON TIC.INVOICE_SUMMARY_ID = TIS.INVOICE_SUMMARY_ID
+                   AND (TIC.CONTAINER_NO = IFIP.CONTAINER_NO
+                    OR  TIS.TRANSPORT_MODE = #{TransportMode_AIR})
+                 WHERE IFIP.HANDLE_FLAG = #{HandleFlag_SUCCESS}
+                   AND IFIP.UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+                   AND IFIP.VALID_FLAG = #{ValidFlag_SYSTEM_DATA}
+                   AND IFIP.ACTION_TYPE = #{ActionType_CC}
+                   AND IFIP.CUSTOMS_CLR_DATE >= #{inbDate}
+                   AND IFIP.CUSTOMS_CLR_DATE <![CDATA[<=]]> ${inbDate} || '_235959'
+                   AND TOF.IMP_STOCK_FLAG = #{WITH_CLEARANCE}
+                   AND TIC.INVOICE_SUMMARY_ID IS NOT NULL
+                   AND TIC.UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+                 GROUP BY TIS.INVOICE_NO
+                   
+                 UNION ALL 
+                 
+                SELECT TIS.INVOICE_NO,
+                       SUM(TIC.QTY) AS INVOICE_QTY
+                  FROM TNT_IF_IMP_IP IFIP
+                 INNER JOIN TNM_OFFICE TOF
+                    ON TOF.OFFICE_CODE = IFIP.OFFICE_CODE
+                  LEFT JOIN TNT_MATCH_INVOICE TMI
+                    ON TMI.WHS_INVOICE_NO = IFIP.DEVAN_INVOICE_NO
+                  LEFT JOIN TNT_INVOICE_SUMMARY TIS
+                    ON (TIS.INVOICE_NO = IFIP.DEVAN_INVOICE_NO OR TIS.INVOICE_NO = TMI.INVOICE_NO)
+                   AND TIS.INVOICE_STATUS <![CDATA[<]]> ${InvoiceStatus_CANCELLED}
+                  LEFT JOIN TNT_INVOICE_CONTAINER TIC
+                    ON TIC.INVOICE_SUMMARY_ID = TIS.INVOICE_SUMMARY_ID
+                   AND TIC.MODULE_NO = IFIP.MODULE_NO
+                 WHERE IFIP.HANDLE_FLAG = #{HandleFlag_SUCCESS}
+                   AND IFIP.UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+                   AND IFIP.VALID_FLAG = #{ValidFlag_SYSTEM_DATA}
+                   AND IFIP.ACTION_TYPE = #{ActionType_DEVANNED}
+                   AND IFIP.DEVANNED_DATE >= #{inbDate}
+                   AND IFIP.DEVANNED_DATE <![CDATA[<=]]> ${inbDate} || '_235959'
+                   AND TIC.INVOICE_SUMMARY_ID IS NOT NULL 
+                   AND (TIC.CC_DATE IS NULL OR TOF.IMP_STOCK_FLAG = #{WITHOUT_CLEARANCE})
+                   AND TIC.UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+                 GROUP BY TIS.INVOICE_NO
+                 
+                 UNION ALL 
+                 
+                SELECT IP.INVOICE_NO
+                     , SUM(DECIMAL(IF.QTY)) AS INVOICE_QTY
+                  FROM TNT_IF_IMP_IP IF
+                 INNER JOIN TNT_IP IP
+                    ON IP.PID_NO = IF.PID_NO
+                 INNER JOIN TNM_OFFICE TOF
+                    ON TOF.OFFICE_ID = IP.OFFICE_ID
+                 INNER JOIN TNT_INVOICE_SUMMARY TIS
+                    ON TIS.INVOICE_NO = IP.INVOICE_NO
+                   AND TIS.INVOICE_STATUS <![CDATA[<]]> ${InvoiceStatus_CANCELLED}
+                 WHERE IF.HANDLE_FLAG = #{HandleFlag_SUCCESS}
+                   AND IF.UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+                   AND IF.VALID_FLAG = #{ValidFlag_SYSTEM_DATA}
+                   AND IF.ACTION_TYPE = #{ActionType_IMPIB}
+                   AND IF.INB_DATE >= #{inbDate}
+                   AND IF.INB_DATE <![CDATA[<=]]> ${inbDate} || '_235959'
+                   AND IP.BUSINESS_PATTERN = #{businessPattern}
+                   AND IP.DEVANNED_DATE IS NULL
+                   AND (IP.CUSTOMS_CLR_DATE IS NULL OR TOF.IMP_STOCK_FLAG = #{WITHOUT_CLEARANCE})
+                 GROUP BY IP.INVOICE_NO
+               ) INV
+         GROUP BY 
+               INV.INVOICE_NO
+         ORDER BY 
+               INV.INVOICE_NO
+    </select>
+    
+    <update id="updateInvoiceSummaryStatus" parameterType="com.chinaplus.common.bean.ReceiveData">
+        <include refid="ConstDef"/>
+        UPDATE 
+            TNT_INVOICE_SUMMARY
+        SET 
+              INVOICE_STATUS = ${InvoiceStatus_INBOUND_COMPLETED}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+        WHERE
+            INBOUND_QTY = INVOICE_QTY
+            AND INVOICE_STATUS <![CDATA[<]]> ${InvoiceStatus_INBOUND_COMPLETED}
+            AND INVOICE_NO IN 
+            <foreach item="item" index="index" collection="invoiceNoList" open="(" separator="," close=")">  
+                  #{item,jdbcType=VARCHAR}
+            </foreach>
+    </update>
+    
+    <update id="updateInvoiceIbActualDateForVV" parameterType="com.chinaplus.common.bean.ReceiveData">
+        <include refid="ConstDef"/>
+        UPDATE 
+              TNT_INVOICE
+        SET 
+              IMP_INB_ACTUAL_DATE = #{actualInbDate}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+        WHERE
+              IMP_INB_ACTUAL_DATE IS NULL
+          AND 
+              INVOICE_SUMMARY_ID IN 
+                (SELECT DISTINCT 
+                        INVOICE_SUMMARY_ID
+                   FROM TNT_INVOICE_SUMMARY
+                  WHERE INVOICE_STATUS = ${InvoiceStatus_INBOUND_COMPLETED}
+                    AND UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+                    AND INVOICE_NO IN 
+                    <foreach item="item" index="index" collection="invoiceNoList" open="(" separator="," close=")">  
+                          #{item,jdbcType=VARCHAR}
+                    </foreach>
+                )
+    </update>
+           
+    <update id="updateInvoiceIbActualDateForAISIN" parameterType="com.chinaplus.common.bean.ReceiveData">
+        <include refid="ConstDef"/>
+        UPDATE 
+              TNT_INVOICE
+        SET 
+              IMP_INB_ACTUAL_DATE = #{actualInbDate}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+        WHERE
+              IMP_INB_ACTUAL_DATE IS NULL
+          AND 
+              INVOICE_ID IN
+                  (SELECT TI.INVOICE_ID
+                     FROM TNT_INVOICE TI
+                    INNER JOIN TNT_INVOICE_SUMMARY TIS
+                       ON TIS.INVOICE_SUMMARY_ID = TI.INVOICE_SUMMARY_ID
+                      AND TIS.INVOICE_STATUS = #{InvoiceStatus_INBOUND_COMPLETED}
+                    WHERE TI.IMP_INB_ACTUAL_DATE IS NULL
+                      AND TIS.INVOICE_NO IN 
+                      <foreach item="item" index="index" collection="invoiceNoList" open="(" separator="," close=")">  
+                          #{item,jdbcType=VARCHAR}
+                      </foreach>
+                    
+                    UNION ALL
+                    
+                   SELECT INVOICE_ID
+                     FROM (SELECT 
+                               TI.INVOICE_ID
+                             , TI.INVOICE_NO
+                             , TIG.KANBAN_PLAN_NO
+                             , SUM(TIP.QTY) AS QTY
+                          FROM TNT_INVOICE TI
+                         INNER JOIN TNT_INVOICE_SUMMARY TIS
+                            ON TIS.INVOICE_SUMMARY_ID = TI.INVOICE_SUMMARY_ID
+                           AND TIS.INVOICE_STATUS <![CDATA[<]]> ${InvoiceStatus_CANCELLED}
+                         INNER JOIN TNT_INVOICE_GROUP TIG
+                            ON TIG.INVOICE_GROUP_ID = TI.INVOICE_GROUP_ID
+                           AND TIG.STATUS = #{InvoiceGroupStatus_NORMAL}
+                         INNER JOIN TNT_INVOICE_PARTS TIP
+                            ON TIP.INVOICE_ID = TI.INVOICE_ID
+                         WHERE TI.IMP_INB_ACTUAL_DATE IS NULL
+                           AND TIS.UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+                           AND TI.INVOICE_NO IN 
+                            <foreach item="item" index="index" collection="invoiceNoList" open="(" separator="," close=")">  
+                               #{item,jdbcType=VARCHAR}
+                            </foreach>
+                         GROUP BY 
+                               TI.INVOICE_ID
+                             , TI.INVOICE_NO
+                             , TIG.KANBAN_PLAN_NO) INV
+                    INNER JOIN 
+                          (SELECT  
+                                  K.INVOICE_NO
+                                , K.KANBAN_PLAN_NO
+                                , SUM(K.QTY) AS QTY
+                             FROM TNT_IP_KANBAN K
+                            INNER JOIN TNT_IF_IMP_IP TIP
+                               ON TIP.IF_IP_ID = K.IF_IP_ID 
+                            WHERE (K.DATA_TYPE = #{IpKbDataType_DEVANNED} OR (K.DATA_TYPE = #{IpKbDataType_INBOUND} AND K.MODULE_NO IS NULL))
+                              AND K.UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+                              AND DATE(TIP.PROCESS_DATE) = #{actualInbDate}
+                              AND K.INVOICE_NO IN 
+                              <foreach item="item" index="index" collection="invoiceNoList" open="(" separator="," close=")">  
+                                  #{item,jdbcType=VARCHAR}
+                              </foreach>
+                            GROUP BY 
+                                  K.INVOICE_NO
+                                , K.KANBAN_PLAN_NO) INB
+                       ON INB.INVOICE_NO = INV.INVOICE_NO
+                      AND INB.KANBAN_PLAN_NO = INV.KANBAN_PLAN_NO
+                      AND INB.QTY = INV.QTY
+                  )
+    </update>
+    
+    <select id="selectPartialInboundInvoiceForVV" parameterType="com.chinaplus.common.bean.ReceiveData" resultType="com.chinaplus.common.bean.IfIpEntity">
+       <include refid="ConstDef"/>
+       SELECT INB.OFFICE_ID AS officeId
+            , INB.PARTS_ID AS partsId
+            , INB.SUPPLIER_ID AS supplierId
+            , INB.IMP_PO_NO AS impPoNo
+            , INB.EXP_PO_NO AS expPoNo
+            , TIC.INVOICE_NO AS inbInvoiceNo
+            , TIC.INVOICE_ID AS invoiceId
+            , SUM(INB.INB_QTY) AS invoiceQty
+         FROM (SELECT IP.OFFICE_ID
+                    , NVL(IP.ORIGINAL_PARTS_ID, IP.PARTS_ID) AS PARTS_ID
+                    , IP.SUPPLIER_ID
+                    , IP.IMP_PO_NO
+                    , IP.EXP_PO_NO
+                    , TIS.INVOICE_SUMMARY_ID
+                    , SUM(CASE WHEN IP.PID_NO IS NULL THEN IP.QTY ELSE DECIMAL(IIF.QTY) END) AS INB_QTY
+                 FROM TNT_IF_IMP_IP IF
+                INNER JOIN TNM_OFFICE TOF
+                   ON TOF.OFFICE_CODE = IF.OFFICE_CODE
+                 LEFT JOIN TNT_MATCH_INVOICE TMI
+                   ON TMI.OFFICE_ID = TOF.OFFICE_ID
+                  AND TMI.WHS_INVOICE_NO = IF.INVOICE_NO
+                  AND TMI.STATUS = #{InvoiceMatchStatus_MATCHED}
+                 LEFT JOIN TNT_INVOICE_SUMMARY TIS
+                   ON (TIS.INVOICE_NO = IF.INVOICE_NO
+                   OR  TIS.INVOICE_NO = TMI.INVOICE_NO)
+                  AND TIS.INVOICE_STATUS = ${InvoiceStatus_PENDING}
+                  AND TIS.BUSINESS_PATTERN = #{businessPattern}
+                 LEFT JOIN TNT_IP IP
+                   ON (IP.CONTAINER_NO = IF.CONTAINER_NO
+                   OR  TIS.TRANSPORT_MODE = #{TransportMode_AIR})
+                  AND IP.INVOICE_NO = TIS.INVOICE_NO
+                 LEFT JOIN TNT_IF_IMP_IP IIF
+                   ON IIF.PID_NO = IP.PID_NO
+                  AND IIF.ACTION_TYPE = #{ActionType_IMPIB}
+                  AND IIF.HANDLE_FLAG = #{HandleFlag_SUCCESS}
+                  AND IIF.UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+                WHERE IF.HANDLE_FLAG = #{HandleFlag_SUCCESS}
+                  AND IF.UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+                  AND IF.VALID_FLAG = #{ValidFlag_SYSTEM_DATA}
+                  AND IF.ACTION_TYPE = #{ActionType_CC}
+                  AND IP.CUSTOMS_CLR_DATE = #{actualInbDate}
+                  AND IP.UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+                  AND TOF.IMP_STOCK_FLAG = #{WITH_CLEARANCE}
+                  AND IP.BUSINESS_PATTERN = #{businessPattern}
+                  <if test = "expPartsIdList != null">
+                  AND IP.EXP_PARTS_ID IN 
+                     <foreach item="item" index="index" collection="expPartsIdList" open="(" separator="," close=")">
+                         #{item}
+                     </foreach>
+                  </if>
+                GROUP BY 
+                      IP.OFFICE_ID
+                    , IP.PARTS_ID
+                    , IP.ORIGINAL_PARTS_ID
+                    , IP.SUPPLIER_ID
+                    , IP.IMP_PO_NO
+                    , IP.EXP_PO_NO
+                    , TIS.INVOICE_SUMMARY_ID
+                UNION ALL 
+               SELECT IP.OFFICE_ID
+                    , NVL(IP.ORIGINAL_PARTS_ID, IP.PARTS_ID) AS PARTS_ID
+                    , IP.SUPPLIER_ID
+                    , IP.IMP_PO_NO
+                    , IP.EXP_PO_NO
+                    , TIS.INVOICE_SUMMARY_ID
+                    , SUM(CASE WHEN IP.PID_NO IS NULL THEN IP.QTY ELSE DECIMAL(IIF.QTY) END) AS INB_QTY
+                 FROM TNT_IF_IMP_IP IF
+                INNER JOIN TNM_OFFICE TOF
+                   ON TOF.OFFICE_CODE = IF.OFFICE_CODE
+                 LEFT JOIN TNT_MATCH_INVOICE TMI
+                   ON TMI.OFFICE_ID = TOF.OFFICE_ID
+                  AND TMI.WHS_INVOICE_NO = IF.DEVAN_INVOICE_NO
+                  AND TMI.STATUS = #{InvoiceMatchStatus_MATCHED}
+                 LEFT JOIN TNT_INVOICE_SUMMARY TIS
+                   ON (TIS.INVOICE_NO = IF.DEVAN_INVOICE_NO
+                   OR  TIS.INVOICE_NO = TMI.INVOICE_NO)
+                  AND TIS.INVOICE_STATUS = ${InvoiceStatus_PENDING}
+                  AND TIS.BUSINESS_PATTERN = #{businessPattern}
+                 LEFT JOIN TNT_IP IP
+                   ON IP.MODULE_NO = IF.MODULE_NO
+                  AND IP.INVOICE_NO = TIS.INVOICE_NO
+                 LEFT JOIN TNT_IF_IMP_IP IIF
+                   ON IIF.PID_NO = IP.PID_NO
+                  AND IIF.ACTION_TYPE = #{ActionType_IMPIB}
+                  AND IIF.HANDLE_FLAG = #{HandleFlag_SUCCESS}
+                  AND IIF.UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+                WHERE IF.HANDLE_FLAG = #{HandleFlag_SUCCESS}
+                  AND IF.UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+                  AND IF.VALID_FLAG = #{ValidFlag_SYSTEM_DATA}
+                  AND IF.ACTION_TYPE = #{ActionType_DEVANNED}
+                  AND IP.DEVANNED_DATE = #{actualInbDate}
+                  AND IP.UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+                  AND (TOF.IMP_STOCK_FLAG = #{WITHOUT_CLEARANCE} OR (TOF.IMP_STOCK_FLAG = #{WITH_CLEARANCE} AND IP.CUSTOMS_CLR_DATE IS NULL))
+                  AND IP.BUSINESS_PATTERN = #{businessPattern}
+                  <if test = "expPartsIdList != null">
+                  AND IP.EXP_PARTS_ID IN 
+                     <foreach item="item" index="index" collection="expPartsIdList" open="(" separator="," close=")">
+                         #{item}
+                     </foreach>
+                  </if>
+                GROUP BY 
+                      IP.OFFICE_ID
+                    , IP.PARTS_ID
+                    , IP.ORIGINAL_PARTS_ID
+                    , IP.SUPPLIER_ID
+                    , IP.IMP_PO_NO
+                    , IP.EXP_PO_NO
+                    , TIS.INVOICE_SUMMARY_ID
+                UNION ALL 
+               SELECT IP.OFFICE_ID
+                    , NVL(IP.ORIGINAL_PARTS_ID, IP.PARTS_ID) AS PARTS_ID
+                    , IP.SUPPLIER_ID
+                    , IP.IMP_PO_NO
+                    , IP.EXP_PO_NO
+                    , TIS.INVOICE_SUMMARY_ID
+                    , SUM(DECIMAL(IF.QTY)) AS INB_QTY
+                 FROM TNT_IF_IMP_IP IF
+                INNER JOIN TNT_IP IP
+                   ON IP.PID_NO = IF.PID_NO
+                INNER JOIN TNM_OFFICE TOF
+                   ON TOF.OFFICE_ID = IP.OFFICE_ID
+                INNER JOIN TNT_INVOICE_SUMMARY TIS
+                   ON TIS.INVOICE_NO = IP.INVOICE_NO
+                  AND TIS.INVOICE_STATUS = ${InvoiceStatus_PENDING}
+                  AND TIS.BUSINESS_PATTERN = #{businessPattern}
+                WHERE IF.HANDLE_FLAG = #{HandleFlag_SUCCESS}
+                  AND IF.UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+                  AND IF.VALID_FLAG = #{ValidFlag_SYSTEM_DATA}
+                  AND IF.ACTION_TYPE = #{ActionType_IMPIB}
+                  AND IP.DEVANNED_DATE IS NULL
+                  AND (TOF.IMP_STOCK_FLAG = #{WITHOUT_CLEARANCE} OR (TOF.IMP_STOCK_FLAG = #{WITH_CLEARANCE} AND IP.CUSTOMS_CLR_DATE IS NULL))
+                  AND IP.IMP_INB_ACTUAL_DATE = #{actualInbDate}
+                  AND IP.BUSINESS_PATTERN = #{businessPattern}
+                GROUP BY 
+                      IP.OFFICE_ID
+                    , IP.PARTS_ID
+                    , IP.ORIGINAL_PARTS_ID
+                    , IP.SUPPLIER_ID
+                    , IP.IMP_PO_NO
+                    , IP.EXP_PO_NO
+                    , TIS.INVOICE_SUMMARY_ID) INB
+        INNER JOIN 
+              (SELECT TI.INVOICE_NO
+                    , TI.INVOICE_SUMMARY_ID
+                    , TI.INVOICE_ID AS INVOICE_ID
+                 FROM TNT_INVOICE TI
+                INNER JOIN TNT_INVOICE_SUMMARY TIS
+                   ON TIS.INVOICE_SUMMARY_ID = TI.INVOICE_SUMMARY_ID
+                  AND TIS.INVOICE_STATUS = ${InvoiceStatus_PENDING}
+                  AND TIS.BUSINESS_PATTERN = #{businessPattern}
+                  AND TI.IMP_INB_ACTUAL_DATE IS NULL) TIC
+           ON TIC.INVOICE_SUMMARY_ID = INB.INVOICE_SUMMARY_ID
+        GROUP BY 
+              INB.OFFICE_ID
+            , INB.PARTS_ID
+            , INB.SUPPLIER_ID
+            , INB.IMP_PO_NO
+            , INB.EXP_PO_NO
+            , TIC.INVOICE_NO
+            , TIC.INVOICE_ID
+        ORDER BY
+              TIC.INVOICE_ID
+            , INB.OFFICE_ID
+            , INB.PARTS_ID
+            , INB.SUPPLIER_ID
+    </select>
+    
+    <select id="selectPartialInboundInvoiceForAISIN" parameterType="com.chinaplus.common.bean.ReceiveData" resultType="com.chinaplus.common.bean.IfIpEntity">
+         <include refid="ConstDef"/>
+         SELECT TIS.OFFICE_ID AS officeId
+              , TIK.PARTS_ID AS partsId
+              , TIK.SUPPLIER_ID AS supplierId
+              , TIK.KANBAN_PLAN_NO AS kanbanPlanNo
+              , TIK.INVOICE_NO AS inbInvoiceNo
+              , TI.INVOICE_ID AS invoiceId
+              , SUM(TIK.QTY) AS invoiceQty 
+           FROM TNT_IF_IMP_IP IF 
+          INNER JOIN TNT_IP_KANBAN TIK 
+             ON TIK.IF_IP_ID = IF.IF_IP_ID 
+            AND TIK.DATA_TYPE IN (#{IpKbDataType_CUSTOMS}, #{IpKbDataType_DEVANNED}, #{IpKbDataType_INBOUND})
+          INNER JOIN TNT_INVOICE_SUMMARY TIS 
+             ON TIS.INVOICE_NO = TIK.INVOICE_NO
+            AND TIS.INVOICE_STATUS = #{InvoiceStatus_PENDING}
+          INNER JOIN TNT_INVOICE_GROUP TIG 
+             ON TIG.KANBAN_PLAN_NO = TIK.KANBAN_PLAN_NO 
+            AND TIG.STATUS = #{InvoiceGroupStatus_NORMAL}
+          INNER JOIN TNT_INVOICE TI 
+             ON TI.INVOICE_SUMMARY_ID = TIS.INVOICE_SUMMARY_ID 
+            AND TI.INVOICE_GROUP_ID = TIG.INVOICE_GROUP_ID
+            AND TI.IMP_INB_ACTUAL_DATE IS NULL 
+          INNER JOIN TNM_OFFICE TOF
+             ON TOF.OFFICE_ID = TIS.OFFICE_ID
+           LEFT JOIN TNT_IP IP
+             ON IP.PID_NO = TIK.PID_NO
+          WHERE IF.HANDLE_FLAG = #{HandleFlag_SUCCESS}
+            AND IF.UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+            AND IF.VALID_FLAG = #{ValidFlag_SYSTEM_DATA}
+            AND ((IF.ACTION_TYPE = ${ActionType_CC} AND TOF.IMP_STOCK_FLAG = #{WITH_CLEARANCE})
+             OR  (IF.ACTION_TYPE = ${ActionType_DEVANNED} AND (TOF.IMP_STOCK_FLAG = #{WITHOUT_CLEARANCE} OR TIS.TRANSPORT_MODE = #{TransportMode_AIR}))
+             OR  (IF.ACTION_TYPE = ${ActionType_IMPIB} AND IP.DEVANNED_DATE IS NULL AND (TOF.IMP_STOCK_FLAG = #{WITHOUT_CLEARANCE} OR IP.CUSTOMS_CLR_DATE IS NULL)))
+            <!-- AND (IF.ACTION_TYPE = ${ActionType_DEVANNED} OR (IF.ACTION_TYPE = ${ActionType_IMPIB} AND IP.DEVANNED_DATE IS NULL)) -->
+            AND DATE(IF.PROCESS_DATE) = #{actualInbDate}
+            AND TIS.BUSINESS_PATTERN = #{businessPattern}
+          GROUP BY
+                TIS.OFFICE_ID
+              , TIK.PARTS_ID
+              , TIK.SUPPLIER_ID
+              , TIK.KANBAN_PLAN_NO
+              , TIK.INVOICE_NO
+              , TI.INVOICE_ID 
+          ORDER BY
+                TI.INVOICE_ID
+              , TIS.OFFICE_ID
+              , TIK.PARTS_ID
+              , TIK.SUPPLIER_ID
+    </select>
+    
+    <select id="selectIpOutboundInfo" parameterType="com.chinaplus.common.bean.ReceiveData" resultType="com.chinaplus.common.entity.TntIp">
+        <include refid="ConstDef"/>
+        SELECT 
+            IP.OFFICE_ID AS officeId
+            , IP.IMP_PO_NO AS impPoNo
+            , IP.EXP_PO_NO AS expPoNo
+            , IP.CUSTOMER_ID AS customerId
+            , TIK.KANBAN_PLAN_NO AS kanbanPlanNo
+            , IP.WHS_ID AS whsId
+            , IP.PARTS_ID AS partsId
+            , IP.ORIGINAL_PARTS_ID AS originalPartsId
+            , NVL(TIK.SUPPLIER_ID, IP.SUPPLIER_ID) AS supplierId
+            , IP.IMP_OB_ACTUAL_DATE AS impObActualDate
+            , IP.IMP_OUTBOUND_DATE AS impOutboundDatetime
+            , IP.IMP_ST_DATE AS impStDate
+            , NVL(TIK.QTY, IP.QTY) AS qty
+         FROM TNT_IP IP
+         LEFT JOIN TNT_IP_KANBAN TIK
+           ON TIK.PID_NO = IP.PID_NO
+          AND TIK.DATA_TYPE = #{IpKbDataType_OUTBOUND}
+        WHERE
+            IP.BUSINESS_PATTERN = #{businessPattern,jdbcType=INTEGER}
+            AND IP.STATUS = ${IpStatus_IMP_OUTBOUND}
+            <if test = "updatedDate != null">
+            AND IP.UPDATED_DATE = #{updatedDate}
+            </if>
+            AND IP.IMP_OB_ACTUAL_DATE <![CDATA[<=]]> #{processDate,jdbcType=DATE}
+            AND IP.OFFICE_ID = #{officeId}
+        ORDER BY 
+            IP.PARTS_ID
+            , IP.IMP_OB_ACTUAL_DATE
+    </select>
+    
+    <update id="updateIpStatusToImpActualOutbound" parameterType="com.chinaplus.common.bean.ReceiveData">
+        <include refid="ConstDef"/>
+        UPDATE 
+            TNT_IP
+        SET 
+              STATUS = ${IpStatus_IMP_ACTUAL_OUTBOUND}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+            , UPDATED_DATE = #{createdDate,jdbcType=TIMESTAMP}
+        WHERE
+            BUSINESS_PATTERN = #{businessPattern,jdbcType=INTEGER}
+            AND STATUS = ${IpStatus_IMP_OUTBOUND}
+            AND IMP_OB_ACTUAL_DATE <![CDATA[<=]]> #{processDate,jdbcType=DATE}
+            <if test = "updatedDate != null">
+            AND UPDATED_DATE = #{updatedDate}
+            </if>
+            AND OFFICE_ID = #{officeId}
+    </update>
+    
+    <update id="updateImpCcActualDate" parameterType="com.chinaplus.common.bean.ReceiveData">
+        <include refid="ConstDef"/>
+        UPDATE 
+            TNT_INVOICE
+        SET 
+              IMP_CC_ACTUAL_DATE = #{actualCcDate, jdbcType=DATE}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+        WHERE
+              IMP_CC_ACTUAL_DATE IS NULL
+          AND INVOICE_SUMMARY_ID IN (
+              SELECT TIS.INVOICE_SUMMARY_ID
+                FROM TNT_INVOICE_SUMMARY TIS
+               WHERE TIS.INVOICE_NO = #{invoiceNo,jdbcType=VARCHAR}
+                 AND TIS.INVOICE_STATUS <![CDATA[<]]> #{InvoiceStatus_CANCELLED}
+          )
+    </update>
+        
+    <update id="updateImpCcDateForContainer" parameterType="com.chinaplus.common.bean.ReceiveData">
+        <include refid="ConstDef"/>
+        UPDATE 
+            TNT_INVOICE_CONTAINER
+        SET 
+              CC_DATE = #{actualCcDate, jdbcType=DATE}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+        WHERE CC_DATE IS NULL
+          AND INVOICE_SUMMARY_ID IN (
+              SELECT TIS.INVOICE_SUMMARY_ID
+                FROM TNT_INVOICE_SUMMARY TIS
+               WHERE TIS.INVOICE_NO = #{invoiceNo,jdbcType=VARCHAR}
+                 AND TIS.INVOICE_STATUS <![CDATA[<]]> #{InvoiceStatus_CANCELLED}
+          )
+          <if test="containerNo != null and containerNo != ''">
+          AND CONTAINER_NO = #{containerNo}
+          </if>
+    </update>
+        
+    <update id="updateDevanDateForContainer" parameterType="com.chinaplus.common.bean.ReceiveData">
+        <include refid="ConstDef"/>
+        UPDATE 
+            TNT_INVOICE_CONTAINER
+        SET 
+              DEVANNED_DATE = #{devannedDate, jdbcType=DATE}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+        WHERE
+              MODULE_NO = #{moduleNo}
+          AND DEVANNED_DATE IS NULL
+          AND INVOICE_SUMMARY_ID IN (
+              SELECT TIS.INVOICE_SUMMARY_ID
+                FROM TNT_INVOICE_SUMMARY TIS
+               WHERE TIS.INVOICE_NO = #{invoiceNo,jdbcType=VARCHAR}
+                 AND TIS.INVOICE_STATUS <![CDATA[<]]> #{InvoiceStatus_CANCELLED}
+          )
+    </update>
+    
+    <update id="updateImpCcActualDateForIp" parameterType="com.chinaplus.common.bean.ReceiveData">
+        <include refid="ConstDef"/>
+        UPDATE 
+            TNT_IP
+        SET 
+              CUSTOMS_CLR_DATE = #{actualCcDate, jdbcType=DATE}
+            , STATUS =  #{IpStatus_CUSTOMS_CLEARANCE, jdbcType=DATE}
+            , WHS_ID =  #{whsId, jdbcType=INTEGER}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+        WHERE
+              INVOICE_NO = #{invoiceNo}
+          <if test="containerNo != null and containerNo != ''">
+          AND CONTAINER_NO = #{containerNo}
+          </if>
+          AND STATUS <![CDATA[<]]> #{IpStatus_CANCELLED}
+          AND CUSTOMS_CLR_DATE IS NULL
+    </update>
+        
+    <update id="updateDevannedDateForIp" parameterType="com.chinaplus.common.bean.ReceiveData">
+        <include refid="ConstDef"/>
+        UPDATE 
+            TNT_IP
+        SET 
+              DEVANNED_DATE = #{devannedDate, jdbcType=DATE}
+            , STATUS =  #{IpStatus_DEVANNED, jdbcType=DATE}
+            , WHS_ID =  #{whsId, jdbcType=INTEGER}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+        WHERE
+              INVOICE_NO = #{invoiceNo,jdbcType=VARCHAR}
+          AND MODULE_NO = #{moduleNo,jdbcType=VARCHAR}
+          AND STATUS <![CDATA[<]]> #{IpStatus_CANCELLED}
+          AND DEVANNED_DATE IS NULL
+    </update>
+    
+    <select id="getContainerPartsInfoForVV" parameterType="com.chinaplus.common.bean.IfIpEntity" resultType="com.chinaplus.common.entity.TnfImpStock">
+         <include refid="ConstDef"/>
+         SELECT
+                TIS.IMP_STOCK_ID AS impStockId
+              , TIS.WHS_ID AS whsId
+              , PI.PARTS_ID AS partsId
+              , PI.SUPPLIER_ID AS supplierId
+              , PI.OFFICE_ID AS officeId
+              , PI.BUSINESS_PATTERN AS businessPattern
+              , PI.QTY AS impInRackQty
+              , TIS.VERSION AS version
+           FROM (SELECT A.PARTS_ID
+                      , A.SUPPLIER_ID
+                      , A.OFFICE_ID
+                      , A.WHS_ID
+                      , A.BUSINESS_PATTERN
+                      , SUM(A.QTY) AS QTY 
+                   FROM TNT_IP A 
+                  WHERE A.STATUS <![CDATA[<]]> #{IpStatus_CANCELLED}
+                    <if test="containerNo != null and containerNo != ''">
+                    AND A.CONTAINER_NO = #{containerNo}
+                    </if>
+                    AND A.INVOICE_NO = #{invoiceNo}
+                    AND A.BUSINESS_PATTERN = #{BusinessPattern_VV}
+                    <if test="expPartsIds != null">
+                    AND A.PID_NO IS NULL
+                    AND A.EXP_PARTS_ID IN 
+                      <foreach item="item" index="index" collection="expPartsIds" open="(" separator="," close=")">
+                          #{item}
+                      </foreach>
+                    </if>
+                  GROUP BY
+                        A.PARTS_ID
+                      , A.SUPPLIER_ID
+                      , A.OFFICE_ID
+                      , A.BUSINESS_PATTERN
+                      , A.WHS_ID) AS PI 
+           LEFT JOIN TNF_IMP_STOCK TIS 
+             ON TIS.PARTS_ID = PI.PARTS_ID 
+            AND TIS.SUPPLIER_ID = PI.SUPPLIER_ID 
+            AND TIS.WHS_ID = PI.WHS_ID
+    </select>
+   
+    <select id="getModulePartsInfoForVV" parameterType="com.chinaplus.common.bean.IfIpEntity" resultType="com.chinaplus.common.entity.TnfImpStock">
+         <include refid="ConstDef"/>
+         SELECT
+                TIS.IMP_STOCK_ID AS impStockId
+              , PI.PARTS_ID AS partsId
+              , PI.SUPPLIER_ID AS supplierId
+              , PI.WHS_ID AS whsId
+              , PI.OFFICE_ID AS officeId
+              , PI.BUSINESS_PATTERN AS businessPattern
+              , (CASE WHEN PI.CUSTOMS_CLR_DATE IS NULL THEN 0 ELSE 0 - PI.QTY END) AS impInRackQty
+              , PI.QTY AS impStockQty
+              , TIS.VERSION AS version
+           FROM (SELECT A.PARTS_ID
+                      , A.SUPPLIER_ID
+                      , A.OFFICE_ID
+                      , A.BUSINESS_PATTERN
+                      , A.WHS_ID
+                      , A.CUSTOMS_CLR_DATE
+                      , SUM(A.QTY) AS QTY 
+                   FROM TNT_IP A 
+                  WHERE A.STATUS <![CDATA[<]]> #{IpStatus_CANCELLED}
+                    AND A.MODULE_NO = #{moduleNo}
+                    AND A.INVOICE_NO = #{invoiceNo}
+                    AND A.BUSINESS_PATTERN = #{BusinessPattern_VV}
+                    <if test="expPartsIds != null">
+                    AND A.PID_NO IS NULL
+                    AND A.EXP_PARTS_ID IN 
+                      <foreach item="item" index="index" collection="expPartsIds" open="(" separator="," close=")">
+                          #{item}
+                      </foreach>
+                    </if>
+                  GROUP BY
+                        A.PARTS_ID
+                      , A.SUPPLIER_ID
+                      , A.OFFICE_ID
+                      , A.BUSINESS_PATTERN
+                      , A.CUSTOMS_CLR_DATE
+                      , A.WHS_ID) AS PI 
+           LEFT JOIN TNF_IMP_STOCK TIS 
+             ON TIS.PARTS_ID = PI.PARTS_ID 
+            AND TIS.SUPPLIER_ID = PI.SUPPLIER_ID 
+            AND TIS.WHS_ID = PI.WHS_ID
+    </select>
+    
+    <select id="getOrderStatusByInvoiceVV" parameterType="com.chinaplus.common.bean.IfIpEntity" resultType="com.chinaplus.common.entity.TnfOrderStatus">
+        <include refid="ConstDef"/>
+        SELECT TOS.ORDER_STATUS_ID AS orderStatusId
+             , TOS.PARTS_ID AS partsId
+             , TOS.SUPPLIER_ID AS supplierId
+             , TOS.IMP_PO_NO AS impPoNo
+             , TOS.EXP_PO_NO AS expPoNo
+             , PI.QTY AS inRackQty
+          FROM (SELECT
+                       A.PARTS_ID
+                     , A.SUPPLIER_ID
+                     , A.IMP_PO_NO
+                     , A.EXP_PO_NO
+                     , A.CUSTOMER_ORDER_NO
+                     , SUM(A.QTY) AS QTY 
+                  FROM TNT_IP A 
+                 WHERE A.STATUS <![CDATA[<]]> #{IpStatus_CANCELLED}
+                   <if test="containerNo != null and containerNo != ''">
+                   AND A.CONTAINER_NO = #{containerNo}
+                   </if>
+                   AND A.INVOICE_NO = #{invoiceNo}
+                   AND A.BUSINESS_PATTERN = #{BusinessPattern_VV}
+                   <if test="expPartsIds != null">
+                   AND A.PID_NO IS NULL 
+                   AND A.EXP_PARTS_ID IN 
+                      <foreach item="item" index="index" collection="expPartsIds" open="(" separator="," close=")">
+                          #{item}
+                      </foreach>    
+                    </if>
+                 GROUP BY
+                       A.PARTS_ID
+                     , A.SUPPLIER_ID
+                     , A.IMP_PO_NO
+                     , A.EXP_PO_NO
+                     , A.CUSTOMER_ORDER_NO) AS PI 
+         INNER JOIN TNF_ORDER_STATUS TOS 
+            ON TOS.PARTS_ID = PI.PARTS_ID 
+           AND TOS.SUPPLIER_ID = PI.SUPPLIER_ID 
+           AND TOS.IMP_PO_NO = PI.IMP_PO_NO
+           AND TOS.EXP_PO_NO = PI.EXP_PO_NO
+           AND TOS.CUSTOMER_ORDER_NO = PI.CUSTOMER_ORDER_NO
+    </select>
+
+    <select id="getOrderStatusByModuleVV" parameterType="com.chinaplus.common.bean.IfIpEntity" resultType="com.chinaplus.common.entity.TnfOrderStatus">
+        <include refid="ConstDef"/>
+        SELECT TOS.ORDER_STATUS_ID AS orderStatusId
+             , TOS.PARTS_ID AS partsId
+             , TOS.SUPPLIER_ID AS supplierId
+             , TOS.IMP_PO_NO AS impPoNo
+             , TOS.EXP_PO_NO AS expPoNo
+             , (CASE WHEN PI.CUSTOMS_CLR_DATE IS NULL THEN 0 ELSE 0 - PI.QTY END) AS inRackQty
+             , PI.QTY AS impStockQty
+          FROM (SELECT
+                       A.PARTS_ID
+                     , A.SUPPLIER_ID
+                     , A.IMP_PO_NO
+                     , A.EXP_PO_NO
+                     , A.CUSTOMER_ORDER_NO
+                     , A.CUSTOMS_CLR_DATE
+                     , SUM(A.QTY) AS QTY 
+                  FROM TNT_IP A 
+                 WHERE A.STATUS <![CDATA[<]]> #{IpStatus_CANCELLED}
+                   AND A.MODULE_NO = #{moduleNo}
+                   AND A.INVOICE_NO = #{invoiceNo}
+                   AND A.BUSINESS_PATTERN = #{BusinessPattern_VV}
+                   <if test="expPartsIds != null">
+                   AND A.PID_NO IS NULL
+                   AND A.EXP_PARTS_ID IN 
+                      <foreach item="item" index="index" collection="expPartsIds" open="(" separator="," close=")">
+                          #{item}
+                      </foreach>    
+                    </if>
+                 GROUP BY
+                       A.PARTS_ID
+                     , A.SUPPLIER_ID
+                     , A.IMP_PO_NO
+                     , A.EXP_PO_NO
+                     , A.CUSTOMER_ORDER_NO
+                     , A.CUSTOMS_CLR_DATE) AS PI 
+         INNER JOIN TNF_ORDER_STATUS TOS 
+            ON TOS.PARTS_ID = PI.PARTS_ID 
+           AND TOS.SUPPLIER_ID = PI.SUPPLIER_ID 
+           AND TOS.IMP_PO_NO = PI.IMP_PO_NO
+           AND TOS.EXP_PO_NO = PI.EXP_PO_NO
+           AND TOS.CUSTOMER_ORDER_NO = PI.CUSTOMER_ORDER_NO
+    </select>
+        
+    <update id="updateImpStockInfo" parameterType="com.chinaplus.common.entity.TnfImpStock">
+         UPDATE TNF_IMP_STOCK 
+            SET UPDATED_BY = #{updatedBy, jdbcType=INTEGER}
+              , UPDATED_DATE = #{updatedDate, jdbcType=TIMESTAMP}
+              , VERSION = VERSION + 1
+              <if test = "impInRackQty != null">
+              , IMP_IN_RACK_QTY = NVL(IMP_IN_RACK_QTY, 0) + #{impInRackQty, jdbcType=DECIMAL}
+              </if>
+              <if test = "impStockQty != null">
+              , IMP_STOCK_QTY = NVL(IMP_STOCK_QTY, 0) + #{impStockQty, jdbcType=DECIMAL}
+              , SYSTEM_STOCK_QTY = NVL(SYSTEM_STOCK_QTY, 0) + #{impStockQty, jdbcType=DECIMAL}
+              </if>
+          WHERE IMP_STOCK_ID = #{impStockId}
+    </update>
+            
+    <update id="updateOrderStatusInfo" parameterType="com.chinaplus.common.entity.TnfOrderStatus">
+         UPDATE TNF_ORDER_STATUS 
+            SET UPDATED_BY = #{updatedBy, jdbcType=INTEGER}
+              , UPDATED_DATE = #{updatedDate, jdbcType=TIMESTAMP}
+              , VERSION = VERSION + 1
+              <if test = "expOnshippingQty != null">
+              , EXP_ONSHIPPING_QTY = NVL(EXP_ONSHIPPING_QTY, 0) + #{expOnshippingQty, jdbcType=DECIMAL}
+              </if>
+              <if test = "inRackQty != null">
+              , IN_RACK_QTY = NVL(IN_RACK_QTY, 0) + #{inRackQty, jdbcType=DECIMAL}
+              </if>
+              <if test = "impStockQty != null">
+              , IMP_STOCK_QTY = NVL(IMP_STOCK_QTY, 0) + #{impStockQty, jdbcType=DECIMAL}
+              </if>
+          WHERE ORDER_STATUS_ID = #{orderStatusId}
+    </update>
+    
+</mapper>

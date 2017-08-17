@@ -1,0 +1,38 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="com.chinaplus.web.sa.service.CPSRDF11Service">
+  <select id="getTITP" resultType="com.chinaplus.web.sa.entity.CPSRDF11Entity" parameterType="com.chinaplus.core.bean.BaseParam">
+        SELECT 
+          A.PARTS_ID AS partsId,
+          B.TTC_PARTS_NO AS ttcPartNo,
+          C.OFFICE_CODE AS impOfficeCode,
+          D.CUSTOMER_CODE AS  ttcCustomerCode,
+          B.BUSINESS_PATTERN  AS businessPattern
+        FROM
+        TNR_RD_MASTER A                                                                    
+        INNER JOIN TNM_PARTS_MASTER B ON B.PARTS_ID = A.PARTS_ID                                                                    
+        INNER JOIN TNM_OFFICE C ON C.OFFICE_ID = B.OFFICE_ID                                                                    
+        INNER JOIN TNM_CUSTOMER D ON D.CUSTOMER_ID = B.CUSTOMER_ID  
+        <where>
+          <foreach item="item" index="index" collection="swapData.initDataList" open="(" separator="or" close=")">    
+             B.TTC_PARTS_NO = #{item.ttcPartNo}
+             AND C.OFFICE_CODE = #{item.impOfficeCode}
+             AND D.CUSTOMER_CODE = #{item.ttcCustomerCode}
+          </foreach> 
+        </where>
+        ORDER BY A.PARTS_ID 
+  </select>
+  
+  <update id="updateData" parameterType="com.chinaplus.web.sa.entity.CPSRDF11Entity"> 
+          UPDATE
+                TNR_RD_MASTER
+          SET          
+                 REMARK = #{rundownRemark,jdbcType=VARCHAR},   
+                 UPDATED_BY = #{updatedBy},
+                 UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP},
+                 VERSION = VERSION + 1 
+           WHERE  
+                 PARTS_ID  =  #{partsId}
+   </update>
+
+</mapper>

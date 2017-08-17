@@ -1,0 +1,542 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.inv.service.CPVIVS01Service">
+
+    <update id="cancelInvoiceGroup" parameterType="com.chinaplus.web.inv.entity.CPVIVS01AdjustEntity">
+        UPDATE
+            TNT_INVOICE_GROUP
+        SET
+            STATUS = 1,
+            UPDATED_DATE = #{systemTime},
+            UPDATED_BY = #{loginUserId},
+            VERSION = VERSION + 1
+        WHERE
+            INVOICE_GROUP_ID IN (
+                SELECT DISTINCT
+                    B.INVOICE_GROUP_ID
+                FROM
+                    TNT_INVOICE_SUMMARY A
+                INNER JOIN
+                    TNT_INVOICE B ON A.INVOICE_SUMMARY_ID = B.INVOICE_SUMMARY_ID
+                WHERE
+                    A.INVOICE_SUMMARY_ID IN
+                    <foreach item="summaryIdItem" index="summaryIdIndex" collection="summaryIds" open="(" separator="," close=")">  
+                        #{summaryIdItem}
+                    </foreach>
+                AND B.INVOICE_GROUP_ID IS NOT NULL
+                AND NOT EXISTS (
+                    SELECT
+                        1
+                    FROM
+                        TNT_INVOICE_SUMMARY D
+                    INNER JOIN
+                        TNT_INVOICE E ON D.INVOICE_SUMMARY_ID = E.INVOICE_SUMMARY_ID
+                    WHERE
+                        D.INVOICE_STATUS != 99
+                    AND B.INVOICE_GROUP_ID = E.INVOICE_GROUP_ID
+                )
+            )
+    </update>
+
+    <update id="cancelInvoiceShipping" parameterType="com.chinaplus.web.inv.entity.CPVIVS01AdjustEntity">
+        UPDATE
+            TNT_INVOICE_SHIPPING
+        SET
+            STATUS = 1,
+            UPDATED_DATE = #{systemTime},
+            UPDATED_BY = #{loginUserId},
+            VERSION = VERSION + 1
+        WHERE
+            STATUS = 0
+        AND INVOICE_NO IN (
+                SELECT
+                    INVOICE_NO
+                FROM
+                    TNT_INVOICE_SUMMARY
+                WHERE
+                    INVOICE_SUMMARY_ID IN
+                    <foreach item="summaryIdItem" index="summaryIdIndex" collection="summaryIds" open="(" separator="," close=")">  
+                        #{summaryIdItem}
+                    </foreach>
+            )
+    </update>
+
+    <select id="findCancelledInvoices" parameterType="com.chinaplus.web.inv.entity.CPVIVS01AdjustEntity" resultType="com.chinaplus.web.inv.entity.CPVIVS01AdjustEntity" flushCache="true">
+        SELECT
+            B.INVOICE_NO AS invoiceNo,
+            D.KANBAN_PLAN_NO AS kanbanPlanNo,
+            D.TRANSPORT_MODE AS transportMode,
+            D.ETD AS etd,
+            D.ETA AS eta,
+            D.IMP_INB_PLAN_DATE AS inbPlanDate,
+            C.PARTS_ID AS partsId,
+            SUM(C.QTY) AS invoiceQty
+        FROM
+            TNT_INVOICE_SUMMARY A
+        INNER JOIN
+            TNT_INVOICE B ON A.INVOICE_SUMMARY_ID = B.INVOICE_SUMMARY_ID
+        INNER JOIN
+            TNT_INVOICE_PARTS C ON B.INVOICE_ID = C.INVOICE_ID
+        INNER JOIN
+            TNT_INVOICE_GROUP D ON B.INVOICE_GROUP_ID = D.INVOICE_GROUP_ID
+        WHERE
+            A.INVOICE_SUMMARY_ID IN
+            <foreach item="summaryIdItem" index="summaryIdIndex" collection="summaryIds" open="(" separator="," close=")">  
+                #{summaryIdItem}
+            </foreach>
+        GROUP BY
+            B.INVOICE_NO,
+            D.KANBAN_PLAN_NO,
+            D.TRANSPORT_MODE,
+            D.ETD,
+            D.ETA,
+            D.IMP_INB_PLAN_DATE,
+            C.PARTS_ID
+        ORDER BY
+            D.KANBAN_PLAN_NO ASC,
+            D.TRANSPORT_MODE ASC,
+            D.ETD DESC,
+            D.ETA DESC,
+            D.IMP_INB_PLAN_DATE DESC,
+            B.INVOICE_NO DESC
+    </select>
+    
+    <select id="findCancelAdjustKanbanPlan" parameterType="com.chinaplus.web.inv.entity.CPVIVS01AdjustEntity" resultType="com.chinaplus.web.inv.entity.CPVIVS01AdjustEntity" flushCache="true">
+        SELECT DISTINCT
+            D.ORDER_MONTH AS orderMonth,
+            E.LATEST_KANBAN_ID AS latestKanbanId,
+            B.KANBAN_SHIPPING_ID AS kanbanShippingId,
+            B.SHIPPING_UUID AS shippingUUID,
+            B.ORIGINAL_VERSION AS originalVersion,
+            B.REVISION_VERSION AS revisionVersion,
+            B.TRANSPORT_MODE AS transportMode,
+            A.NIRD_FLAG AS nirdFlag,
+            B.ETD AS etd,
+            B.ETA AS eta,
+            B.IMP_INB_PLAN_DATE AS inbPlanDate,
+            C.PARTS_ID AS partsId,
+            C.QTY AS planQty,
+            F.STATUS AS partStatus,
+            F.SPQ AS spq,
+            G.SPQ AS latestSpq
+        FROM
+            TNT_INVOICE_SHIPPING A
+        INNER JOIN
+            TNT_KANBAN_SHIPPING B ON A.KANBAN_SHIPPING_ID = B.KANBAN_SHIPPING_ID
+        INNER JOIN  
+            TNT_KANBAN_SHIPPING_PARTS C ON B.KANBAN_SHIPPING_ID = C.KANBAN_SHIPPING_ID
+        INNER JOIN
+            TNT_KANBAN D ON B.KANBAN_ID = D.KANBAN_ID
+        INNER JOIN
+            (SELECT
+                KANBAN_PLAN_NO,
+                MAX(KANBAN_ID) AS LATEST_KANBAN_ID 
+            FROM 
+                TNT_KANBAN 
+            WHERE 
+                KANBAN_PLAN_NO = #{kanbanPlanNo}
+            GROUP BY
+                KANBAN_PLAN_NO
+            ) E ON D.KANBAN_PLAN_NO = E.KANBAN_PLAN_NO
+        INNER JOIN
+            TNT_KANBAN_PARTS F ON D.KANBAN_ID = F.KANBAN_ID AND C.PARTS_ID = F.PARTS_ID
+        LEFT JOIN
+            TNT_KANBAN_PARTS G ON E.LATEST_KANBAN_ID = G.KANBAN_ID AND C.PARTS_ID = G.PARTS_ID
+        WHERE
+            A.INVOICE_NO = #{invoiceNo}
+        AND D.KANBAN_PLAN_NO = #{kanbanPlanNo}
+        AND A.STATUS = 0
+        ORDER BY
+            B.TRANSPORT_MODE ASC,
+            B.ETD ASC,
+            B.ETA ASC,
+            B.IMP_INB_PLAN_DATE ASC
+    </select>
+    
+    <select id="findExistLatestPlan" parameterType="com.chinaplus.web.inv.entity.CPVIVS01AdjustEntity" resultType="com.chinaplus.web.inv.entity.CPVIVS01AdjustEntity" flushCache="true">
+        SELECT
+            B.KANBAN_SHIPPING_ID AS kanbanShippingId,
+            B.SHIPPING_UUID AS shippingUUID,
+            B.ORIGINAL_VERSION AS originalVersion,
+            B.REVISION_VERSION AS revisionVersion,
+            D.KANBAN_PLAN_ID AS differBoxId,
+            E.KANBAN_PLAN_ID AS dummyBoxId
+        FROM
+            TNT_KANBAN A
+        INNER JOIN
+            TNT_KANBAN_SHIPPING B ON A.KANBAN_ID = B.KANBAN_ID
+        LEFT JOIN
+            TNT_KANBAN_PLAN D ON B.KANBAN_ID = D.KANBAN_ID AND B.SHIPPING_UUID = D.SHIPPING_UUID AND D.PLAN_TYPE = 1
+        LEFT JOIN
+            TNT_KANBAN_PLAN E ON B.KANBAN_ID = E.KANBAN_ID AND B.SHIPPING_UUID = E.SHIPPING_UUID AND E.PLAN_TYPE = 3
+        WHERE
+            A.KANBAN_ID = #{latestKanbanId}
+        AND B.TRANSPORT_MODE = #{transportMode}
+        AND B.NIRD_FLAG = #{nirdFlag}
+        AND B.ETD = #{etd}
+        AND B.ETA = #{eta}
+        AND B.IMP_INB_PLAN_DATE = #{inbPlanDate}
+        AND B.COMPLETED_FLAG = 0
+    </select>
+
+    <select id="findCancelledParts" parameterType="com.chinaplus.web.inv.entity.CPVIVS01Entity" resultType="com.chinaplus.web.inv.entity.CPVIVS01Entity" flushCache="true">
+        SELECT
+            D.KANBAN_PLAN_NO AS kanbanPlanNo,
+            C.PARTS_ID AS partsId,
+            SUM(C.QTY) AS partsQty
+        FROM
+            TNT_INVOICE_SUMMARY A
+        INNER JOIN
+            TNT_INVOICE B ON A.INVOICE_SUMMARY_ID = B.INVOICE_SUMMARY_ID
+        INNER JOIN
+            TNT_INVOICE_PARTS C ON B.INVOICE_ID = C.INVOICE_ID
+        INNER JOIN
+            TNT_INVOICE_GROUP D ON B.INVOICE_GROUP_ID = D.INVOICE_GROUP_ID
+        WHERE
+            A.INVOICE_SUMMARY_ID IN
+            <foreach item="summaryIdItem" index="summaryIdIndex" collection="summaryIds" open="(" separator="," close=")">  
+                #{summaryIdItem}
+            </foreach>
+        AND A.UPLOAD_STATUS = 2
+        AND (A.NON_SHIPPING_ROUTE IS NULL OR A.NON_SHIPPING_ROUTE = 2)
+        GROUP BY
+            D.KANBAN_PLAN_NO,
+            C.PARTS_ID
+    </select>
+
+    <select id="findIrregularParts" parameterType="com.chinaplus.web.inv.entity.CPVIVS01IrregularEntity" resultType="com.chinaplus.web.inv.entity.CPVIVS01IrregularEntity" flushCache="true">
+        SELECT
+            A.VESSEL_NAME AS vesselName,
+            A.ETD AS vesselEtd,
+            D.EXP_PARTS_ID AS expPartsId
+        FROM
+            TNT_INVOICE_SUMMARY A
+        INNER JOIN
+            TNT_INVOICE B ON A.INVOICE_SUMMARY_ID = B.INVOICE_SUMMARY_ID AND B.INVOICE_GROUP_ID IS NOT NULL
+        INNER JOIN
+            TNT_INVOICE_PARTS C ON B.INVOICE_ID = C.INVOICE_ID
+        INNER JOIN
+            TNM_EXP_PARTS D ON C.PARTS_ID = D.PARTS_ID AND C.SUPPLIER_ID = D.SUPPLIER_ID
+        WHERE
+            A.UPLOAD_ID = #{uploadId}
+        AND A.NON_SHIPPING_ROUTE = 1
+        ORDER BY
+            A.VESSEL_NAME ASC,
+            A.ETD ASC,
+            D.EXP_PARTS_ID ASC
+    </select>
+
+    <select id="findApproveParts" parameterType="com.chinaplus.web.inv.entity.CPVIVS01Entity" resultType="com.chinaplus.web.inv.entity.CPVIVS01Entity" flushCache="true">
+        SELECT
+            A.ISSUE_TYPE AS issueType,
+            C.IMP_PO_NO AS ipo,
+            C.CUSTOMER_ORDER_NO AS cpo,
+            C.EXP_PO_NO AS epo,
+            C.SUPPLIER_ID AS supplierId,
+            C.PARTS_ID AS partsId,
+            SUM(C.QTY) AS partsQty
+        FROM
+            TNT_INVOICE_SUMMARY A
+        INNER JOIN
+            TNT_INVOICE B ON A.INVOICE_SUMMARY_ID = B.INVOICE_SUMMARY_ID
+        INNER JOIN
+            TNT_INVOICE_PARTS C ON B.INVOICE_ID = C.INVOICE_ID
+        WHERE
+            A.INVOICE_SUMMARY_ID IN
+            <foreach item="summaryIdItem" index="summaryIdIndex" collection="summaryIds" open="(" separator="," close=")">  
+                #{summaryIdItem}
+            </foreach>
+        GROUP BY
+            A.ISSUE_TYPE,
+            C.IMP_PO_NO,
+            C.CUSTOMER_ORDER_NO,
+            C.EXP_PO_NO,
+            C.SUPPLIER_ID,
+            C.PARTS_ID
+    </select>
+    
+    <select id="findApproveInvoiceId" parameterType="com.chinaplus.web.inv.entity.CPVIVS01Entity" resultType="com.chinaplus.web.inv.entity.CPVIVS01Entity" flushCache="true">
+        SELECT
+            B.INVOICE_ID AS invoiceId
+        FROM
+            TNT_INVOICE_SUMMARY A
+        INNER JOIN
+            TNT_INVOICE B ON A.INVOICE_SUMMARY_ID = B.INVOICE_SUMMARY_ID
+        WHERE
+            A.INVOICE_SUMMARY_ID IN
+            <foreach item="summaryIdItem" index="summaryIdIndex" collection="summaryIds" open="(" separator="," close=")">  
+                #{summaryIdItem}
+            </foreach>
+    </select>
+
+    <select id="findApproveStatusCount" parameterType="com.chinaplus.core.bean.PageParam" resultType="int" flushCache="true">
+        SELECT
+            COUNT(1) AS cnt
+        FROM
+            TNT_INVOICE_SUMMARY A
+        WHERE
+            A.INVOICE_SUMMARY_ID IN
+            <foreach item="selectedDataItem" index="selectedDataIndex" collection="selectedDatas" open="(" separator="," close=")">  
+                #{selectedDataItem}
+            </foreach>
+        AND A.INVOICE_STATUS != 1
+    </select>
+    
+    <update id="approveInvoiceSummary" parameterType="com.chinaplus.web.inv.entity.CPVIVS01Entity">
+        UPDATE
+            TNT_INVOICE_SUMMARY
+        SET
+            INVOICE_STATUS = 2,
+            POST_RI_FLAG = 1,
+            UPDATED_DATE = #{systemTime},
+            UPDATED_BY = #{loginUserId},
+            VERSION = VERSION + 1
+        WHERE
+            INVOICE_SUMMARY_ID IN
+            <foreach item="summaryIdItem" index="summaryIdIndex" collection="summaryIds" open="(" separator="," close=")">  
+                #{summaryIdItem}
+            </foreach>
+    </update>
+
+    <update id="cancelInvoiceSummary" parameterType="com.chinaplus.web.inv.entity.CPVIVS01Entity">
+        UPDATE
+            TNT_INVOICE_SUMMARY
+        SET
+            INVOICE_STATUS = 99,
+            UPDATED_DATE = #{systemTime},
+            UPDATED_BY = #{loginUserId},
+            VERSION = VERSION + 1
+        WHERE
+            INVOICE_SUMMARY_ID IN
+            <foreach item="summaryIdItem" index="summaryIdIndex" collection="summaryIds" open="(" separator="," close=")">  
+                #{summaryIdItem}
+            </foreach>
+    </update>
+
+    <select id="findInvoiceByUploadId" parameterType="com.chinaplus.core.bean.PageParam" resultType="com.chinaplus.web.inv.entity.CPVIVS01Entity" flushCache="true">
+        SELECT
+            A.INVOICE_SUMMARY_ID AS invoiceSummaryId,
+            A.INVOICE_NO AS invoiceNo
+        FROM
+            TNT_INVOICE_SUMMARY A
+        WHERE
+            A.UPLOAD_ID IN
+            <foreach item="selectedDataItem" index="selectedDataIndex" collection="selectedDatas" open="(" separator="," close=")">  
+                #{selectedDataItem}
+            </foreach>
+        ORDER BY
+            A.INVOICE_NO ASC
+    </select>
+    
+    <select id="findInboundCount" parameterType="com.chinaplus.core.bean.PageParam" resultType="int" flushCache="true">
+        SELECT
+            COUNT(1) AS cnt
+        FROM
+            TNT_INVOICE_SUMMARY A
+        WHERE
+            A.INVOICE_SUMMARY_ID IN
+            <foreach item="selectedDataItem" index="selectedDataIndex" collection="selectedDatas" open="(" separator="," close=")">  
+                #{selectedDataItem}
+            </foreach>
+        AND (A.INBOUND_QTY <![CDATA[>]]> 0 OR A.POST_RI_FLAG <![CDATA[>=]]> 1)
+    </select>
+    
+    <select id="findActualCCCount" parameterType="com.chinaplus.core.bean.PageParam" resultType="int" flushCache="true">
+        SELECT
+            COUNT(1) AS cnt
+        FROM
+            TNT_INVOICE_SUMMARY A
+        INNER JOIN
+            TNT_INVOICE B ON A.INVOICE_SUMMARY_ID = B.INVOICE_SUMMARY_ID
+        WHERE
+            A.INVOICE_SUMMARY_ID IN
+            <foreach item="selectedDataItem" index="selectedDataIndex" collection="selectedDatas" open="(" separator="," close=")">  
+                #{selectedDataItem}
+            </foreach>
+        AND B.IMP_CC_ACTUAL_DATE IS NOT NULL
+    </select>
+    
+    <select id="findCancelledCount" parameterType="com.chinaplus.core.bean.PageParam" resultType="int" flushCache="true">
+        SELECT
+            COUNT(1) AS cnt
+        FROM
+            TNT_INVOICE_SUMMARY A
+        WHERE
+            A.INVOICE_SUMMARY_ID IN
+            <foreach item="selectedDataItem" index="selectedDataIndex" collection="selectedDatas" open="(" separator="," close=")">  
+                #{selectedDataItem}
+            </foreach>
+        AND A.INVOICE_STATUS = 99
+    </select>
+
+    <select id="findDraftCount" parameterType="com.chinaplus.core.bean.PageParam" resultType="int" flushCache="true">
+        SELECT
+            COUNT(1) AS cnt
+        FROM
+            TNT_INVOICE_SUMMARY A
+        WHERE
+            A.UPLOAD_ID IN
+            <foreach item="selectedDataItem" index="selectedDataIndex" collection="selectedDatas" open="(" separator="," close=")">  
+                #{selectedDataItem}
+            </foreach>
+        AND (A.NON_SHIPPING_ROUTE = 1 OR A.UPLOAD_STATUS = 1)
+    </select>
+
+    <select id="findPageListCount" parameterType="com.chinaplus.core.bean.PageParam" resultType="int" flushCache="true">
+        SELECT
+            COUNT(1) AS cnt
+        <include refid="fromSql" />
+    </select>
+    
+    <select id="findPageList" parameterType="com.chinaplus.core.bean.PageParam" resultType="com.chinaplus.web.inv.entity.CPVIVS01Entity" flushCache="true">
+        SELECT
+            *
+        FROM (
+            SELECT
+                A.INVOICE_SUMMARY_ID AS invoiceSummaryId,
+                A.BUSINESS_PATTERN AS businessPattern,
+                A.INVOICE_NO AS invoiceNo,
+                A.INVOICE_TYPE AS businessPattern,
+                A.EXP_REGION AS expCountry,
+                A.IMP_REGION AS impCountry,
+                A.TRANSPORT_MODE AS transportMode,
+                A.SUPPLIER_CODE_SET AS ttcSupplierCode,
+                A.ETD AS etd,
+                A.ETA AS eta,
+                A.INVOICE_QTY AS invoiceQty,
+                A.INBOUND_QTY AS inboundQty,
+                (COALESCE(A.INVOICE_QTY, 0) - COALESCE(A.INBOUND_QTY, 0)) AS pendingQty,
+                A.POST_RI_FLAG AS postRIFlag,
+                CASE WHEN E.INVOICE_SUMMARY_ID IS NOT NULL THEN 1 ELSE 0 END AS ccStatus,
+                A.INVOICE_TYPE AS invoiceType,
+                D.INVOICE_STATUS AS invoiceStatus,
+                A.NON_SHIPPING_ROUTE AS irregularStatus,
+                CASE WHEN C.UPLOAD_ID IS NULL THEN 2 ELSE 1 END AS groupIrregularStatus,
+                A.UPLOAD_ID AS uploadId,
+                B.LOGIN_ID AS userId,
+                A.UPLOADED_DATE AS uploadReceiveTime,
+                A.UPLOAD_STATUS AS uploadStatus,
+                A.VERSION AS version,
+                ROWNUMBER() over(<include refid="orderSql" />) AS rownum
+            <include refid="fromSql" />
+            <include refid="orderSql" />
+        ) 
+        WHERE
+            <include refid="com.chinaplus.const.pagingCondition" />
+    </select>
+    
+    <sql id="fromSql">
+        FROM
+            TNT_INVOICE_SUMMARY A
+        LEFT JOIN 
+            TNM_USER B ON A.UPLOADED_BY = B.USER_ID
+        LEFT JOIN 
+            (SELECT DISTINCT
+                UPLOAD_ID
+            FROM
+                TNT_INVOICE_SUMMARY
+            WHERE
+                OFFICE_ID = #{currentOfficeId}
+            AND NON_SHIPPING_ROUTE = 1
+            ) C ON A.UPLOAD_ID = C.UPLOAD_ID
+        LEFT JOIN 
+            (SELECT
+                INVOICE_SUMMARY_ID,
+                CASE WHEN INBOUND_QTY <![CDATA[>=]]> INVOICE_QTY THEN 3 ELSE INVOICE_STATUS END AS INVOICE_STATUS
+            FROM
+                TNT_INVOICE_SUMMARY
+            WHERE
+                OFFICE_ID = #{currentOfficeId}
+            ) D ON A.INVOICE_SUMMARY_ID = D.INVOICE_SUMMARY_ID
+        LEFT JOIN 
+            (SELECT DISTINCT
+                INVOICE_SUMMARY_ID
+            FROM
+                TNT_INVOICE
+            WHERE
+                OFFICE_ID = #{currentOfficeId}
+            AND IMP_CC_ACTUAL_DATE IS NOT NULL
+            ) E ON A.INVOICE_SUMMARY_ID = E.INVOICE_SUMMARY_ID
+        WHERE
+            A.OFFICE_ID = #{currentOfficeId}
+        AND A.BUSINESS_PATTERN = #{swapData.busiPtn}
+        <if test="filters.invoiceNo != null and filters.invoiceNo != ''">
+            AND A.INVOICE_NO LIKE #{filters.invoiceNo} ESCAPE '!'
+        </if>
+        <if test="filters.irregularStatus != null and filters.irregularStatus != ''">
+            AND A.NON_SHIPPING_ROUTE = #{filters.irregularStatus}
+        </if>
+        <if test="filters.uploadStatus != null and filters.uploadStatus != ''">
+            AND A.UPLOAD_STATUS = #{filters.uploadStatus}
+        </if>
+        <if test="filters.expCountry != null and filters.expCountry.size() != 0">
+            AND A.EXP_REGION IN
+            <foreach item="expCountryItem" index="expCountryIndex" collection="filters.expCountry" open="(" separator="," close=")">  
+                #{expCountryItem}
+            </foreach>
+        </if>
+        <if test="filters.impCountry != null and filters.impCountry.size() != 0">
+            AND A.IMP_REGION IN
+            <foreach item="impCountryItem" index="impCountryIndex" collection="filters.impCountry" open="(" separator="," close=")">  
+                #{impCountryItem}
+            </foreach>
+        </if>
+        <if test="filters.ttcSupplierCode != null and filters.ttcSupplierCode.size() != 0">
+            AND
+            <foreach item="ttcSupplierCodeItem" index="ttcSupplierCodeIndex" collection="filters.ttcSupplierCode" open="(" separator="OR" close=")">  
+                A.SUPPLIER_CODE_SET LIKE '%'||#{ttcSupplierCodeItem}||'%'
+            </foreach>
+        </if>
+        <if test="filters.transportMode != null and filters.transportMode != ''">
+            AND A.TRANSPORT_MODE = #{filters.transportMode}
+        </if>
+        <if test="filters.etdFrom != null and filters.etdFrom != ''">
+            AND A.ETD <![CDATA[>=]]> #{filters.etdFrom}
+        </if>
+        <if test="filters.etdTo != null and filters.etdTo != ''">
+            AND A.ETD <![CDATA[<=]]> #{filters.etdTo}
+        </if>
+        <if test="filters.etaFrom != null and filters.etaFrom != ''">
+            AND A.ETA <![CDATA[>=]]> #{filters.etaFrom}
+        </if>
+        <if test="filters.etaTo != null and filters.etaTo != ''">
+            AND A.ETA <![CDATA[<=]]> #{filters.etaTo}
+        </if>
+        <if test="filters.uploadId != null and filters.uploadId != ''">
+            AND A.UPLOAD_ID LIKE #{filters.uploadId} ESCAPE '!'
+        </if>
+        <if test="filters.userId != null and filters.userId.size() != 0">
+            AND A.UPLOADED_BY IN
+            <foreach item="userIdItem" index="userIdIndex" collection="filters.userId" open="(" separator="," close=")">  
+                #{userIdItem}
+            </foreach>
+        </if>
+        <if test="filters.uploadReceiveTimeFrom != null and filters.uploadReceiveTimeFrom != ''">
+            AND A.UPLOADED_DATE <![CDATA[>=]]> #{filters.uploadReceiveTimeFrom}
+        </if>
+        <if test="filters.uploadReceiveTimeTo != null and filters.uploadReceiveTimeTo != ''">
+            AND A.UPLOADED_DATE <![CDATA[<=]]> #{filters.uploadReceiveTimeTo}
+        </if>
+        <if test="filters.invoiceType != null and filters.invoiceType.size() != 0">
+            AND A.INVOICE_TYPE IN
+            <foreach item="invoiceTypeItem" index="invoiceTypeIndex" collection="filters.invoiceType" open="(" separator="," close=")">  
+                #{invoiceTypeItem}
+            </foreach>
+        </if>
+        <if test="filters.invoiceStatus != null and filters.invoiceStatus.size() != 0">
+            AND D.INVOICE_STATUS IN
+            <foreach item="invoiceStatusItem" index="invoiceStatusIndex" collection="filters.invoiceStatus" open="(" separator="," close=")">  
+                #{invoiceStatusItem}
+            </foreach>
+        </if>
+    </sql>
+    
+    <sql id="orderSql">
+        ORDER BY
+            A.UPLOADED_DATE DESC,
+            A.INVOICE_NO ASC
+    </sql>
+    
+</mapper>

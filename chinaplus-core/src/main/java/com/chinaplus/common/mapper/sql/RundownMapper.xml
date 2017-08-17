@@ -1,0 +1,798 @@
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.common.service.RundownService">
+    <sql id="ConstDef">
+        <bind name="ETD_DELAY_A" value="@com.chinaplus.common.consts.CodeConst$NotInRDReasonType@ETD_DELAY_A" />
+        <bind name="ETD_DELAY_B" value="@com.chinaplus.common.consts.CodeConst$NotInRDReasonType@ETD_DELAY_B" />
+        <bind name="INBOUND_DELAY" value="@com.chinaplus.common.consts.CodeConst$NotInRDReasonType@INBOUND_DELAY" />
+        <bind name="NG_ONHOLD" value="@com.chinaplus.common.consts.CodeConst$NotInRDReasonType@NG_ONHOLD" />
+        <bind name="TARGET" value="@com.chinaplus.common.consts.CodeConst$SimulationType@TARGET" />
+        <bind name="InvoiceStatus_NOT_APPROVED" value="@com.chinaplus.common.consts.CodeConst$InvoiceStatus@NOT_APPROVED" />
+        <bind name="InvoiceStatus_CANCELLED" value="@com.chinaplus.common.consts.CodeConst$InvoiceStatus@CANCELLED" />
+        <bind name="NOT_REQUIRE" value="@com.chinaplus.common.consts.CodeConst$SimulationType@NOT_REQUIRE" />
+    </sql>
+    
+    <select id="findAllRundownMasterIds" resultType="java.lang.Integer" parameterType="com.chinaplus.core.bean.BaseParam">
+         <include refid="ConstDef"/>
+         SELECT 
+                A.RUNDOWN_MASTER_ID AS rundownMasterId
+           FROM
+                TNR_RD_MASTER A 
+          INNER JOIN 
+                (SELECT DISTINCT 
+                        A.PARTS_ID 
+                <include refid="com.chinaplus.common.service.StockStatusService.getWhereInfo"/>) B 
+             ON 
+                B.PARTS_ID = A.PARTS_ID 
+    </select>
+    
+    <!-- get rundown master list for file -->
+    <select id="findRundownMasterList" resultType="com.chinaplus.common.bean.TntRundownMasterEx" parameterType="com.chinaplus.core.bean.BaseParam">
+         <include refid="ConstDef"/>
+         SELECT 
+                A.RUNDOWN_MASTER_ID AS rundownMasterId
+              , C.TTC_PARTS_NO AS ttcPartsNo
+              , C.PARTS_NAME_EN AS partNameEn
+              , C.PARTS_NAME_CN AS partNameCn
+              , C.BUSINESS_PATTERN AS businessPattern
+              , D.EXP_PARTS_ID AS expPartsId
+              , D.TTC_SUPP_CODE AS ttcSupplierCode
+              , D.SUPP_PARTS_NO AS supplierPartsNo
+              , E.OFFICE_CODE AS officeCode
+              , C.CUSTOMER_CODE AS customerCode
+              , C.CUST_PARTS_NO AS custPartsNo
+              , C.OLD_TTC_PARTS_NO AS oldPartsNo
+              , C.CUST_BACK_NO AS custBackNo
+              , C.SPQ AS spq
+              , C.CAR_MODEL AS carModel
+              , C.PARTS_TYPE AS partType
+              , C.IMP_REGION AS impRegion
+              , C.BUSINESS_TYPE AS businessType
+              , B.DELAY_ADJUSTMENT_PATTERN AS delayAdjPattern
+              , B.EXP_PARTS_SET AS expPartsSet
+              , B.OFFICE_ID AS officeId
+              , B.STOCK_DATE AS stockDate
+              , D.BUILDOUT_FLAG AS buildoutFlag
+              , D.BUILDOUT_MONTH AS buildoutMonth
+              , D.LAST_PO_MONTH AS lastPoMonth
+              , D.EXP_REGION AS expRegion
+              , D.REMARK1 AS partsRemark
+              , A.IMP_STOCK_FLAG AS impStockFlag
+              , A.SA_CUST_STOCK_FLAG AS saCustStockFlag
+              , A.REMARK AS remark
+              , A.MIN_STOCK AS minStock
+              , A.MIN_BOX AS minBox
+              , A.ORDER_MONTH AS orderMonth
+              , A.TARGET_MONTH AS targetMonth
+              , A.END_CFC_DATE AS endCfcDate
+              , A.END_PFC_DATE AS endPfcDate
+              , A.RUN_START_DATE AS runStartDate
+              , A.RUN_END_DATE AS runEndDate
+              , A.RUNDOWN_SAFETY_STOCK AS rundownSafetyStock
+              , A.EXP_BALANCE_ORDER AS expBalanceOrder
+              , A.EXP_WHS_STOCK AS expWhsStock
+              , A.ON_SHIPPING_STOCK AS onShippingStock
+              , NVL(A.NG_QTY, 0) AS ngQty
+              , A.CUST_STOCK_QTY AS custStockQty
+              , A.CUST_STOCK_END_DATE AS custStockEndDate
+              , NVL(A.ECI_ONHOLD_QTY, 0) AS eciOnholdQty
+              , NVL(A.IMP_WHS_QTY, 0)  AS impWhsQty
+              , NVL(A.IN_RACK_QTY, 0) AS inRackQty
+              , NVL(A.PREPARED_OB_QTY, 0) AS preparedObQty
+              , NVL(A.PFC_QTY, 0) AS pfcQty
+              , NVL(A.ETD_DELAY_QTY, 0) AS etdDelayQty
+              , NVL(A.INBOUND_DELAY_QTY, 0) AS inboundDelayQty   
+              , NVL(A.DELI_QTY_OF_LAST_MONTH, 0) AS deliQtyOfLastMonth
+              , A.INVENTORY_BOX_FLAG AS inventoryBoxFlag
+              , F.DECIMAL_DIGITS AS digit
+              , NVL(G.LAST_TARGET_DATE, B.STOCK_DATE) AS endTargetDate
+           FROM
+                TNR_RD_MASTER A 
+          INNER JOIN 
+                TNR_STOCK_STATUS B 
+             ON 
+                B.PARTS_ID = A.PARTS_ID 
+          INNER JOIN 
+                TNM_PARTS_MASTER C 
+             ON 
+                C.PARTS_ID = B.PARTS_ID 
+          INNER JOIN 
+                TNM_EXP_PARTS D 
+             ON 
+                D.PARTS_ID = B.PARTS_ID 
+            AND 
+                D.SUPPLIER_ID = B.SUPPLIER_ID 
+          INNER JOIN 
+                TNM_OFFICE E 
+             ON 
+                E.OFFICE_ID = C.OFFICE_ID 
+          INNER JOIN 
+                TNM_UOM F 
+             ON 
+                F.UOM_CODE = C.UOM_CODE 
+           LEFT JOIN 
+                  (SELECT 
+                          RD.RUNDOWN_MASTER_ID
+                        , MAX(RD.IMP_INB_PLAN_DATE) AS LAST_TARGET_DATE
+                     FROM 
+                          TNR_RD_DETAIL RD
+                    WHERE 
+                          RD.SIMULATION_TYPE = #{TARGET}
+                    GROUP BY
+                          RD.RUNDOWN_MASTER_ID) G
+            ON 
+               G.RUNDOWN_MASTER_ID = A.RUNDOWN_MASTER_ID
+         WHERE 
+               B.OFFICE_ID = #{currentOfficeId}
+          <if test="swapData.businessPattern != null" >
+           AND 
+               C.BUSINESS_PATTERN = #{swapData.businessPattern}
+          </if>
+          <if test="swapData.rundownMasterIds != null and swapData.rundownMasterIds.size() > 0" >
+           AND
+               A.RUNDOWN_MASTER_ID IN 
+            <foreach item="rdMasterId" index="Index" collection="swapData.rundownMasterIds" open="(" separator="," close=")">
+                #{rdMasterId}
+            </foreach>
+          </if>
+         ORDER BY 
+               A.RUNDOWN_MASTER_ID
+    </select>    
+      
+    <!-- get rundown master header for file -->
+    <select id="findRundownMasterHeader" resultType="com.chinaplus.common.bean.TntRundownHeader" parameterType="com.chinaplus.core.bean.BaseParam">
+         SELECT
+                MIN(A.RUN_START_DATE) AS stockDate
+              , MAX(A.RUN_END_DATE) AS latestRunEndDate
+           FROM
+                TNR_RD_MASTER A 
+          <if test="swapData.businessPattern != null" >
+          INNER JOIN 
+                TNM_PARTS_MASTER TM
+             ON 
+                TM.PARTS_ID = A.PARTS_ID
+            AND 
+                TM.BUSINESS_PATTERN = #{swapData.businessPattern}
+          </if>
+          <where> 
+            <if test="swapData.rundownMasterIds != null and swapData.rundownMasterIds.size() > 0" >
+                A.RUNDOWN_MASTER_ID IN 
+                <foreach item="rdMasterId" index="Index" collection="swapData.rundownMasterIds" open="(" separator="," close=")">
+                    #{rdMasterId}
+                </foreach>
+            </if>
+          </where>
+    </select>  
+               
+    <select id="findNotInRundownList" resultType="com.chinaplus.common.bean.TntNotInRundownEx" parameterType="com.chinaplus.core.bean.BaseParam">
+         SELECT
+                A.RUNDOWN_MASTER_ID AS rundownMasterId
+              , A.REASON_TYPE AS reasonType
+              , A.IMP_PO_NO AS impPoNo
+              , A.ETD AS etd
+              , A.ETA AS eta
+              , A.INVOICE_NO AS invoiceNo
+              , A.IMP_INB_DATE AS impInbDate
+              , SUM(A.QTY) AS qty
+           FROM
+                (SELECT DISTINCT
+                        RUNDOWN_MASTER_ID
+                      , PARTS_ID
+                      , REASON_TYPE
+                      , IMP_PO_NO
+                      , EXP_PO_NO
+                      , ETD
+                      , ETA
+                      , TRANSPORT_MODE
+                      , INVOICE_NO
+                      , IMP_INB_DATE
+                      , PROCESS_DATE
+                      , QTY
+                   FROM TNR_NOT_IN_RUNDOWN) A
+          <if test="swapData.businessPattern != null" >
+          INNER JOIN 
+                TNM_PARTS_MASTER TM
+             ON 
+                TM.PARTS_ID = A.PARTS_ID
+            AND 
+                TM.BUSINESS_PATTERN = #{swapData.businessPattern}
+          </if>
+          <where>
+              <if test="swapData.rundownMasterIds != null and swapData.rundownMasterIds.size() > 0" >
+                A.RUNDOWN_MASTER_ID IN 
+                <foreach item="rdMasterId" index="Index" collection="swapData.rundownMasterIds" open="(" separator="," close=")">
+                    #{rdMasterId}
+                </foreach>
+            </if>
+          </where>
+          GROUP BY 
+                A.RUNDOWN_MASTER_ID
+              , A.REASON_TYPE
+              , A.IMP_PO_NO
+              , A.ETD
+              , A.ETA
+              , A.INVOICE_NO
+              , A.IMP_INB_DATE
+          ORDER BY 
+                A.RUNDOWN_MASTER_ID
+              , A.REASON_TYPE
+              , A.ETD
+              , A.ETA
+              , A.IMP_INB_DATE
+              , A.IMP_PO_NO
+              , A.INVOICE_NO
+    </select>   
+               
+    <select id="findNotInRundownListForHeader" resultType="com.chinaplus.common.bean.TntNotInRundownEx" parameterType="com.chinaplus.core.bean.BaseParam">
+         SELECT
+                A.REASON_TYPE AS reasonType
+              , A.ETD AS etd
+              , A.ETA AS eta
+              , A.IMP_INB_DATE AS impInbDate
+              , A.IMP_PO_NO AS impPoNo
+              , A.INVOICE_NO AS invoiceNo
+              , MIN(A.VANNING_DATE) AS vanningDate
+              , MAX(A.VANNING_DATE) AS lastVanDate
+           FROM
+                TNR_NOT_IN_RUNDOWN A
+          <if test="swapData.businessPattern != null" >
+          INNER JOIN 
+                TNM_PARTS_MASTER TM
+             ON 
+                TM.PARTS_ID = A.PARTS_ID
+            AND 
+                TM.BUSINESS_PATTERN = #{swapData.businessPattern}
+          </if>
+          <where> 
+            <if test="swapData.rundownMasterIds != null and swapData.rundownMasterIds.size() > 0" >
+                A.RUNDOWN_MASTER_ID IN 
+                <foreach item="rdMasterId" index="Index" collection="swapData.rundownMasterIds" open="(" separator="," close=")">
+                    #{rdMasterId}
+                </foreach>
+            </if>
+          </where>
+          GROUP BY 
+                A.REASON_TYPE
+              , A.ETD
+              , A.ETA
+              , A.IMP_INB_DATE
+              , A.IMP_PO_NO
+              , A.INVOICE_NO
+          ORDER BY 
+                A.REASON_TYPE
+              , A.ETD
+              , A.ETA
+              , A.IMP_INB_DATE
+              , A.IMP_PO_NO
+              , A.INVOICE_NO
+    </select> 
+                   
+    <select id="findShareInfoList" resultType="com.chinaplus.common.entity.TntRdAttachCfc" parameterType="com.chinaplus.core.bean.BaseParam">
+         SELECT DISTINCT
+                A.RUNDOWN_MASTER_ID AS rundownMasterId
+              , A.CFC_MONTH AS cfcMonth
+              , A.SHARE_DATE AS shareDate
+              , A.QTY AS qty
+           FROM
+                TNR_RD_ATTACH_CFC A
+          <if test="swapData.businessPattern != null" >
+          INNER JOIN 
+                TNM_PARTS_MASTER TM
+             ON 
+                TM.PARTS_ID = A.PARTS_ID
+            AND 
+                TM.BUSINESS_PATTERN = #{swapData.businessPattern}
+          </if>
+          <where> 
+            <if test="swapData.rundownMasterIds != null and swapData.rundownMasterIds.size() > 0" >
+                A.RUNDOWN_MASTER_ID IN 
+                <foreach item="rdMasterId" index="Index" collection="swapData.rundownMasterIds" open="(" separator="," close=")">
+                    #{rdMasterId}
+                </foreach>
+            </if>
+          </where>
+          ORDER BY 
+                A.RUNDOWN_MASTER_ID
+              , A.CFC_MONTH
+              , A.SHARE_DATE
+    </select>
+                      
+    <select id="findShareInfoListForHeader" resultType="com.chinaplus.common.entity.TntRdAttachCfc" parameterType="com.chinaplus.core.bean.BaseParam">
+         SELECT
+                DISTINCT
+                A.CFC_MONTH AS cfcMonth
+              , A.SHARE_DATE AS shareDate
+           FROM
+                TNR_RD_ATTACH_CFC A
+          <if test="swapData.businessPattern != null" >
+          INNER JOIN 
+                TNM_PARTS_MASTER TM
+             ON 
+                TM.PARTS_ID = A.PARTS_ID
+            AND 
+                TM.BUSINESS_PATTERN = #{swapData.businessPattern}
+          </if>
+          <where> 
+            <if test="swapData.rundownMasterIds != null and swapData.rundownMasterIds.size() > 0" >
+                A.RUNDOWN_MASTER_ID IN 
+                <foreach item="rdMasterId" index="Index" collection="swapData.rundownMasterIds" open="(" separator="," close=")">
+                    #{rdMasterId}
+                </foreach>
+            </if>
+          </where>
+          ORDER BY 
+                A.CFC_MONTH
+              , A.SHARE_DATE
+    </select>
+                         
+    <select id="findRundownDetailList" resultType="com.chinaplus.common.bean.TntRundownDetailEx" parameterType="com.chinaplus.core.bean.BaseParam">
+        <include refid="ConstDef"/>
+         SELECT DISTINCT
+                A.RUNDOWN_DETAIL_ID AS rundownDetailId
+              , A.RUNDOWN_MASTER_ID AS rundownMasterId
+              , A.PARTS_ID AS partsId
+              , A.SIMULATION_TYPE AS simulationType
+              , A.IMP_INB_PLAN_DATE AS impInbPlanDate
+              , A.ORDER_FORECAST_QTY AS orderForecastQty
+              , A.NOT_ETD_QTY AS notEtdQty
+              , A.ON_SHIPPING_QTY AS onShippingQty
+              , A.DAILY_USAGE_QTY AS daliyUsageQty
+              , A.ENDING_STOCK AS endingStock 
+              , A.NO_CFC_FLAG AS noCfcFlag
+              , A.NO_PFC_FLAG AS noPfcFlag
+              , A.ADD_ON_MIN_QTY AS addOnMinQty
+              , A.ADD_ON_SAFTY_QTY AS addOnSaftyQty
+              , A.WORKING_FLAG AS workingFlag
+              , A.STOCK_DAYS AS stockDays
+           FROM
+                TNR_RD_DETAIL A
+          <if test="swapData.businessPattern != null" >
+          INNER JOIN 
+                TNM_PARTS_MASTER TM
+             ON 
+                TM.PARTS_ID = A.PARTS_ID
+            AND 
+                TM.BUSINESS_PATTERN = #{swapData.businessPattern}
+          </if>
+          <where> 
+            <if test="swapData.rundownMasterIds != null and swapData.rundownMasterIds.size() > 0" >
+                A.RUNDOWN_MASTER_ID IN 
+                <foreach item="rdMasterId" index="Index" collection="swapData.rundownMasterIds" open="(" separator="," close=")">
+                    #{rdMasterId}
+                </foreach>
+            </if>
+            <if test="swapData.allPartsFlag != null" >
+                AND A.SIMULATION_TYPE <![CDATA[<]]> #{NOT_REQUIRE} 
+            </if>
+          </where>
+          ORDER BY 
+                A.RUNDOWN_MASTER_ID
+              , A.IMP_INB_PLAN_DATE
+    </select>  
+                       
+    <select id="findShippingPlanList" resultType="com.chinaplus.common.bean.TntRdDetailAttachEx" parameterType="com.chinaplus.core.bean.BaseParam">
+         SELECT
+                M.RUNDOWN_MASTER_ID AS rundownMasterId
+              , A.ATTACH_TYPE AS attachType
+              , A.PFC_MONTH AS pfcMonth
+              , A.IMP_PO_NO AS impPoNo
+              , A.ETD AS etd
+              , A.ETA AS eta 
+              , A.IMP_INB_PLAN_DATE AS impInbPlanDate
+              , A.INVOICE_NO AS invoiceNo
+              , (CASE WHEN A.PFC_MONTH IS NOT NULL THEN TRM.ORDER_MONTH ELSE C.ORDER_MONTH END) AS orderMonth
+              , SUM(A.QTY) AS qty
+           FROM
+                (SELECT DISTINCT
+                        RUNDOWN_DETAIL_ID
+                      , PARTS_ID
+                      , SUPPLIER_ID
+                      , ATTACH_TYPE
+                      , PFC_MONTH
+                      , IMP_PO_NO
+                      , ETD
+                      , ETA
+                      , IMP_INB_PLAN_DATE
+                      , QTY
+                      , INVOICE_NO
+                   FROM TNR_RD_ATTACH_SHIPPING) A
+          INNER JOIN 
+                TNR_RD_DETAIL M
+             ON 
+                M.RUNDOWN_DETAIL_ID = A.RUNDOWN_DETAIL_ID
+          <if test="swapData.businessPattern != null" >
+          INNER JOIN 
+                TNM_PARTS_MASTER TM
+             ON 
+                TM.PARTS_ID = A.PARTS_ID
+            AND 
+                TM.BUSINESS_PATTERN = #{swapData.businessPattern}
+          </if>
+          INNER JOIN 
+                TNR_RD_DETAIL TRD
+             ON 
+                TRD.RUNDOWN_DETAIL_ID = A.RUNDOWN_DETAIL_ID
+          INNER JOIN 
+                TNR_RD_MASTER TRM
+             ON 
+                TRM.RUNDOWN_MASTER_ID = TRD.RUNDOWN_MASTER_ID
+           LEFT JOIN 
+                (SELECT DISTINCT
+                        T.KANBAN_PLAN_NO
+                      , T.IMP_PO_NO
+                      , T.ORDER_MONTH   
+                  FROM TNF_ORDER_STATUS T) C
+             ON 
+                C.IMP_PO_NO = A.IMP_PO_NO
+             OR 
+                C.KANBAN_PLAN_NO = A.IMP_PO_NO
+          <where> 
+            <if test="swapData.rundownMasterIds != null and swapData.rundownMasterIds.size() > 0" >
+                M.RUNDOWN_MASTER_ID IN 
+                <foreach item="rdMasterId" index="Index" collection="swapData.rundownMasterIds" open="(" separator="," close=")">
+                    #{rdMasterId}
+                </foreach>
+            </if>
+          </where>
+          GROUP BY 
+                M.RUNDOWN_MASTER_ID
+              , A.ATTACH_TYPE
+              , A.PFC_MONTH
+              , A.IMP_PO_NO
+              , A.ETD
+              , A.ETA
+              , A.IMP_INB_PLAN_DATE
+              , A.INVOICE_NO
+              , C.ORDER_MONTH
+              , TRM.ORDER_MONTH
+          ORDER BY 
+                M.RUNDOWN_MASTER_ID
+              , A.IMP_INB_PLAN_DATE
+              , A.ETD
+              , A.ETA
+              , A.ATTACH_TYPE DESC
+              , orderMonth
+              , A.PFC_MONTH
+              , A.IMP_PO_NO
+              , A.INVOICE_NO
+    </select>  
+     
+    <select id="findShippingPlanListForHeader" resultType="com.chinaplus.common.bean.TntRdDetailAttachEx" parameterType="com.chinaplus.core.bean.BaseParam">
+         SELECT
+                A.ATTACH_TYPE AS attachType
+              , A.PFC_MONTH AS pfcMonth
+              , A.IMP_PO_NO AS impPoNo
+              , A.ETD AS etd
+              , A.ETA AS eta
+              , A.IMP_INB_PLAN_DATE AS impInbPlanDate
+              , A.INVOICE_NO AS invoiceNo
+              , (CASE WHEN A.PFC_MONTH IS NOT NULL THEN TRM.ORDER_MONTH ELSE C.ORDER_MONTH END) AS orderMonth
+              , MIN(A.VANNING_DATE) AS vanningDate
+              , MAX(A.VANNING_DATE) AS lastVanDate
+           FROM
+                TNR_RD_ATTACH_SHIPPING A
+          <if test="swapData.businessPattern != null" >
+          INNER JOIN 
+                TNM_PARTS_MASTER TM
+             ON 
+                TM.PARTS_ID = A.PARTS_ID
+            AND 
+                TM.BUSINESS_PATTERN = #{swapData.businessPattern}
+          </if>
+          INNER JOIN 
+                TNR_RD_DETAIL TRD
+             ON 
+                TRD.RUNDOWN_DETAIL_ID = A.RUNDOWN_DETAIL_ID
+          INNER JOIN 
+                TNR_RD_MASTER TRM
+             ON 
+                TRM.RUNDOWN_MASTER_ID = TRD.RUNDOWN_MASTER_ID
+           LEFT JOIN 
+                (SELECT DISTINCT
+                        T.KANBAN_PLAN_NO
+                      , T.IMP_PO_NO
+                      , T.ORDER_MONTH   
+                  FROM TNF_ORDER_STATUS T) C
+             ON 
+                C.IMP_PO_NO = A.IMP_PO_NO
+             OR 
+                C.KANBAN_PLAN_NO = A.IMP_PO_NO
+          <where> 
+            <if test="swapData.rundownMasterIds != null and swapData.rundownMasterIds.size() > 0" >
+                TRD.RUNDOWN_MASTER_ID IN 
+                <foreach item="rdMasterId" index="Index" collection="swapData.rundownMasterIds" open="(" separator="," close=")">
+                    #{rdMasterId}
+                </foreach>
+            </if>
+          </where>
+          GROUP BY
+                A.IMP_INB_PLAN_DATE
+              , A.ETD
+              , A.ETA
+              , A.ATTACH_TYPE
+              , A.PFC_MONTH
+              , A.IMP_PO_NO
+              , A.INVOICE_NO
+              , TRM.ORDER_MONTH
+              , C.ORDER_MONTH
+          ORDER BY 
+                A.IMP_INB_PLAN_DATE
+              , A.ETD
+              , A.ETA
+              , A.ATTACH_TYPE DESC
+              , orderMonth
+              , A.PFC_MONTH
+              , A.IMP_PO_NO
+              , A.INVOICE_NO
+    </select>  
+    
+    <select id="findYetEtdListForSingle" resultType="com.chinaplus.common.bean.TntNotInRundownEx" parameterType="com.chinaplus.core.bean.BaseParam">
+         <include refid="ConstDef"/>
+         SELECT
+                A.RUNDOWN_MASTER_ID AS rundownMasterId
+              , A.IMP_PO_NO AS impPoNo
+              , A.EXP_PO_NO AS expPoNo
+              , C.ORDER_MONTH AS orderMonth
+              , SUM(A.QTY) AS qty
+           FROM
+                (SELECT DISTINCT
+                        RUNDOWN_MASTER_ID
+                      , PARTS_ID
+                      , REASON_TYPE
+                      , IMP_PO_NO
+                      , EXP_PO_NO
+                      , ETD
+                      , ETA
+                      , TRANSPORT_MODE
+                      , INVOICE_NO
+                      , IMP_INB_DATE
+                      , PROCESS_DATE
+                      , QTY
+                   FROM TNR_NOT_IN_RUNDOWN) A
+          <if test="swapData.businessPattern != null" >
+          INNER JOIN 
+                TNM_PARTS_MASTER TM
+             ON 
+                TM.PARTS_ID = A.PARTS_ID
+            AND 
+                TM.BUSINESS_PATTERN = #{swapData.businessPattern}
+          </if>
+           LEFT JOIN 
+                (SELECT DISTINCT
+                        T.KANBAN_PLAN_NO
+                      , T.IMP_PO_NO
+                      , T.ORDER_MONTH   
+                  FROM TNF_ORDER_STATUS T) C
+             ON 
+                C.IMP_PO_NO = A.IMP_PO_NO
+             OR 
+                C.KANBAN_PLAN_NO = A.IMP_PO_NO
+          WHERE 
+                A.REASON_TYPE IN (#{ETD_DELAY_A}, #{ETD_DELAY_B})
+            <if test="swapData.rundownMasterIds != null and swapData.rundownMasterIds.size() > 0" >
+            AND 
+                A.RUNDOWN_MASTER_ID IN 
+                <foreach item="rdMasterId" index="Index" collection="swapData.rundownMasterIds" open="(" separator="," close=")">
+                    #{rdMasterId}
+                </foreach>
+            </if>
+          GROUP BY 
+                A.RUNDOWN_MASTER_ID
+              , A.IMP_PO_NO
+              , A.EXP_PO_NO
+              , C.ORDER_MONTH
+          ORDER BY 
+                A.RUNDOWN_MASTER_ID
+              , C.ORDER_MONTH
+              , A.IMP_PO_NO
+              , A.EXP_PO_NO
+    </select>  
+                    
+    <select id="findYetInboundListForSingle" resultType="com.chinaplus.common.bean.TntNotInRundownEx" parameterType="com.chinaplus.core.bean.BaseParam">
+         <include refid="ConstDef"/>
+         SELECT
+                A.RUNDOWN_MASTER_ID AS rundownMasterId
+              , A.INVOICE_NO AS invoiceNo
+              , A.ETD AS etd
+              , A.TRANSPORT_MODE AS transportMode
+              , A.ETA AS eta
+              , SUM(A.QTY) AS qty
+           FROM
+                (SELECT DISTINCT
+                        RUNDOWN_MASTER_ID
+                      , PARTS_ID
+                      , REASON_TYPE
+                      , IMP_PO_NO
+                      , EXP_PO_NO
+                      , ETD
+                      , ETA
+                      , TRANSPORT_MODE
+                      , INVOICE_NO
+                      , IMP_INB_DATE
+                      , PROCESS_DATE
+                      , QTY
+                   FROM TNR_NOT_IN_RUNDOWN) A
+          <if test="swapData.businessPattern != null" >
+          INNER JOIN 
+                TNM_PARTS_MASTER TM
+             ON 
+                TM.PARTS_ID = A.PARTS_ID
+            AND 
+                TM.BUSINESS_PATTERN = #{swapData.businessPattern}
+          </if>
+          WHERE 
+                A.REASON_TYPE = #{INBOUND_DELAY}
+            <if test="swapData.rundownMasterIds != null and swapData.rundownMasterIds.size() > 0" >
+            AND
+                A.RUNDOWN_MASTER_ID IN 
+                <foreach item="rdMasterId" index="Index" collection="swapData.rundownMasterIds" open="(" separator="," close=")">
+                    #{rdMasterId}
+                </foreach>
+            </if>
+          GROUP BY 
+                A.RUNDOWN_MASTER_ID
+              , A.INVOICE_NO
+              , A.ETD
+              , A.TRANSPORT_MODE
+              , A.ETA
+          ORDER BY 
+                A.RUNDOWN_MASTER_ID
+              , A.ETD
+              , A.ETA
+              , A.INVOICE_NO
+    </select> 
+                        
+    <select id="findImpWhOnHoldListForSingle" resultType="com.chinaplus.common.bean.TntNotInRundownEx" parameterType="com.chinaplus.core.bean.BaseParam">
+         <include refid="ConstDef"/>
+         SELECT
+                A.RUNDOWN_MASTER_ID AS rundownMasterId
+              , A.INVOICE_NO AS invoiceNo
+              , A.ETD AS etd
+              , A.TRANSPORT_MODE AS transportMode
+              , A.ETA AS eta
+              , A.IMP_INB_DATE AS impInbDate
+              , A.PROCESS_DATE AS processDate
+              , SUM(A.QTY) AS qty
+           FROM
+                (SELECT DISTINCT
+                        RUNDOWN_MASTER_ID
+                      , PARTS_ID
+                      , REASON_TYPE
+                      , IMP_PO_NO
+                      , EXP_PO_NO
+                      , ETD
+                      , ETA
+                      , TRANSPORT_MODE
+                      , INVOICE_NO
+                      , IMP_INB_DATE
+                      , PROCESS_DATE
+                      , QTY
+                   FROM TNR_NOT_IN_RUNDOWN) A
+          <if test="swapData.businessPattern != null" >
+          INNER JOIN 
+                TNM_PARTS_MASTER TM
+             ON 
+                TM.PARTS_ID = A.PARTS_ID
+            AND 
+                TM.BUSINESS_PATTERN = #{swapData.businessPattern}
+          </if>
+          WHERE 
+                A.REASON_TYPE = #{NG_ONHOLD}
+            <if test="swapData.rundownMasterIds != null and swapData.rundownMasterIds.size() > 0" >
+            AND
+                A.RUNDOWN_MASTER_ID IN 
+                <foreach item="rdMasterId" index="Index" collection="swapData.rundownMasterIds" open="(" separator="," close=")">
+                    #{rdMasterId}
+                </foreach>
+            </if>
+          GROUP BY 
+                A.RUNDOWN_MASTER_ID
+              , A.INVOICE_NO
+              , A.ETD
+              , A.TRANSPORT_MODE
+              , A.ETA
+              , A.IMP_INB_DATE
+              , A.PROCESS_DATE
+          ORDER BY 
+                A.RUNDOWN_MASTER_ID
+              , A.ETD
+              , A.ETA
+              , A.IMP_INB_DATE
+              , A.PROCESS_DATE
+              , A.INVOICE_NO
+    </select> 
+                               
+    <select id="findShippingPlanListForSingle" resultType="com.chinaplus.common.bean.TntRdDetailAttachEx" parameterType="com.chinaplus.core.bean.BaseParam">
+         <include refid="ConstDef"/>
+         SELECT
+                M.RUNDOWN_MASTER_ID AS rundownMasterId
+              , A.RUNDOWN_DETAIL_ID AS rundownDetailId
+              , A.ATTACH_TYPE AS attachType
+              , NVL(A.INVOICE_NO, A.IMP_PO_NO) AS impPoNo
+              , A.ETD AS etd
+              , A.ETA AS eta 
+              , A.IMP_INB_PLAN_DATE AS impInbPlanDate
+              , A.INVOICE_NO AS invoiceNo
+              , TIS.BL_DATE AS blDate
+              , TIS.TRANSPORT_MODE AS transportMode
+              , C.ORDER_MONTH AS orderMonth
+              , SUM(A.QTY) AS qty
+           FROM
+                (SELECT DISTINCT
+                        RUNDOWN_DETAIL_ID
+                      , PARTS_ID
+                      , SUPPLIER_ID
+                      , ATTACH_TYPE
+                      , PFC_MONTH
+                      , IMP_PO_NO
+                      , ETD
+                      , ETA
+                      , IMP_INB_PLAN_DATE
+                      , QTY
+                      , INVOICE_NO
+                   FROM TNR_RD_ATTACH_SHIPPING) A
+          INNER JOIN 
+                TNR_RD_DETAIL M
+             ON 
+                M.RUNDOWN_DETAIL_ID = A.RUNDOWN_DETAIL_ID
+          <if test="swapData.businessPattern != null" >
+          INNER JOIN 
+                TNM_PARTS_MASTER TM
+             ON 
+                TM.PARTS_ID = A.PARTS_ID
+            AND 
+                TM.BUSINESS_PATTERN = #{swapData.businessPattern}
+          </if>
+           LEFT JOIN 
+                (SELECT DISTINCT
+                        T.KANBAN_PLAN_NO
+                      , T.IMP_PO_NO
+                      , T.ORDER_MONTH   
+                  FROM TNF_ORDER_STATUS T) C
+             ON 
+                C.IMP_PO_NO = A.IMP_PO_NO
+             OR 
+                C.KANBAN_PLAN_NO = A.IMP_PO_NO
+           LEFT JOIN (
+                SELECT DISTINCT
+                       INVOICE_NO
+                     , BL_DATE
+                     , TRANSPORT_MODE
+                  FROM TNT_INVOICE_SUMMARY
+                 WHERE INVOICE_STATUS <![CDATA[<]]> ${InvoiceStatus_CANCELLED}
+                   AND INVOICE_STATUS > #{InvoiceStatus_NOT_APPROVED}) TIS
+             ON TIS.INVOICE_NO = A.INVOICE_NO
+          <where> 
+            <if test="swapData.rundownMasterIds != null and swapData.rundownMasterIds.size() > 0" >
+                M.RUNDOWN_MASTER_ID IN 
+                <foreach item="rdMasterId" index="Index" collection="swapData.rundownMasterIds" open="(" separator="," close=")">
+                    #{rdMasterId}
+                </foreach>
+            </if>
+          </where>
+          GROUP BY 
+                M.RUNDOWN_MASTER_ID
+              , A.RUNDOWN_DETAIL_ID
+              , A.ATTACH_TYPE
+              , NVL(A.INVOICE_NO, A.IMP_PO_NO)
+              , A.ETD
+              , A.ETA
+              , A.IMP_INB_PLAN_DATE
+              , A.INVOICE_NO
+              , TIS.BL_DATE
+              , TIS.TRANSPORT_MODE
+              , C.ORDER_MONTH
+          ORDER BY 
+                M.RUNDOWN_MASTER_ID
+              , A.RUNDOWN_DETAIL_ID
+              , A.IMP_INB_PLAN_DATE
+              , A.ETD
+              , A.ETA
+              , A.ATTACH_TYPE
+              , A.INVOICE_NO
+              , impPoNo
+    </select>
+    
+</mapper>

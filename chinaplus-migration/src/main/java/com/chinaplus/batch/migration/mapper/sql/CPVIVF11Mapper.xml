@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.batch.migration.service.CPVIVF11Service">
+
+    <select id="findUploadedInvoices" parameterType="com.chinaplus.batch.migration.bean.CPVIVF11SupportEntity" resultType="com.chinaplus.batch.migration.bean.CPVIVF11SupportEntity" flushCache="true">
+        SELECT
+            B.INVOICE_NO AS invoiceNo,
+            D.KANBAN_PLAN_NO AS kanbanPlanNo,
+            D.TRANSPORT_MODE AS transMode,
+            D.ETD AS etd,
+            D.ETA AS eta,
+            D.IMP_INB_PLAN_DATE AS inbPlanDate,
+            C.PARTS_ID AS partsId,
+            SUM(C.QTY) AS invoiceQty
+        FROM
+            TNT_INVOICE_SUMMARY A
+        INNER JOIN
+            TNT_INVOICE B ON A.INVOICE_SUMMARY_ID = B.INVOICE_SUMMARY_ID
+        INNER JOIN
+            TNT_INVOICE_PARTS C ON B.INVOICE_ID = C.INVOICE_ID
+        INNER JOIN
+            TNT_INVOICE_GROUP D ON B.INVOICE_GROUP_ID = D.INVOICE_GROUP_ID
+        WHERE
+            A.UPLOAD_STATUS = 2
+        AND A.NON_SHIPPING_ROUTE IS NULL
+        AND A.OFFICE_ID = #{officeId}
+        GROUP BY
+            B.INVOICE_NO,
+            D.KANBAN_PLAN_NO,
+            D.TRANSPORT_MODE,
+            D.ETD,
+            D.ETA,
+            D.IMP_INB_PLAN_DATE,
+            C.PARTS_ID
+        ORDER BY
+            D.KANBAN_PLAN_NO ASC,
+            D.TRANSPORT_MODE ASC,
+            D.ETD ASC,
+            D.ETA ASC,
+            D.IMP_INB_PLAN_DATE ASC,
+            B.INVOICE_NO ASC
+    </select>
+
+    <select id="findNeedAdjuestKanbanPlan" parameterType="com.chinaplus.batch.migration.bean.CPVIVF11AdjustEntity" resultType="com.chinaplus.batch.migration.bean.CPVIVF11AdjustEntity" flushCache="true">
+        SELECT DISTINCT
+            A.KANBAN_ID AS kanbanId,
+            A.KANBAN_PLAN_NO AS kanbanPlanNo,
+            A.ORDER_MONTH AS orderMonth,
+            B.KANBAN_SHIPPING_ID AS kanbanShippingId,
+            B.SHIPPING_UUID AS shippingUUID,
+            B.ORIGINAL_VERSION AS originalVersion,
+            B.REVISION_VERSION AS revisionVersion,
+            B.TRANSPORT_MODE AS transportMode,
+            B.COMPLETED_FLAG AS completedFlag,
+            B.NIRD_FLAG AS nirdFlag,
+            B.ETD AS etd,
+            B.ETA AS eta,
+            B.IMP_INB_PLAN_DATE AS inbPlanDate,
+            D.KANBAN_PLAN_ID AS differBoxId,
+            E.KANBAN_PLAN_ID AS dummyBoxId,
+            C.PARTS_ID AS partsId,
+            C.QTY AS planQty
+        FROM
+            TNT_KANBAN A
+        INNER JOIN
+            (SELECT 
+                MAX(KANBAN_ID) AS KANBAN_ID 
+            FROM 
+                TNT_KANBAN 
+            WHERE 
+                KANBAN_PLAN_NO = #{kanbanPlanNo}
+            ) K ON A.KANBAN_ID = K.KANBAN_ID
+        INNER JOIN
+            TNT_KANBAN_SHIPPING B ON A.KANBAN_ID = B.KANBAN_ID
+        INNER JOIN
+            TNT_KANBAN_SHIPPING_PARTS C ON B.KANBAN_SHIPPING_ID = C.KANBAN_SHIPPING_ID
+        LEFT JOIN
+            TNT_KANBAN_PLAN D ON B.KANBAN_ID = D.KANBAN_ID AND B.SHIPPING_UUID = D.SHIPPING_UUID AND D.PLAN_TYPE = 1
+        LEFT JOIN
+            TNT_KANBAN_PLAN E ON B.KANBAN_ID = E.KANBAN_ID AND B.SHIPPING_UUID = E.SHIPPING_UUID AND E.PLAN_TYPE = 3
+        WHERE
+            A.STATUS != 99
+        AND B.COMPLETED_FLAG = 0
+        ORDER BY
+            A.KANBAN_PLAN_NO ASC,
+            B.TRANSPORT_MODE ASC,
+            B.ETD ASC,
+            B.ETA ASC,
+            B.IMP_INB_PLAN_DATE ASC
+    </select>
+        
+    <select id="findAllKanbanParts" parameterType="com.chinaplus.batch.migration.bean.CPVIVF11AdjustEntity" resultType="com.chinaplus.batch.migration.bean.CPVIVF11AdjustEntity" flushCache="true">
+        SELECT DISTINCT
+            A.KANBAN_ID AS kanbanId,
+            A.KANBAN_PLAN_NO AS kanbanPlanNo,
+            B.PARTS_ID AS partsId,
+            B.SPQ AS spq,
+            B.STATUS AS partStatus,
+            C.SHIPPING_ROUTE_CODE AS shippingRouteCode,
+            C.EXP_PARTS_ID AS expPartsId
+        FROM
+            TNT_KANBAN A
+        INNER JOIN
+            TNT_KANBAN_PARTS B ON A.KANBAN_ID = B.KANBAN_ID
+        INNER JOIN
+            TNM_EXP_PARTS C ON A.SUPPLIER_ID = C.SUPPLIER_ID AND B.PARTS_ID = C.PARTS_ID
+        WHERE
+            A.KANBAN_ID = #{kanbanId}
+    </select>
+
+    <select id="findMaxOriginalVersion" parameterType="com.chinaplus.batch.migration.bean.CPVIVF11AdjustEntity" resultType="com.chinaplus.batch.migration.bean.CPVIVF11AdjustEntity" flushCache="true">
+        SELECT
+            MAX(A.ORIGINAL_VERSION) AS originalVersion
+        FROM
+            TNT_KANBAN_SHIPPING A
+        WHERE
+            A.KANBAN_ID = #{kanbanId}
+    </select>
+    
+</mapper>

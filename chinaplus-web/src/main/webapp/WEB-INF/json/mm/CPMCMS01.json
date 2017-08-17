@@ -1,0 +1,1440 @@
+/**
+ * Calendar Master
+ * 
+ * @screen CPMCMS01
+ * @author shi_yuxi
+ */
+CPMCMS01 = {
+    id : chinaplus.screen.CPMCMS01,
+    xtype : 'form',
+    title : chinaplus.label.CPMCMS01_Label_PageTitle,
+    header : false,
+    autoScroll : true,
+    frame : true,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    getFormValues : function() {
+        var form = Ext.getCmp(chinaplus.screen.CPMCMS01).getForm();
+        var values = form.getFieldValues();
+        values.calendarCodeRawValue = Ext.getCmp('combo_calendarCode').getRawValue();
+
+        var msg = [];
+        var popMsg = TRF.util.getMessage('w1039');
+        if (Ext.isEmpty(values.ttcOfficeCode)) {
+            Ext.Array.push(msg, TRF.util.getMessage('w1001_005', 'CPMCMS01_Label_TTCOfficeCode'));
+        }
+        if (Ext.isEmpty(values.party)) {
+            Ext.Array.push(msg, TRF.util.getMessage('w1001_005', 'CPMCMS01_Label_Party'));
+        }
+        if (Ext.isEmpty(values.year)) {
+            Ext.Array.push(msg, TRF.util.getMessage('w1001_005', 'CPMCMS01_Label_Year'));
+        }
+
+        if (Ext.isEmpty(values.partyCode)) {
+            if (Ext.isEmpty(values.partyCodeCombo) && Ext.isEmpty(values.calendarCode)) {
+                Ext.Array.push(msg, TRF.util.getMessage('w1039'));
+            }
+        } else if (Ext.isEmpty(values.partyCodeCombo)) {
+            if (Ext.isEmpty(values.partyCode) && Ext.isEmpty(values.calendarCode)) {
+                Ext.Array.push(msg, TRF.util.getMessage('w1039'));
+            }
+
+        }
+
+        if (msg.length > 0) {
+            TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, msg, msg);
+            return;
+        }
+        delete values.checkbox;
+        return values;
+    },
+    getValues : function() {
+        var form = Ext.getCmp(chinaplus.screen.CPMCMS01).getForm();
+        var values = form.getFieldValues();
+        values.calendarCodeRawValue = Ext.getCmp('combo_calendarCode').getRawValue();
+        delete values.checkbox;
+        return values;
+    },
+    tbar : [{
+                iconCls : 'btn-search',
+                id : 'CPMCMS01_Button_Search',
+                text : chinaplus.label.CPMCMS01_Button_Search,
+                needConfirmChange : false,
+                /** search */
+                handler : function() {
+                    CPMCMS01.sreachFunc();
+                }
+            }, {
+                text : chinaplus.label.CPMCMS01_Button_Modify,
+                iconCls : 'btn-modify',
+                id : chinaplus.screen.CPMCMS01 + "_btnModify",
+                hidden : TRF.util.isDetailTabMode_View() ? false : true,
+                handler : function() {
+                    CPMCMS01.modifyFunc();
+                }
+            }, {
+                iconCls : 'btn-save',
+                id : 'CPMCMS01_Button_Save',
+                hidden : true,
+                text : chinaplus.label.CPMCMS01_Button_Save,
+                needConfirmChange : true,
+                /** save */
+                handler : function() {
+                    // callAjax to do insert or update
+                    // var backFun = function(responseData) {
+                    // if (responseData.success) {
+                    // // show message
+                    // var message = TRF.util.getMessage('i1004',
+                    // [chinaplus.label.CPMCMS01_Button_Save]);
+                    // TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_INFO,
+                    // message, [message]);
+                    // }
+                    // };
+                    var params = {
+                        'uploadProcess' : 'check',
+                        'calendarCodeRawValue' : Ext.getCmp('combo_calendarCode').getRawValue()
+                    };
+
+                    /**
+                     * Get SessionKey function.
+                     * 
+                     * @param responseData have sessionKey
+                     */
+                    var func = function(responseData) {
+
+                        var sessionKey = '';
+                        sessionKey = responseData.result
+
+                        /**
+                         * Get MessageCodes
+                         * 
+                         * @param applicationData have messageCodes
+                         */
+                        var CPMCMS01_backFun = function(applicationData) {
+                            if (null == applicationData.messageCodes || applicationData.messageCodes.length == 0) {
+                                Ext.getCmp(chinaplus.screen.CPMCMS01 + '_pageFrom').setValue('sreach');
+                                Ext.getCmp('CPMCMS01_Button_Save').hide();
+                                Ext.getCmp(chinaplus.screen.CPMCMS01 + "_btnModify").show();
+                                var office = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_cmImpOfficeCode').getValue();
+                                var partyType = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_party').getValue();
+                                var country = Ext.getCmp('combo_country').getValue();
+                                var partyCode = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCode').getRawValue();
+                                var calenderCode = Ext.getCmp('combo_calendarCode').getValue();
+                                var year = Ext.getCmp('combo_year').getValue();
+
+                                var params = {
+                                    "pageFrom" : null
+                                };
+                                Ext.getStore(chinaplus.screen.CPMCMS01 + '_cmImpOfficeCodeStore').removeAll();
+                                TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_cmImpOfficeCodeStore'), params);
+                                Ext.getStore(chinaplus.screen.CPMCMS01 + '_calendarCodeStore').removeAll();
+                                var hidden = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCode').getValue();
+                                Ext.getCmp(chinaplus.screen.CPMCMS01 + "_partyCodeHidden").setValue(hidden);
+                                
+                                
+
+                                //Ext.getCmp(chinaplus.screen.CPMCMS01 + "_partyCodeCombo").setValue(partyCode);
+                                Ext.getCmp(chinaplus.screen.CPMCMS01 + "_partyCode").hide();
+                                Ext.getCmp(chinaplus.screen.CPMCMS01 + "_partyCodeCombo").show();
+                                Ext.getCmp(chinaplus.screen.CPMCMS01 + "_partyCodeCombo").setRawValue(partyCode);
+                                Ext.getCmp(chinaplus.screen.CPMCMS01 + '_companyCalendar').setHtml(Ext.getCmp(chinaplus.screen.CPMCMS01 + '_companyCalendar').html.replace('<td colspan="21" class="ux-companyCalendar-calendarYear-red">','<td colspan="21" class="ux-companyCalendar-calendarYear">'));
+                                
+                                Ext.getCmp("combo_calendarCode").setFieldStyle("background:rgb(255,255,255)")
+                                Ext.getCmp("combo_calendarCode").setEditable(false);
+                                
+                                var calendarId = Ext.getCmp('combo_calendarCode').getValue();
+                                var calendarRawValue = Ext.getCmp('combo_calendarCode').getRawValue();
+                                var today = Ext.util.Format.date(new Date(), 'Y-m-d');                         
+                                var officeId = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_cmImpOfficeCode').getValue();
+                                params = {
+                                        'calendarId' : calendarId,
+                                        'today' : today,
+                                        'calendarRawValue' : calendarRawValue,
+                                        'officeId' : officeId
+                                };
+                                TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_yearStore'), params);                          
+                                //var year = Ext.getCmp(chinaplus.screen.CPMCMS01).getFormValues().year;
+                                //Ext.getCmp('combo_year').setValue(year);
+                                CPMCMS01.sreachFunc();
+                                
+                                // show message
+                                var message = TRF.util.getMessage('i1004', [chinaplus.label.CPMCMS01_Button_Save]);
+                                TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_INFO, message, [message]);
+                                Ext.getCmp(chinaplus.screen.CPMCMS01).isEdited = true;
+                                
+                            } else {
+                                if (applicationData.confirm == "yes") {
+                                    TRF.util.ajaxSubmit(CPMCMS01_backFun, chinaplus.screen.CPMCMS01, 'master/CPMCMS01/saveYearCalendar', {
+                                                'sessionMapKey' : sessionKey,
+                                                'uploadProcess' : 'yes'
+                                            });
+                                } else if (applicationData.confirm == "no") {
+                                    // var params = {
+                                    // 'sessionMapKey' : sessionKey,
+                                    // 'uploadProcess' : 'no'
+                                    // };
+                                    // TRF.util.uploadSubmit(form, null,
+                                    // chinaplus.screen.CPOCSS01,
+                                    // 'om/CPOCSF11/upload', params);
+                                }
+                            }
+                            
+                        }
+                        if (responseData.success) {
+                            var cmp = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_companyCalendar');
+                            var nonWorkingDay = cmp.getNonWorkingDay();
+                            if (Ext.isArray(nonWorkingDay)) {
+                                var values = Ext.getCmp(chinaplus.screen.CPMCMS01).getFormValues();
+                                if (values) {
+                                    var year = cmp.getYear().toString();
+                                    values.year = year;
+                                    values.nonWorkingDays = nonWorkingDay;
+                                    TRF.util.ajaxSubmit(CPMCMS01_backFun, chinaplus.screen.CPMCMS01, 'master/CPMCMS01/saveYearCalendar', {
+                                                sessionMapKey : sessionKey,
+                                                uploadProcess : 'check'
+                                            }, {
+                                                data : values
+                                            });
+                                }
+                            }
+                        }
+                    }
+
+                    TRF.util.ajaxSubmit(func, chinaplus.screen.CPMCMS01, 'common/getSessionKey', params, null);
+
+                }
+            }, {
+                iconCls : 'btn-download',
+                id : 'CPMCMS01_Button_Download',
+                hidden : true,
+                text : chinaplus.label.CPMCMS01_Button_Download,
+                /** download */
+                handler : function() {
+                    var backFuns = function(applicationData) {
+                        if (applicationData.success) {
+                            TRF.util.showMessageBoxByMsgIdAndArgs('i1003');
+                        }
+                    };
+                    var values = Ext.getCmp(chinaplus.screen.CPMCMS01).getFormValues();
+                    if (values) {
+                        var cmp = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_companyCalendar');
+                        var year = cmp.getYear();
+                        values.nonWorkingDays = cmp.getNonWorkingDay();
+                        var calendarCodeObject = Ext.getCmp(chinaplus.screen.CPMCMS01).down('#combo_calendarCode');
+                        var partyCodeValue = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCode').getRawValue();
+                        var partyCodeComboValue = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCodeCombo').getRawValue();
+                        if (partyCodeValue != '') {
+                            partyCodeValue = partyCodeValue;
+                        } else if (partyCodeComboValue != '') {
+                            partyCodeValue = partyCodeComboValue;
+                        }
+
+                        var params = {
+                            'regionId' : values.country,
+                            'calendarId' : calendarCodeObject.getRawValue(),
+                            'year' : year.toString(),
+                            'office' : Ext.getCmp(chinaplus.screen.CPMCMS01 + '_cmImpOfficeCode').getRawValue(),
+                            'partyType' : Ext.getCmp(chinaplus.screen.CPMCMS01 + '_party').getRawValue(),
+                            'partyCode' : partyCodeValue,
+                            'nonWorkingDays' : values.nonWorkingDays,
+                            needCheck : true
+                        };
+
+                        TRF.util.downloadSubmit(backFuns, chinaplus.screen.CPMCMS01, 'master/CPMCMF01/downloadcheck', params, 'master/CPMCMF01/download');
+                    }
+                }
+            }],
+    items : [{
+                xtype : 'container',
+                layout : {
+                    type : 'table',
+                    columns : 1
+                },
+                items : [{
+                            xtype : 'combo',
+                            fieldLabel : chinaplus.label.CPMCMS01_Label_TTCOfficeCode,
+                            labelSeparator : '',
+                            id : chinaplus.screen.CPMCMS01 + '_cmImpOfficeCode',
+                            name : 'ttcOfficeCode',
+                            msgTarget : 'side',
+                            margin : '25 50 0 50',
+                            store : TRF.util.createStore(chinaplus.screen.CPMCMS01, 'master/CPMCMS01/loadOfficeCodeByIds', 'Combo', chinaplus.screen.CPMCMS01
+                                            + '_cmImpOfficeCodeStore'),
+                            dispalyField : 'text',
+                            valueField : 'id',
+                            queryMode : 'local',
+                            editable : false,
+                            fieldStyle : 'background:rgb(255,255,153)',
+                            queryParam : false,
+                            needConfirmChange : false,
+                            editable : false,
+                            labelWidth : 100,
+                            labelAlign : 'right',
+                            listeners : {
+                                change : function() {
+                                    CPMCMS01.loadCmImpOfficeCodeChange();
+                                }
+                            }
+                        }]
+            },{
+                xtype : 'container',
+                layout : {
+                    type : 'table',
+                    columns : 3,
+                    width : 100
+                },
+                // autoScroll : true,
+                items : [{
+                            xtype : 'combo',
+                            fieldLabel : chinaplus.label.CPMCMS01_Label_Party,
+                            labelSeparator : '',
+                            id : chinaplus.screen.CPMCMS01 + '_party',
+                            name : 'party',
+                            msgTarget : 'side',
+                            margin : '0 120 0 120',
+                            store : TRF.util.createStore(chinaplus.screen.CPMCMS01, 'mm/CPMPMS02/loadParty', 'Combo', chinaplus.screen.CPMCMS01 + '_partyStore'),
+                            dispalyField : 'text',
+                            valueField : 'id',
+                            queryMode : 'local',
+                            editable : false,
+                            fieldStyle : 'background:rgb(255,255,153)',
+                            queryParam : false,
+                            needConfirmChange : false,
+                            editable : false,
+                            labelWidth : 30,
+                            labelAlign : 'right',
+                            listeners : {
+                                change : function() {
+                                    CPMCMS01.loadPartyChange();
+                                }
+                            }
+                        }, {
+                            xtype : 'combo',
+                            name : 'country',
+                            id : 'combo_country',
+                            fieldLabel : chinaplus.label.CPMCMS01_Label_EXPIMPCountryCountry,
+                            msgTarget : 'side',
+                            labelWidth : 70,
+                            labelSeparator : '',
+                            labelAlign : 'right',
+                            margin : '0 50 0 0',
+                            store : TRF.util.createStore(chinaplus.screen.CPMCMS01, 'master/CPMCMS01/loadCountryCombo', 'Combo', chinaplus.screen.CPMCMS01 + '_countryStore'),
+                            displayField : 'text',
+                            valueField : 'id',
+                            queryMode : 'local',
+                            editable : false,
+                            needConfirmChange : false,
+                            listeners : {
+                                change : function(thisObj, newValue, oldValue, eOpts) {
+                                    /*
+                                     * var calendarCodeObject =
+                                     * Ext.getCmp(chinaplus.screen.CPMCMS01).down('#combo_calendarCode');
+                                     * var yearObject =
+                                     * Ext.getCmp(chinaplus.screen.CPMCMS01).down('#combo_year');
+                                     * yearObject.clearValue();
+                                     * calendarCodeObject.clearValue();
+                                     * 
+                                     * Ext.getCmp(chinaplus.screen.CPMCMS01 +
+                                     * '_cmImpOfficeCode').setValue('');
+                                     * Ext.getCmp(chinaplus.screen.CPMCMS01 +
+                                     * '_partyCode').setValue('');
+                                     * Ext.getStore(chinaplus.screen.CPMCMS01 +
+                                     * '_calendarCodeStore').removeAll();
+                                     * 
+                                     * var calendarCodeStore =
+                                     * Ext.getStore(chinaplus.screen.CPMCMS01 +
+                                     * '_calendarCodeStore'); var codeMap = {
+                                     * data : newValue };
+                                     * TRF.util.loadStore(calendarCodeStore, {},
+                                     * null, codeMap);
+                                     * Ext.getCmp(chinaplus.screen.CPMCMS01 +
+                                     * '_companyCalendar').hide();
+                                     * Ext.getCmp(chinaplus.screen.CPMCMS01).down('#CPMCMS01_Button_Download').hide();
+                                     */
+                                    Ext.getStore(chinaplus.screen.CPMCMS01 + '_partyCodeStore').removeAll();
+                                    Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCode').setValue('');
+                                    Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCode').destroyList();
+                                    Ext.getStore(chinaplus.screen.CPMCMS01 + '_partyCodeStoreCombo').removeAll();
+                                    Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCodeCombo').setValue('');
+                                    var party = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_party').getValue();
+                                    var country = Ext.getCmp('combo_country').getRawValue();
+                                    var officeId = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_cmImpOfficeCode').getValue();
+                                    var pageFrom = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_pageFrom').getValue();
+                                    var partyCode = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCode');
+                                    var partyCodeCombo = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCodeCombo');
+                                    var partyCodeValue = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCode').getValue();
+                                    var partyCodeComboValue = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCodeCombo').getValue();
+                                   
+                                    if ('modify' != pageFrom) {
+                                        Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCodeHidden').setValue('');
+                                    }
+                                    if (party != '') {
+                                        if (pageFrom == 'modify') {
+                                            if (party == 7) {
+                                                partyCode.hide();
+                                                partyCodeCombo.show();
+                                            } else {
+                                                partyCode.show();
+                                                partyCodeCombo.hide();
+                                            }
+                                        } else {
+                                            partyCode.hide();
+                                            partyCodeCombo.show();
+                                        }
+                                        var params = {
+                                            'officeId' : officeId,
+                                            'party' : party,
+                                            'country' : country,
+                                            'pageFrom' : pageFrom
+                                        };
+                                        if (partyCodeValue != '') {
+                                            partyCodeValue = partyCodeValue;
+                                        } else if (partyCodeComboValue != '') {
+                                            partyCodeValue = partyCodeComboValue;
+                                        }
+                                        var flg = false;
+                                        var backFunPartyCodeStore = function(records) {
+                                            if (records.length == 1) {
+                                                Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCode').setValue(records[0].data.id);
+                                                
+                                            } else if (records.length > 1) {
+                                                for (var i = 0; i < records.length; i++) {
+                                                    if (records[i].data.id == partyCodeValue) {
+                                                        flg = true;
+                                                        break;
+                                                    }
+
+                                                }
+                                                if (flg) {
+                                                    Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCode').setValue(partyCodeValue);
+                                                    
+                                                } else {
+                                                    Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCode').setValue('');
+                                                    Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCode').destroyList('');
+                                                    
+                                                }
+
+                                            }
+                                            
+                                            TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_partyCodeStoreCombo'), params, backFunPartyCodeStoreCombo);
+                                        }
+                                        
+                                        
+                                        var backFunPartyCodeStoreCombo = function(records) {
+                                            if (records.length == 1) {
+                                               
+                                                Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCodeCombo').setValue(records[0].data.id);
+                                            } else if (records.length > 1) {
+                                                for (var i = 0; i < records.length; i++) {
+                                                    if (records[i].data.id == partyCodeValue) {
+                                                        flg = true;
+                                                        break;
+                                                    }
+
+                                                }
+                                                if (flg) {
+                                                    
+                                                    Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCodeCombo').setValue(partyCodeValue);
+                                                } else {
+                                                   
+                                                    Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCodeCombo').setValue('');
+                                                }
+
+                                            }
+                                        }
+                                        
+                                        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_partyCodeStore'), params, backFunPartyCodeStore);
+                                        
+                                    }
+
+                                }
+                            }
+                        }, {
+                            xtype : 'checkcombo',
+                            fieldLabel : chinaplus.label.CPMCMS01_Label_PartyCode,
+                            labelSeparator : '',
+                            id : chinaplus.screen.CPMCMS01 + '_partyCode',
+                            name : 'partyCode',
+                            margin : '25 50',
+                            msgTarget : 'side',
+                            hidden : true,
+                            addAllSelector : true,
+                            multiSelect : true,
+                            store : TRF.util.createStore(chinaplus.screen.CPMCMS01, 'master/CPMCMS01/loadPartyCode', 'Combo', chinaplus.screen.CPMCMS01 + '_partyCodeStore'),
+                            dispalyField : 'text',
+                            valueField : 'id',
+                            queryMode : 'local',
+                            editable : false,
+                            needConfirmChange : false,
+                            queryParam : false,
+                            labelWidth : 60,
+                            labelAlign : 'right',
+                            listeners : {
+                                change : function() {
+                                    CPMCMS01.loadPartyCodeChange();
+                                }
+                            }
+                        }, {
+                            xtype : 'combo',
+                            fieldLabel : chinaplus.label.CPMCMS01_Label_PartyCode,
+                            labelSeparator : '',
+                            id : chinaplus.screen.CPMCMS01 + '_partyCodeCombo',
+                            name : 'partyCodeCombo',
+                            margin : '25 50',
+                            msgTarget : 'side',
+                            store : TRF.util.createStore(chinaplus.screen.CPMCMS01, 'master/CPMCMS01/loadPartyCode', 'Combo', chinaplus.screen.CPMCMS01 + '_partyCodeStoreCombo'),
+                            dispalyField : 'text',
+                            valueField : 'id',
+                            queryMode : 'local',
+                            editable : false,
+                            queryParam : false,
+                            editable : false,
+                            needConfirmChange : false,
+                            labelWidth : 60,
+                            labelAlign : 'right',
+                            listeners : {
+                                change : function() {
+
+                                    CPMCMS01.loadPartyCodeChange();
+
+                                }
+                            }
+                        }, {
+                            xtype : 'combo',
+                            name : 'calendarCode',
+                            id : 'combo_calendarCode',
+                            fieldLabel : chinaplus.label.CPMCMS01_Label_CalendarCode,
+                            msgTarget : 'side',
+                            labelWidth : 78,
+                            autoFitErrors : false,
+                            labelSeparator : '',
+                            labelAlign : 'right',
+                            margin : '0 72',
+                            store : TRF.util.createStore(chinaplus.screen.CPMCMS01, 'master/CPMCMS01/loadCalendarCodeCombo', 'Combo', chinaplus.screen.CPMCMS01
+                                            + '_calendarCodeStore'),
+                            displayField : 'text',
+                            valueField : 'id',
+                            queryMode : 'local',
+                            needConfirmChange : false,
+                            queryParam : false,
+                            editable : false,
+                            listeners : {
+                                change : function(thisObj, newValue, oldValue, eOpts) {
+                                    /*
+                                     * var yearObject =
+                                     * Ext.getCmp(chinaplus.screen.CPMCMS01).down('#combo_year');
+                                     * yearObject.clearValue(); var yearStore =
+                                     * Ext.getStore(chinaplus.screen.CPMCMS01 +
+                                     * '_yearStore'); var countryID =
+                                     * Ext.getCmp(chinaplus.screen.CPMCMS01).down('#combo_country').getRawValue();
+                                     * var today = Ext.util.Format.date(new
+                                     * Date(), 'Y-m-d'); var codeMap = { data :
+                                     * countryID + "," + newValue + "," + today };
+                                     * TRF.util.loadStore(yearStore, {}, null,
+                                     * codeMap);
+                                     * Ext.getCmp(chinaplus.screen.CPMCMS01 +
+                                     * '_companyCalendar').hide();
+                                     * Ext.getCmp(chinaplus.screen.CPMCMS01).down('#CPMCMS01_Button_Download').hide();
+                                     */
+                                    Ext.getCmp('combo_year').setValue('');
+                                    var calendarId = Ext.getCmp('combo_calendarCode').getValue();
+                                    var calendarRawValue = Ext.getCmp('combo_calendarCode').getRawValue();
+                                    var today = Ext.util.Format.date(new Date(), 'Y-m-d');
+                                    var pageFrom = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_pageFrom').getValue();
+                                    var officeId = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_cmImpOfficeCode').getValue();
+                                    var params = {
+                                        'calendarId' : calendarId,
+                                        'today' : today,
+                                        'calendarRawValue' : calendarRawValue,
+                                        'officeId' : officeId
+                                    };
+                                    var backFun = function(records) {
+                                        if (records.length == 1) {
+                                            Ext.getCmp('combo_year').setValue(records[0].data.id);
+                                        }
+                                    }
+                                    TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_yearStore'), params, backFun);
+                                    Ext.getCmp(chinaplus.screen.CPMCMS01 + '_companyCalendar').hide();
+                                    Ext.getCmp(chinaplus.screen.CPMCMS01).down('#CPMCMS01_Button_Download').hide();
+                                    var calenderHiddenFlg = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_companyCalendar').hidden;
+                                    if (calenderHiddenFlg) {
+                                        if ('modify' == pageFrom) {
+                                            Ext.getCmp(chinaplus.screen.CPMCMS01).down('#CPMCMS01_Button_Save').hide();
+                                        }
+                                    }
+                                }
+                            }
+                        },{
+                            xtype : 'combo',
+                            name : 'year',
+                            id : 'combo_year',
+                            fieldLabel : chinaplus.label.CPMCMS01_Label_Year,
+                            msgTarget : 'side',
+                            labelWidth : 30,
+                            margin : '0 40',
+                            labelSeparator : '',
+                            labelAlign : 'right',
+                            store : TRF.util.createStore(chinaplus.screen.CPMCMS01, 'master/CPMCMS01/loadYearCombo', 'Combo', chinaplus.screen.CPMCMS01 + '_yearStore'),
+                            displayField : 'text',
+                            valueField : 'id',
+                            fieldStyle : 'background:rgb(255,255,153)',
+                            queryMode : 'local',
+                            queryParam : false,
+                            needConfirmChange : false,
+                            editable : false,
+                            listeners : {
+                                change : function(thisObj, newValue, oldValue, eOpts) {
+                                    /*
+                                     * Ext.getCmp(chinaplus.screen.CPMCMS01 +
+                                     * '_companyCalendar').hide();
+                                     * Ext.getCmp(chinaplus.screen.CPMCMS01).down('#CPMCMS01_Button_Save').hide();
+                                     * Ext.getCmp(chinaplus.screen.CPMCMS01).down('#CPMCMS01_Button_Download').hide();
+                                     */
+                                }
+                            }
+                        }, {
+                             xtype : 'textfield',
+                             labelWidth : 100,
+                             enforceMaxLength : true,
+                             labelSeparator : '',
+                             abelAlign : 'right',
+                             autoFitErrors: false,
+                             id : chinaplus.screen.CPMCMS01 + '_partyCodeHidden',
+                             name : 'remark',
+                             style : 'width:552px;',
+                             needConfirmChange : false,
+                             hidden : true,
+                            
+                        }]
+            }, Ext.create('Ext.ux.CompanyCalendar', {
+                        id : chinaplus.screen.CPMCMS01 + '_companyCalendar',
+                        margin : 20,
+                        needConfirmChange : true,
+                        onLastYear : function(year) {
+                            var values = Ext.getCmp(chinaplus.screen.CPMCMS01).getFormValues();
+                            if (values) {
+                                values.year = year;
+                                var store = Ext.getStore(chinaplus.screen.CPMCMS01 + '_calendarStore');
+                                if (store && store.isStore) {
+                                    Ext.getCmp(chinaplus.screen.CPMCMS01 + '_companyCalendar').setYear(values.year);
+                                    TRF.util.loadStore(store, {}, function() {
+                                            }, {
+                                                data : values
+                                            });
+                                }
+                            }
+                        },
+                        onNextYear : function(year) {
+                            var values = Ext.getCmp(chinaplus.screen.CPMCMS01).getFormValues();
+                            if (values) {
+                                values.year = year;
+                                var store = Ext.getStore(chinaplus.screen.CPMCMS01 + '_calendarStore');
+                                if (store && store.isStore) {
+                                    Ext.getCmp(chinaplus.screen.CPMCMS01 + '_companyCalendar').setYear(values.year);
+                                    TRF.util.loadStore(store, {}, function() {
+                                            }, {
+                                                data : values
+                                            });
+                                }
+                            }
+                        }
+                    }), {
+                xtype : 'textfield',
+                hidden : true,
+                id : chinaplus.screen.CPMCMS01 + '_pageFrom',
+                needConfirmChange : true,
+                
+            }],
+    initialize : function() {
+        // init Calendar Master
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_countryStore'));
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_partyStore'));
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_cmImpOfficeCodeStore'));
+
+        var model = Ext.define(null, {
+                    extend : 'Ext.data.Model'
+                });
+        var store = TRF.util.createStore(chinaplus.screen.CPMCMS01, 'master/CPMCMS01/getYearCalendar', model, chinaplus.screen.CPMCMS01 + '_calendarStore');
+        if (store && store.isStore) {
+            store.on('load', function(thisStore, records, successful) {
+                        var nonworkingDay = [];
+                        var existFlag = 1;
+                        if (successful && records && records.length >= 0) {
+                            if (records.length == 0) {
+                                existFlag = 0;
+                            } else {
+                                var record;
+                                for (var i in records) {
+                                    record = records[i];
+                                    Ext.Array.push(nonworkingDay, record.data.disCalendarDate);
+                                }
+                            }
+                        }
+                        
+                        var values = Ext.getCmp(chinaplus.screen.CPMCMS01).getFormValues();
+                        var calendarYear = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_companyCalendar').getYear(values.year);
+                        var currentYear = Ext.Date.subtract(new Date(), Ext.Date.DAY, 1).getFullYear();
+                        var bool = calendarYear < currentYear - 1;
+                        var pageFrom = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_pageFrom').getValue();
+                        if (bool) {
+                            Ext.getCmp(chinaplus.screen.CPMCMS01 + '_companyCalendar').down('#bottombar').hide();
+                        } else {
+                            Ext.getCmp(chinaplus.screen.CPMCMS01 + '_companyCalendar').down('#bottombar').show();
+                        }
+                        if (bool) {
+                            Ext.getCmp(chinaplus.screen.CPMCMS01).down('#CPMCMS01_Button_Save').hide();
+                        }
+                        if (calendarYear >= currentYear - 1 && pageFrom == 'modify') {
+
+                            Ext.getCmp(chinaplus.screen.CPMCMS01).down('#CPMCMS01_Button_Save').show();
+                        }
+                        if (calendarYear < currentYear - 1 && pageFrom == 'modify') {
+
+                            Ext.getCmp(chinaplus.screen.CPMCMS01).down('#CPMCMS01_Button_Save').hide();
+                        }
+                        
+
+                        // controlaccess
+                        TRF.util.controlAccess(Ext.getCmp(chinaplus.screen.CPMCMS01));
+
+                        Ext.getCmp(chinaplus.screen.CPMCMS01 + '_companyCalendar').loadCalendar(nonworkingDay, existFlag);
+                        Ext.getCmp(chinaplus.screen.CPMCMS01 + '_companyCalendar').show();
+                    });
+        }
+    },
+
+    /**
+     * load Cm Imp Office Code Change
+     */
+    loadCmImpOfficeCodeChange : function() {
+
+        /*
+         * Ext.getCmp('combo_country').clearValue();
+         * Ext.getCmp('combo_country').destroyList();
+         * Ext.getCmp(chinaplus.screen.CPMPMS02 + '_partyCode').clearValue();
+         * Ext.getCmp(chinaplus.screen.CPMPMS02 + '_partyCode').destroyList();
+         * Ext.getCmp(chinaplus.screen.CPMPMS02 +
+         * '_partyCodeCombo').clearValue(); Ext.getCmp(chinaplus.screen.CPMPMS02 +
+         * '_partyCodeCombo').destroyList();
+         * Ext.getCmp('combo_calendarCode').clearValue();
+         * Ext.getCmp('combo_calendarCode').destroyList();
+         * Ext.getCmp('combo_year').clearValue();
+         * Ext.getCmp('combo_year').destroyList();
+         */
+
+        Ext.getCmp('combo_country').setValue('');
+        Ext.getStore(chinaplus.screen.CPMCMS01 + '_partyCodeStore').removeAll();
+        Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCode').setValue('');
+        Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCode').destroyList();
+        Ext.getStore(chinaplus.screen.CPMCMS01 + '_partyCodeStoreCombo').removeAll();
+        Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCodeCombo').setValue('');
+        Ext.getCmp('combo_calendarCode').setValue('');
+        Ext.getCmp('combo_year').setValue('');
+        var officeId = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_cmImpOfficeCode').getValue();
+        var party = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_party').getValue();
+        var country = Ext.getCmp('combo_country').getRawValue();
+        var pageFrom = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_pageFrom').getValue();
+        var partyCode = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCode');
+        var partyCodeCombo = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCodeCombo');
+        var partyCodeValue = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCode').getValue();
+        var partyCodeComboValue = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCodeCombo').getValue();
+        var calenderHiddenFlg = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_companyCalendar').hidden;
+        if (calenderHiddenFlg) {
+            if ('modify' == pageFrom) {
+                Ext.getCmp(chinaplus.screen.CPMCMS01).down('#CPMCMS01_Button_Save').hide();
+            }
+        }
+
+        if (party != '') {
+            if (partyCodeValue != '') {
+                partyCodeValue = partyCodeValue;
+            } else if (partyCodeComboValue != '') {
+                partyCodeValue = partyCodeComboValue;
+            }
+            var params = {
+                'party' : party,
+                'country' : country,
+                'pageFrom' : pageFrom,
+                'officeId' : officeId,
+                'partyCode' : partyCodeValue,
+            };
+            var backFun = function(records) {
+
+                if (records.length == 1) {
+                    Ext.getCmp('combo_calendarCode').setValue(records[0].data.id);
+                }
+            }
+            CPMCMS01.loadCommon(params);
+
+            if ('modify' != pageFrom) {
+            Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCodeHidden').setValue('');
+                if (party != '') {
+                    if (party != null) {
+                        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_calendarCodeStore'), params, backFun);
+                    }
+                }
+            } else {
+                TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_calendarCodeStore'), params, backFun);
+            }
+            
+            /*Ext.getCmp('combo_country').setValue('');
+            Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCode').setValue('');
+            Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCodeCombo').setValue('');
+            Ext.getCmp('combo_calendarCode').setValue('');
+            Ext.getCmp('combo_year').setValue('');
+
+            Ext.getStore(chinaplus.screen.CPMCMS01 + '_partyCodeStore').removeAll();
+            Ext.getStore(chinaplus.screen.CPMCMS01 + '_partyCodeStoreCombo').removeAll();*/
+        }
+
+    },
+
+    /**
+     * load Party Change
+     */
+    loadPartyChange : function() {
+        //debugger;
+        Ext.getCmp('combo_country').setValue('');
+        Ext.getStore(chinaplus.screen.CPMCMS01 + '_partyCodeStoreCombo').removeAll();
+        Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCodeCombo').setValue('');
+        Ext.getStore(chinaplus.screen.CPMCMS01 + '_partyCodeStore').removeAll();
+        Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCode').setValue('');
+        Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCode').destroyList();
+        Ext.getCmp('combo_calendarCode').setValue('');
+        Ext.getCmp('combo_year').setValue('');
+
+        var officeId = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_cmImpOfficeCode').getValue();
+        var party = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_party').getValue();
+        var country = Ext.getCmp('combo_country').getRawValue();
+        var pageFrom = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_pageFrom').getValue();
+        var partyCode = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCode');
+        var partyCodeCombo = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCodeCombo');
+        var partyCodeValue = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCode').getValue();
+        var partyCodeComboValue = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCodeCombo').getValue();
+        var calenderHiddenFlg = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_companyCalendar').hidden;
+        if (calenderHiddenFlg) {
+            if ('modify' == pageFrom) {
+                Ext.getCmp(chinaplus.screen.CPMCMS01).down('#CPMCMS01_Button_Save').hide();
+            }
+        }
+
+        if (party != '') {
+
+            if (pageFrom == 'modify') {
+                if (party == 7) {
+                    partyCode.hide();
+                    partyCodeCombo.show();
+                } else {
+                    partyCode.show();
+                    partyCodeCombo.hide();
+                }
+            } else {
+                partyCode.hide();
+                partyCodeCombo.show();
+            }
+            if (partyCodeValue != '') {
+                partyCodeValue = partyCodeValue;
+            } else if (partyCodeComboValue != '') {
+                partyCodeValue = partyCodeComboValue;
+            }
+
+            var params = {
+                'party' : party,
+                'country' : country,
+                'pageFrom' : pageFrom,
+                'officeId' : officeId,
+                'partyCode' : partyCodeValue
+            };
+
+            var backFun = function(records) {
+
+                if (records.length == 1) {
+                    Ext.getCmp('combo_calendarCode').setValue(records[0].data.id);
+                } else if (records.length == 0) {
+                    var popMsg = TRF.util.getMessage('w1038');
+                    var lsMsgs = [];
+                    Ext.Array.push(popMsg, TRF.util.getMessage('w1038'));
+                    TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, popMsg, lsMsgs);
+                }
+            }
+            CPMCMS01.loadCommon(params);
+            
+                if (officeId != '') {
+                    if (officeId != null) {
+                        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_calendarCodeStore'), params, backFun);
+                    }
+                }
+            
+            if (party == 7) {
+                Ext.getCmp("combo_calendarCode").setEditable(false);
+            } else {
+                if ('modify' == pageFrom) {
+                    Ext.getCmp("combo_calendarCode").setEditable(true);
+                }
+            }
+            
+            if ('modify' != pageFrom) {
+                Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCodeHidden').setValue('');
+            }
+        }
+    },
+
+    /**
+     * load PartyCode Change
+     */
+    loadPartyCodeChange : function() {
+    
+        var officeId = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_cmImpOfficeCode').getValue();
+        var party = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_party').getValue();
+        var country = Ext.getCmp('combo_country').getRawValue();
+        var pageFrom = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_pageFrom').getValue();
+        var partyCode = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCode');
+        var partyCodeValue = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCode').getValue();
+        var partyCodeCombo = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCodeCombo');
+        var partyCodeComboValue = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCodeCombo').getValue();
+        var partyCodeComboRawValue = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCodeCombo').getRawValue();
+        var calendarCode = Ext.getCmp('combo_calendarCode').getValue();
+        if ('modify' != pageFrom) {
+            if(partyCodeComboRawValue != partyCodeComboValue){
+                calendarCode = Ext.getCmp('combo_calendarCode').getValue();
+                Ext.getCmp('combo_calendarCode').setValue('');
+                Ext.getStore(chinaplus.screen.CPMCMS01 + '_calendarCodeStore').removeAll();
+                Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCodeHidden').setValue('');
+            }
+        }
+
+        if (partyCode.hidden) {
+            partyCodeValue = partyCodeComboValue;
+        } else if (partyCodeCombo.hidden) {
+            partyCodeValue = partyCodeValue;
+        }
+        if (party == 7) {
+            partyCodeValue = partyCodeComboValue;
+        }
+        
+        var params = {
+            'party' : party,
+            'country' : country,
+            'pageFrom' : pageFrom,
+            'officeId' : officeId,
+            'partyCode' : partyCodeValue
+        };
+        var backFun = function(records) {
+            if (records.length == 1) {
+
+                Ext.getCmp('combo_calendarCode').setValue(records[0].data.id);
+            } else if (records.length == 0) {
+
+                //if (calendarCode == null) {
+
+                    var popMsg = TRF.util.getMessage('w1038');
+                    var lsMsgs = [];
+                    Ext.Array.push(popMsg, TRF.util.getMessage('w1038'));
+                    TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, popMsg, lsMsgs);
+                //}
+            } 
+        }
+
+        if ('modify' != pageFrom || party == 7) {
+            if (party != null) {
+                if (partyCodeValue != '') {
+                    if (partyCodeValue != null) {
+                        if(partyCodeComboRawValue != partyCodeComboValue){
+                            TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_calendarCodeStore'), params, backFun);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (party == 7) {
+            Ext.getCmp("combo_calendarCode").setEditable(false);
+        }
+
+        /*
+         * if (party == '7' && partyCode.indexOf(",") >= 0) { var popMsg =
+         * TRF.util.getMessage('w1003'); var lsMsgs = []; Ext.Array.push(lsMsgs,
+         * TRF.util.getMessage('w1003_022',
+         * chinaplus.label.CPMCMS01_Label_PartyCode)); // check blank
+         * TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, popMsg,
+         * lsMsgs); Ext.getCmp(chinaplus.screen.CPMCMS01 +
+         * '_partyCode').setValue(''); return; }
+         */
+    },
+
+    /**
+     * modify function
+     */
+    modifyFunc : function() {
+
+        Ext.getCmp(chinaplus.screen.CPMCMS01 + '_pageFrom').setValue('modify');
+        // var params = {'userId' : userId, 'userName' : userName, 'officeId' :
+        // officeId };
+        // TRF.util.addApplication(chinaplus.screen.CPCAUS01,
+        // chinaplus.screen.CPCAUS01, true, params);
+        var office = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_cmImpOfficeCode').getValue();
+        var officeCode = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_cmImpOfficeCode').getRawValue();
+        var party = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_party').getValue();
+        var partyRawValue = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_party').getRawValue();
+        var partyCodeComboValue = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCodeCombo').getValue();
+        var partyCodeComboRawValue = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCodeCombo').getRawValue();
+        var hiddenValue =  Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCodeHidden').getValue();
+        if(hiddenValue != ''){
+            Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCode').destroyList();
+            Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCode').setValue(hiddenValue.split(","));
+        } else if (partyCodeComboValue != '') {
+            Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCode').destroyList();
+            Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCode').setValue(partyCodeComboValue);
+        }
+        var values = Ext.getCmp(chinaplus.screen.CPMCMS01).getValues();
+
+        var params = {
+            'party' : party,
+            'pageFrom' : "modify",
+            'partyCode' : partyCodeComboValue,
+            "officeId" : office
+        };
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_partyStore'), params);
+        var backFun = function(records) {
+
+            if (records != null) {
+                if (records.result == true) {
+
+                    var pageFrom = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_pageFrom').getValue();
+                    if (pageFrom == 'modify') {
+
+                        var flg = false;
+                        var partyCodeBackFun = function(records) {
+                            /*if (records.length != 0) {*/
+                                if (null == partyCodeComboValue || '' == partyCodeComboValue) {
+                                    values = Ext.getCmp(chinaplus.screen.CPMCMS01).getValues();
+                                    TRF.util.removePopupApplication(chinaplus.screen.CPMCMS01);
+                                    TRF.util.setDetailTabMode_Edit();
+                                    TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_cmImpOfficeCodeStore'), params);
+                                    if (party != 7) {
+                                        Ext.getCmp(chinaplus.screen.CPMCMS01 + "_partyCode").show();
+                                        Ext.getCmp(chinaplus.screen.CPMCMS01 + "_partyCodeCombo").hide();
+                                        Ext.getCmp(chinaplus.screen.CPMCMS01 + "_partyCodeCombo").setValue('');
+                                    }
+                                    Ext.getCmp(chinaplus.screen.CPMCMS01 + "_btnModify").hide();
+                                    var totalCount = Ext.getStore(chinaplus.screen.CPMCMS01 + '_calendarStore').totalCount;
+                                    if (null != totalCount) {
+                                        if ('modify' == pageFrom) {
+                                            var bool = false;
+                                            var calendarYear = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_companyCalendar').getYear(values.year);
+                                            var currentYear = Ext.Date.subtract(new Date(), Ext.Date.DAY, 1).getFullYear();
+                                            var bool = calendarYear < currentYear - 1;
+                                        
+                                            if(bool){
+                                                Ext.getCmp(chinaplus.screen.CPMCMS01).down('#CPMCMS01_Button_Save').hide();
+                                            } else {
+                                                Ext.getCmp(chinaplus.screen.CPMCMS01).down('#CPMCMS01_Button_Save').show();
+                                            }
+                                        }
+                                    }
+
+                                    Ext.getCmp("combo_calendarCode").setFieldStyle("background:rgb(255,255,153)");
+                                    if (party != 7) {
+                                        Ext.getCmp("combo_calendarCode").setEditable(true);
+                                    }
+                                    TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_calendarCodeStore'), params);
+                                    
+                                    if (null == totalCount || '' == totalCount) {
+                                        if(0 != totalCount){
+                                            var filterYear = Ext.getCmp('combo_year').getValue();
+                                            if(null != filterYear && '' != filterYear){
+                                                CPMCMS01.sreachFunc();
+                                            }
+                                        }
+                                    }
+                                } else {
+                                
+                                    for (var i = 0; i < records.length; i++) {
+                                        if (records[i].data.id == partyCodeComboValue) {
+                                            flg = true;
+                                            break;
+                                        }
+
+                                    }
+                                    if (flg) {
+                                        values = Ext.getCmp(chinaplus.screen.CPMCMS01).getValues();
+                                        TRF.util.removePopupApplication(chinaplus.screen.CPMCMS01);
+                                        TRF.util.setDetailTabMode_Edit();
+                                        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_cmImpOfficeCodeStore'), params);
+                                        if (party != 7) {
+                                            Ext.getCmp(chinaplus.screen.CPMCMS01 + "_partyCode").show();
+                                            Ext.getCmp(chinaplus.screen.CPMCMS01 + "_partyCodeCombo").hide();
+                                            Ext.getCmp(chinaplus.screen.CPMCMS01 + "_partyCodeCombo").setValue('');
+                                        }
+                                        Ext.getCmp(chinaplus.screen.CPMCMS01 + "_btnModify").hide();
+                                        var totalCount = Ext.getStore(chinaplus.screen.CPMCMS01 + '_calendarStore').totalCount;
+                                        if (null != totalCount) {
+                                            if ('modify' == pageFrom) {
+                                                var bool = false;
+                                                var calendarYear = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_companyCalendar').getYear(values.year);
+                                                var currentYear = Ext.Date.subtract(new Date(), Ext.Date.DAY, 1).getFullYear();
+                                                var bool = calendarYear < currentYear - 1;
+                                            
+                                                if(bool){
+                                                    Ext.getCmp(chinaplus.screen.CPMCMS01).down('#CPMCMS01_Button_Save').hide();
+                                                } else {
+                                                    Ext.getCmp(chinaplus.screen.CPMCMS01).down('#CPMCMS01_Button_Save').show();
+                                                }
+                                            }
+                                        }
+
+                                        Ext.getCmp("combo_calendarCode").setFieldStyle("background:rgb(255,255,153)");
+                                        if (party != 7) {
+                                            Ext.getCmp("combo_calendarCode").setEditable(true);
+                                        }
+
+                                        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_calendarCodeStore'), params);
+                                        
+                                        if (null == totalCount || '' == totalCount) {
+                                            if(0 != totalCount){
+                                                var filterYear = Ext.getCmp('combo_year').getValue();
+                                                if(null != filterYear && '' != filterYear){
+                                                    CPMCMS01.sreachFunc();
+                                                }
+                                            }
+                                        }
+                                        Ext.getCmp(chinaplus.screen.CPMCMS01).isEdited = true;
+                                    } else {
+                                        if(partyCodeComboValue != partyCodeComboRawValue){
+                                        
+                                            var popMsg = TRF.util.getMessage('w1002_007', partyCodeComboRawValue);
+                                            var lsMsgs = [];
+                                            if (TRF.core.language == chinaplus.consts.code.Language.CN) {
+                                                Ext.Array.push(lsMsgs, TRF.util.getMessage('w1002', '修改'));
+                                            } else {
+                                                Ext.Array.push(lsMsgs, TRF.util.getMessage('w1002', 'Modify'));
+                                            }
+                                            TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, lsMsgs, popMsg);
+                                            Ext.getCmp(chinaplus.screen.CPMCMS01 + '_pageFrom').setValue('');
+                                            params = {
+                                                'pageFrom' : "",
+                                            };
+                                            TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_partyStore'), params);
+                                            
+                                        } else {
+                                            values = Ext.getCmp(chinaplus.screen.CPMCMS01).getValues();
+                                            TRF.util.removePopupApplication(chinaplus.screen.CPMCMS01);
+                                            TRF.util.setDetailTabMode_Edit();
+                                            TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_cmImpOfficeCodeStore'), params);
+                                            if (party != 7) {
+                                                Ext.getCmp(chinaplus.screen.CPMCMS01 + "_partyCode").show();
+                                                Ext.getCmp(chinaplus.screen.CPMCMS01 + "_partyCodeCombo").hide();
+                                                Ext.getCmp(chinaplus.screen.CPMCMS01 + "_partyCodeCombo").setValue('');
+                                            }
+                                            Ext.getCmp(chinaplus.screen.CPMCMS01 + "_btnModify").hide();
+                                            var totalCount = Ext.getStore(chinaplus.screen.CPMCMS01 + '_calendarStore').totalCount;
+                                            if (null != totalCount) {
+                                                if ('modify' == pageFrom) {
+                                                    var bool = false;
+                                                    var calendarYear = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_companyCalendar').getYear(values.year);
+                                                    var currentYear = Ext.Date.subtract(new Date(), Ext.Date.DAY, 1).getFullYear();
+                                                    var bool = calendarYear < currentYear - 1;
+                                                
+                                                    if(bool){
+                                                        Ext.getCmp(chinaplus.screen.CPMCMS01).down('#CPMCMS01_Button_Save').hide();
+                                                    } else {
+                                                        Ext.getCmp(chinaplus.screen.CPMCMS01).down('#CPMCMS01_Button_Save').show();
+                                                    }
+                                                }
+                                            }
+    
+                                            Ext.getCmp("combo_calendarCode").setFieldStyle("background:rgb(255,255,153)");
+                                            if (party != 7) {
+                                                Ext.getCmp("combo_calendarCode").setEditable(true);
+                                            }
+    
+                                            TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_calendarCodeStore'), params);
+                                            
+                                            if (null == totalCount || '' == totalCount) {
+                                                if(0 != totalCount){
+                                                    var filterYear = Ext.getCmp('combo_year').getValue();
+                                                    if(null != filterYear && '' != filterYear){
+                                                        CPMCMS01.sreachFunc();
+                                                    }
+                                                }
+                                            }
+                                            Ext.getCmp(chinaplus.screen.CPMCMS01).isEdited = true;
+                                        }
+                                    
+                                     }
+                                }
+
+                            /*} else {
+                            debugger;
+                                var popMsg = TRF.util.getMessage('w1002_007', partyRawValue);
+                                var lsMsgs = [];
+                                if (TRF.core.language == chinaplus.consts.code.Language.CN) {
+                                    Ext.Array.push(lsMsgs, TRF.util.getMessage('w1002', '修改'));
+                                } else {
+                                    Ext.Array.push(lsMsgs, TRF.util.getMessage('w1002', 'Modify'));
+                                }
+                                TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, lsMsgs, popMsg);
+                                Ext.getCmp(chinaplus.screen.CPMCMS01 + '_pageFrom').setValue('');
+                                params = {
+                                    'pageFrom' : "",
+                                };
+                                TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_partyStore'), params);
+                                
+                            }*/
+                        }
+
+                        if (party == 4) {
+
+                            var checkFun = function(records) {
+                            
+                                if(records.result == true){
+                                    TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_partyCodeStore'), params, partyCodeBackFun);
+                                } else {
+                                    
+                                    var popMsg = TRF.util.getMessage('w1002_007', partyRawValue);
+                                    var lsMsgs = [];
+                                    if (TRF.core.language == chinaplus.consts.code.Language.CN) {
+                                        Ext.Array.push(lsMsgs, TRF.util.getMessage('w1002', '修改'));
+                                    } else {
+                                        Ext.Array.push(lsMsgs, TRF.util.getMessage('w1002', 'Modify'));
+                                    }
+                                    TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, lsMsgs, popMsg);
+                                    Ext.getCmp(chinaplus.screen.CPMCMS01 + '_pageFrom').setValue('');
+                                    params = {
+                                        'pageFrom' : "",
+                                    };
+                                    TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_partyStore'), params);
+                                }
+                            
+                            }
+                        
+                            TRF.util.ajaxSubmit(checkFun, chinaplus.screen.CPMCMS01, 'master/CPMCMS01/checkCustomer', params, null);
+                            
+                        
+                        
+                        } else {
+
+                            if(party == 1){
+                                var partyBackFun = function(records) {
+                                    var flg = false;
+                                    for (var i = 0; i < records.length; i++) {
+                                        if (records[i].data.id == 1) {
+                                            flg = true;
+                                            break;
+                                        }
+                                    }
+                                    
+                                    /*if(!flg){
+                                    debugger;
+                                        var popMsg = TRF.util.getMessage('w1002_007', partyRawValue);
+                                        var lsMsgs = [];
+                                        if (TRF.core.language == chinaplus.consts.code.Language.CN) {
+                                            Ext.Array.push(lsMsgs, TRF.util.getMessage('w1002', '修改'));
+                                        } else {
+                                            Ext.Array.push(lsMsgs, TRF.util.getMessage('w1002', 'Modify'));
+                                        }
+                                        TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, lsMsgs, popMsg);
+                                        Ext.getCmp(chinaplus.screen.CPMCMS01 + '_pageFrom').setValue('');
+                                        params = {
+                                            'pageFrom' : "",
+                                        };
+                                        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_partyStore'), params);
+                                        
+                                    } else {*/
+                                        values = Ext.getCmp(chinaplus.screen.CPMCMS01).getValues();
+                                        TRF.util.removePopupApplication(chinaplus.screen.CPMCMS01);
+                                        TRF.util.setDetailTabMode_Edit();
+                                        // var params = {"pageFrom" : "modify"};
+                                        // TRF.util.popupApplication(chinaplus.screen.CPMCMS01,
+                                        // chinaplus.screen.CPMCMS01, param, '1200*600');
+                                        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_cmImpOfficeCodeStore'), params);
+                                        if (party != 7) {
+                                            Ext.getCmp(chinaplus.screen.CPMCMS01 + "_partyCode").show();
+                                            Ext.getCmp(chinaplus.screen.CPMCMS01 + "_partyCodeCombo").hide();
+                                            Ext.getCmp(chinaplus.screen.CPMCMS01 + "_partyCodeCombo").setValue('');
+                                        }
+                                        Ext.getCmp(chinaplus.screen.CPMCMS01 + "_btnModify").hide();
+                                        var totalCount = Ext.getStore(chinaplus.screen.CPMCMS01 + '_calendarStore').totalCount;
+                                        if (null != totalCount) {
+                                            if ('modify' == pageFrom) {
+                                                var bool = false;
+                                                var calendarYear = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_companyCalendar').getYear(values.year);
+                                                var currentYear = Ext.Date.subtract(new Date(), Ext.Date.DAY, 1).getFullYear();
+                                                var bool = calendarYear < currentYear - 1;
+                                            
+                                                if(bool){
+                                                    Ext.getCmp(chinaplus.screen.CPMCMS01).down('#CPMCMS01_Button_Save').hide();
+                                                } else {
+                                                    Ext.getCmp(chinaplus.screen.CPMCMS01).down('#CPMCMS01_Button_Save').show();
+                                                }
+                                            }
+                                        }
+            
+                                        Ext.getCmp("combo_calendarCode").setFieldStyle("background:rgb(255,255,153)");
+                                        if (party != 7) {
+                                            Ext.getCmp("combo_calendarCode").setEditable(true);
+                                        }
+                                        
+                                        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_calendarCodeStore'), params); 
+                                        
+                                        if (null == totalCount || '' == totalCount) {
+                                            if(0 != totalCount){
+                                                var filterYear = Ext.getCmp('combo_year').getValue();
+                                                if(null != filterYear && '' != filterYear){
+                                                    CPMCMS01.sreachFunc();
+                                                }
+                                            }
+                                        }
+                                        Ext.getCmp(chinaplus.screen.CPMCMS01).isEdited = true;
+                                    //}
+                                }
+                                TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_partyStore'), params, partyBackFun);
+                            } else {
+                                values = Ext.getCmp(chinaplus.screen.CPMCMS01).getValues();
+                                TRF.util.removePopupApplication(chinaplus.screen.CPMCMS01);
+                                TRF.util.setDetailTabMode_Edit();
+                                // var params = {"pageFrom" : "modify"};
+                                // TRF.util.popupApplication(chinaplus.screen.CPMCMS01,
+                                // chinaplus.screen.CPMCMS01, param, '1200*600');
+                                TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_cmImpOfficeCodeStore'), params);
+                                if (party != 7) {
+                                    Ext.getCmp(chinaplus.screen.CPMCMS01 + "_partyCode").show();
+                                    Ext.getCmp(chinaplus.screen.CPMCMS01 + "_partyCodeCombo").hide();
+                                    Ext.getCmp(chinaplus.screen.CPMCMS01 + "_partyCodeCombo").setValue('');
+                                }
+                                Ext.getCmp(chinaplus.screen.CPMCMS01 + "_btnModify").hide();
+                                var totalCount = Ext.getStore(chinaplus.screen.CPMCMS01 + '_calendarStore').totalCount;
+                                if (null != totalCount) {
+                                    if ('modify' == pageFrom) {
+                                        var bool = false;
+                                        var calendarYear = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_companyCalendar').getYear(values.year);
+                                        var currentYear = Ext.Date.subtract(new Date(), Ext.Date.DAY, 1).getFullYear();
+                                        var bool = calendarYear < currentYear - 1;
+                                    
+                                        if(bool){
+                                            Ext.getCmp(chinaplus.screen.CPMCMS01).down('#CPMCMS01_Button_Save').hide();
+                                        } else {
+                                            Ext.getCmp(chinaplus.screen.CPMCMS01).down('#CPMCMS01_Button_Save').show();
+                                        }
+                                    }
+                                }
+    
+                                Ext.getCmp("combo_calendarCode").setFieldStyle("background:rgb(255,255,153)");
+                                if (party != 7) {
+                                    Ext.getCmp("combo_calendarCode").setEditable(true);
+                                }
+                                
+                                TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_calendarCodeStore'), params); 
+                                
+                                if (null == totalCount || '' == totalCount) {
+                                    if(0 != totalCount){
+                                        var filterYear = Ext.getCmp('combo_year').getValue();
+                                        if(null != filterYear && '' != filterYear){
+                                            CPMCMS01.sreachFunc();
+                                        }
+                                    }
+                                }
+                                Ext.getCmp(chinaplus.screen.CPMCMS01).isEdited = true;
+                            }
+                        }
+
+                        var year = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_companyCalendar').getYear();
+                        if (0 != year) {
+                            var values = Ext.getCmp(chinaplus.screen.CPMCMS01).getValues();
+                            var calendarYear = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_companyCalendar').getYear(values.year);
+                            var currentYear = Ext.Date.subtract(new Date(), Ext.Date.DAY, 1).getFullYear();
+                            var bool = calendarYear < currentYear - 1;
+                            if (bool) {
+                                Ext.getCmp(chinaplus.screen.CPMCMS01).down('#CPMCMS01_Button_Save').hide();
+                            }
+
+                        }
+
+                    } else {
+                        TRF.util.setDetailTabMode_Edit();
+                        TRF.util.addApplication(chinaplus.screen.CPMCMS01, chinaplus.screen.CPMCMS01, true, params);
+                    }
+
+                } else {
+                    var popMsg = TRF.util.getMessage('w1002_007', officeCode);
+                    var lsMsgs = [];
+                    if (TRF.core.language == chinaplus.consts.code.Language.CN) {
+                        Ext.Array.push(lsMsgs, TRF.util.getMessage('w1002', '修改'));
+                    } else {
+                        Ext.Array.push(lsMsgs, TRF.util.getMessage('w1002', 'Modify'));
+                    }
+                    TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, lsMsgs, popMsg);
+                    Ext.getCmp(chinaplus.screen.CPMCMS01 + '_pageFrom').setValue('');
+                    params = {
+                        'pageFrom' : "",
+                    };
+                    TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_partyStore'), params);
+                    
+                }
+
+            }
+        }
+
+        TRF.util.ajaxSubmit(backFun, chinaplus.screen.CPMCMS01, 'master/CPMCMS01/getOfficeFlg', params, null);
+
+    },
+    
+    /**
+     * sreach function
+     */
+    sreachFunc : function() {
+        var values = Ext.getCmp(chinaplus.screen.CPMCMS01).getFormValues();
+                    if (values) {
+                        var store = Ext.getStore(chinaplus.screen.CPMCMS01 + '_calendarStore');
+                        var pageFrom = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_pageFrom').getValue();
+                        if (store && store.isStore) {
+                            Ext.getCmp(chinaplus.screen.CPMCMS01 + '_companyCalendar').setYear(values.year);
+
+                            TRF.util.loadStore(store, {}, function(records, a, b, c, d) {
+                                        if ('modify' == pageFrom) {
+                                            var bool = false;
+                                            var calendarYear = Ext.getCmp(chinaplus.screen.CPMCMS01 + '_companyCalendar').getYear(values.year);
+                                            var currentYear = Ext.Date.subtract(new Date(), Ext.Date.DAY, 1).getFullYear();
+                                            var bool = calendarYear < currentYear - 1;
+                                        
+                                            if(bool){
+                                                Ext.getCmp(chinaplus.screen.CPMCMS01).down('#CPMCMS01_Button_Save').hide();
+                                            } else {
+                                                Ext.getCmp(chinaplus.screen.CPMCMS01).down('#CPMCMS01_Button_Save').show();
+                                            }
+                                            
+                                        }
+                                        Ext.getCmp(chinaplus.screen.CPMCMS01).down('#CPMCMS01_Button_Download').show();
+                                        Ext.getCmp(chinaplus.screen.CPMCMS01).isEdited = false;
+                                    }, {
+                                        data : values
+                                    });
+                        }
+                    }
+    
+    
+    },
+    
+    loadCommon : function(params) {
+        var countryBackFun = function(records) {
+            if (records.length == 1) {
+                Ext.getCmp('combo_country').setValue(records[0].data.id);
+            }
+            TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_partyCodeStore'), params, partyCodeBackFun);
+            
+        }
+        var partyCodeBackFun = function(records) {
+            if (records.length == 1) {
+                Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCode').setValue(records[0].data.id);
+               
+            }
+            TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_partyCodeStoreCombo'), params, partyCodeComboBackFun);
+        }
+        var partyCodeComboBackFun = function(records) {
+            if (records.length == 1) {
+                
+                Ext.getCmp(chinaplus.screen.CPMCMS01 + '_partyCodeCombo').setValue(records[0].data.id);
+            }
+        }
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPMCMS01 + '_countryStore'), params, countryBackFun);
+    }
+}

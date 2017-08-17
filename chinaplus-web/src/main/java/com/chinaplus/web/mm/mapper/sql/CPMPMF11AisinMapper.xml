@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.mm.service.CPMPMF11DBAisinService">       
+    <sql id="ConstDef">
+        <bind name="AISIN" value="@com.chinaplus.common.consts.CodeConst$BusinessPattern@AISIN" />
+        <bind name="ACTIVE" value="@com.chinaplus.common.consts.CodeConst$InactiveFlag@ACTIVE" />
+    </sql>
+
+    <!-- Check if TTC Customer Code is not related with Customer Code in SSMS OR KANB invoice & Supplier Kanban Issue Plan file one to one. -->
+    <select id="getCutExpCode" resultType="com.chinaplus.web.mm.entity.CPMPMF11Entity" parameterType="com.chinaplus.core.bean.BaseParam"> 
+        SELECT DISTINCT
+            A.CUSTOMER_CODE AS customerCode          
+            , A.KANBAN_CUST_CODE AS expCustCode
+            , B.OFFICE_CODE AS officeCode
+        FROM
+            TNM_PARTS_MASTER A
+            INNER JOIN TNM_OFFICE B ON A.OFFICE_ID = B.OFFICE_ID
+        WHERE
+            A.BUSINESS_PATTERN = 2
+    </select>
+    
+    <!-- If part is already exist in parts master. -->
+    <!-- TTC Part No. + TTC Supplier Code + CUSTOMER_ID in (a) has more then one data. -->
+    <!-- Or Supplier Part No. + TTC Supplier Code + Customer Code in SSMS OR KANB invoice & Supplier Kanban Issue Plan file has more then one data.  -->
+    <!-- Or Customer Part No. + TTC Supplier Code + CUSTOMER_ID in (a) has more then one data. -->
+    <select id="getTTCSECNew" resultType="com.chinaplus.web.mm.entity.CPMPMF11Entity" parameterType="com.chinaplus.core.bean.BaseParam"> 
+        <include refid="ConstDef"/>
+        SELECT DISTINCT
+            A.TTC_PARTS_NO AS ttcPartsNo
+            , A.TTC_SUPP_CODE AS ttcSuppCode
+            , B.CUSTOMER_CODE AS customerCode
+            , A.SUPP_PARTS_NO AS suppPartsNo
+            , B.KANBAN_CUST_CODE AS expCustCode
+            , B.CUST_PARTS_NO AS custPartsNo
+            , C.OFFICE_CODE AS officeCode
+        FROM
+            TNM_EXP_PARTS A
+            INNER JOIN TNM_PARTS_MASTER B ON A.PARTS_ID = B.PARTS_ID
+            INNER JOIN TNM_OFFICE C ON A.OFFICE_ID = C.OFFICE_ID
+        WHERE
+            A.TTC_SUPP_CODE IN    
+        <foreach collection="swapData.initDataList" item="item" index="index" open="(" close=")" separator="," >
+            #{item.ttcSuppCode}
+        </foreach>
+    </select>
+    
+    <select id="getTTCSECMod" resultType="com.chinaplus.web.mm.entity.CPMPMF11Entity" parameterType="com.chinaplus.core.bean.BaseParam"> 
+        <include refid="ConstDef"/>
+        SELECT 
+            A.TTC_PARTS_NO AS  ttcPartsNo,
+            A.TTC_SUPP_CODE  AS  ttcSuppCode,
+            B.CUSTOMER_CODE AS customerCode,           
+            A.SUPP_PARTS_NO AS suppPartsNo,
+            B.KANBAN_CUST_CODE AS expCustCode,      
+            B.CUST_PARTS_NO AS custPartsNo,
+            A.EXP_PARTS_ID AS expPartsId,
+            A.SHIPPING_ROUTE_CODE  AS  shippingRouteCode,
+            C.OFFICE_CODE AS officeCode
+        FROM  
+            TNM_EXP_PARTS  A
+            INNER JOIN TNM_PARTS_MASTER B ON A.PARTS_ID = B.PARTS_ID 
+            INNER JOIN TNM_OFFICE C ON A.OFFICE_ID = C.OFFICE_ID
+        WHERE         
+            A.TTC_SUPP_CODE IN    
+        <foreach collection="swapData.initDataList" item="item" index="index" open="(" close=")" separator="," >
+            #{item.ttcSuppCode}
+        </foreach>
+<!-- shiyang mod start
+            AND (
+        <foreach collection="swapData.initDataList" item="item" index="index" open="(" close=")" separator="or" >
+            A.TTC_PARTS_NO = #{item.ttcPartsNo}      
+            AND  A.TTC_SUPP_CODE = #{item.ttcSuppCode}   
+            AND  B.CUSTOMER_CODE = #{item.customerCode}   
+            AND  A.SUPP_PARTS_NO  = #{item.suppPartsNo}   
+            AND  B.KANBAN_CUST_CODE =  #{item.expCustCode}   
+            AND  B.CUST_PARTS_NO = #{item.custPartsNo}       
+        </foreach>
+           )
+shiyang mod end -->
+    </select>
+    
+   <select id="getTCSEC" resultType="com.chinaplus.web.mm.entity.CPMPMF11Entity" parameterType="com.chinaplus.core.bean.BaseParam"> 
+      <include refid="ConstDef"/>
+       SELECT 
+           B.TTC_PARTS_NO AS  ttcPartsNo,
+           B.CUSTOMER_CODE AS customerCode,       
+           B.KANBAN_CUST_CODE AS expCustCode,      
+           B.CUST_PARTS_NO AS custPartsNo,
+           B.PARTS_ID AS partsId,
+           C.OFFICE_CODE AS officeCode,
+           A.INACTIVE_FLAG   AS inactiveFlag,
+           A.TTC_SUPP_CODE AS ttcSuppCode
+      FROM  
+          TNM_EXP_PARTS  A
+          INNER JOIN TNM_PARTS_MASTER B ON A.PARTS_ID = B.PARTS_ID  
+          INNER JOIN  TNM_OFFICE C  ON  B.OFFICE_ID = C.OFFICE_ID 
+      WHERE         
+          A.BUSINESS_PATTERN  =  ${AISIN} 
+          AND 
+        <foreach collection="swapData.initDataList" item="item" index="index" open="(" close=")" separator="or" >
+          (   B.TTC_PARTS_NO = #{item.ttcPartsNo}       
+             AND  B.CUSTOMER_CODE = #{item.customerCode}    
+<!-- shiyang del start
+             AND  B.KANBAN_CUST_CODE =  #{item.expCustCode}   
+             AND  B.CUST_PARTS_NO = #{item.custPartsNo}
+shiyang del end -->
+             AND  C.OFFICE_CODE = #{item.officeCode} )
+        </foreach>
+    </select>
+    
+    
+    <select id="getSuppPNo" resultType="com.chinaplus.web.mm.entity.CPMPMF11Entity" parameterType="com.chinaplus.core.bean.BaseParam"> 
+        <include refid="ConstDef"/>
+        SELECT           
+            A.SUPP_PARTS_NO AS suppPartsNo,
+            A.TTC_PARTS_NO AS  ttcPartsNo
+        FROM  
+            TNM_EXP_PARTS  A
+        WHERE
+            A.INACTIVE_FLAG = ${ACTIVE}
+            AND A.SUPP_PARTS_NO  IN
+            <foreach collection="swapData.initDataList" item="item" index="index" open="(" close=")" separator="," >
+              #{item.suppPartsNo}          
+            </foreach>      
+    </select>
+    
+   <select id="getCustPNo" resultType="com.chinaplus.web.mm.entity.CPMPMF11Entity" parameterType="com.chinaplus.core.bean.BaseParam"> 
+        <include refid="ConstDef"/>
+        SELECT           
+            A.CUST_PARTS_NO AS custPartsNo,
+            A.TTC_PARTS_NO AS  ttcPartsNo
+        FROM  
+            TNM_PARTS_MASTER  A
+        WHERE
+            A.INACTIVE_FLAG = ${ACTIVE}
+            AND A.CUST_PARTS_NO  IN
+            <foreach collection="swapData.initDataList" item="item" index="index" open="(" close=")" separator="," >
+              #{item.custPartsNo}          
+            </foreach>      
+    </select> 
+
+</mapper>

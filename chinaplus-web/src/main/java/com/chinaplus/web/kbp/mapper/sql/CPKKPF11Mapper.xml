@@ -1,0 +1,681 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.kbp.service.CPKKPF11Service">
+    
+    <!-- Exist Customer Code -->
+    <select id="existCustomerCode" parameterType="com.chinaplus.common.entity.TnmPartsMaster" resultType="com.chinaplus.common.entity.TnmPartsMaster" flushCache="true">
+        SELECT
+            CUSTOMER_ID AS customerId
+            , CUSTOMER_CODE AS customerCode
+        FROM
+            TNM_PARTS_MASTER
+        WHERE
+            KANBAN_CUST_CODE = #{kanbanCustCode}
+        FETCH FIRST 1 ROWS ONLY
+    </select>
+    
+    <!-- Get Parts Info -->
+    <select id="getPartsMasterInfo" parameterType="com.chinaplus.web.kbp.entity.CPKKPF11Entity" resultType="com.chinaplus.web.kbp.entity.CPKKPF11Entity" flushCache="true">
+        SELECT
+            PARTS_MASTER.PARTS_ID AS partsId
+            , PARTS_MASTER.CUSTOMER_ID AS customerId
+            , PARTS_MASTER.CUSTOMER_CODE AS customerCode
+            , EXP_PARTS.INACTIVE_FLAG AS inactiveFlag
+            , PARTS_MASTER.FORECAST_NUM AS forecastNum
+            , EXP_PARTS.TTC_SUPP_CODE AS ttcSuppCode
+            , EXP_PARTS.SUPP_PARTS_NO AS suppPartsNo
+            , EXP_PARTS.SRBQ AS srbq
+            , EXP_PARTS.SHIPPING_ROUTE_CODE AS shippingRouteCode 
+            , EXP_PARTS.EXP_PARTS_ID AS expPartsId
+            , UOM.DECIMAL_DIGITS AS digits
+        FROM
+            TNM_PARTS_MASTER PARTS_MASTER
+            INNER JOIN 
+                TNM_EXP_PARTS EXP_PARTS ON PARTS_MASTER.PARTS_ID = EXP_PARTS.PARTS_ID
+            LEFT JOIN 
+                TNM_UOM UOM ON UOM.UOM_CODE = PARTS_MASTER.UOM_CODE
+        WHERE
+            PARTS_MASTER.OFFICE_ID = #{officeId}
+            AND PARTS_MASTER.KANBAN_CUST_CODE = #{expCustCode}
+            AND EXP_PARTS.SUPPLIER_ID = #{supplierId}
+        ORDER BY
+            PARTS_MASTER.TTC_PARTS_NO ASC
+    </select>
+    
+    <!-- Get Order Month -->
+    <select id="getOrderMonth" parameterType="com.chinaplus.web.kbp.entity.CPKKPF11Entity" resultType="com.chinaplus.web.kbp.entity.CPKKPF11Entity" flushCache="true">
+        SELECT
+            ORDER_MONTH AS orderMonth
+        FROM
+            TNM_KB_ISSUED_DATE
+        WHERE
+            CUSTOMER_ID = #{customerId}
+            AND FROM_DATE = #{fromDate}
+            AND TO_DATE = #{toDate} 
+    </select>
+    
+    <!-- Check Invoice is exists or not -->
+    <select id="existInvoiceInfo" parameterType="com.chinaplus.web.kbp.entity.CPKKPF11Entity" resultType="com.chinaplus.web.kbp.entity.CPKKPF11Entity" flushCache="true">
+        SELECT
+            COUNT(1) AS count
+        FROM
+            TNT_INVOICE_GROUP INVOICE_GROUP
+            INNER JOIN 
+                TNT_INVOICE INVOICE ON INVOICE_GROUP.INVOICE_GROUP_ID = INVOICE.INVOICE_GROUP_ID
+            INNER JOIN 
+                TNT_INVOICE_SUMMARY INVOICE_SUMMARY ON INVOICE.INVOICE_SUMMARY_ID = INVOICE_SUMMARY.INVOICE_SUMMARY_ID AND INVOICE_SUMMARY.INVOICE_STATUS <![CDATA[<>]]> 99
+                AND (INVOICE_SUMMARY.NON_SHIPPING_ROUTE IS NULL OR INVOICE_SUMMARY.NON_SHIPPING_ROUTE = 2) AND (INVOICE_SUMMARY.UPLOAD_STATUS IS NULL OR INVOICE_SUMMARY.UPLOAD_STATUS = 2)
+            INNER JOIN 
+                TNT_INVOICE_PARTS INVOICE_PARTS ON INVOICE.INVOICE_ID = INVOICE_PARTS.INVOICE_ID
+        WHERE
+            INVOICE_GROUP.KANBAN_PLAN_NO = #{kanbanPlanNo}
+            AND INVOICE_PARTS.PARTS_ID = #{partsId} 
+    </select>
+    
+    <!-- Get Kanban Plan Info -->
+    <select id="getKanbanPlanInfo" parameterType="com.chinaplus.web.kbp.entity.CPKKPF11Entity" resultType="com.chinaplus.web.kbp.entity.CPKKPF11Entity" flushCache="true">
+        SELECT
+            KANBAN.KANBAN_ID AS kanbanId
+            , KANBAN.KANBAN_PLAN_NO AS kanbanPlanNo
+            , COALESCE(KANBAN.REVISION_VERSION, 0) AS revisionVersion
+            , AIR_FLAG AS airFlag
+        FROM
+            TNT_KANBAN KANBAN
+            INNER JOIN 
+                (SELECT KANBAN_PLAN_NO, STATUS, MAX(REVISION_VERSION) AS REVISION_VERSION FROM TNT_KANBAN GROUP BY KANBAN_PLAN_NO, STATUS) AS KANBAN_G 
+                ON KANBAN.KANBAN_PLAN_NO = KANBAN_G.KANBAN_PLAN_NO AND KANBAN.STATUS = KANBAN_G.STATUS AND COALESCE(KANBAN.REVISION_VERSION, 0) = COALESCE(KANBAN_G.REVISION_VERSION, 0)
+        WHERE
+            KANBAN.CUSTOMER_ID = #{customerId}
+            AND KANBAN.SUPPLIER_ID = #{supplierId} 
+            AND KANBAN.ORDER_MONTH = #{orderMonth}
+            AND KANBAN.STATUS <![CDATA[<>]]> 99
+    </select>
+    
+    <!-- Get QTY Info -->
+    <select id="getQtyInfo" parameterType="com.chinaplus.web.kbp.entity.CPKKPF11Entity" resultType="com.chinaplus.web.kbp.entity.CPKKPF11Entity" flushCache="true">
+        SELECT
+            MAX(KANBAN.KANBAN_ID) AS kanbanId
+            , SUM(COALESCE(ORDER_STATUS.ORDER_QTY, 0)) AS orderQty
+            , SUM(
+                CASE WHEN OFFICE.IMP_STOCK_FLAG = 1 THEN COALESCE(ORDER_STATUS.EXP_ONSHIPPING_QTY, 0)
+                ELSE COALESCE(ORDER_STATUS.EXP_ONSHIPPING_QTY, 0) + COALESCE(ORDER_STATUS.IN_RACK_QTY, 0)
+                END) AS onShippingQty
+            , SUM(
+                CASE WHEN OFFICE.IMP_STOCK_FLAG = 1 THEN COALESCE(ORDER_STATUS.IN_RACK_QTY, 0) + COALESCE(ORDER_STATUS.IMP_STOCK_QTY, 0) - COALESCE(ORDER_STATUS.IMP_ADJUSTED_QTY, 0) + COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) + COALESCE(ORDER_STATUS.TRANSFER_OUT_QTY, 0)
+                ELSE COALESCE(ORDER_STATUS.IMP_STOCK_QTY, 0) - COALESCE(ORDER_STATUS.IMP_ADJUSTED_QTY, 0) + COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) + COALESCE(ORDER_STATUS.TRANSFER_OUT_QTY, 0)
+                END) AS inboundQty
+            , SUM(
+                CASE WHEN OFFICE.IMP_STOCK_FLAG = 1 THEN
+                    CASE WHEN (COALESCE(ORDER_STATUS.IN_RACK_QTY, 0) + COALESCE(ORDER_STATUS.IMP_STOCK_QTY, 0) - COALESCE(ORDER_STATUS.IMP_ADJUSTED_QTY, 0) + COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) + COALESCE(ORDER_STATUS.TRANSFER_OUT_QTY, 0)) > COALESCE(ORDER_STATUS.ORDER_QTY, 0) THEN 0
+                    WHEN KANBAN_PARTS.STATUS = 9 THEN 0
+                    ELSE (COALESCE(ORDER_STATUS.ORDER_QTY, 0) - (COALESCE(ORDER_STATUS.IN_RACK_QTY, 0) + COALESCE(ORDER_STATUS.IMP_STOCK_QTY, 0) - COALESCE(ORDER_STATUS.IMP_ADJUSTED_QTY, 0) + COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) + COALESCE(ORDER_STATUS.TRANSFER_OUT_QTY, 0)))
+                    END
+                ELSE
+                    CASE WHEN (COALESCE(ORDER_STATUS.IMP_STOCK_QTY, 0) - COALESCE(ORDER_STATUS.IMP_ADJUSTED_QTY, 0) + COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) + COALESCE(ORDER_STATUS.TRANSFER_OUT_QTY, 0)) > COALESCE(ORDER_STATUS.ORDER_QTY, 0) THEN 0
+                    WHEN KANBAN_PARTS.STATUS = 9 THEN 0
+                    ELSE (COALESCE(ORDER_STATUS.ORDER_QTY, 0) - (COALESCE(ORDER_STATUS.IMP_STOCK_QTY, 0) - COALESCE(ORDER_STATUS.IMP_ADJUSTED_QTY, 0) + COALESCE(ORDER_STATUS.IMP_DELIVERED_QTY, 0) + COALESCE(ORDER_STATUS.TRANSFER_OUT_QTY, 0)))
+                    END
+                END) AS orderBalance
+        FROM
+            TNT_KANBAN KANBAN
+            INNER JOIN 
+                TNM_OFFICE OFFICE ON KANBAN.OFFICE_ID = OFFICE.OFFICE_ID
+            LEFT JOIN 
+                TNT_KANBAN_PARTS KANBAN_PARTS ON KANBAN.KANBAN_ID = KANBAN_PARTS.KANBAN_ID
+            LEFT JOIN 
+                TNF_ORDER_STATUS ORDER_STATUS ON KANBAN.KANBAN_PLAN_NO = ORDER_STATUS.KANBAN_PLAN_NO AND KANBAN_PARTS.PARTS_ID = ORDER_STATUS.PARTS_ID
+        WHERE
+            KANBAN.KANBAN_ID = #{kanbanId}
+    </select>
+    
+    <!-- Get Kanban Parts Info -->
+    <select id="getKanbanPartsInfo" parameterType="com.chinaplus.common.entity.TntKanbanPart" resultType="com.chinaplus.common.entity.TntKanbanPart" flushCache="true">
+        SELECT
+            KANBAN_PARTS.SEQ_NO AS seqNo
+            , KANBAN_PARTS.PLANT AS plant
+            , KANBAN_PARTS.DOCK AS dock
+            , KANBAN_PARTS.BOX_NO AS boxNo
+            , KANBAN_PARTS.BOX_TYPE AS boxType
+            , KANBAN_PARTS.PARTS_ID AS partsId
+            , KANBAN_PARTS.SPQ AS spq
+            , KANBAN_PARTS.QTY AS qty
+            , KANBAN_PARTS.KANBAN_QTY AS kanbanQty 
+            , KANBAN_PARTS.FC_QTY1 AS fcQty1
+            , KANBAN_PARTS.FC_QTY2 AS fcQty2
+            , KANBAN_PARTS.FC_QTY3 AS fcQty3
+            , KANBAN_PARTS.FC_QTY4 AS fcQty4
+            , KANBAN_PARTS.FC_QTY5 AS fcQty5
+            , KANBAN_PARTS.FC_QTY6 AS fcQty6
+            , KANBAN_PARTS.REMARK AS remark
+            , KANBAN_PARTS.FORCE_COMPLETED_BY AS forceCompletedBy 
+            , KANBAN_PARTS.FORCE_COMPLETED_DATE AS forceCompletedDate
+            , KANBAN_PARTS.STATUS AS status
+        FROM
+            TNT_INVOICE_GROUP INVOICE_GROUP
+            INNER JOIN 
+                TNT_INVOICE INVOICE ON INVOICE_GROUP.INVOICE_GROUP_ID = INVOICE.INVOICE_GROUP_ID
+            INNER JOIN 
+                TNT_INVOICE_SUMMARY INVOICE_SUMMARY ON INVOICE_SUMMARY.INVOICE_SUMMARY_ID = INVOICE.INVOICE_SUMMARY_ID AND INVOICE_SUMMARY.INVOICE_STATUS <![CDATA[<>]]> 99
+                AND (INVOICE_SUMMARY.NON_SHIPPING_ROUTE IS NULL OR INVOICE_SUMMARY.NON_SHIPPING_ROUTE = 2) AND (INVOICE_SUMMARY.UPLOAD_STATUS IS NULL OR INVOICE_SUMMARY.UPLOAD_STATUS = 2)
+            INNER JOIN 
+                TNT_INVOICE_PARTS INVOICE_PARTS ON INVOICE.INVOICE_ID = INVOICE_PARTS.INVOICE_ID
+            INNER JOIN 
+                TNT_KANBAN KANBAN ON INVOICE_GROUP.KANBAN_PLAN_NO = KANBAN.KANBAN_PLAN_NO
+            INNER JOIN 
+                TNT_KANBAN_PARTS KANBAN_PARTS ON KANBAN_PARTS.KANBAN_ID = KANBAN.KANBAN_ID AND KANBAN_PARTS.PARTS_ID = INVOICE_PARTS.PARTS_ID
+        WHERE
+            KANBAN.KANBAN_ID = #{kanbanId}
+    </select>
+    
+    <!-- Get Kanban Shipping AND Kanban Shipping Parts Info -->
+    <select id="getKanbanShippingAndShippingPartsInfo" parameterType="com.chinaplus.core.bean.BaseParam" resultType="com.chinaplus.web.kbp.entity.CPKKPF11Entity" flushCache="true">
+        SELECT
+            KANBAN_SHIPPING.SHIPPING_UUID AS shippingUuid
+            , KANBAN_SHIPPING.TRANSPORT_MODE AS tansportMode 
+            , KANBAN_SHIPPING.ETD AS etd
+            , KANBAN_SHIPPING.ETA AS eta
+            , KANBAN_SHIPPING.IMP_INB_PLAN_DATE AS impPlanInboundDate 
+            , KANBAN_SHIPPING.ORIGINAL_VERSION AS originalVersion
+            , KANBAN_SHIPPING.REVISION_VERSION AS revisionVersion
+            , KANBAN_SHIPPING.REVISION_REASON AS revisionReason
+            , KANBAN_SHIPPING.COMPLETED_FLAG AS completedFlag
+            , KANBAN_SHIPPING.NIRD_FLAG AS nirdFlag
+            , KANBAN_SHIPPING_PARTS.PARTS_ID AS partsId
+            , KANBAN_SHIPPING_PARTS.QTY AS qty
+        FROM
+            TNT_KANBAN_SHIPPING KANBAN_SHIPPING
+            INNER JOIN 
+                TNT_KANBAN_SHIPPING_PARTS KANBAN_SHIPPING_PARTS ON KANBAN_SHIPPING.KANBAN_SHIPPING_ID = KANBAN_SHIPPING_PARTS.KANBAN_SHIPPING_ID
+        WHERE
+            KANBAN_SHIPPING.KANBAN_ID = #{filters.kanbanId}
+        <if test="filters.partsId != null and filters.partsId.size() != 0">
+            AND KANBAN_SHIPPING_PARTS.PARTS_ID IN 
+                <foreach item="partsIdItem" index="partsIdIndex" collection="filters.partsId" open="(" separator="," close=")">  
+                    #{partsIdItem}
+                </foreach>
+        </if>
+        ORDER BY
+            KANBAN_SHIPPING.SHIPPING_UUID ASC
+            , KANBAN_SHIPPING.ORIGINAL_VERSION ASC
+            , KANBAN_SHIPPING.REVISION_VERSION ASC
+    </select>
+    
+    <!-- Get Kanban Plan AND Kanban Plan Parts Info -->
+    <select id="getKanbanPlanAndPlanPartsInfo" parameterType="com.chinaplus.core.bean.BaseParam" resultType="com.chinaplus.web.kbp.entity.CPKKPF11Entity" flushCache="true">
+        SELECT
+            KANBAN_PLAN.SHIPPING_UUID AS shippingUuid
+            , KANBAN_PLAN.ORDER_MONTH AS orderMonth
+            , KANBAN_PLAN.PLAN_TYPE AS planType
+            , KANBAN_PLAN.ISSUED_DATE AS issuedDate
+            , KANBAN_PLAN.ISSUE_REMARK AS issueRemark
+            , KANBAN_PLAN.DELIVERED_DATE AS deliveredDate
+            , KANBAN_PLAN.DELIVERE_REMARK AS delivereRemark
+            , KANBAN_PLAN.VANNING_DATE AS vanningDate
+            , KANBAN_PLAN.VANNING_REMARK AS vanningRemark
+            , KANBAN_PLAN.REVISION_REASON AS revisionReasion
+            , KANBAN_PLAN_PARTS.PARTS_ID AS partsId
+            , KANBAN_PLAN_PARTS.QTY AS qty
+            , KANBAN_PLAN_PARTS.KANBAN_QTY AS kanbanQty 
+        FROM
+            TNT_KANBAN_PLAN KANBAN_PLAN
+            INNER JOIN 
+                TNT_KANBAN_PLAN_PARTS KANBAN_PLAN_PARTS ON KANBAN_PLAN.KANBAN_PLAN_ID = KANBAN_PLAN_PARTS.KANBAN_PLAN_ID
+        WHERE
+            KANBAN_PLAN.KANBAN_ID = #{filters.kanbanId}
+        <if test="filters.partsId != null and filters.partsId.size() != 0">
+            AND KANBAN_PLAN_PARTS.PARTS_ID IN 
+                <foreach item="partsIdItem" index="partsIdIndex" collection="filters.partsId" open="(" separator="," close=")">  
+                    #{partsIdItem}
+                </foreach>
+        </if>
+        ORDER BY
+            KANBAN_PLAN.SHIPPING_UUID ASC
+            , KANBAN_PLAN.ISSUED_DATE ASC
+            , KANBAN_PLAN.DELIVERED_DATE ASC
+            , KANBAN_PLAN.VANNING_DATE ASC
+    </select>
+    
+    <!-- Get Order Status Info -->
+    <select id="getOrderStatusInfo" parameterType="com.chinaplus.common.entity.TnfOrderStatus" resultType="com.chinaplus.common.entity.TnfOrderStatus" flushCache="true">
+        SELECT
+            ORDER_STATUS_ID AS orderStatusId
+            , PARTS_ID AS partsId
+        FROM
+            TNF_ORDER_STATUS
+        WHERE
+            KANBAN_PLAN_NO = #{kanbanPlanNo}
+    </select>
+    
+    <!-- Insert Order Status -->
+    <insert id="insertOrderStatus" parameterType="com.chinaplus.common.entity.TnfOrderStatus">
+        INSERT INTO TNF_ORDER_STATUS(
+            ORDER_STATUS_ID
+            , KANBAN_PLAN_NO
+            , PARTS_ID
+            , ORDER_MONTH
+            , SUPPLIER_ID
+            , ORDER_QTY
+            , EXP_INBOUND_QTY
+            , EXP_OUTBOUND_QTY
+            , EXP_ONSHIPPING_QTY
+            , IN_RACK_QTY
+            , IMP_STOCK_QTY
+            , IMP_ADJUSTED_QTY
+            , IMP_PREPARE_OB_QTY
+            , IMP_DELIVERED_QTY
+            , IMP_ECI_QTY
+            , IMP_NG_QTY
+            , TRANSFER_OUT_QTY
+            , FORCE_COMPLETED_QTY
+            , BUSINESS_PATTERN
+            , CREATED_BY
+            , CREATED_DATE
+            , UPDATED_BY
+            , UPDATED_DATE
+            , VERSION
+        ) VALUES (
+            #{orderStatusId}
+            , #{kanbanPlanNo}
+            , #{partsId}
+            , #{orderMonth}
+            , #{supplierId}
+            , #{orderQty}
+            , 0
+            , 0
+            , 0
+            , 0
+            , 0
+            , 0
+            , 0
+            , 0
+            , 0
+            , 0
+            , 0
+            , 0
+            , 2
+            , #{createdBy}
+            , #{createdDate}
+            , #{updatedBy}
+            , #{updatedDate}
+            , 1
+        )
+    </insert>
+    
+    <!-- Update Order Status -->
+    <update id="updateOrderStatus" parameterType="com.chinaplus.common.entity.TnfOrderStatus">
+        UPDATE
+            TNF_ORDER_STATUS
+        SET
+            ORDER_QTY = #{orderQty}
+            , UPDATED_DATE = #{updatedDate}
+            , UPDATED_BY = #{updatedBy}
+            , VERSION = VERSION + 1
+        WHERE
+            ORDER_STATUS_ID = #{orderStatusId}
+    </update>
+    
+    <!-- Delete Order Status -->
+    <delete id="deleteOrderStatus" parameterType="com.chinaplus.core.bean.ObjectParam">
+        DELETE FROM
+            TNF_ORDER_STATUS
+        WHERE
+            KANBAN_PLAN_NO = #{swapData.KANBAN_PLAN_NO}
+        <if test="swapData.PARTS_ID != null and swapData.PARTS_ID.size() != 0">
+            AND PARTS_ID NOT IN 
+            <foreach item="partsItem" index="partsIdIndex" collection="swapData.PARTS_ID" open="(" separator="," close=")">  
+                    #{partsItem}
+            </foreach>
+        </if>
+    </delete>
+    
+    <!-- Delete TNT_PFC_DETAIL -->
+    <delete id="deletePfcDetail" parameterType="com.chinaplus.core.bean.ObjectParam">
+        DELETE FROM
+            TNT_PFC_DETAIL
+        WHERE
+            KANBAN_PLAN_NO = #{swapData.KANBAN_PLAN_NO}
+        <if test="swapData.PARTS_ID != null and swapData.PARTS_ID.size() != 0">
+            AND PARTS_ID NOT IN 
+            <foreach item="partsItem" index="partsIdIndex" collection="swapData.PARTS_ID" open="(" separator="," close=")">  
+                    #{partsItem}
+            </foreach>
+        </if>
+    </delete>
+    
+    <!-- Delete TNT_PFC_SHIPPING -->
+    <delete id="deletePfcShipping" parameterType="com.chinaplus.core.bean.ObjectParam">
+        DELETE FROM
+            TNT_PFC_SHIPPING
+        WHERE
+            PFC_DETAIL_ID IN (
+                SELECT 
+                    PFC_DETAIL_ID
+                FROM
+                    TNT_PFC_DETAIL
+                WHERE
+                    KANBAN_PLAN_NO = #{swapData.KANBAN_PLAN_NO}
+                <if test="swapData.PARTS_ID != null and swapData.PARTS_ID.size() != 0">
+                    AND PARTS_ID NOT IN 
+                    <foreach item="partsItem" index="partsIdIndex" collection="swapData.PARTS_ID" open="(" separator="," close=")">  
+                            #{partsItem}
+                    </foreach>
+                </if>
+            )
+    </delete>
+    
+    <!-- Update Kanban -->
+    <update id="updateKanban" parameterType="com.chinaplus.web.kbp.entity.CPKKPF11Entity">
+        UPDATE 
+            TNT_KANBAN
+        SET 
+            TOTAL_ORDER_QTY = #{orderQty}
+            , TOTAL_ONSHIPPING_QTY = #{onShippingQty}
+            , TOTAL_INBOUND_QTY = #{inboundQty}
+            , TOTAL_BALANCE_QTY = #{orderBalance}
+            , UPDATED_DATE = #{updatedDate}
+            , UPDATED_BY = #{updatedBy}
+            , VERSION = VERSION + 1
+        WHERE
+            KANBAN_ID = #{kanbanId}
+    </update>
+    
+    <!-- Insert Kanban -->
+    <insert id="insertKanban" parameterType="com.chinaplus.common.entity.TntKanban">
+        INSERT INTO TNT_KANBAN(
+            KANBAN_ID
+            , OFFICE_ID
+            , KANBAN_PLAN_NO
+            , CUSTOMER_ID
+            , SUPPLIER_ID
+            , ORDER_MONTH
+            , UPLOADED_BY
+            , UPLOADED_DATE
+            , REVISION_VERSION
+            , REVISION_CODE_SET
+            , REVISION_REASON
+            , SEA_FLAG
+            , AIR_FLAG
+            , TOTAL_ORDER_QTY
+            , TOTAL_ONSHIPPING_QTY
+            , TOTAL_INBOUND_QTY
+            , TOTAL_BALANCE_QTY
+            , UPLOAD_FILE_TYPE
+            , STATUS
+            , CREATED_BY
+            , CREATED_DATE
+            , UPDATED_BY
+            , UPDATED_DATE
+            , VERSION
+        ) VALUES (
+            #{kanbanId}
+            , #{officeId}
+            , #{kanbanPlanNo}
+            , #{customerId}
+            , #{supplierId}
+            , #{orderMonth}
+            , #{uploadedBy}
+            , #{uploadedDate}
+            , #{revisionVersion, jdbcType=INTEGER}
+            , #{revisionCodeSet, jdbcType=VARCHAR}
+            , #{revisionReason, jdbcType=VARCHAR}
+            , #{seaFlag}
+            , #{airFlag}
+            , #{totalOrderQty, jdbcType=DECIMAL}
+            , #{totalOnshippingQty, jdbcType=DECIMAL}
+            , #{totalInboundQty, jdbcType=DECIMAL}
+            , #{totalBalanceQty, jdbcType=DECIMAL}
+            , #{uploadFileType}
+            , #{status}
+            , #{createdBy}
+            , #{createdDate}
+            , #{updatedBy}
+            , #{updatedDate}
+            , 1
+        )
+    </insert>
+    
+    <!-- Insert Kanban Parts -->
+    <insert id="insertKanbanParts" parameterType="com.chinaplus.common.entity.TntKanbanPart">
+        INSERT INTO TNT_KANBAN_PARTS(
+            KANBAN_PARTS_ID
+            , KANBAN_ID
+            , SEQ_NO
+            , PLANT
+            , DOCK
+            , BOX_NO
+            , BOX_TYPE
+            , ORDER_MONTH
+            , SUPPLIER_ID
+            , CUSTOMER_ID
+            , PARTS_ID
+            , SPQ
+            , QTY
+            , KANBAN_QTY
+            , FC_QTY1
+            , FC_QTY2
+            , FC_QTY3
+            , FC_QTY4
+            , FC_QTY5
+            , FC_QTY6
+            , REMARK
+            , FORCE_COMPLETED_BY
+            , FORCE_COMPLETED_DATE
+            , STATUS
+            , CREATED_BY
+            , CREATED_DATE
+            , UPDATED_BY
+            , UPDATED_DATE
+            , VERSION
+        ) VALUES (
+            #{kanbanPartsId}
+            , #{kanbanId}
+            , #{seqNo, jdbcType=VARCHAR}
+            , #{plant, jdbcType=VARCHAR}
+            , #{dock, jdbcType=VARCHAR}
+            , #{boxNo, jdbcType=VARCHAR}
+            , #{boxType, jdbcType=VARCHAR}
+            , #{orderMonth}
+            , #{supplierId}
+            , #{customerId}
+            , #{partsId}
+            , #{spq}
+            , #{qty}
+            , #{kanbanQty}
+            , #{fcQty1, jdbcType=DECIMAL}
+            , #{fcQty2, jdbcType=DECIMAL}
+            , #{fcQty3, jdbcType=DECIMAL}
+            , #{fcQty4, jdbcType=DECIMAL}
+            , #{fcQty5, jdbcType=DECIMAL}
+            , #{fcQty6, jdbcType=DECIMAL}
+            , #{remark, jdbcType=VARCHAR}
+            , #{forceCompletedBy, jdbcType=INTEGER}
+            , #{forceCompletedDate, jdbcType=TIME}
+            , #{status}
+            , #{createdBy}
+            , #{createdDate}
+            , #{updatedBy}
+            , #{updatedDate}
+            , 1
+        )
+    </insert>
+    
+    <!-- Insert Kanban Shipping -->
+    <insert id="insertKanbanShipping" parameterType="com.chinaplus.common.entity.TntKanbanShipping">
+        INSERT INTO TNT_KANBAN_SHIPPING(
+            KANBAN_SHIPPING_ID 
+            , KANBAN_ID
+            , SHIPPING_UUID
+            , TRANSPORT_MODE
+            , ETD
+            , ETA
+            , IMP_INB_PLAN_DATE
+            , ORIGINAL_VERSION
+            , REVISION_VERSION
+            , REVISION_REASON
+            , COMPLETED_FLAG
+            , NIRD_FLAG
+            , CREATED_BY
+            , CREATED_DATE
+            , UPDATED_BY
+            , UPDATED_DATE
+            , VERSION
+        ) VALUES (
+            #{kanbanShippingId}
+            , #{kanbanId}
+            , #{shippingUuid}
+            , #{transportMode}
+            , #{etd}
+            , #{eta}
+            , #{impInbPlanDate}
+            , #{originalVersion, jdbcType=INTEGER}
+            , #{revisionVersion, jdbcType=INTEGER}
+            , #{revisionReason, jdbcType=VARCHAR}
+            , #{completedFlag}
+            , #{nirdFlag}
+            , #{createdBy}
+            , #{createdDate}
+            , #{updatedBy}
+            , #{updatedDate}
+            , 1
+        )
+    </insert>
+    
+    <!-- Insert Kanban Shipping Parts -->
+    <insert id="insertKanbanShippingParts" parameterType="com.chinaplus.common.entity.TntKanbanShippingPart">
+        INSERT INTO TNT_KANBAN_SHIPPING_PARTS(
+            KSP_ID
+            , KANBAN_SHIPPING_ID
+            , PARTS_ID
+            , QTY
+            , KANBAN_QTY
+            , CREATED_BY
+            , CREATED_DATE
+            , UPDATED_BY
+            , UPDATED_DATE
+            , VERSION
+        ) VALUES (
+            #{kspId}
+            , #{kanbanShippingId}
+            , #{partsId}
+            , #{qty, jdbcType=DECIMAL}
+            , #{kanbanQty, jdbcType=DECIMAL}
+            , #{createdBy}
+            , #{createdDate}
+            , #{updatedBy}
+            , #{updatedDate}
+            , 1
+        )
+    </insert>
+
+    <!-- Insert Kanban Plan -->
+    <insert id="insertKanbanPlan" parameterType="com.chinaplus.common.entity.TntKanbanPlan">
+        INSERT INTO TNT_KANBAN_PLAN(
+            KANBAN_PLAN_ID
+            , KANBAN_ID
+            , SHIPPING_UUID
+            , ORDER_MONTH
+            , PLAN_TYPE
+            , ISSUED_DATE
+            , ISSUE_REMARK
+            , DELIVERED_DATE
+            , DELIVERE_REMARK
+            , VANNING_DATE
+            , VANNING_REMARK
+            , REVISION_REASON
+            , CREATED_BY
+            , CREATED_DATE
+            , UPDATED_BY
+            , UPDATED_DATE
+            , VERSION
+        ) VALUES (
+            #{kanbanPlanId}
+            , #{kanbanId}
+            , #{shippingUuid}
+            , #{orderMonth}
+            , #{planType}
+            , #{issuedDate, jdbcType=DATE}
+            , #{issueRemark, jdbcType=VARCHAR}
+            , #{deliveredDate, jdbcType=DATE}
+            , #{delivereRemark, jdbcType=VARCHAR}
+            , #{vanningDate, jdbcType=DATE}
+            , #{vanningRemark, jdbcType=VARCHAR}
+            , #{revisionReason, jdbcType=VARCHAR}
+            , #{createdBy}
+            , #{createdDate}
+            , #{updatedBy}
+            , #{updatedDate}
+            , 1
+        )
+    </insert>
+
+    <!-- Insert Kanban Plan Parts -->
+    <insert id="insertKanbanPlanParts" parameterType="com.chinaplus.common.entity.TntKanbanPlanPart">
+        INSERT INTO TNT_KANBAN_PLAN_PARTS(
+            KB_PLAN_PARTS_ID
+            , KANBAN_PLAN_ID
+            , PARTS_ID
+            , QTY
+            , KANBAN_QTY
+            , CREATED_BY
+            , CREATED_DATE
+            , UPDATED_BY
+            , UPDATED_DATE
+            , VERSION
+        ) VALUES (
+            #{kbPlanPartsId}
+            , #{kanbanPlanId}
+            , #{partsId}
+            , #{qty, jdbcType=DECIMAL}
+            , #{kanbanQty, jdbcType=DECIMAL}
+            , #{createdBy}
+            , #{createdDate}
+            , #{updatedBy}
+            , #{updatedDate}
+            , 1
+        )
+    </insert>
+    
+    <!-- Get the exist shipping plan. -->
+    <select id="getExistShippingPlan" parameterType="com.chinaplus.web.kbp.entity.CPKKPF11Entity" resultType="com.chinaplus.web.kbp.entity.CPKKPF11Entity" flushCache="true">
+        SELECT
+            KANBAN_SHIPPING_ID AS kanbanShippingId
+            , SHIPPING_UUID AS shippingUuid
+        FROM
+            TNT_KANBAN_SHIPPING
+        WHERE
+            KANBAN_ID = #{kanbanId}
+            AND TRANSPORT_MODE = '1'
+            AND ETD = #{etd}
+            AND ETA = #{eta}
+            AND IMP_INB_PLAN_DATE = #{impPlanInboundDate}
+            AND COMPLETED_FLAG = '0'
+            AND NIRD_FLAG = '0'
+    </select>
+    
+    <!-- Get the exist kanban plan. -->
+    <select id="getExistKanbanPlan" parameterType="com.chinaplus.web.kbp.entity.CPKKPF11Entity" resultType="com.chinaplus.web.kbp.entity.CPKKPF11Entity" flushCache="true">
+        SELECT
+            KANBAN_PLAN_ID AS kanbanPlanId
+        FROM
+            TNT_KANBAN_PLAN
+        WHERE
+            KANBAN_ID = #{kanbanId}
+            AND SHIPPING_UUID = #{shippingUuid}
+            AND PLAN_TYPE = '2'
+            AND ISSUED_DATE = #{issuedDate}
+            AND DELIVERED_DATE = #{deliveredDate}
+            AND VANNING_DATE = #{vanningDate}       
+    </select>
+    
+    <!-- Get max original version. -->
+    <select id="getMaxOriginalVersion" parameterType="com.chinaplus.web.kbp.entity.CPKKPF11Entity" resultType="com.chinaplus.web.kbp.entity.CPKKPF11Entity" flushCache="true">
+        SELECT 
+            COALESCE(MAX(ORIGINAL_VERSION), 0) AS originalVersion 
+        FROM 
+            TNT_KANBAN_SHIPPING 
+        WHERE 
+            KANBAN_ID = #{kanbanId}
+    </select>
+</mapper>

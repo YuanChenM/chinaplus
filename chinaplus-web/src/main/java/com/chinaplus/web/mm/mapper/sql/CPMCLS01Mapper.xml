@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.mm.service.CPMCLS01Service">
+    <sql id="const">
+        <bind name="INACTIVEFLAG" value="@com.chinaplus.common.consts.CodeConst$InactiveFlag@ACTIVE" />
+    </sql>
+
+    <sql id="whereSql">
+        from TNM_CUSTOMER A
+          LEFT JOIN TNM_USER C
+              ON A.CREATED_BY = C.USER_ID
+          LEFT JOIN TNM_OFFICE E
+                ON A.OFFICE_ID=E.OFFICE_ID
+          LEFT JOIN TNM_USER D
+              ON A.UPDATED_BY = D.USER_ID
+          LEFT JOIN TNM_WHS_CUSTOMER E 
+              ON A.CUSTOMER_ID = E.CUSTOMER_ID
+        <where>
+        <if test="null != filters">
+            <if test="null != filters.customerCode and filters.customerCode.size()>0">
+                and A.CUSTOMER_CODE IN 
+                <foreach item="item" index="index" collection="filters.customerCode" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+            </if>
+            <if test="null != filters.ttlCustomerCode and filters.ttlCustomerCode.size()>0">
+                and E.WHS_CUSTOMER_CODE IN 
+                <foreach item="item" index="index" collection="filters.ttlCustomerCode" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+            </if>
+            <if test="null != filters.officeCode and filters.officeCode.size()>0">
+                and A.OFFICE_ID IN 
+                <foreach item="item" index="index" collection="filters.officeCode" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+            </if>
+            <if test="null != filters.customerName and '' != filters.customerName">
+                and A.CUSTOMER_NAME LIKE #{filters.customerName} ESCAPE '!'
+            </if>
+            <if test="null != filters.regionCode and filters.regionCode.size()>0">
+                and A.REGION_CODE IN 
+                <foreach item="item" index="index" collection="filters.regionCode" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+            </if>
+            <if test="null != filters.businessPattern and filters.businessPattern.size()>0">
+                and A.BUSINESS_PATTERN IN 
+                <foreach item="item" index="index" collection="filters.businessPattern" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+            </if>
+            <if test="null != filters.inActiveFlag and '' != filters.inActiveFlag">
+                and A.INACTIVE_FLAG = #{filters.inActiveFlag}
+            </if>
+
+            <if test="null != filters.createDateFrom and '' != filters.createDateFrom">
+                and DATE(A.CREATED_DATE) <![CDATA[>=]]> #{filters.createDateFrom}
+            </if>
+            <if test="null != filters.createDateTo and '' != filters.createDateTo">
+                and DATE (A.CREATED_DATE) <![CDATA[<=]]> #{filters.createDateTo}
+            </if>
+            <if test="null != filters.updateDateFrom and '' != filters.updateDateFrom">
+                and DATE(A.UPDATED_DATE) <![CDATA[>=]]> #{filters.updateDateFrom}
+            </if>
+            <if test="null != filters.updateDateTo and '' != filters.updateDateTo">
+                and DATE(A.UPDATED_DATE) <![CDATA[<=]]> #{filters.updateDateTo}
+            </if>
+            <if test="null != filters.createBy and '' != filters.createBy">
+                and C.LOGIN_ID LIKE #{filters.createBy} ESCAPE '!'
+            </if>
+            <if test="null != filters.updateBy and '' != filters.updateBy">
+                and D.LOGIN_ID LIKE #{filters.updateBy} ESCAPE '!'
+            </if>
+        </if>
+        </where>
+    </sql>
+    
+    <sql id="orderSql">
+    ORDER BY A.CUSTOMER_CODE ASC
+    </sql>
+    
+<select id="getTtlCustomerCodebyCustomerId" resultType="com.chinaplus.web.mm.entity.CPMCLS01Entity" flushCache="true">
+    	select 
+    		A.CUSTOMER_ID AS customerId,
+    		E.WHS_CUSTOMER_CODE AS ttlCustomerCode
+    	from 
+    		TNM_CUSTOMER A
+    		INNER JOIN TNM_WHS_CUSTOMER E 
+              ON A.CUSTOMER_ID = E.CUSTOMER_ID
+        where 
+        	A.CUSTOMER_ID IN 
+                <foreach item="item" index="index" collection="swapData.custmoerList" open="(" separator="," close=")">  
+                      #{item.customerId}
+                </foreach>
+        order by 
+        	E.WHS_CUSTOMER_CODE ASC 
+    </select>
+    
+    <select id="getCustomerList" parameterType="com.chinaplus.core.bean.PageParam"
+        resultType="com.chinaplus.web.mm.entity.CPMCLS01Entity" flushCache="true">
+        Select * from (
+        select
+        	customerId,
+        	customerCode,
+        	officeId,
+        	officeCode,
+        	customerName,
+        	regionCode,
+        	businessPattern,
+        	inActiveFlag,
+        	createDate,
+        	createBy,
+        	updateDate,
+        	updateBy,
+            rownumber() over(ORDER BY customerCode ASC) as rownum
+        from (
+		        select DISTINCT
+            A.CUSTOMER_ID customerId,
+            A.CUSTOMER_CODE customerCode,
+            A.OFFICE_ID AS officeId,
+            E.OFFICE_CODE AS officeCode,
+            A.CUSTOMER_NAME AS customerName,
+            A.REGION_CODE AS regionCode,
+            A.BUSINESS_PATTERN AS businessPattern,
+            A.INACTIVE_FLAG AS inActiveFlag,
+            A.CREATED_DATE AS createDate,
+            C.LOGIN_ID AS createBy,
+            A.UPDATED_DATE AS updateDate,
+		            D.LOGIN_ID AS updateBy
+        <include refid= "whereSql"/>
+        <include refid="orderSql" />
+		     )
+        ) Where <include refid="com.chinaplus.const.pagingCondition" />
+    </select>
+    
+    <select id="getCustomerListCount" parameterType="com.chinaplus.core.bean.PageParam"
+        resultType="int" flushCache="true">
+        select
+            count(0)
+        from 
+        	(select DISTINCT
+            A.CUSTOMER_ID customerId,
+            A.CUSTOMER_CODE customerCode,
+            A.OFFICE_ID AS officeId,
+            E.OFFICE_CODE AS officeCode,
+            A.CUSTOMER_NAME AS customerName,
+            A.REGION_CODE AS regionCode,
+            A.BUSINESS_PATTERN AS businessPattern,
+            A.INACTIVE_FLAG AS inActiveFlag,
+            A.CREATED_DATE AS createDate,
+            C.LOGIN_ID AS createBy,
+            A.UPDATED_DATE AS updateDate,
+            D.LOGIN_ID AS updateBy
+        <include refid= "whereSql"/>
+ ) 
+    </select>
+
+    <select id="getCalendarListCombo" parameterType="com.chinaplus.core.bean.BaseParam" resultType="com.chinaplus.common.entity.TnmCalendarMaster" flushCache="true">
+        select DISTINCT
+            CALENDAR_ID calendarId,
+            CALENDAR_CODE calendarCode
+        from TNM_CALENDAR_MASTER
+            ORDER BY CALENDAR_CODE ASC
+    </select>
+    
+    <select id="getCustomers" parameterType="com.chinaplus.core.bean.BaseParam" resultType="com.chinaplus.common.entity.TnmCustomer" flushCache="true">
+        SELECT
+            distinct CUSTOMER_CODE as customerCode
+        FROM
+            TNM_CUSTOMER
+        ORDER BY
+            CUSTOMER_CODE ASC
+        </select>
+            <select id="getOffices" parameterType="com.chinaplus.core.bean.BaseParam" resultType="com.chinaplus.common.bean.ComboData">
+        SELECT
+        	OFFICE_ID AS id,
+        	OFFICE_CODE AS text
+        FROM
+            TNM_OFFICE
+       	<if test="null != userOfficeIds and userOfficeIds.size()>0">
+       		WHERE OFFICE_ID IN 
+                <foreach item="item" index="index" collection="userOfficeIds" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+        </if>
+        ORDER BY
+            OFFICE_ID ASC
+    </select>
+    
+    <select id="getTtlCustomers" parameterType="com.chinaplus.core.bean.BaseParam" resultType="com.chinaplus.common.bean.ComboData" flushCache="true">
+        SELECT
+            DISTINCT WHS_CUSTOMER_CODE as id,
+            WHS_CUSTOMER_CODE as text
+        FROM
+            TNM_WHS_CUSTOMER
+        WHERE
+            1=1
+        and OFFICE_ID IN 
+        <foreach item="item" index="index" collection="userOfficeIds" open="(" separator="," close=")">  
+              #{item}
+        </foreach>
+        ORDER BY
+            WHS_CUSTOMER_CODE ASC
+    </select>
+    
+</mapper>

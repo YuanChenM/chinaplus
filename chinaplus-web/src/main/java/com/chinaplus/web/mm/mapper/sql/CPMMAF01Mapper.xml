@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chinaplus.web.mm.service.CPMMAF01Service">
+    <select id="getEmailAlertList" parameterType="com.chinaplus.core.bean.BaseParam"
+        resultType="com.chinaplus.web.mm.entity.CPMMAF01Entity">
+            SELECT C.LOGIN_ID AS loginId,
+                D.OFFICE_CODE AS impOfficeCode,
+                B.CUSTOMER_CODE AS ttcCustomerCode,
+                A.ALERT_LEVEL AS alertLevel,
+                A.INACTIVE_FLAG AS inActiveFlag
+            FROM
+                TNM_EMAIL_ALERT A                                                                           
+                INNER JOIN TNM_CUSTOMER B 
+                ON A.CUSTOMER_ID=B.CUSTOMER_ID                                                                            
+                INNER JOIN TNM_USER C 
+                ON C.USER_ID=A.USER_ID                                                                            
+                INNER JOIN TNM_OFFICE D 
+                ON D.OFFICE_ID=B.OFFICE_ID
+            WHERE
+            1=1
+            <if test="null != swapData.impOfficeId and swapData.impOfficeId != ''">
+                AND D.OFFICE_ID IN (${swapData.impOfficeId})
+            </if>
+            <if test="null != swapData.loginId and swapData.loginId != ''">
+                AND C.LOGIN_ID IN (${swapData.loginId})
+            </if>
+            <if test="null != swapData.alertLevel and swapData.alertLevel != ''">
+                AND A.ALERT_LEVEL IN (${swapData.alertLevel})
+            </if>
+            <if test="null != swapData.alertLevel and swapData.alertLevel != ''">
+                AND A.ALERT_LEVEL IN (${swapData.alertLevel})
+            </if>
+            ORDER BY
+            C.login_id,
+            D.office_code,
+            B.customer_code ASC
+    </select>
+</mapper>

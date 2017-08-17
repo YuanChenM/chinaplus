@@ -1,0 +1,381 @@
+/**
+ * Kanban Issued Plan Screen
+ * 
+ * @screen CPKKPS01
+ * @author shiyang
+ */
+CPKKPS01 = {
+    id : chinaplus.screen.CPKKPS01,
+    title : chinaplus.label.CPKKPS01_Label_PageTitle,
+    xtype : 'grid',
+    autoScroll : true,
+    border : true,
+    closable : false,
+    enableColumnHide : false,
+    enableColumnMove : false,
+    qtip : true,
+    columnLines : true,
+    selModel : Ext.create('Ext.ux.selection.CheckBoxModel', {
+                checkOnly : true
+            }),
+    viewConfig : {
+        loadMask : false,
+        getRowClass : function() {
+            return "vertical-align-row";
+        }
+    },
+    plugins : [{
+                ptype : 'gridheaderfilters'
+            }, {
+                ptype : 'emptystoreview'
+            }, {
+                ptype : 'headerfiltertoolbar',
+                showMore : true,
+                pageSize : TRF.cnst.PAGE_SIZE_COMMON
+            }],
+    header : false,
+    headerPosition : 'bottom',
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    columns : [{
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPKKPS01_Grid_KanbanPlanNo + '</div>',
+                width : 200,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'kanbanPlanNoDisplay',
+                sortable : false,
+                filter : 'string',
+                renderer : function(v, p, record) {
+                    var formatStr = '<a href="#" onclick="Ext.getCmp(chinaplus.screen.CPKKPS01).gotoDetailScreen(\'{1}\', \'{2}\', \'{3}\')">{0}</a>';
+                    return Ext.String.format(formatStr, Ext.String.htmlEncode(v), record.data.kanbanId, record.data.kanbanPlanNo, record.data.kanbanPlanNoDisplay);
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPKKPS01_Grid_OrderMonth + '</div>',
+                width : 100,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'orderMonth',
+                sortable : false,
+                align : 'center',
+                filter : 'date',
+                filterPlugins : [{
+                            ptype : 'monthPicker'
+                        }],
+                filterValueGen : function(value) {
+                    var dateInfo = value.split('-');
+                    return dateInfo[0] + dateInfo[1];
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPKKPS01_Grid_TTCCustomerCode + '</div>',
+                width : 150,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'ttcCustomerCode',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPKKPS01, 'common/loadOfficeCustomers', 'Combo', chinaplus.screen.CPVIVS07 + '_customerStore')
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPKKPS01_Grid_TTCSupplierCode + '</div>',
+                width : 150,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'ttcSupplierCode',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPKKPS01, 'common/loadActiveSuppliers', 'Combo', chinaplus.screen.CPKKPS01 + '_supplierStore')
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPKKPS01_Grid_TransportMode + '</div>',
+                width : 90,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'transportMode',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    options : chinaplus.master.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_TransportMode)
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPKKPS01_Grid_OrderQty + '</div>',
+                width : 110,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'orderQty',
+                sortable : false,
+                align : 'right',
+                renderer : function(v, p, record) {
+                    return TRF.util.getDecimalFormatByDigits(v, 3);
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPKKPS01_Grid_OnShippingQty + '</div>',
+                width : 110,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'onShippingQty',
+                sortable : false,
+                align : 'right',
+                renderer : function(v, p, record) {
+                    return TRF.util.getDecimalFormatByDigits(v, 3);
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPKKPS01_Grid_InboundQty + '</div>',
+                width : 110,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'inboundQty',
+                sortable : false,
+                align : 'right',
+                renderer : function(v, p, record) {
+                    return TRF.util.getDecimalFormatByDigits(v, 3);
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPKKPS01_Grid_OrderBalance + '</div>',
+                width : 110,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'orderBalance',
+                sortable : false,
+                align : 'right',
+                renderer : function(v, p, record) {
+                    return TRF.util.getDecimalFormatByDigits(v, 3);
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPKKPS01_Grid_Status + '</div>',
+                width : 80,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'status',
+                sortable : false,
+                align : 'left',
+                filter : {
+                    type : 'list',
+                    options : chinaplus.master.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_KanbanStatus)
+                },
+                renderer : function(v, p, record) {
+                    return chinaplus.master.getMasterName(chinaplus.master.consts.TnmCodeCategory_KanbanStatus, v);
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPKKPS01_Grid_UploadID + '</div>',
+                width : 100,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'uploadId',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPKKPS01, 'common/loadOfficeUsers', 'Combo', chinaplus.screen.CPKKPS01 + '_userStore')
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPKKPS01_Grid_LastUploadTime + '</div>',
+                width : 140,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'lastUploadTime',
+                sortable : false,
+                align : 'center',
+                filter : 'date',
+                filterPlugins : [{
+                            ptype : 'datePickerClear'
+                        }]
+            }],
+    tbar : [{
+                text : chinaplus.label.CPKKPS01_Button_UploadKanban,
+                id : chinaplus.screen.CPKKPS01 + '_uploadKanban',
+                iconCls : 'btn-upload',
+                handler : function() {
+                    CPKKPS01.uploadKanban();
+                }
+            }, {
+                text : chinaplus.label.CPKKPS01_Button_DownloadKanban,
+                id : chinaplus.screen.CPKKPS01 + '_downloadKanban',
+                iconCls : 'btn-download',
+                handler : function() {
+                    CPKKPS01.downloadKanban();
+                }
+            }, {
+                text : chinaplus.label.CPKKPS01_Button_CancelKanban,
+                id : chinaplus.screen.CPKKPS01 + '_cancelKanban',
+                iconCls : 'btn-cancel',
+                handler : function() {
+                    CPKKPS01.cancelKanban();
+                }
+            }],
+    store : TRF.util.createStore(chinaplus.screen.CPKKPS01, 'kbp/CPKKPS01/loadKanbanList', 'KanbanList', chinaplus.screen.CPKKPS01 + '_kanbanStore', {
+                load : TRF.util.addEnterListenerToFocusableLink
+            }),
+
+    /**
+     * The initialize function.
+     * 
+     * @param params the parameter object passed to this screen
+     */
+    initialize : function(params) {
+
+        var me = this;
+        var gridStore = this.store;
+
+        // Set deafult condition
+        TRF.util.setDefaultValuesForToolBar(this, 'status', '1');
+
+        // Load the kanban list.
+        TRF.util.loadStore(gridStore, null, function() {
+                    gridStore.on('beforeload', function() {
+                                TRF.core.mask(TRF.core.maskMsg.load, null, me);
+                            });
+                    gridStore.on('load', function() {
+                                TRF.core.unmask(me);
+                            });
+                }, {
+                    filters : {
+                        status : '1'
+                    }
+                });
+        me.doLayout();
+        TRF.util.addGridTip(me);
+    },
+
+    /**
+     * Go to detail screen.
+     * 
+     * @param kanbanId.
+     * @param kanbanPlanNo.
+     * @param kanbanPlanNoDisplay.
+     */
+    gotoDetailScreen : function(kanbanId, kanbanPlanNo, kanbanPlanNoDisplay) {
+        TRF.util.setDetailTabMode_View();
+        var params = {
+            'kanbanId' : kanbanId,
+            'kanbanPlanNo' : kanbanPlanNo,
+            'kanbanPlanNoDisplay' : kanbanPlanNoDisplay
+        };
+        TRF.util.addApplication(chinaplus.screen.CPKKPS02, chinaplus.screen.CPKKPS02, true, params);
+    },
+
+    /**
+     * Upload Kanban(CPKKPS04).
+     */
+    uploadKanban : function() {
+        var me = this;
+        var backFun = function(applicationData) {
+            me.store.reload();
+        };
+        TRF.util.popupApplication(chinaplus.screen.CPKKPS04, chinaplus.screen.CPKKPS04, null, null, backFun);
+    },
+
+    /**
+     * Download Kanban(CPKKPS03).
+     */
+    downloadKanban : function() {
+        // Select check
+        var selectionArray = Ext.getCmp(chinaplus.screen.CPKKPS01).getSelectionModel().getSelection();
+        if (selectionArray.length == 0) {
+            TRF.util.showMessageBoxByMsgIdAndArgs('w1011');
+            return;
+        }
+
+        var kanbanPlanNoDisplay;
+        var kanbanId;
+        for (var i = 0; i < selectionArray.length; i++) {
+            if (i == 0) {
+                kanbanPlanNoDisplay = selectionArray[i].data.kanbanPlanNoDisplay;
+                kanbanId = selectionArray[i].data.kanbanId;
+            } else {
+                kanbanPlanNoDisplay = kanbanPlanNoDisplay + ',' + selectionArray[i].data.kanbanPlanNoDisplay;
+                kanbanId = kanbanId + ',' + selectionArray[i].data.kanbanId;
+            }
+        }
+
+        var params = [];
+        params.push(kanbanPlanNoDisplay);
+        params.push(kanbanId);
+        TRF.util.popupApplication(chinaplus.screen.CPKKPS03, chinaplus.screen.CPKKPS03, params);
+    },
+
+    /**
+     * Cancel Kanban.
+     */
+    cancelKanban : function() {
+        // Select check
+        var selectionArray = Ext.getCmp(chinaplus.screen.CPKKPS01).getSelectionModel().getSelection();
+        if (selectionArray.length == 0) {
+            TRF.util.showMessageBoxByMsgIdAndArgs('w1011');
+            return;
+        }
+
+        // Cancel confirm
+        var me = this;
+        var conMsg = TRF.util.getMessage('c1001', [chinaplus.label.CPKKPS01_Button_CancelKanban]);
+        TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_QUESTION, conMsg, [conMsg], function(btn) {
+                    if (btn == 'yes') {
+                        // Get selected kanbanPlanNo
+                        var selectedDatas = new Array();
+                        for (var i = 0; i < selectionArray.length; i++) {
+                            selectedDatas[i] = {
+                                'kanbanId' : selectionArray[i].data.kanbanId,
+                                'kanbanPlanNo' : selectionArray[i].data.kanbanPlanNo
+                            };
+                        }
+
+                        var params = {};
+                        params[TRF.cnst.DATAS] = selectedDatas;
+
+                        // Callback function with Submit, show message [{0}
+                        // process has been successful.] if process has been
+                        // successful.
+                        var backFun = function(applicationData) {
+                            if (applicationData.success) {
+                                var lsMsgs = TRF.util.getMessage('i1004', [chinaplus.label.CPKKPS01_Button_CancelKanban]);
+                                TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_INFO, lsMsgs, lsMsgs, function() {
+                                            me.store.reload();
+                                        });
+                            }
+                        };
+
+                        // Submit
+                        TRF.util.ajaxSubmit(backFun, chinaplus.screen.CPKKPS01, 'kbp/CPKKPS01/cancelKanban', null, params);
+                    }
+                });
+    }
+    ,
+}

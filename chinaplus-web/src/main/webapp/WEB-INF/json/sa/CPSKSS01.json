@@ -1,0 +1,418 @@
+/**
+ * kpi screen
+ * 
+ * @author shi_yuxi
+ * @screen CPSKSS01
+ */
+
+CPSKSS01 = {
+    xtype : 'form',
+    id : chinaplus.screen.CPSKSS01,
+    title : chinaplus.label.CPSKSS01_Label_PageTitle,
+    frame : true,
+    autoHeight : false,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    autoScroll : true,
+    buttonAlign : 'left',
+    fieldDefaults : {
+        labelAlign : 'right',
+        labelWidth : 150
+    },
+    items : [{
+        xtype : 'container',
+        minWidth : 900,
+        layout : 'column',
+        margin : '15 0 0 15',
+        autoScroll : true,
+        items : [{
+                    xtype : 'container',
+                    autoHeight : true,
+                    items : [{
+                                xtype : 'checkcombo',
+                                margin : '10 0 0 0',
+                                addAllSelector : true,
+                                editable : false,
+                                multiSelect : true,
+                                fieldLabel : chinaplus.label.CPSKSS01_Label_BusinessPattern,
+                                id : chinaplus.screen.CPSKSS01 + '_businessPattern',
+                                width : 432,
+                                fieldStyle : 'background:rgb(255,255,153)',
+                                labelWidth : 200,
+                                name : 'businessPattern',
+                                store : TRF.util
+                                        .createStore(chinaplus.screen.CPSKSS01, 'CPSKSS01/loadBusinessPattern', 'Combo', chinaplus.screen.CPSKSS01 + '_businessPatternStore'),
+                                dispalyField : 'text',
+                                valueField : 'id',
+                                queryMode : 'local',
+                                labelSeparator : '',
+                                listeners : {
+                                    change : function(thisObj, newValue, oldValue, eOpts) {
+                                        var customer = Ext.getCmp(chinaplus.screen.CPSKSS01 + '_customerCode');
+                                        customer.setValue('');
+                                        var param = {
+                                            'businessPattern' : newValue
+                                        };
+                                        TRF.util.loadStore(customer.store, param);
+                                        // V-V
+                                        if (newValue == 1) {
+                                            Ext.getCmp(chinaplus.screen.CPSKSS01 + '_SalesOrderDate').show();
+                                            Ext.getCmp(chinaplus.screen.CPSKSS01 + '_OrderNo').show();
+                                            Ext.getCmp(chinaplus.screen.CPSKSS01 + '_OrderMonthFrom').setValue(null);
+                                            Ext.getCmp(chinaplus.screen.CPSKSS01 + '_OrderMonthTo').setValue(null);
+                                            Ext.getCmp(chinaplus.screen.CPSKSS01 + '_OrderMonth').hide();
+                                            Ext.getCmp(chinaplus.screen.CPSKSS01 + '_KBPlanNo').setValue(null);
+                                            Ext.getCmp(chinaplus.screen.CPSKSS01 + '_KBPlanNo').hide();
+                                        }
+                                        //ansin
+                                        else if (newValue == 2) {
+                                            Ext.getCmp(chinaplus.screen.CPSKSS01 + '_SalesOrderDateFrom').setValue(null);
+                                            Ext.getCmp(chinaplus.screen.CPSKSS01 + '_SalesOrderDateTo').setValue(null);
+                                            Ext.getCmp(chinaplus.screen.CPSKSS01 + '_SalesOrderDate').hide();
+                                            Ext.getCmp(chinaplus.screen.CPSKSS01 + '_OrderNo').setValue(null);
+                                            Ext.getCmp(chinaplus.screen.CPSKSS01 + '_OrderNo').hide();
+                                            Ext.getCmp(chinaplus.screen.CPSKSS01 + '_OrderMonth').show();
+                                            Ext.getCmp(chinaplus.screen.CPSKSS01 + '_KBPlanNo').show();
+                                        }
+                                        //all
+                                        else if (newValue == '1,2' || newValue == '2,1') {
+                                            Ext.getCmp(chinaplus.screen.CPSKSS01 + '_SalesOrderDate').show();
+                                            Ext.getCmp(chinaplus.screen.CPSKSS01 + '_OrderNo').show();
+                                            Ext.getCmp(chinaplus.screen.CPSKSS01 + '_OrderMonth').show();
+                                            Ext.getCmp(chinaplus.screen.CPSKSS01 + '_KBPlanNo').show();
+                                        } else {
+                                            Ext.getCmp(chinaplus.screen.CPSKSS01 + '_SalesOrderDateFrom').setValue(null);
+                                            Ext.getCmp(chinaplus.screen.CPSKSS01 + '_SalesOrderDateTo').setValue(null);
+                                            Ext.getCmp(chinaplus.screen.CPSKSS01 + '_SalesOrderDate').hide();
+                                            Ext.getCmp(chinaplus.screen.CPSKSS01 + '_OrderNo').setValue(null);
+                                            Ext.getCmp(chinaplus.screen.CPSKSS01 + '_OrderNo').hide();
+                                            Ext.getCmp(chinaplus.screen.CPSKSS01 + '_OrderMonthFrom').setValue(null);
+                                            Ext.getCmp(chinaplus.screen.CPSKSS01 + '_OrderMonthTo').setValue(null);
+                                            Ext.getCmp(chinaplus.screen.CPSKSS01 + '_OrderMonth').hide();
+                                            Ext.getCmp(chinaplus.screen.CPSKSS01 + '_KBPlanNo').setValue(null);
+                                            Ext.getCmp(chinaplus.screen.CPSKSS01 + '_KBPlanNo').hide();
+                                        }
+                                    }
+                                }
+                            }, {
+                                xtype : 'checkcombo',
+                                labelSeparator : '',
+                                margin : '10 0 0 0',
+                                addAllSelector : true,
+                                editable : false,
+                                multiSelect : true,
+                                msgTarget : 'side',
+                                id : chinaplus.screen.CPSKSS01 + '_supplierCode',
+                                name : 'supplierCode',
+                                fieldLabel : chinaplus.label.CPSKSS01_Label_SupplierCode,
+                                width : 450,
+                                labelWidth : 200,
+                                store : TRF.util
+                                        .createStore(chinaplus.screen.CPSKSS01, 'common/loadActiveSuppliersCode', 'Combo', chinaplus.screen.CPSKSS01 + '_SupplierCodeStore'),
+                                dispalyField : 'text',
+                                valueField : 'id',
+                                queryMode : 'local',
+                                autoFitErrors : false,
+                                forceSelection : true,
+                                enableKeyEvents : true,
+                                listeners : {
+                                    change : function() {
+                                    }
+                                }
+                            }, {
+                                xtype : 'checkcombo',
+                                labelSeparator : '',
+                                msgTarget : 'side',
+                                addAllSelector : true,
+                                multiSelect : true,
+                                margin : '10 0 0 0',
+                                id : chinaplus.screen.CPSKSS01 + '_regions',
+                                name : 'regions',
+                                fieldLabel : chinaplus.label.CPSKSS01_Label_ExportCountry,
+                                width : 450,
+                                labelWidth : 200,
+                                store : TRF.util.createStore(chinaplus.screen.CPSKSS01, 'common/loadActiveRegions', 'Combo', chinaplus.screen.CPSKSS01 + '_regionsStore'),
+                                dispalyField : 'text',
+                                valueField : 'id',
+                                queryMode : 'local',
+                                autoFitErrors : false,
+                                forceSelection : true,
+                                editable : false,
+                                enableKeyEvents : true,
+                                listeners : {
+                                    change : function() {
+                                    }
+                                }
+                            }, {
+                                margin : '5 0 0 0',
+                                xtype : 'container',
+                                layout : 'column',
+                                width : 450,
+                                autoScroll : true,
+                                autoHeight : true,
+                                hidden : true,
+                                fieldStyle : 'background:rgb(255,255,153)',
+                                id : chinaplus.screen.CPSKSS01 + '_SalesOrderDate',
+                                items : [{
+                                            xtype : 'datefield',
+                                            msgTarget : 'side',
+                                            editable : false,
+                                            margin : '5 0 0 0',
+                                            width : 310,
+                                            labelWidth : 200,
+                                            fieldLabel : chinaplus.label.CPSKSS01_Label_SalesOrderDate,
+                                            fieldStyle : 'background:rgb(255,255,153)',
+                                            id : chinaplus.screen.CPSKSS01 + '_SalesOrderDateFrom',
+		                                    format : TRF.core.language == chinaplus.consts.code.Language.CN
+		                                            ? TRF.cnst.GLOBAL_DATE_YEAR_MONTH_DAY_FORMAT
+		                                            : TRF.cnst.GLOBAL_DATETIME_SHORT_FORMAT,
+                                            plugins : [{
+                                                        ptype : 'datePickerClear'
+                                                    }]
+                                        }, {
+                                            xtype : 'label',
+                                            text : '~',
+                                            width : 5,
+                                            margin : '10 5 0 5'
+                                        }, {
+                                            xtype : 'datefield',
+                                            margin : '5 0 0 5',
+                                            msgTarget : 'side',
+                                            editable : false,
+                                            width : 102,
+                                            fieldStyle : 'background:rgb(255,255,153)',
+                                            id : chinaplus.screen.CPSKSS01 + '_SalesOrderDateTo',
+		                                    format : TRF.core.language == chinaplus.consts.code.Language.CN
+		                                            ? TRF.cnst.GLOBAL_DATE_YEAR_MONTH_DAY_FORMAT
+		                                            : TRF.cnst.GLOBAL_DATETIME_SHORT_FORMAT,
+                                            plugins : [{
+                                                        ptype : 'datePickerClear'
+                                                    }]
+                                        }]
+                            }, {
+                                margin : '8 0 0 0',
+                                xtype : 'container',
+                                layout : 'column',
+                                width : 450,
+                                autoScroll : true,
+                                autoHeight : true,
+                                hidden : true,
+                                id : chinaplus.screen.CPSKSS01 + '_OrderMonth',
+                                items : [{
+                                            xtype : 'datefield',
+                                            msgTarget : 'side',
+                                            editable : false,
+                                            margin : '5 0 0 0',
+                                            width : 310,
+                                            labelWidth : 200,
+                                            fieldLabel : chinaplus.label.CPSKSS01_Label_OrderMonth,
+                                            fieldStyle : 'background:rgb(255,255,153)',
+                                            id : chinaplus.screen.CPSKSS01 + '_OrderMonthFrom',
+                                            plugins : [{
+                                                        ptype : 'monthPicker'
+                                                    }]
+                                        }, {
+                                            xtype : 'label',
+                                            text : '~',
+                                            width : 5,
+                                            margin : '10 5 0 5'
+                                        }, {
+                                            xtype : 'datefield',
+                                            margin : '5 0 0 5',
+                                            msgTarget : 'side',
+                                            editable : false,
+                                            width : 102,
+                                            fieldStyle : 'background:rgb(255,255,153)',
+                                            id : chinaplus.screen.CPSKSS01 + '_OrderMonthTo',
+                                            plugins : [{
+                                                        ptype : 'monthPicker'
+                                                    }]
+                                        }]
+                            }, {
+                                margin : '10 0 0 0',
+                                xtype : 'container',
+                                layout : 'column',
+                                width : 450,
+                                autoScroll : true,
+                                autoHeight : true,
+                                items : [{
+                                            xtype : 'datefield',
+                                            msgTarget : 'side',
+                                            editable : false,
+                                            margin : '5 0 0 0',
+                                            width : 310,
+                                            labelWidth : 200,
+                                            fieldStyle : 'background:rgb(255,255,153)',
+                                            fieldLabel : chinaplus.label.CPSKSS01_Label_ETD,
+                                            fieldStyle : 'background:rgb(255,255,153)',
+                                            id : chinaplus.screen.CPSKSS01 + '_ETDFrom',
+		                                    format : TRF.core.language == chinaplus.consts.code.Language.CN
+		                                            ? TRF.cnst.GLOBAL_DATE_YEAR_MONTH_DAY_FORMAT
+		                                            : TRF.cnst.GLOBAL_DATETIME_SHORT_FORMAT,
+                                            plugins : [{
+                                                        ptype : 'datePickerClear'
+                                                    }]
+                                        }, {
+                                            xtype : 'label',
+                                            text : '~',
+                                            width : 5,
+                                            margin : '5 5 0 5'
+                                        }, {
+                                            xtype : 'datefield',
+                                            margin : '5 0 0 5',
+                                            msgTarget : 'side',
+                                            editable : false,
+                                            width : 102,
+                                            fieldStyle : 'background:rgb(255,255,153)',
+                                            id : chinaplus.screen.CPSKSS01 + '_ETDTo',
+		                                    format : TRF.core.language == chinaplus.consts.code.Language.CN
+		                                            ? TRF.cnst.GLOBAL_DATE_YEAR_MONTH_DAY_FORMAT
+		                                            : TRF.cnst.GLOBAL_DATETIME_SHORT_FORMAT,
+                                            plugins : [{
+                                                        ptype : 'datePickerClear'
+                                                    }]
+                                        }]
+                            }]
+                }, {
+                    xtype : 'container',
+                    autoHeight : true,
+                    margin : '10 0 0 0',
+                    items : [{
+                                xtype : 'checkcombo',
+                                labelSeparator : '',
+                                margin : '30 0 0 0',
+                                addAllSelector : true,
+                                editable : false,
+                                multiSelect : true,
+                                msgTarget : 'side',
+                                id : chinaplus.screen.CPSKSS01 + '_customerCode',
+                                name : 'customerCode',
+                                fieldLabel : chinaplus.label.CPSKSS01_Label_CustomerCode,
+                                width : 418,
+                                store : TRF.util.createStore(chinaplus.screen.CPSKSS01, 'CPSKSS01/loadOfficeCustomers', 'Combo', chinaplus.screen.CPSKSS01 + '_customerCodeStore'),
+                                dispalyField : 'text',
+                                valueField : 'id',
+                                queryMode : 'local',
+                                autoFitErrors : false,
+                                forceSelection : true,
+                                enableKeyEvents : true,
+                                listeners : {
+                                    change : function() {
+                                    }
+                                }
+                            }, {
+                                xtype : 'textfield',
+                                margin : '10 0 0 0',
+                                id : chinaplus.screen.CPSKSS01 + '_ttcPartNo',
+                                name : 'ttcPartNo',
+                                fieldLabel : chinaplus.label.CPSKSS01_Label_PartNo,
+                                width : 400,
+                                labelSeparator : ''
+                            }, {
+                                xtype : 'textfield',
+                                margin : '10 0 0 0',
+                                id : chinaplus.screen.CPSKSS01 + '_OrderNo',
+                                name : 'orderNo',
+                                fieldLabel : chinaplus.label.CPSKSS01_Label_OrderNo,
+                                width : 400,
+                                hidden : true,
+                                labelSeparator : ''
+                            }, {
+                                margin : '10 0 0 0',
+                                xtype : 'textfield',
+                                id : chinaplus.screen.CPSKSS01 + '_KBPlanNo',
+                                name : 'kbPlanNo',
+                                hidden : true,
+                                fieldLabel : chinaplus.label.CPSKSS01_Label_KBPlanNo,
+                                width : 400,
+                                labelSeparator : ''
+                            }]
+                }]
+    }],
+    tbar : [{
+                xtype : 'button',
+                id : chinaplus.screen.CPSKSS01 + '_btnSave',
+                iconCls : 'btn-download',
+                text : chinaplus.label.CPSKSS01_Button_DownloadETDDelayRep,
+                handler : function() {
+                    var businessPattern = Ext.getCmp(chinaplus.screen.CPSKSS01 + '_businessPattern').getValue();
+                    var supplierCode =  new Array();
+                    var supplierCodes = Ext.getCmp(chinaplus.screen.CPSKSS01 + '_supplierCode').getValue();
+                    if(supplierCodes!= '' && typeof(supplierCodes) != 'undefined'){
+                       supplierCode = supplierCodes.split(',');
+                    }
+                    
+                    var customerCode =  new Array();
+                    var customerCodes = Ext.getCmp(chinaplus.screen.CPSKSS01 + '_customerCode').getRawValue();
+                    if(customerCodes != '' && typeof(customerCodes) != 'undefined'){
+                       customerCode = customerCodes.split(',');
+                    }
+                    
+                    var region =  new Array();
+                    var regions = Ext.getCmp(chinaplus.screen.CPSKSS01 + '_regions').getValue();
+                    if(regions!= '' && typeof(regions) != 'undefined'){
+                       region = regions.split(',');
+                    }
+                    var ttcPartsNo = Ext.getCmp(chinaplus.screen.CPSKSS01 + '_ttcPartNo').getValue();
+                    var oidFrom = Ext.getCmp(chinaplus.screen.CPSKSS01 + '_SalesOrderDateFrom').getValue();
+                    var oidTo = Ext.getCmp(chinaplus.screen.CPSKSS01 + '_SalesOrderDateTo').getValue();
+                    
+                    var ttcOrderNo = Ext.getCmp(chinaplus.screen.CPSKSS01 + '_OrderNo').getValue();
+                    
+                    var orderMonthFrom = Ext.getCmp(chinaplus.screen.CPSKSS01 + '_OrderMonthFrom').getValue();
+                    orderMonthFrom = Ext.util.Format.date(orderMonthFrom, 'Ym');
+                    var orderMonthTo = Ext.getCmp(chinaplus.screen.CPSKSS01 + '_OrderMonthTo').getValue();
+                    orderMonthTo = Ext.util.Format.date(orderMonthTo, 'Ym');
+                    var planNo = Ext.getCmp(chinaplus.screen.CPSKSS01 + '_KBPlanNo').getValue();
+                    var etdFrom = Ext.getCmp(chinaplus.screen.CPSKSS01 + '_ETDFrom').getValue();
+                    var etdTo = Ext.getCmp(chinaplus.screen.CPSKSS01 + '_ETDTo').getValue();
+                    var params = {
+                        'businessPattern' : businessPattern,
+                        'supplierCode' : supplierCode,
+                        'customerCode' : customerCode,
+                        'region' : region,
+                        'ttcPartsNo' : ttcPartsNo,
+                        'oidFromString' : oidFrom,
+                        'oidToString' : oidTo,
+                        'ttcOrderNo' : ttcOrderNo,
+                        'orderMonthFrom' : orderMonthFrom,
+                        'orderMonthTo' : orderMonthTo,
+                        'planNo' : planNo,
+                        'etdFromString' : etdFrom,
+                        'etdToString' : etdTo
+                    };
+                
+                    var fcn =  function (){
+                    };
+                    TRF.util.downloadSubmit(fcn, chinaplus.screen.CPSKSS01, 
+                            "sa/CPSDRF01/downloadcheck", params, "sa/CPSDRF01/download");   
+                
+                }
+            }],
+
+    // add for #0214061 begin
+    needConfirmChange : TRF.util.isDetailTabMode_View() ? false : true,
+    // add for #0214061 end
+
+    /**
+     * The initialize function.
+     * 
+     * @param params.
+     *            the parameter object passed to this screen.
+     */
+    initialize : function(inParam) {
+        var businessPattern = Ext.getCmp(chinaplus.screen.CPSKSS01 + '_businessPattern');
+        TRF.util.loadStore(businessPattern.store);
+        var supplier = Ext.getCmp(chinaplus.screen.CPSKSS01 + '_supplierCode');
+        TRF.util.loadStore(supplier.store);
+        var region = Ext.getCmp(chinaplus.screen.CPSKSS01 + '_regions');
+        TRF.util.loadStore(region.store);
+    },
+    /**
+     * getBusinessPattern
+     * 
+     */
+    getBusinessPattern : function() {
+        var bp = Ext.getCmp(chinaplus.screen.CPSKSS01 + '_businessPattern').getValue();
+        return bp;
+    }
+}

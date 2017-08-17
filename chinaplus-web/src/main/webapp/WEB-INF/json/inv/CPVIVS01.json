@@ -1,0 +1,656 @@
+/**
+ * Invoice Screen
+ * 
+ * @screen CPVIVS01
+ * @author gu_chengchen
+ */
+CPVIVS01 = {
+    id : chinaplus.screen.CPVIVS01,
+    title : chinaplus.label.CPVIVS01_Label_PageTitle,
+    xtype : 'grid',
+    autoScroll : true,
+    border : true,
+    closable : false,
+    enableColumnHide : false,
+    enableColumnMove : false,
+    qtip : true,
+    columnLines : true,
+    selModel : Ext.create('Ext.ux.selection.CheckBoxModel', {
+                checkOnly : true
+            }),
+    viewConfig : {
+        loadMask : false,
+        getRowClass : function() {
+            return "vertical-align-row";
+        }
+    },
+    plugins : [{
+                ptype : 'gridheaderfilters'
+            }, {
+                ptype : 'emptystoreview'
+            }, {
+                ptype : 'headerfiltertoolbar',
+                showMore : true,
+                pageSize : TRF.cnst.PAGE_SIZE_COMMON
+            }],
+    header : false,
+    headerPosition : 'bottom',
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    columns : [{
+                xtype : 'gridcolumn',
+                id : chinaplus.screen.CPVIVS01 + '_invoiceNo',
+                text : '<div style="text-align:center">' + chinaplus.label.CPVIVS01_Grid_InvoiceNo + '</div>',
+                width : 130,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'invoiceNo',
+                sortable : false,
+                filter : 'string'
+            }, {
+                xtype : 'gridcolumn',
+                id : chinaplus.screen.CPVIVS01 + '_irregularStatus',
+                text : '<div style="text-align:center">' + chinaplus.label.CPVIVS01_Grid_IrregularStatus + '</div>',
+                width : 220,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'irregularStatus',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    options : chinaplus.master.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_InvoiceIrregularStatus)
+                },
+                renderer : function(v, p, record) {
+                    var name = chinaplus.master.getMasterName(chinaplus.master.consts.TnmCodeCategory_InvoiceIrregularStatus, v);
+                    var formatStr = '<a style="color:red;" class="link-focusable" href="javascript:Ext.getCmp(chinaplus.screen.CPVIVS01).doIrregular(\'{1}\')">{0}</a>';
+                    if (record.data.hasIrregularLink) {
+                        return Ext.String.format(formatStr, name, record.data.uploadId);
+                    } else {
+                        return name;
+                    }
+                }
+            }, {
+                xtype : 'gridcolumn',
+                id : chinaplus.screen.CPVIVS01 + '_uploadStatus',
+                text : '<div style="text-align:center">' + chinaplus.label.CPVIVS01_Grid_UploadStatus + '</div>',
+                width : 140,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'uploadStatus',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    options : chinaplus.master.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_InvoiceUploadStatus)
+                },
+                renderer : function(v, p, record) {
+                    var name = chinaplus.master.getMasterName(chinaplus.master.consts.TnmCodeCategory_InvoiceUploadStatus, v);
+                    var formatStr = '<a style="color:red;" class="link-focusable" href="javascript:Ext.getCmp(chinaplus.screen.CPVIVS01).downloadSupplementary(\'{1}\')">{0}</a>';
+                    if (record.data.hasUploadLink) {
+                        return Ext.String.format(formatStr, name, record.data.uploadId);
+                    } else {
+                        return name;
+                    }
+                }
+            }, {
+                xtype : 'gridcolumn',
+                id : chinaplus.screen.CPVIVS01 + '_expCountry',
+                text : '<div style="text-align:center">' + chinaplus.label.CPVIVS01_Grid_ExpCountry + '</div>',
+                width : 80,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'expCountry',
+                sortable : false,
+                align : 'center',
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPVIVS01, 'common/loadActiveRegions', 'Combo', chinaplus.screen.CPVIVS01 + '_expCountryStore')
+                }
+            }, {
+                xtype : 'gridcolumn',
+                id : chinaplus.screen.CPVIVS01 + '_impCountry',
+                text : '<div style="text-align:center">' + chinaplus.label.CPVIVS01_Grid_ImpCountry + '</div>',
+                width : 80,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'impCountry',
+                sortable : false,
+                align : 'center',
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPVIVS01, 'common/loadActiveRegions', 'Combo', chinaplus.screen.CPVIVS01 + '_impCountryStore')
+                }
+            }, {
+                xtype : 'gridcolumn',
+                id : chinaplus.screen.CPVIVS01 + '_ttcSupplierCode',
+                text : '<div style="text-align:center">' + chinaplus.label.CPVIVS01_Grid_TTCSupplierCode + '</div>',
+                width : 150,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'ttcSupplierCode',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPVIVS01, 'common/loadActiveSuppliersCode', 'Combo', chinaplus.screen.CPVIVS01 + '_supplierStore')
+                }
+            }, {
+                xtype : 'gridcolumn',
+                id : chinaplus.screen.CPVIVS01 + '_transportMode',
+                text : '<div style="text-align:center">' + chinaplus.label.CPVIVS01_Grid_TransportMode + '</div>',
+                width : 90,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'transportMode',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    options : chinaplus.master.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_TransportMode)
+                },
+                renderer : function(v, p, record) {
+                    return chinaplus.master.getMasterName(chinaplus.master.consts.TnmCodeCategory_TransportMode, v);
+                }
+            }, {
+                xtype : 'gridcolumn',
+                id : chinaplus.screen.CPVIVS01 + '_etdDate',
+                text : '<div style="text-align:center">' + chinaplus.label.CPVIVS01_Grid_ETDDate + '</div>',
+                width : 100,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'etd',
+                sortable : false,
+                align : 'center',
+                filter : 'date',
+                filterPlugins : [{
+                            ptype : 'datePickerClear'
+                        }]
+            }, {
+                xtype : 'gridcolumn',
+                id : chinaplus.screen.CPVIVS01 + '_etaDate',
+                text : '<div style="text-align:center">' + chinaplus.label.CPVIVS01_Grid_ETADate + '</div>',
+                width : 100,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'eta',
+                sortable : false,
+                align : 'center',
+                filter : 'date',
+                filterPlugins : [{
+                            ptype : 'datePickerClear'
+                        }]
+            }, {
+                xtype : 'gridcolumn',
+                id : chinaplus.screen.CPVIVS01 + '_invoiceQty',
+                text : '<div style="text-align:center">' + chinaplus.label.CPVIVS01_Grid_InvoiceQty + '</div>',
+                width : 120,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'invoiceQty',
+                sortable : false,
+                align : 'right',
+                renderer : function(v, p, record) {
+                    return TRF.util.getDecimalFormatByDigits(v, 3);
+                }
+            }, {
+                xtype : 'gridcolumn',
+                id : chinaplus.screen.CPVIVS01 + '_pendingQty',
+                text : '<div style="text-align:center">' + chinaplus.label.CPVIVS01_Grid_PendingQty + '</div>',
+                width : 165,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'pendingQty',
+                sortable : false,
+                align : 'right',
+                renderer : function(v, p, record) {
+                    return TRF.util.getDecimalFormatByDigits(v, 3);
+                }
+            }, {
+                xtype : 'gridcolumn',
+                id : chinaplus.screen.CPVIVS01 + '_uploadId',
+                text : '<div style="text-align:center">' + chinaplus.label.CPVIVS01_Grid_UploadId + '</div>',
+                width : 150,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'uploadId',
+                sortable : false,
+                filter : 'string'
+            }, {
+                xtype : 'gridcolumn',
+                id : chinaplus.screen.CPVIVS01 + '_userId',
+                text : '<div style="text-align:center">' + chinaplus.label.CPVIVS01_Grid_UserId + '</div>',
+                width : 120,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'userId',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPVIVS01, 'common/loadOfficeUsers', 'Combo', chinaplus.screen.CPVIVS01 + '_userStore')
+                }
+            }, {
+                xtype : 'gridcolumn',
+                id : chinaplus.screen.CPVIVS01 + '_uploadReceiveTime',
+                text : '<div style="text-align:center">' + chinaplus.label.CPVIVS01_Grid_UploadReceiveTime + '</div>',
+                width : 140,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'uploadReceiveTime',
+                sortable : false,
+                align : 'center',
+                filter : 'date',
+                filterPlugins : [{
+                            ptype : 'datePickerClear'
+                        }]
+            }, {
+                xtype : 'gridcolumn',
+                id : chinaplus.screen.CPVIVS01 + '_invoiceType',
+                text : '<div style="text-align:center">' + chinaplus.label.CPVIVS01_Grid_InvoiceType + '</div>',
+                width : 90,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'invoiceType',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    options : chinaplus.master.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_InvoiceType)
+                },
+                renderer : function(v, p, record) {
+                    return chinaplus.master.getMasterName(chinaplus.master.consts.TnmCodeCategory_InvoiceType, v);
+                }
+            }, {
+                xtype : 'gridcolumn',
+                id : chinaplus.screen.CPVIVS01 + '_invoiceStatus',
+                text : '<div style="text-align:center">' + chinaplus.label.CPVIVS01_Grid_InvoiceStatus + '</div>',
+                width : 140,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'invoiceStatus',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    options : chinaplus.master.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_InvoiceStatus)
+                },
+                renderer : function(v, p, record) {
+                    return chinaplus.master.getMasterName(chinaplus.master.consts.TnmCodeCategory_InvoiceStatus, v);
+                }
+            }, {
+                xtype : 'gridcolumn',
+                id : chinaplus.screen.CPVIVS01 + '_postGRGI',
+                text : '<div style="text-align:center">' + chinaplus.label.CPVIVS01_Grid_PostGRGI + '</div>',
+                width : 150,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'postRIStatus',
+                sortable : false,
+                renderer : function(v, p, record) {
+                    if (v == 3) {
+                        var btnHtml = '<input type="button" style="font-size:11px;" onClick="javascript:Ext.getCmp(chinaplus.screen.CPVIVS01).postGrGi({0})" value="'
+                                + chinaplus.label.CPVIVS01_Button_PostGRGI + '"';
+                        return Ext.String.format(btnHtml, record.data.invoiceSummaryId);
+                    } else {
+                        return chinaplus.master.getMasterName(chinaplus.master.consts.TnmCodeCategory_InvoiceRiStatus, v);
+                    }
+                }
+            }],
+    tbar : [{
+                text : chinaplus.label.CPVIVS01_Button_UploadInvoice,
+                id : chinaplus.screen.CPVIVS01 + '_uploadInvoice',
+                iconCls : 'btn-upload',
+                handler : function() {
+                    TRF.util.popupApplication(chinaplus.screen.CPVIVS02, chinaplus.screen.CPVIVS02);
+                }
+            }, {
+                text : chinaplus.label.CPVIVS01_Button_UploadSupplementary,
+                id : chinaplus.screen.CPVIVS01 + '_uploadSupplementary',
+                iconCls : 'btn-upload',
+                handler : function() {
+                    TRF.util.popupApplication(chinaplus.screen.CPVIVS03, chinaplus.screen.CPVIVS03);
+                }
+            }, {
+                text : chinaplus.label.CPVIVS01_Button_DownloadInvoice,
+                id : chinaplus.screen.CPVIVS01 + '_downloadInvoice',
+                iconCls : 'btn-download',
+                handler : function() {
+                    CPVIVS01.downloadInvoice();
+                }
+            }, {
+                text : chinaplus.label.CPVIVS01_Button_CancelInvoice,
+                id : chinaplus.screen.CPVIVS01 + '_cancelInvoice',
+                iconCls : 'btn-cancel',
+                handler : function() {
+                    CPVIVS01.cancelInvoice();
+                }
+            }, {
+                text : chinaplus.label.CPVIVS01_Button_DownloadWest,
+                id : chinaplus.screen.CPVIVS01 + '_downloadWest',
+                iconCls : 'btn-download',
+                handler : function() {
+                    CPVIVS01.downloadWest();
+                }
+            }, {
+                text : chinaplus.label.CPVIVS01_Button_CreateInvoice,
+                id : chinaplus.screen.CPVIVS01 + '_createInvoice',
+                iconCls : 'btn-add',
+                handler : function() {
+                    TRF.util.addApplication(chinaplus.screen.CPVIVS07, chinaplus.screen.CPVIVS07, true);
+                }
+            }, {
+                text : chinaplus.label.CPVIVS01_Button_ApproveInvoice,
+                id : chinaplus.screen.CPVIVS01 + '_approveInvoice',
+                iconCls : 'btn-approve',
+                handler : function() {
+                    CPVIVS01.approveInvoice();
+                }
+            }],
+    store : TRF.util.createStore(chinaplus.screen.CPVIVS01, 'inv/CPVIVS01/loadInvoiceList', 'InvoiceList', chinaplus.screen.CPVIVS01 + '_invoiceStore'),
+    irregularCallBackFlg : 0,
+
+    /**
+     * The initialize function.
+     * 
+     * @param params the parameter object passed to this screen
+     */
+    initialize : function(params) {
+
+        // Check V-V&Aisin
+        var businessPattern;
+        var rootId = TRF.access.rootId;
+        if (chinaplus.consts.code.RootId.VV == rootId) {
+            businessPattern = 1;
+            Ext.getCmp(chinaplus.screen.CPVIVS01 + '_uploadInvoice').hide();
+            Ext.getCmp(chinaplus.screen.CPVIVS01 + '_uploadSupplementary').hide();
+            Ext.getCmp(chinaplus.screen.CPVIVS01 + '_downloadInvoice').hide();
+            Ext.getCmp(chinaplus.screen.CPVIVS01 + '_downloadWest').hide();
+            Ext.getCmp(chinaplus.screen.CPVIVS01 + '_irregularStatus').hide();
+            Ext.getCmp(chinaplus.screen.CPVIVS01 + '_uploadStatus').hide();
+            Ext.getCmp(chinaplus.screen.CPVIVS01 + '_ttcSupplierCode').hide();
+            Ext.getCmp(chinaplus.screen.CPVIVS01 + '_uploadId').hide();
+        } else if (chinaplus.consts.code.RootId.AISIN == rootId) {
+            businessPattern = 2;
+            Ext.getCmp(chinaplus.screen.CPVIVS01 + '_createInvoice').hide();
+            Ext.getCmp(chinaplus.screen.CPVIVS01 + '_approveInvoice').hide();
+        }
+
+        // Load grid store
+        var me = this;
+        var gridStore = this.store;
+
+        // Set deafult condition
+        TRF.util.setDefaultValuesForToolBar(this, 'invoiceStatus', ['1', '2', '3']);
+
+        // Load the invoice list.
+        TRF.util.loadStore(gridStore, {
+                    busiPtn : businessPattern
+                }, function() {
+                    gridStore.on('beforeload', function() {
+                                TRF.core.mask(TRF.core.maskMsg.load, null, me);
+                            });
+                    gridStore.on('load', function() {
+                                TRF.core.unmask(me);
+                            });
+                }, {
+                    filters : {
+                        invoiceStatus : ['1', '2', '3']
+                    }
+                });
+        me.doLayout();
+        TRF.util.addGridTip(me);
+    },
+
+    /**
+     * Refresh grid data.
+     */
+    refreshData : function() {
+
+        this.store.loadPage(1);
+    },
+
+    /**
+     * Download invoice.
+     */
+    downloadInvoice : function() {
+
+        // Select check
+        var selectionArray = Ext.getCmp(chinaplus.screen.CPVIVS01).getSelectionModel().getSelection();
+        if (selectionArray.length == 0) {
+            TRF.util.showMessageBoxByMsgIdAndArgs('w1011');
+            return;
+        }
+
+        // Set param
+        var invoiceArray = [];
+        selectionArray.forEach(function(record) {
+                    if (!TRF.util.arrayContains(invoiceArray, record.data.uploadId)) {
+                        invoiceArray.push(record.data.uploadId);
+                    }
+                });
+
+        // Download
+        var params = {};
+        params[TRF.cnst.SELECTEDDATAS] = invoiceArray;
+        TRF.util.downloadSubmit(null, chinaplus.screen.CPVIVS01, "inv/CPVIVS01/downloadcheck", params, "inv/CPVIVS01/download");
+    },
+
+    /**
+     * Download WEST invoice.
+     */
+    downloadWest : function() {
+
+        // Select check
+        var selectionArray = Ext.getCmp(chinaplus.screen.CPVIVS01).getSelectionModel().getSelection();
+        if (selectionArray.length == 0) {
+            TRF.util.showMessageBoxByMsgIdAndArgs('w1011');
+            return;
+        }
+
+        // Check invoice status
+        var hasError = false;
+        var invoiceArray = [];
+        selectionArray.forEach(function(record) {
+                    var irregularStatus = record.data.irregularStatus;
+                    var uploadStatus = record.data.uploadStatus;
+                    if (irregularStatus == 1 || uploadStatus == 1) {
+                        hasError = true;
+                    }
+                    invoiceArray.push(record.data.invoiceSummaryId + "#;!" + record.data.invoiceNo);
+                });
+        if (hasError) {
+            TRF.util.showMessageBoxByMsgIdAndArgs('w1029');
+            return;
+        }
+
+        // Download
+        var params = {};
+        params[TRF.cnst.SELECTEDDATAS] = invoiceArray;
+        TRF.util.downloadSubmit(null, chinaplus.screen.CPVIVS01, "inv/CPVIVF02/downloadcheck", params, "inv/CPVIVF02/download");
+    },
+
+    /**
+     * Cancel invoice.
+     */
+    cancelInvoice : function() {
+
+        // Select check
+        var selectionArray = Ext.getCmp(chinaplus.screen.CPVIVS01).getSelectionModel().getSelection();
+        if (selectionArray.length == 0) {
+            TRF.util.showMessageBoxByMsgIdAndArgs('w1011');
+            return;
+        }
+
+        // Confirm
+        var records = [];
+        selectionArray.forEach(function(record) {
+                    var recordData = record.data;
+                    var newRecord = {};
+                    newRecord.invoiceSummaryId = recordData.invoiceSummaryId;
+                    newRecord.invoiceNo = recordData.invoiceNo;
+                    newRecord.businessPattern = recordData.businessPattern;
+                    newRecord.uploadId = recordData.uploadId;
+                    newRecord.invoiceType = recordData.invoiceType;
+                    Ext.Array.push(records, newRecord);
+                });
+        var confirmBackFun = function(applicationData) {
+            var cancelBackFun = function(responseData) {
+                if (responseData.success) {
+                    TRF.util.showMessageBoxByMsgIdAndArgs('i1004', chinaplus.label.CPVIVS01_Button_CancelInvoice);
+                    Ext.getCmp(chinaplus.screen.CPVIVS01).refreshData();
+                }
+            };
+            if (applicationData.confirm == "yes") {
+                TRF.util.ajaxSubmit(cancelBackFun, chinaplus.screen.CPVIVS01, 'inv/CPVIVS01/cancel', null, {
+                            datas : records
+                        });
+            }
+        };
+        TRF.util.ajaxSubmit(confirmBackFun, chinaplus.screen.CPVIVS01, 'inv/CPVIVS01/cancelConfirm', null, {
+                    datas : records
+                });
+    },
+
+    /**
+     * Approve invoice.
+     */
+    approveInvoice : function() {
+
+        // Select check
+        var selectionArray = Ext.getCmp(chinaplus.screen.CPVIVS01).getSelectionModel().getSelection();
+        if (selectionArray.length == 0) {
+            TRF.util.showMessageBoxByMsgIdAndArgs('w1011');
+            return;
+        }
+
+        // Confirm
+        TRF.util.showMessageBoxByMsgIdAndArgs('c1001', chinaplus.label.CPVIVS01_Button_ApproveInvoice, function(btn) {
+                    if (btn == 'yes') {
+                        var summaryIdArray = [];
+                        selectionArray.forEach(function(record) {
+                                    summaryIdArray.push(record.data.invoiceSummaryId);
+                                });
+                        var params = {};
+                        params[TRF.cnst.SELECTEDDATAS] = summaryIdArray;
+                        var backFun = function(responseData) {
+                            if (responseData.success) {
+                                TRF.util.showMessageBoxByMsgIdAndArgs('i1004', chinaplus.label.CPVIVS01_Button_ApproveInvoice);
+                                Ext.getCmp(chinaplus.screen.CPVIVS01).refreshData();
+                            }
+                        };
+                        TRF.util.ajaxSubmit(backFun, chinaplus.screen.CPVIVS01, 'inv/CPVIVS01/approve', null, params);
+                    }
+                });
+    },
+
+    /**
+     * Irregular Shipping Process.
+     * 
+     * @param uploadId the Upload ID
+     */
+    doIrregular : function(uploadId) {
+
+        var backFun = function(responseData) {
+            if (responseData.success) {
+                var uploadResult = responseData.result;
+                if (uploadResult == 0) {
+                    Ext.getCmp(chinaplus.screen.CPVIVS01).refreshData();
+                } else if (uploadResult == 1 || uploadResult == 2) {
+                    var irrParam = {
+                        'uploadId' : uploadId,
+                        'forwardPage' : chinaplus.screen.CPVIVS01
+                    };
+                    var irrBackFun;
+                    if (uploadResult == 1) {
+                        irrBackFun = function() {
+                            var callBackFlg = Ext.getCmp(chinaplus.screen.CPVIVS01).irregularCallBackFlg;
+                            if (callBackFlg == 1) {
+                                Ext.getCmp(chinaplus.screen.CPVIVS01).refreshData();
+                            }
+                        };
+                    } else {
+                        irrBackFun = function() {
+                            Ext.getCmp(chinaplus.screen.CPVIVS01).refreshData();
+                        };
+                    }
+                    Ext.getCmp(chinaplus.screen.CPVIVS01).irregularCallBackFlg = 0;
+                    TRF.util.popupApplication(chinaplus.screen.CPVIVS04, chinaplus.screen.CPVIVS04, irrParam, null, irrBackFun);
+                }
+            }
+        };
+        TRF.util.ajaxSubmit(backFun, chinaplus.screen.CPVIVS01, 'inv/CPVIVS01/confirmIrregular', null, {
+                    data : uploadId
+                });
+    },
+
+    /**
+     * Download Invoice Supplementary Data File.
+     * 
+     * @param uploadId the Upload ID
+     */
+    downloadSupplementary : function(uploadId) {
+
+        var uploadIdArray = [uploadId];
+        var params = {};
+        params[TRF.cnst.SELECTEDDATAS] = uploadIdArray;
+        TRF.util.downloadSubmit(null, chinaplus.screen.CPVIVS01, "inv/CPVIVF01/downloadcheck", params, "inv/CPVIVF01/download");
+    },
+
+    /**
+     * Post GR/GI.
+     * 
+     * @param invoiceSummaryId invoice summary ID
+     * @param version version
+     */
+    postGrGi : function(invoiceSummaryId) {
+
+        var gridStore = Ext.getStore(chinaplus.screen.CPVIVS01 + '_invoiceStore');
+        var postInvoice;
+        gridStore.each(function(record, index) {
+                    var data = record.data;
+                    if (record.data.invoiceSummaryId == invoiceSummaryId) {
+                        postInvoice = data;
+                        return;
+                    }
+                });
+
+        var postParam = {
+            data : postInvoice
+        };
+        TRF.util.popupApplication(chinaplus.screen.CPVIVS06, chinaplus.screen.CPVIVS06, postParam);
+    }
+
+}

@@ -1,0 +1,85 @@
+<!--
+@screen CPOOCS01
+@author shi_yuxi
+-->
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chinaplus.web.om.service.CPOOCS01Service">
+    
+    <sql id="condition">
+      FROM
+      TNT_CFC_MASTER A
+      INNER JOIN TNM_USER U
+      ON A.UPLOADED_BY = U.USER_ID
+      WHERE 
+      1 = 1
+      <if test="currentOfficeId != null">
+          AND A.OFFICE_ID = #{currentOfficeId}
+      </if>
+      <if test="swapData.status != null">
+          AND A.STATUS = #{swapData.status}
+      </if>
+      <if test="swapData.customerId != null and swapData.customerId != ''">
+          AND A.CUSTOMER_ID IN (${swapData.customerId})
+      </if>
+      <if test="swapData.fcDate != null">
+        AND DATE(A.FC_DATE) <![CDATA[>=]]> #{swapData.fcDate}
+      </if>
+      <!--<if test=""></if>-->
+      <if test="filters.cfcNo != null">
+         AND 
+            A.CFC_NO 
+            LIKE 
+            #{filters.cfcNo} ESCAPE '!'
+      </if>
+      <if test="filters.uploadedByName != null">
+         AND A.UPLOADED_BY IN 
+         <foreach item="userId" index="uploadIDIndex" collection="filters.uploadedByName" open="(" separator="," close=")">  
+             #{userId}
+         </foreach>
+      </if>
+      <if test="filters.fcDateLanFrom != null">
+        AND A.FC_DATE <![CDATA[>=]]> #{filters.fcDateLanFrom}
+      </if>
+      <if test="filters.fcDateLanTo != null">
+        AND A.FC_DATE <![CDATA[<=]]> #{filters.fcDateLanTo}
+      </if>
+      <if test="filters.uploadedDateLanFrom != null and filters.uploadedDateLanFrom != ''">
+        AND A.UPLOADED_DATE <![CDATA[>=]]> #{filters.uploadedDateLanFrom}
+      </if>
+      <if test="filters.uploadedDateLanTo != null and filters.uploadedDateLanTo != ''">
+        AND A.UPLOADED_DATE <![CDATA[<=]]> #{filters.uploadedDateLanTo}
+      </if>
+    </sql>
+    
+    <select id="findPageList" parameterType="com.chinaplus.core.bean.PageParam" 
+            resultType="com.chinaplus.web.om.entity.TntCfcMasterShow">
+          SELECT 
+            * 
+          FROM(
+              SELECT 
+              A.CFC_ID AS cfcId
+              ,A.CFC_NO AS cfcNo
+              ,A.FC_DATE AS fcDateLan
+              ,A.FIRST_FC_MONTH AS firstFcMonthLan
+              ,A.LAST_FC_MONTH AS lastFcMonthLan
+              ,A.REMARK AS remark
+              ,U.LOGIN_ID AS uploadedByName
+              ,A.UPLOADED_DATE AS uploadedDateLan
+              ,ROWNUMBER() over(ORDER BY A.CFC_ID) as rownum
+              <include refid= "condition"/>
+              ORDER BY A.FC_DATE DESC, A.CFC_NO DESC
+              )
+          WHERE
+          <include refid="com.chinaplus.const.pagingCondition" />
+    </select>
+    
+    <!-- <cache /> -->
+    <select id="findPageListCount" parameterType="com.chinaplus.core.bean.PageParam" resultType="int">
+         SELECT 
+         COUNT(1) 
+         <include refid= "condition"/>
+    </select>
+    
+</mapper>

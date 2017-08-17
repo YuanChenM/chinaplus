@@ -1,0 +1,348 @@
+/**
+ * CPOOCS01 Order Calculation Supporting Data Report Download Screen
+ * 
+ * @author shi_yuxi
+ * @screen CPOOCS01
+ */
+CPOOCS01 = {
+    id : chinaplus.screen.CPOOCS01,
+    title : chinaplus.label.CPOOCS01_Label_PageTitle,
+    xtype : 'form',
+    frame : true,
+    autoHeight : false,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    autoScroll : true,
+    buttonAlign : 'left',
+    width : '100%',
+    fieldDefaults : {
+        labelAlign : 'right',
+        labelWidth : 200,
+        labelSeparator : ''
+    },
+    items : [
+            {
+                margin : '10 0 0 0',
+                xtype : 'combo',
+                labelSeparator : '',
+                msgTarget : 'side',
+                id : chinaplus.screen.CPOOCS01 + '_customerCode',
+                name : 'customerCode',
+                fieldLabel : chinaplus.label.CPOOCS01_Label_TTCCustomerCode,
+                width : 570,
+                store : TRF.util.createStore(chinaplus.screen.CPOOCS01, 'common/loadOfficeCustomers', 'Combo', chinaplus.screen.CPOOCS01 + '_TTCCustomerCode'),
+                dispalyField : 'text',
+                valueField : 'id',
+                queryMode : 'local',
+                autoFitErrors : false,
+                allowBlank : true,
+                forceSelection : true,
+                editable : false,
+                fieldStyle : 'background:rgb(255,255,153)',
+                enableKeyEvents : true,
+                listeners : {
+                    change : function() {
+                        var grid = Ext.getCmp(chinaplus.screen.CPOOCS01 + '_OrderCalculationGrid');
+                        TRF.util.addGridTip(grid);
+                        var gridStore = grid.store;
+                        var customerId = Ext.getCmp(chinaplus.screen.CPOOCS01 + '_customerCode').getValue();
+                        var param = {"customerId":customerId}
+                        TRF.util.dataLoadStart(chinaplus.screen.CPOOCS01);
+                        TRF.util.loadStore(gridStore, param, function() {
+                                    TRF.util.dataLoadEnd(chinaplus.screen.CPOOCS01);
+                                },{filters: {fcDateLan : '1'}});
+                        grid.doLayout();
+                    }
+                }
+            },{
+                xtype : 'datefield',
+                margin : '10 0 0 0',
+                msgTarget : 'side',
+                editable : false,
+                allowBlank : true,
+                fieldLabel : chinaplus.label.CPOOCS01_Label_ClosingStockDate,
+                fieldStyle : 'background:rgb(255,255,153)',
+                id : chinaplus.screen.CPOOCS01 + '_ClosingStockDate',
+                plugins : [{
+                            ptype : 'datePickerClear'
+                        }]
+
+            }, {
+                xtype : 'datefield',
+                margin : '10 0 0 0',
+                msgTarget : 'side',
+                editable : false,
+                allowBlank : true,
+                fieldLabel : chinaplus.label.CPOOCS01_Label_ClosingOrderBalanceDate,
+                fieldStyle : 'background:rgb(255,255,153)',
+                id : chinaplus.screen.CPOOCS01 + '_ClosingOrderBalanceDate',
+                plugins : [{
+                            ptype : 'datePickerClear'
+                        }]
+
+            },{
+                xtype : 'container',
+                margin : '0 0 5 0',
+                autoHeight : true,
+                layout : 'column',
+                defaults : {
+                    fieldCls : 'x-field-input-ellipsis'
+                },
+                items : [{
+                xtype : 'datefield',
+                margin : '10 0 0 0',
+                msgTarget : 'side',
+                editable : false,
+                allowBlank : true,
+                //fieldStyle : 'background:rgb(255,255,153)',
+                fieldLabel : chinaplus.label.CPOOCS01_Label_RangeofCusFc,
+                id : chinaplus.screen.CPOOCS01 + '_RangeofCusFcFrom',
+                plugins : [{
+                            ptype : 'monthPicker'
+                        }]
+                },{
+                    xtype: 'label',
+                    text: '~',
+                    margin: '10 20 0 20'
+                },{
+                xtype : 'datefield',
+                margin : '10 0 0 0',
+                msgTarget : 'side',
+                editable : false,
+                allowBlank : true,
+                //fieldStyle : 'background:rgb(255,255,153)',
+                id : chinaplus.screen.CPOOCS01 + '_RangeofCusFcTo',
+                plugins : [{
+                            ptype : 'monthPicker'
+                        }]
+                }]
+            },{
+                xtype : 'checkboxfield',
+                boxLabel  : chinaplus.label.CPOOCS01_Label_CurrmonthOrderData,
+                name : '',
+                id        : chinaplus.screen.CPOOCS01 + '_CurrmonthOrderData',
+                checked : false,
+                margin : '20 0 20 10',
+                listeners : {}
+            },
+            {
+                id : chinaplus.screen.CPOOCS01 + '_OrderCalculationGrid',
+                xtype : 'grid',
+                autoScroll : true,
+                margin : '10 5 10 5',
+                height : Ext.getCmp('tabpanelId').getHeight() - 150,
+                border : true,
+                closable : false,
+                enableColumnHide : false,
+                enableColumnMove : false,
+                qtip : true,
+                columnLines : true,
+                selModel : Ext.create('Ext.ux.selection.CheckBoxModel', {
+                            checkOnly : true
+                        }),
+                viewConfig : {
+                    loadMask : false
+                },
+                plugins : [{
+                            ptype : 'gridheaderfilters'
+                        }, {
+                            ptype : 'emptystoreview'
+                        },{
+                            ptype : 'headerfiltertoolbar',
+                            showMore : true
+                        }],
+                columns : [{
+                            xtype : 'gridcolumn',
+                            text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPOOCS01_Grid_ForecastNo + '</div>',
+                            width : 400,
+                            items : [{
+                                        xtype : 'header',
+                                        hidden : true
+                                    }],
+                            dataIndex : 'cfcNo',
+                            align : 'left',
+                            sortable : false,
+                            filter : 'string'
+                        }, {
+                            xtype : 'gridcolumn',
+                            text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPOOCS01_Grid_FcReceivedDate + '</div>',
+                            width : 200,
+                            items : [{
+                                        xtype : 'header',
+                                        hidden : true
+                                    }],
+                            align : 'center',
+                            dataIndex : 'fcDateLan',
+                            sortable : false,
+                            filter : {
+                            type : 'list',
+                            options : [{    id : "1",
+                                            text : chinaplus.label.CPOOCS01_Label_ForecastOfCurrentMonth
+                                        }, {
+                                            id : "2",
+                                            text : chinaplus.label.CPOOCS01_Label_ForecastOfLastMonth
+                                        }]
+                            }
+                        }, {
+                            xtype : 'gridcolumn',
+                            text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPOOCS01_Grid_CusFcMonthRange + '</div>',
+                            width : 300,
+                            items : [{
+                                        xtype : 'header',
+                                        hidden : true
+                                    }],
+                            dataIndex : 'firstFcMonthLan',
+                            align : 'center',
+                            sortable : false,
+                            filter : false,
+                            renderer : function(value, meta, record, rIndex, cIndex, store, view) {
+                                return record.get('firstFcMonthLan') + ' - ' + record.get('lastFcMonthLan');
+                            }
+                        }, {
+                            xtype : 'gridcolumn',
+                            text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPOOCS01_Grid_Remark + '</div>',
+                            width : 200,
+                            items : [{
+                                        xtype : 'header',
+                                        hidden : true
+                                    }],
+                            dataIndex : 'remark',
+                            sortable : false,
+                            filter : false
+                        },{
+                            xtype : 'gridcolumn',
+                            text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPOOCS01_Grid_UploadID + '</div>',
+                            width : 200,
+                            items : [{
+                                        xtype : 'header',
+                                        hidden : true
+                                    }],
+                            dataIndex : 'uploadedByName',
+                            sortable : false,
+                            filter : false,
+                            filter : {
+                                type : 'list',
+                                multiSelect : true,
+                                optionsStore : TRF.util.createStore(chinaplus.screen.CPOCFS01, 'common/loadOfficeUsers', 'Combo', chinaplus.screen.CPOCFS01 + '_UploadIdStore')
+                            }
+                        }, {
+                            xtype : 'gridcolumn',
+                            text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPOOCS01_Grid_UploadTime + '</div>',
+                            width : 300,
+                            items : [{
+                                        xtype : 'header',
+                                        hidden : true
+                                    }],
+                            dataIndex : 'uploadedDateLan',
+                            align : 'center',
+                            sortable : false,
+                            filter : 'date', 
+                            filterPlugins : [{
+                                        ptype : 'datePickerClear'
+                                    }]
+                        }],
+                store : TRF.util.createStore(chinaplus.screen.CPOOCS01, 'om/CPOOCS01/getList', 'OrderDownload', chinaplus.screen.CPOOCS01 + '_orderDownloadStore', {})
+            }],
+    tbar : [{
+                text : chinaplus.label.CPOOCS01_Button_DlOrderCalSuppDataReport,
+                iconCls : 'btn-modify',
+                id : chinaplus.screen.CPOOCS01 + "_btnModify",
+                hidden : TRF.util.isDetailTabMode_View() ? false : true,
+                handler : function() {
+                    var customerId = Ext.getCmp(chinaplus.screen.CPOOCS01 + '_customerCode').getValue();
+                    var csDate = Ext.getCmp(chinaplus.screen.CPOOCS01 + '_ClosingStockDate').getValue();
+                    var balanceDate = Ext.getCmp(chinaplus.screen.CPOOCS01 + '_ClosingOrderBalanceDate').getValue();
+                    var monthRangeFrom = Ext.getCmp(chinaplus.screen.CPOOCS01 + '_RangeofCusFcFrom').getValue();
+                    var monthRangeTo = Ext.getCmp(chinaplus.screen.CPOOCS01 + '_RangeofCusFcTo').getValue();
+                    var current = Ext.getCmp(chinaplus.screen.CPOOCS01 + '_CurrmonthOrderData').getValue();
+			        var gridpanel = Ext.getCmp(chinaplus.screen.CPOOCS01).down('grid');
+			        var selectionArray = gridpanel.getSelectionModel().getSelection();
+                    var popMsg = TRF.util.getMessage('w1003');
+                    var lsMsgs = [];
+                    
+                    if (Ext.isEmpty(customerId)) {
+                        Ext.Array.push(lsMsgs, TRF.util.getMessage('w1003_001', chinaplus.label.CPOOCS01_Label_TTCCustomerCode));
+                    }
+                    if (Ext.isEmpty(csDate)) {
+                        Ext.Array.push(lsMsgs, TRF.util.getMessage('w1003_001', chinaplus.label.CPOOCS01_Label_ClosingStockDate));
+                    }
+                    if (Ext.isEmpty(balanceDate)) {
+                        Ext.Array.push(lsMsgs, TRF.util.getMessage('w1003_001', chinaplus.label.CPOOCS01_Label_ClosingOrderBalanceDate));
+                    }
+                   /* var flag = true;
+                    if (Ext.isEmpty(monthRangeFrom)) {
+                        Ext.Array.push(lsMsgs, TRF.util.getMessage('w1003_001', chinaplus.label.CPOOCS01_Label_RangeofCusFc));
+                        flag = false;
+                    }
+                    if (Ext.isEmpty(monthRangeTo) && flag) {
+                        Ext.Array.push(lsMsgs, TRF.util.getMessage('w1003_001', chinaplus.label.CPOOCS01_Label_RangeofCusFc));
+                    }*/
+                    var selectedDatas = new Array();
+                    if (selectionArray.length <= 0){
+                    	Ext.Array.push(lsMsgs, TRF.util.getMessage('w1003_031'));
+                    } else {
+                    	for (var i = 0; i < selectionArray.length; i++) {
+								selectedDatas[i] = selectionArray[i].data.cfcId;
+						}
+                    }
+                    if (!Ext.isEmpty(lsMsgs)) {
+                        TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, popMsg, lsMsgs);
+                        return;
+                    }
+                    var param = {'customerId' : customerId, 'csDate' : csDate,'balanceDate' : balanceDate,
+                    'monthRangeFrom' : monthRangeFrom,'monthRangeTo' : monthRangeTo, 'current': current, 'uploadProcess' : 'check', 'cfcIdList': selectedDatas};
+                    var CPOOFS01fun = function(applicationData)
+                    {
+                        if (null != applicationData.messageCodes && applicationData.messageCodes.length == 0) {
+                        }
+                        else
+                        {
+                            if (applicationData.confirm == "yes") {
+                                var paramComfirm = {'customerId' : customerId, 'csDate' : csDate,'balanceDate' : balanceDate,
+                                'monthRangeFrom' : monthRangeFrom,'monthRangeTo' : monthRangeTo, 'current': current, 'uploadProcess' : 'yes', 'cfcIdList': selectedDatas};
+                                TRF.util.downloadSubmit(null, 'CPOOCS01', "om/CPOOCF01/downloadcheck", paramComfirm, "om/CPOOCF01/download", false);
+                            }
+                        }
+                    }
+                    TRF.util.downloadSubmit(CPOOFS01fun, 'CPOOCS01', "om/CPOOCF01/downloadcheck", param, "om/CPOOCF01/download", false);
+                }
+            }],
+    needConfirmChange : !TRF.util.isDetailTabMode_View(),
+
+    /**
+     * initialize
+     */
+    initialize : function() {
+        var grid = Ext.getCmp(chinaplus.screen.CPOOCS01 + '_OrderCalculationGrid');
+        TRF.util.addGridTip(grid);
+        TRF.util.setDefaultValuesForToolBar(grid,'fcDateLan','1');
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPOOCS01 + '_TTCCustomerCode'));
+        
+        // Set date format
+        var dateFormat;
+        if (TRF.core.language == chinaplus.consts.code.Language.CN) {
+            dateFormat = TRF.cnst.GLOBAL_DATE_YEAR_MONTH_DAY_FORMAT;
+        } else {
+            dateFormat = TRF.cnst.GLOBAL_DATETIME_SHORT_FORMAT;
+        }
+        Ext.getCmp(chinaplus.screen.CPOOCS01 + '_ClosingStockDate').format = dateFormat;
+        Ext.getCmp(chinaplus.screen.CPOOCS01 + '_ClosingOrderBalanceDate').format = dateFormat;
+        
+        var orderStore = grid.store;
+        orderStore.on('beforeload', function() {
+            TRF.core.mask(TRF.core.maskMsg.load, null, grid);
+        });
+        orderStore.on('load', function() {
+            TRF.core.unmask(grid);
+        });
+        
+        /**var gridStore = grid.store;
+        var customerId = Ext.getCmp(chinaplus.screen.CPOOCS01 + '_customerCode');
+        var param = {"customerId":customerId}
+        TRF.util.dataLoadStart(chinaplus.screen.CPOOCS01);
+        TRF.util.loadStore(gridStore, null, function() {
+                    TRF.util.dataLoadEnd(chinaplus.screen.CPOOCS01);
+                });
+
+        grid.doLayout();*/
+    }
+}

@@ -1,0 +1,138 @@
+<!--
+@screen CPOOFF11
+@author shi_yuxi
+-->
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.om.service.CPOOFF11Service">
+    <select id="getForcast" parameterType="com.chinaplus.core.bean.BaseParam" resultType="com.chinaplus.web.om.entity.MainRouteEntity">
+            SELECT
+             A.PARTS_ID AS partsId
+            ,A.TTC_PARTS_NO AS ttcPartsNo
+            ,A.CUSTOMER_ID AS customerId 
+            ,A.FORECAST_NUM AS forecastNum
+            ,A.IMP_REGION AS impRegion
+            ,A.EXP_CALENDAR_CODE AS expCalendarCode
+            ,A.TARGET_MONTH AS targetMonth
+            ,B.SUPPLIER_ID AS supplierId
+            ,B.EXP_PARTS_ID AS expPartsId
+            ,B.WEST_PARTS_NO AS westPartsNo
+            ,B.WEST_CUST_CODE AS westCustCode
+            ,B.SHIPPING_ROUTE_CODE AS shippingRouteCode
+            ,B.SSMS_MAIN_ROUTE AS ssmsMainRoute
+            ,B.SSMS_VENDOR_ROUTE AS ssmsVendorRoute
+            ,B.EXP_SUPP_CODE AS ssmsSupplierCode
+            ,B.PARTS_STATUS AS partsStatus
+            ,B.INACTIVE_FLAG AS inActiveFlag
+            ,B.SRBQ AS srbq
+            FROM
+            TNM_PARTS_MASTER A
+            INNER JOIN TNM_EXP_PARTS B ON A.PARTS_ID=B.PARTS_ID 
+            <!--INNER JOIN TNM_UOM C ON B.EXP_UOM_CODE = C.UOM_CODE-->
+            WHERE
+                B.WEST_CUST_CODE = #{swapData.westCustCode}                                                                  
+            AND B.WEST_PARTS_NO = #{swapData.westPartsNo}
+            <if test="swapData.expPartsId != null and swapData.expPartsId != ''">
+                B.EXP_PARTS_ID = #{swapData.expPartsId}
+            </if>
+            <!--B.PARTS_STATUS = 2 (Completed)-->
+    </select>
+    
+    <select id="getCalendarList" parameterType="com.chinaplus.core.bean.BaseParam" 
+            resultType="com.chinaplus.web.om.entity.CalculateDrEntity">
+            SELECT 
+            B.CALENDAR_DATE AS calendarDate,
+            B.WORKING_FLAG AS workingFlag
+            FROM TNM_CALENDAR_MASTER A
+            INNER JOIN TNM_CALENDAR_DETAIL B ON A.CALENDAR_ID = B.CALENDAR_ID
+            INNER JOIN TNM_CALENDAR_PARTY C ON A.CALENDAR_ID = C.CALENDAR_ID
+            WHERE A.CALENDAR_CODE = #{swapData.calendarCode}
+            AND B.WORKING_FLAG = #{swapData.workingFlag}
+            AND C.PARTY_TYPE = #{swapData.partyType}
+            AND DATE(B.CALENDAR_DATE) <![CDATA[>=]]> #{swapData.firstDate}
+            AND DATE(B.CALENDAR_DATE) <![CDATA[<=]]> #{swapData.lastDate}
+            ORDER BY B.CALENDAR_DATE
+    </select>
+    
+    <select id="getPartsInformation" parameterType="com.chinaplus.common.bean.SupplyChainEntity" resultType="com.chinaplus.common.bean.SupplyChainEntity">
+         SELECT 
+                B.OFFICE_ID AS officeId
+              , B.CUSTOMER_ID AS customerId
+              , D.WHS_ID AS impWhsId
+              , C.IMP_STOCK_FLAG AS impStockFlag
+              , A.SHIPPING_ROUTE_CODE AS shippingRouteCode
+              , A.AIR_ETD_LEADTIME AS airEtdLt
+              , A.AIR_ETA_LEADTIME AS airEtaLt
+              , A.AIR_INBOUND_LEADTIME AS airInboundLt
+              , A.SEA_ETA_LEADTIME AS seaEtaLt
+              , A.SEA_INBOUND_LEADTIME AS seaInboundLt
+           FROM 
+                TNM_EXP_PARTS A
+          INNER JOIN 
+                TNM_PARTS_MASTER B 
+             ON 
+                B.PARTS_ID = A.PARTS_ID
+          INNER JOIN 
+                TNM_OFFICE C 
+             ON 
+                C.OFFICE_ID = B.OFFICE_ID
+          INNER JOIN 
+                TNM_WAREHOUSE D 
+             ON 
+                D.WHS_CODE = B.IMP_WHS_CODE
+          WHERE 
+                A.EXP_PARTS_ID = #{expPartsId}
+    </select>
+    
+    
+    
+    <select id="checkShippingRoute" parameterType="com.chinaplus.core.bean.BaseParam" 
+            resultType="int">
+        SELECT
+        count(*)
+        FROM
+            TNM_SR_MASTER A
+        INNER JOIN 
+            TNM_SR_DETAIL B 
+        ON 
+            A.SR_ID = B.SR_ID 
+        WHERE 
+            A.INACTIVE_FLAG = #{swapData.inactiveFlag}
+        AND A.SHIPPING_ROUTE_TYPE = #{swapData.shippingRouteType} 
+        AND B.DELIVERY_END >= #{swapData.lastDay}
+        AND A.SHIPPING_ROUTE_CODE = #{swapData.shippingRouteCode}
+    </select>
+    
+    <select id="getMaster" parameterType="com.chinaplus.core.bean.BaseParam" 
+        resultType="com.chinaplus.common.entity.TntPfcMaster">
+        SELECT
+            PFC_ID AS pfcId,
+            PFC_NO AS pfcNo,
+            OFFICE_ID AS officeId,
+            BUSINESS_PATTERN AS businessPattern,
+            IMP_REGION AS impRegion,
+            CUSTOMER_ID AS customerId,
+            ORDER_MONTH AS orderMonth,
+            FIRST_FC_MONTH AS firstFcMonth,
+            LAST_FC_MONTH AS lastFcMonth,
+            UPLOADED_BY AS uploadedBy,
+            UPLOADED_DATE AS uploadedDate,
+            REMARK AS remark,
+            REVISE_VERSION AS reviseVersion,
+            STATUS AS status,
+            CREATED_BY AS createdBy,
+            CREATED_DATE AS createdDate,
+            UPDATED_BY AS updatedBy,
+            UPDATED_DATE AS updatedDate,
+            VERSION AS version
+        FROM
+            TNT_PFC_MASTER
+        WHERE
+            OFFICE_ID = #{swapData.officeId}
+            AND ORDER_MONTH = #{swapData.orderMonth}
+            AND REVISE_VERSION = #{swapData.reviseVersion}
+            AND CUSTOMER_ID = #{swapData.customerId}
+    </select>
+</mapper>

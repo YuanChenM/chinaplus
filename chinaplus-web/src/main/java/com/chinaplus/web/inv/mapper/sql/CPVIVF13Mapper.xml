@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.inv.service.CPVIVF13Service">
+    
+    <select id="findAllList" parameterType="com.chinaplus.web.inv.entity.CPVIVF13Entity" resultType="com.chinaplus.web.inv.entity.CPVIVF13Entity" flushCache="true">
+        SELECT DISTINCT
+            B.PARTS_ID AS partsId,
+            F.SUPPLIER_ID AS supplierId,
+            F.SUPPLIER_CODE AS supplierCode,
+            F.REGION_CODE AS expRegion,
+            E.REGION_CODE AS impRegion,
+            C.UOM_CODE AS uomCode
+        FROM
+            TNT_ORDER A
+        INNER JOIN
+            TNF_ORDER_STATUS B ON A.IMP_PO_NO = B.IMP_PO_NO AND A.CUSTOMER_ORDER_NO = B.CUSTOMER_ORDER_NO
+        INNER JOIN
+            TNM_PARTS_MASTER C ON B.PARTS_ID = C.PARTS_ID AND A.CUSTOMER_ID = C.CUSTOMER_ID
+        INNER JOIN
+            TNM_CUSTOMER E ON A.CUSTOMER_ID = E.CUSTOMER_ID
+        INNER JOIN
+            TNM_SUPPLIER F ON B.SUPPLIER_ID = F.SUPPLIER_ID
+        WHERE
+            A.OFFICE_ID = #{officeId}
+        <if test="currentCustomers != null and currentCustomers.size() != 0">
+            AND A.CUSTOMER_ID IN
+            <foreach item="currentCustomerItem" index="currentCustomerIndex" collection="currentCustomers" open="(" separator="," close=")">  
+                #{currentCustomerItem}
+            </foreach>
+        </if>
+        <if test="impOrderNo != null and impOrderNo != ''">
+            AND B.IMP_PO_NO = #{impOrderNo}
+        </if>
+        <if test="expOrderNo != null and expOrderNo != ''">
+            AND B.EXP_PO_NO = #{expOrderNo}
+        </if>
+        <if test="cusOrderNo != null and cusOrderNo != ''">
+            AND B.CUSTOMER_ORDER_NO = #{cusOrderNo}
+        </if>
+        <if test="ttcPartNo != null and ttcPartNo != ''">
+            AND C.TTC_PARTS_NO = #{ttcPartNo}
+        </if>
+        <if test="ttcCustomerCode != null and ttcCustomerCode != ''">
+            AND E.CUSTOMER_CODE = #{ttcCustomerCode}
+        </if>
+    </select>
+    
+    <select id="findPageListCount" parameterType="com.chinaplus.core.bean.ObjectParam" resultType="int" flushCache="true">
+        SELECT
+            COUNT(1) AS cnt
+        FROM
+            TNT_INVOICE_SUMMARY
+        WHERE
+            INVOICE_NO = #{data}
+        AND INVOICE_STATUS != 99
+    </select>
+    
+</mapper>

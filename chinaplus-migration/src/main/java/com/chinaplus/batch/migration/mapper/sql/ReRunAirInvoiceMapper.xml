@@ -1,0 +1,118 @@
+<!--
+@screen ReRunShippingPlan
+@author cheng_xingfei
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.batch.migration.service.ReRunAirInvoiceService">
+    <sql id="ConstDef">
+        <bind name="IpStatus_INVOICE" value="@com.chinaplus.common.consts.CodeConst$IpStatus@INVOICE" />
+        <bind name="IpStatus_IMP_INBOUND" value="@com.chinaplus.common.consts.CodeConst$IpStatus@IMP_INBOUND" />
+        <bind name="InvoiceStatus_NOT_APPROVED" value="@com.chinaplus.common.consts.CodeConst$InvoiceStatus@NOT_APPROVED" />
+        <bind name="InvoiceStatus_CANCELLED" value="@com.chinaplus.common.consts.CodeConst$InvoiceStatus@CANCELLED" />
+    </sql>
+        
+    <select id="findInvoiceIPInfoList" parameterType="com.chinaplus.common.bean.IfIpEntity" resultType="com.chinaplus.common.bean.IfIpEntity">
+        <include refid="ConstDef"/>
+        SELECT B.IP_NO AS sourceIpNo
+             , TOF.OFFICE_CODE AS officeCode
+             , D.WHS_CODE AS whsCode
+             , E.WHS_CUSTOMER_CODE AS whsCustomerCode
+             , C.TTC_PARTS_NO AS ttcPartsNo
+             , B.QTY AS originalQty
+             , B.INVOICE_NO AS inbInvoiceNo
+             , B.MODULE_NO AS inbModuleNo
+             , B.DEVANNED_DATE AS invDevanDate
+             , B.CUSTOMS_CLR_DATE AS ccDate
+             , NVL(A.ETA, A.ETD) AS expObActualDate
+          FROM TNT_INVOICE_SUMMARY A 
+         INNER JOIN TNM_OFFICE TOF
+            ON TOF.OFFICE_ID = A.OFFICE_ID 
+         INNER JOIN TNT_IP B 
+            ON B.INVOICE_NO = A.INVOICE_NO 
+           AND B.STATUS <![CDATA[<]]> #{IpStatus_IMP_INBOUND} 
+           AND B.STATUS >= #{IpStatus_INVOICE} 
+         INNER JOIN TNM_PARTS_MASTER C
+            ON C.PARTS_ID = B.PARTS_ID
+          LEFT JOIN TNM_WAREHOUSE D
+            ON D.WHS_ID = B.WHS_ID
+            OR (B.WHS_ID IS NULL AND D.WHS_CODE = C.IMP_WHS_CODE)
+          LEFT JOIN ( 
+                 SELECT WHS_ID
+                      , CUSTOMER_ID
+                      , MIN(WHS_CUSTOMER_CODE) AS WHS_CUSTOMER_CODE 
+                   FROM TNM_WHS_CUSTOMER 
+                  GROUP BY
+                        WHS_ID
+                      , CUSTOMER_ID) E
+            ON E.WHS_ID = D.WHS_ID
+           AND E.CUSTOMER_ID = B.CUSTOMER_ID
+         WHERE TOF.OFFICE_CODE = #{officeCode}
+           AND A.INVOICE_STATUS <![CDATA[<]]> #{InvoiceStatus_CANCELLED}
+           AND A.INVOICE_STATUS > #{InvoiceStatus_NOT_APPROVED}
+           AND A.INVOICE_NO = #{invoiceNo}
+    </select>
+    
+    <insert id="saveIfIpInformation" parameterType="com.chinaplus.common.bean.IfIpEntity">
+        INSERT INTO 
+            TNT_IF_IMP_IP( 
+                IF_IP_ID
+              , SEQ_NO
+              , ACTION_TYPE
+              , DATA_SOURCE
+              , OFFICE_CODE
+              , SOURCE_IP_NO
+              , PID_NO
+              , WHS_CODE
+              , WHS_CUSTOMER_CODE
+              , TTC_PARTS_NO
+              , QTY
+              , INB_INVOICE_NO
+              , INB_MODULE_NO
+              , INB_DATE
+              , OUTBOUND_DATETIME
+              , DISPATCHED_DATETIME
+              , STATUS
+              , PROCESS_DATE
+              , IF_DATE_TIME
+              , VALID_FLAG
+              , HANDLE_FLAG
+              , CREATED_BY
+              , CREATED_DATE
+              , UPDATED_BY
+              , UPDATED_DATE
+              , VERSION
+        ) VALUES (
+                #{ifIpId,jdbcType=INTEGER}
+              , '1'
+              , #{actionType,jdbcType=INTEGER}
+              , 'WEST'
+              , #{officeCode,jdbcType=VARCHAR}
+              , #{sourceIpNo,jdbcType=VARCHAR}
+              , #{pidNo,jdbcType=VARCHAR}
+              , #{whsCode,jdbcType=VARCHAR}
+              , #{whsCustomerCode,jdbcType=VARCHAR}
+              , #{ttcPartsNo,jdbcType=VARCHAR}
+              , #{qty,jdbcType=VARCHAR}
+              , #{inbInvoiceNo,jdbcType=VARCHAR}
+              , #{inbModuleNo,jdbcType=VARCHAR}
+              , #{inbDate,jdbcType=VARCHAR}
+              , #{outboundDatetime,jdbcType=VARCHAR}
+              , #{dispatchedDatetime,jdbcType=VARCHAR}
+              , '2'
+              , #{processDate,jdbcType=TIMESTAMP}
+              , #{ifDateTime,jdbcType=TIMESTAMP}
+              , #{validFlag,jdbcType=INTEGER}
+              , #{handleFlag,jdbcType=INTEGER}
+              , #{createdBy,jdbcType=INTEGER}
+              , #{createdDate,jdbcType=TIMESTAMP}
+              , #{updatedBy,jdbcType=INTEGER}
+              , #{updatedDate,jdbcType=TIMESTAMP}
+              , #{version,jdbcType=INTEGER}
+        )
+    </insert>
+                            
+    <select id="getMaxIfIpId" resultType="java.lang.Integer">
+        SELECT MAX(IF_IP_ID) + 1 FROM TNT_IF_IMP_IP
+    </select>
+</mapper>

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.vvp.service.VVPSDF11Service">
+
+    <select id="findPrimaryKeyExist" parameterType="com.chinaplus.core.bean.BaseParam" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+          FROM VVP_SUPPILER A
+         WHERE A.EXPORT_OFFICE = #{filters.expOffice}
+           AND A.FULL_COMPANY_NAME = #{filters.companyName}
+    </select>
+
+    <insert id="insertIntoVVPSupplier"  parameterType="com.chinaplus.web.vvp.entity.VVPSDF11Entity"> 
+     INSERT 
+        INTO VVP_SUPPILER( 
+          SUPPLIER_ID
+          , EXPORT_OFFICE
+          , CREATED_DATE
+          , CREATED_BY
+          , STATUS
+          , FULL_COMPANY_NAME
+          , LOCAL_ADDRESS
+          , CAPITAL
+          , BUSINESS_ACTIVITY
+          , SHARE_HOLDER
+          , COMPANY_WEBSITE
+          , NO_OF_EMPLOYEE
+          , MAIN_CUSTOMER
+          , HEADQUARTER_OFFICE
+          , END_USER_OEM
+          , OFFICE_BRANCH
+          , PRODUCT_MATEIAL
+          , SECTION_OF_THE_CAR
+          , PRODUCTION_PROCESS
+          , REMARKS1
+          , BUSINESS_WITH_LOCAL_TTC
+          , NDA_AGREEMENT
+          , SUPPILER_TARGET
+          , APPEALING_POINT
+          , OVERALL_EVALUATION
+          , RISK_CONCERN_IF_ANY
+          , REMARKS2
+          , DOCUMENT1_NAME
+          , DOCUMENT2_NAME
+          , DOCUMENT3_NAME
+          , DOCUMENT4_NAME
+          , DOCUMENT5_NAME
+          , VERSION
+        ) 
+        VALUES ( 
+            #{supplierId,jdbcType=INTEGER}
+          , #{expOffice,jdbcType=INTEGER}
+          , #{createDate,jdbcType=DATE}
+          , #{createBy,jdbcType=VARCHAR}
+          , 1
+          , #{companyName,jdbcType=VARCHAR}
+          , #{localAddress,jdbcType=VARCHAR}
+          , #{capital,jdbcType=VARCHAR}
+          , #{businessActivity,jdbcType=VARCHAR}
+          , #{shareHolder,jdbcType=VARCHAR}
+          , #{companyWebsite,jdbcType=VARCHAR}
+          , #{noOfEmployee,jdbcType=VARCHAR}
+          , #{mainCustomer,jdbcType=VARCHAR}
+          , #{headquarter,jdbcType=INTEGER}
+          , #{endUserOem,jdbcType=VARCHAR}
+          , #{officeBranch,jdbcType=INTEGER}
+          , #{productMateial,jdbcType=INTEGER}
+          , #{sectionOfTheCar,jdbcType=INTEGER}
+          , #{productionProcess,jdbcType=INTEGER}
+          , #{remarks1,jdbcType=VARCHAR}
+          , #{businessWithLocalTTC,jdbcType=INTEGER}
+          , #{ndaAgreement,jdbcType=INTEGER}
+          , #{suppilerTarget,jdbcType=VARCHAR}
+          , #{appealingPoint,jdbcType=VARCHAR}
+          , #{overallEvaluation,jdbcType=INTEGER}
+          , #{riskConcernIfAny,jdbcType=VARCHAR}
+          , #{remarks2,jdbcType=VARCHAR}
+          , #{document1Name,jdbcType=VARCHAR}
+          , #{document2Name,jdbcType=VARCHAR}
+          , #{document3Name,jdbcType=VARCHAR}
+          , #{document4Name,jdbcType=VARCHAR}
+          , #{document5Name,jdbcType=VARCHAR}
+          , 1
+        )
+    </insert> 
+</mapper>

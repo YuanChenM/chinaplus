@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.com.service.CPCAUS01Service">
+
+    <sql id="ConstDef">
+        <bind name="ACTIVE" value="@com.chinaplus.common.consts.CodeConst$User$Status@ACTIVE" />
+        <bind name="Active_Y" value="@com.chinaplus.common.consts.CodeConst$ActiveFlag@Y" />
+        <bind name="Active_N" value="@com.chinaplus.common.consts.CodeConst$ActiveFlag@N" />
+    </sql>
+
+    
+    
+    <insert id="addUserCustomer" parameterType="com.chinaplus.web.com.entity.CPCAUS01Entity">
+    INSERT 
+    INTO 
+    TNM_USER_CUSTOMER (
+        USER_CUSTOMER_ID,
+        USER_ID,
+        <if test="null != customerId and '' != customerId">
+            CUSTOMER_ID,
+        </if>
+        OFFICE_ID,
+        ALL_CUSTOMER_FLAG,
+        <if test="null != businessPattern and '' != businessPattern">
+            BUSINESS_PATTERN,
+        </if>
+        CREATED_BY,
+        CREATED_DATE,
+        UPDATED_BY,
+        UPDATED_DATE,
+        VERSION
+    )
+    VALUES
+    (
+        SEQ_TNM_USER_CUSTOMER.nextval,
+        #{userId},
+        <if test="null != customerId and '' != customerId">
+            #{customerId},
+        </if>
+        #{officeCode},
+        #{allCustomerFlag},
+        <if test="null != businessPattern and '' != businessPattern">
+            #{businessPattern},
+        </if>
+        #{createdBy},
+        #{createdDate,jdbcType=TIMESTAMP},
+        #{updatedBy},
+        #{updatedDate,jdbcType=TIMESTAMP},
+        #{version}
+    )
+    </insert>
+    
+    <delete id="delUserCustomerCode" parameterType="com.chinaplus.core.bean.BaseParam">
+        DELETE 
+        FROM 
+        TNM_USER_CUSTOMER A
+        WHERE 
+        A.USER_ID=#{swapData.userId}
+        <if test="null != swapData.officeId and '' != swapData.officeId">
+            AND A.OFFICE_ID=#{swapData.officeId} 
+        </if>
+    </delete>
+    
+    <select id="getUserCustomerByCode" parameterType="com.chinaplus.core.bean.BaseParam" resultType="com.chinaplus.web.com.entity.CPCAUS01Entity"
+        flushCache="true">
+        <include refid="ConstDef"/>
+        SELECT
+            DISTINCT
+            A.CUSTOMER_CODE  AS customerCode
+            ,A.CUSTOMER_NAME  AS customerName
+            ,A.INACTIVE_FLAG  AS activeFlag
+            ,A.CUSTOMER_ID  AS customerId
+            ,CASE WHEN B.CUSTOMER_ID IS NULL THEN 0 ELSE 1 END AS useFlag
+            ,D.OFFICE_CODE AS officeCode
+            ,B.ALL_CUSTOMER_FLAG AS allCustomerFlag
+            ,A.BUSINESS_PATTERN AS businessPattern
+        FROM 
+            TNM_CUSTOMER A
+        INNER 
+        JOIN 
+            TNM_USER_OFFICE_ROLE C 
+        ON
+            A.OFFICE_ID = C.OFFICE_ID
+        AND 
+            C.USER_ID = #{swapData.userId}
+        INNER 
+        JOIN 
+            TNM_OFFICE D 
+        ON
+            C.OFFICE_ID=D.OFFICE_ID
+            
+            <if test="null != swapData.officeId and '' != swapData.officeId">
+                AND D.OFFICE_ID = #{swapData.officeId}
+            </if>
+            <if test="null == swapData.officeId or '' == swapData.officeId">
+                AND D.OFFICE_ID IN 
+                <foreach item="item" index="index" collection="userOfficeIds" open="(" separator="," close=")">  
+                    #{item}
+                </foreach>
+            </if>
+        LEFT 
+        JOIN 
+            TNM_USER_CUSTOMER B 
+        ON
+            B.CUSTOMER_ID =  A.CUSTOMER_ID 
+        AND 
+            B.USER_ID = #{swapData.userId}
+        WHERE
+        
+            (A.INACTIVE_FLAG = ${Active_N}
+        OR 
+            B.CUSTOMER_ID IS NOT NULL)
+        <if test="null != filters.customerCode and 0 != filters.customerCode.size()">
+            AND A.CUSTOMER_ID IN 
+                <foreach item="item" index="index" collection="filters.customerCode" open="(" separator="," close=")">  
+                    #{item}
+                </foreach>
+        </if>
+        ORDER BY
+            D.OFFICE_CODE ASC,
+            A.CUSTOMER_CODE ASC
+    </select>
+    
+    <select id="getUserCustomerForUser" parameterType="com.chinaplus.core.bean.BaseParam" resultType="com.chinaplus.web.com.entity.CPCAUS01Entity"
+        flushCache="true">
+        <include refid="ConstDef"/>
+        SELECT
+            DISTINCT
+            A.CUSTOMER_CODE  AS customerCode
+            ,A.CUSTOMER_NAME  AS customerName
+            ,A.INACTIVE_FLAG  AS activeFlag
+            ,A.CUSTOMER_ID  AS customerId
+            ,CASE WHEN B.CUSTOMER_ID IS NULL THEN 0 ELSE 1 END AS useFlag
+            ,D.OFFICE_CODE AS officeCode
+            ,A.BUSINESS_PATTERN AS businessPattern
+        FROM 
+            TNM_CUSTOMER A
+        INNER 
+        JOIN 
+            TNM_USER_OFFICE_ROLE C 
+        ON
+            A.OFFICE_ID = C.OFFICE_ID
+        AND 
+            C.USER_ID = #{swapData.userId}
+        INNER 
+        JOIN 
+            TNM_OFFICE D 
+        ON
+            C.OFFICE_ID=D.OFFICE_ID
+            
+            <if test="null != swapData.officeId and '' != swapData.officeId">
+                AND D.OFFICE_ID = #{swapData.officeId}
+            </if>
+            <if test="null != filters.officeCode and 0 != filters.officeCode.size()">
+                AND D.OFFICE_ID IN 
+                <foreach item="item" index="index" collection="filters.officeCode" open="(" separator="," close=")">  
+                    #{item}
+                </foreach>
+            </if>
+        LEFT 
+        JOIN 
+            TNM_USER_CUSTOMER B 
+        ON
+            B.CUSTOMER_ID =  A.CUSTOMER_ID 
+        AND 
+            B.USER_ID = #{swapData.userId}
+        WHERE 1 = 1
+        <if test="swapData.flag">
+            AND B.CUSTOMER_ID IS NOT NULL
+        </if>
+        <if test="!swapData.flag">
+            AND A.INACTIVE_FLAG = ${Active_N}
+        </if>
+        <if test="null != filters.customerCode and 0 != filters.customerCode.size()">
+            AND A.CUSTOMER_ID IN 
+                <foreach item="item" index="index" collection="filters.customerCode" open="(" separator="," close=")">  
+                    #{item}
+                </foreach>
+        </if>
+        <if test="null != filters.businessPattern and 0 != filters.businessPattern.size()">
+            AND A.BUSINESS_PATTERN IN 
+                <foreach item="item" index="index" collection="filters.businessPattern" open="(" separator="," close=")">  
+                    #{item}
+                </foreach>
+        </if>
+        <if test="null != filters.activeFlag and 0 != filters.activeFlag.size()">
+            AND A.INACTIVE_FLAG IN 
+                <foreach item="item" index="index" collection="filters.activeFlag" open="(" separator="," close=")">  
+                    #{item}
+                </foreach>
+        </if>
+        ORDER BY
+            D.OFFICE_CODE ASC,
+            A.CUSTOMER_CODE ASC
+    </select>
+    
+    <select id="getAllUser" parameterType="com.chinaplus.core.bean.BaseParam" resultType="com.chinaplus.common.entity.TnmUser"
+        flushCache="true">
+        <include refid="ConstDef"/>
+        SELECT
+            DISTINCT
+            A.USER_ID  AS userId
+            ,A.DEFAULT_OFFICE_ID AS defaultOfficeId
+            ,C.OFFICE_CODE AS mailAddr
+            ,A.LOGIN_ID  AS loginId
+            ,A.USER_NAME  AS userName
+        FROM 
+            TNM_USER A
+        INNER 
+        JOIN 
+            TNM_USER_OFFICE_ROLE B 
+        ON
+            A.USER_ID = B.USER_ID 
+            <if test="null != swapData.officeId and '' != swapData.officeId">
+                AND 
+                    B.OFFICE_ID = #{swapData.officeId}
+            </if>
+            INNER 
+            JOIN 
+                TNM_OFFICE C 
+            ON 
+                A.DEFAULT_OFFICE_ID=C.OFFICE_ID 
+        WHERE 
+            A.STATUS = ${ACTIVE}
+        ORDER BY
+            A.LOGIN_ID ASC
+    </select>
+    <select id="getOfficesByUser" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam" flushCache="true">
+        SELECT 
+               DISTINCT
+               A.OFFICE_ID AS id,
+               A.OFFICE_CODE AS text
+        FROM  
+              TNM_OFFICE  A
+        <if test="null != swapData.userId and '' != swapData.userId">
+        		INNER JOIN TNM_USER_OFFICE_ROLE B ON B.OFFICE_ID = A.OFFICE_ID
+        	WHERE 
+        		B.USER_ID = #{swapData.userId}
+        </if>
+   </select> 
+</mapper>

@@ -1,0 +1,222 @@
+/**
+ * Download Latest Customer Forecast in Rundown Screen
+ * 
+ * @screen CPOCFS05
+ * @author li_feng
+ */
+CPOCFS05 = {
+    xtype : 'form',
+    id : chinaplus.screen.CPOCFS05,
+    title : chinaplus.label.CPOCFS05_Label_PageTitle,
+    frame : true,
+    autoHeight : false,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    autoScroll : true,
+    margin : '0 0 0 0',
+    buttonAlign : 'left',
+    fieldDefaults : {
+        labelAlign : 'right',
+        labelWidth : 150
+    },
+    items : [{
+                margin : '20 0 0 50',
+                xtype : 'combobox',
+                labelSeparator : '',
+                addAllSelector : false,
+                multiSelect : false,
+                msgTarget : 'side',
+                id : chinaplus.screen.CPOCFS05 + '_customerCode',
+                name : 'customerCode',
+                fieldLabel : chinaplus.label.CPOCFS05_Label_TTCCustomerCode,
+                width : 384,
+                store : TRF.util.createStore(chinaplus.screen.CPOCFS05, 'common/loadOfficeCustomers', 'Combo', chinaplus.screen.CPOCFS05 + '_customerCode'),
+                dispalyField : 'text',
+                queryMode : 'local',
+                valueField : 'id',
+                autoFitErrors : false,
+                allowBlank : true,
+                forceSelection : true,
+                editable : false,
+                fieldStyle : 'background:rgb(255,255,153)',
+                enableKeyEvents : true
+            }, {
+                margin : '20 0 0 50',
+                xtype : 'container',
+                layout : 'column',
+                autoScroll : true,
+                items : [{
+                            // minWidth : 300,
+                            xtype : 'container',
+                            defaultType : 'datefield',
+                            defaults : {
+                                format : "M  Y",
+                                msgTarget : 'side'
+                            },
+                            items : [{
+                                        fieldLabel : chinaplus.label.CPOCFS05_Label_CustomrForecastMonth,
+                                        labelSeparator : '',
+                                        id : chinaplus.screen.CPOCFS05 + '_startMonth',
+                                        endDateField : chinaplus.screen.CPOCFS05 + '_endMonth',
+                                        editable : false,
+                                        msgTarget : 'side',
+                                        format : "M Y",
+                                        name : 'custStartDate',
+                                        width : 260,
+                                        forceSelection : true,
+                                        readOnly : true,
+                                        autoFitErrors : false,
+                                        fieldStyle : 'background:rgb(255,255,153)',
+                                        listeners : {},
+                                        plugins : [{
+                                                    ptype : 'monthPicker'
+                                                }]
+                                    }]
+                        }, {
+                            xtype : 'label',
+                            text : '~',
+                            width : 4,
+                            margin : '0 20 0 0'
+                        }, {
+                            xtype : 'container',
+                            autoHeight : true,
+                            autoScroll : true,
+                            defaultType : 'datefield',
+                            defaults : {
+                                format : "M Y",
+                                msgTarget : 'side'
+                            },
+                            items : [{
+                                        fieldLabel : '',
+                                        id : chinaplus.screen.CPOCFS05 + '_endMonth',
+                                        editable : false,
+                                        format : "M Y",
+                                        name : 'custEndDate',
+                                        startDateField : chinaplus.screen.CPOCFS05 + '_startMonth',
+                                        msgTarget : 'side',
+                                        width : 100,
+                                        forceSelection : true,
+                                        autoFitErrors : false,
+                                        fieldStyle : 'background:rgb(255,255,153)',
+                                        listeners : {},
+                                        plugins : [{
+                                                    ptype : 'monthPicker'
+                                                }]
+                                    }]
+                        }]
+            }, {
+                xtype : 'button',
+                id : 'custDownload',
+                iconCls : 'btn-download',
+                align : 'center',
+                width : 130,
+                height : 25,
+                text : chinaplus.label.CPOCFS05_Button_Download,
+                margin : '50 0 30 75',
+                handler : function() {
+                    Ext.getCmp(chinaplus.screen.CPOCFS05).downloadFunc();
+                }
+            }, {
+                xtype : 'button',
+                id : 'cancel',
+                iconCls : 'btn-cancel',
+                align : 'center',
+                width : 130,
+                height : 25,
+                text : chinaplus.label.CPOCFS05_Button_Cancel,
+                margin : '50 0 30 77',
+                handler : function() {
+                    CPOCFS05.cancelFunc();
+                }
+            }],
+
+    /**
+     * The initialize function.
+     * 
+     * @param params. the parameter object passed to this screen.
+     */
+    initialize : function(params) {
+       // show Page
+       var backEffFromToEtdFun = function(records) {
+            if (records != null) {
+                var startDate = records.result;
+                var dateFormat;
+                if (TRF.core.language == chinaplus.consts.code.Language.CN) {
+                    dateFormat = TRF.cnst.GLOBAL_DATE_YEAR_MONTH_FORMAT;
+                } else {
+                    dateFormat = TRF.cnst.GLOBAL_YEAR_MONTH_FORMAT;
+                }
+                Ext.getCmp(chinaplus.screen.CPOCFS05 + '_startMonth').setValue(Ext.util.Format.date(startDate+'/01', dateFormat));
+            }
+        }
+        
+        TRF.util.ajaxSubmit(backEffFromToEtdFun, chinaplus.screen.CPOCFS05, 'om/CPOCFF05/getOfficeTime', params, null);
+          
+        TRF.util.addFieldTipToPanel(this);  
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPOCFS05 + '_customerCode'));
+        
+        
+        
+        
+        
+        this.doLayout();
+    },
+
+    /**
+     * Close window function.
+     */
+    cancelFunc : function() {
+        TRF.util.removePopupApplication('CPOCFS05');
+    },
+
+    /**
+     * Upload function.
+     * @param params. the parameter object passed to this screen.
+     */
+    downloadFunc : function(params) {
+        var customerCode = Ext.getCmp(chinaplus.screen.CPOCFS05 + '_customerCode').getValue();
+        var customerCodeName = Ext.getCmp(chinaplus.screen.CPOCFS05 + '_customerCode').getRawValue();
+        var custStartMonth = Ext.getCmp(chinaplus.screen.CPOCFS05 + '_startMonth').getValue();
+        var custEndMonth = Ext.getCmp(chinaplus.screen.CPOCFS05 + '_endMonth').getValue();
+
+        if (!Ext.isEmpty(custStartMonth)) {
+            custStartMonth = CPOCFS05.dateFormat(custStartMonth, 'Ym');
+        }
+        if (!Ext.isEmpty(custEndMonth)) {
+            custEndMonth = CPOCFS05.dateFormat(custEndMonth, 'Ym');
+        }
+
+
+        var params = {
+            'customerCode' : customerCode,
+            'customerCodeName' : customerCodeName,
+            'custStartMonth' : custStartMonth,
+            'custEndMonth' : custEndMonth,
+            needCheck : true
+        };
+        var backFun = function(applicationData) {
+            if (applicationData.success) {     
+            TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, TRF.util.getMessage('i1003'));
+                // show success message
+                TRF.util.showMessageBoxByMsgIdAndArgs('i1003');
+            };
+        }
+        TRF.util.downloadSubmit(backFun, 'CPOCFS05', "om/CPOCFF05/rundownDownloadCheck", params, "om/CPOCFF05/download", false);
+
+    },
+    
+
+    /**
+     * dateFormat
+     */
+    dateFormat : function(value, formatStr) {
+        if (null != value) {
+            return Ext.Date.format(new Date(value), formatStr);
+        } else {
+            return value;
+        }
+    },
+
+}
+    
+    
+    

@@ -1,0 +1,215 @@
+/**
+ * CPMOLS01
+ * 
+ * @author shi_yuxi
+ * @screen CPMOLS01
+ */
+
+CPMOLS01 = {
+    id : chinaplus.screen.CPMOLS01,
+    title : chinaplus.label.CPMOLS01_Label_PageTitle,
+    xtype : 'grid',
+    autoScroll : true,
+    width : 1000,
+    border : true,
+    closable : false,
+    enableColumnHide : false,
+    enableColumnMove : false,
+    qtip : true,
+    columnLines : true,
+    //    selModel : Ext.create('Ext.ux.selection.CheckBoxModel', {
+    //        checkOnly : true
+    //    }),
+    viewConfig : {
+        loadMask : false
+    },
+    plugins : [{
+                ptype : 'gridheaderfilters'
+            }, {
+                ptype : 'emptystoreview'
+            }, {
+                ptype : 'headerfiltertoolbar',
+                showMore : true,
+                pageSize : TRF.cnst.PAGE_SIZE_ORDER
+            }],
+    header : false,
+    headerPosition : 'bottom',
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    columns : [{
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPMOLS01_Grid_No + '</div>',
+                width : 50,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'rownum',
+                align : 'right',
+                sortable : false
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPMOLS01_Grid_OfficeCode + '</div>',
+                width : 150,
+                // resizable : false,
+                // locked : true,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'officeCode',
+                sortable : false,
+                filter : 'string',
+                renderer : function(v, p, record) {
+                    var formatStr = '<a class="link-focusable" href="javascript:Ext.getCmp(chinaplus.screen.CPMOLS01).goToDetailLink(\'{1}\', \'{2}\')">{0}</a>';
+                    return Ext.String.format(formatStr, Ext.String.htmlEncode(v), record.data.officeId, record.data.regionCode);
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPMOLS01_Grid_OfficeName + '</div>',
+                width : 250,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'officeName',
+                sortable : false,
+                filter : 'string'
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPMOLS01_Grid_Region + '</div>',
+                width : 150,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'regionCode',
+                align : 'center',
+                sortable : false,
+                // renderer : function(v, p, record) {
+                // return record.data.regionName;
+                // },
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPMOLS01, 'common/loadActiveRegions', 'Combo', chinaplus.screen.CPMPMS02 + '_regions')
+                }
+            },/* {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPMOLS01_Grid_SendDateTime + '</div>',
+                width : 100,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'sendDateTime',
+                sortable : false,
+                align : 'center',
+                renderer : function(v, p, record) {
+                    if(v != null && v.length != 0)
+                    {
+                        return v.substring(0,2) + ':' + v.substring(2,4);
+                    }
+                    return v;
+                }
+            }, */{
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPMOLS01_Grid_CreateBy + '</div>',
+                width : 100,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'createBy',
+                sortable : false,
+                filter : 'string'
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPMOLS01_Grid_CreateDate + '</div>',
+                width : 150,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'createDate',
+                align : 'center',
+                sortable : false,
+                // renderer :
+                // Ext.util.Format.dateRenderer(TRF.cnst.GLOBAL_YEAR_MONTH_FORMAT),
+                filter : 'date',
+                filterPlugins : [{
+                            ptype : 'datePickerClear'
+                        }]
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPMOLS01_Grid_DcontIndicator + '</div>',
+                width : 100,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'inActiveFlag',
+                align : 'center',
+                sortable : false,
+                renderer : function(value) {
+                    return chinaplus.master.getMasterName(chinaplus.master.consts.TnmCodeCategory_DiscontinueIndicator, value);
+                },
+                filter : {
+                    type : 'list',
+                    options : chinaplus.master.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_DiscontinueIndicator)
+                }
+            }],
+    tbar : [{
+                text : chinaplus.label.CPMOLS01_Button_CreateNew,
+                iconCls : 'btn-add',
+                id : chinaplus.screen.CPMOLS01 + '_Button_CreateNew',
+                handler : function() {
+                    TRF.util.setDetailTabMode_New();
+                    TRF.util.addApplication(chinaplus.screen.CPMOLS02, chinaplus.screen.CPMOLS02, true);
+                }
+            }],
+    store : TRF.util.createStore(chinaplus.screen.CPMOLS01, 'mm/CPMOLS01/init', 'OfficeList', chinaplus.screen.CPMOLS01 + '_projectStore', {
+                load : TRF.util.addEnterListenerToFocusableLink
+            }),
+    /**
+     * initialize
+     */
+    initialize : function() {
+        var me = this;
+        var gridStore = this.store;
+        // TRF.util.InitListOrderMonth(me);
+        // Load the information list
+        TRF.util.setDefaultValuesForToolBar(this,'inActiveFlag','0');
+        TRF.util.loadStore(gridStore, null, function() {
+                    gridStore.on('beforeload', function() {
+                                TRF.core.mask(TRF.core.maskMsg.load, null, me);
+                            });
+                    gridStore.on('load', function() {
+                                TRF.core.unmask(me);
+                            });
+                },{filters: {inActiveFlag : '0'}});
+        me.doLayout();
+        TRF.util.addGridTip(me);
+        CPMOLS01.setColor(me);
+    },
+    setColor : function(grid) {
+        this.store.on('load', function(s, records) {
+                    var girdcount = 0;
+                    s.each(function(r) {
+                                if (r.get('activeFlag') == '1' && null != grid && null != grid.getView() && null != grid.getView().getRow(girdcount)
+                                        && null != grid.getView().getRow(girdcount).style && null != grid.getView().getRow(girdcount).style.backgroundColor) {
+                                    grid.getView().getRow(girdcount).style.backgroundColor = '#cccccc';
+                                }
+                                girdcount = girdcount + 1;
+                            });
+                });
+    },
+    goToDetailLink : function(officeId, regionCode) {
+        var detailApplicationId = 'CPMOLS02';
+        TRF.util.setDetailTabMode_View();
+        var inParam = {
+            'officeId' : officeId,
+            'regionCode' : regionCode
+        };
+        TRF.util.addApplication(detailApplicationId, detailApplicationId, true, inParam);
+    }
+}

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.common.service.PostGrGiService">
+
+    <select id="findNeedGRInvoice" parameterType="com.chinaplus.common.entity.PostGrGiEntity" resultType="com.chinaplus.common.entity.PostGrGiEntity" flushCache="true">
+        SELECT DISTINCT
+            A.INVOICE_SUMMARY_ID AS invoiceSummaryId,
+            A.BUSINESS_PATTERN AS businessPattern,
+            D.KANBAN_PLAN_NO AS kanbanPlanNo,
+            C.PARTS_ID AS partsId,
+            C.SUPPLIER_ID AS supplierId,
+            C.IMP_PO_NO AS ipo,
+            C.CUSTOMER_ORDER_NO AS cpo,
+            C.EXP_PO_NO AS epo,
+            C.QTY AS qty
+        FROM
+            TNT_INVOICE_SUMMARY A
+        INNER JOIN
+            TNT_INVOICE B ON A.INVOICE_SUMMARY_ID = B.INVOICE_SUMMARY_ID
+        INNER JOIN
+            TNT_INVOICE_PARTS C ON B.INVOICE_ID = C.INVOICE_ID
+        LEFT JOIN
+            TNT_INVOICE_GROUP D ON B.INVOICE_GROUP_ID = D.INVOICE_GROUP_ID
+        WHERE
+            A.POST_RI_FLAG = 1
+        AND A.OFFICE_ID = #{officeId}
+        AND A.GR_DATE <![CDATA[<=]]> #{conditionDate}
+        <if test="invoiceSummaryId != null">
+            AND A.INVOICE_SUMMARY_ID = #{invoiceSummaryId}
+        </if>
+        ORDER BY
+            A.INVOICE_SUMMARY_ID ASC
+    </select>
+    
+    <select id="findNeedGIInvoice" parameterType="com.chinaplus.common.entity.PostGrGiEntity" resultType="com.chinaplus.common.entity.PostGrGiEntity" flushCache="true">
+        SELECT DISTINCT
+            A.INVOICE_SUMMARY_ID AS invoiceSummaryId,
+            A.BUSINESS_PATTERN AS businessPattern,
+            D.KANBAN_PLAN_NO AS kanbanPlanNo,
+            C.PARTS_ID AS partsId,
+            C.SUPPLIER_ID AS supplierId,
+            C.IMP_PO_NO AS ipo,
+            C.CUSTOMER_ORDER_NO AS cpo,
+            C.EXP_PO_NO AS epo,
+            C.QTY AS qty
+        FROM
+            TNT_INVOICE_SUMMARY A
+        INNER JOIN
+            TNT_INVOICE B ON A.INVOICE_SUMMARY_ID = B.INVOICE_SUMMARY_ID
+        INNER JOIN
+            TNT_INVOICE_PARTS C ON B.INVOICE_ID = C.INVOICE_ID
+        LEFT JOIN
+            TNT_INVOICE_GROUP D ON B.INVOICE_GROUP_ID = D.INVOICE_GROUP_ID
+        WHERE
+            A.POST_RI_FLAG = 2
+        AND A.OFFICE_ID = #{officeId}
+        AND A.GI_DATE <![CDATA[<=]]> #{conditionDate}
+        <if test="invoiceSummaryId != null">
+            AND A.INVOICE_SUMMARY_ID = #{invoiceSummaryId}
+        </if>
+        ORDER BY
+            A.INVOICE_SUMMARY_ID ASC
+    </select>
+    
+    <select id="findPostRIStock" parameterType="com.chinaplus.common.entity.PostGrGiEntity" resultType="com.chinaplus.common.entity.PostGrGiEntity" flushCache="true">
+        SELECT
+            A.IMP_STOCK_ID AS stockId
+        FROM
+            TNF_IMP_STOCK A
+        WHERE
+            A.OFFICE_ID = #{officeId}
+        AND A.WHS_ID IS NULL
+        AND A.PARTS_ID = #{partsId}
+        <if test="supplierId != null">
+            AND A.SUPPLIER_ID = #{supplierId}
+        </if>
+    </select>
+    
+</mapper>

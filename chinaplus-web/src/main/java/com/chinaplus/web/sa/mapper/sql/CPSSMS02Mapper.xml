@@ -1,0 +1,62 @@
+<!--
+@screen CPSSMS02
+@author li_feng
+-->
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.sa.service.CPSSMS02Service">
+    <sql id="ConstDef">
+        <bind name="InactiveFlag_ACTIVE" value="@com.chinaplus.common.consts.CodeConst$InactiveFlag@ACTIVE" />
+        <bind name="Status_ACTIVE" value="@com.chinaplus.common.consts.CodeConst$User$Status@ACTIVE" />
+    </sql>
+    
+    
+    <!-- get all active suppliers -->
+    <select id="getActiveSuppliers" resultType="com.chinaplus.common.entity.TnmSupplier" parameterType="com.chinaplus.core.bean.PageParam">
+        <include refid="ConstDef"/>
+        SELECT
+            SUPPLIER_ID as supplierId,
+            SUPPLIER_CODE as supplierCode
+        FROM
+            TNM_SUPPLIER
+        
+            
+        <if test="swapData.ExportCountry != null and swapData.ExportCountry.size()>0" >
+        WHERE
+                REGION_CODE
+            IN
+                <foreach item="country" index="Index" collection="swapData.ExportCountry" open="(" separator="," close=")">  
+                    #{country}
+                </foreach>
+
+        </if>        
+        ORDER BY
+            SUPPLIER_CODE ASC
+    </select>
+    
+    <!-- get current office customers -->
+    <select id="getCurrentOfficeCustomers" resultType="com.chinaplus.common.entity.TnmCustomer" parameterType="com.chinaplus.core.bean.PageParam">
+        <include refid="ConstDef"/>
+        SELECT
+            CUSTOMER_ID as customerId,
+            CUSTOMER_CODE as customerCode
+        FROM
+            TNM_CUSTOMER
+        WHERE
+            OFFICE_ID = #{currentOfficeId}
+        
+        <if test="swapData.ImportCountry != null and swapData.ImportCountry.size()>0" >
+            AND
+                REGION_CODE
+            IN
+                <foreach item="country" index="Index" collection="swapData.ImportCountry" open="(" separator="," close=")">  
+                    #{country}
+                </foreach>
+
+        </if> 
+        ORDER BY
+            CUSTOMER_CODE ASC
+    </select>
+</mapper>

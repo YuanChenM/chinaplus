@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.inv.service.CPVIVF11Service">
+
+    <select id="findAllOrderMonth" parameterType="com.chinaplus.web.inv.entity.CPVIVF11SupportEntity" resultType="com.chinaplus.web.inv.entity.CPVIVF11SupportEntity" flushCache="true">
+        SELECT
+            A.CUSTOMER_ID AS customerId,
+            A.ORDER_MONTH AS orderMonth,
+            A.FROM_DATE AS fromDate,
+            A.TO_DATE AS toDate
+        FROM
+            TNM_KB_ISSUED_DATE A
+        WHERE
+            A.CUSTOMER_ID IN 
+            <foreach item="customerIdItem" index="customerIdIndex" collection="customerIdList" open="(" separator="," close=")">  
+                #{customerIdItem}
+            </foreach>
+    </select>
+    
+    <select id="findTtcCustomerCode" parameterType="com.chinaplus.web.inv.entity.CPVIVF11SupportEntity" resultType="com.chinaplus.web.inv.entity.CPVIVF11SupportEntity" flushCache="true">
+        SELECT DISTINCT
+            A.CUSTOMER_CODE AS ttcCustCode
+        FROM
+            TNM_PARTS_MASTER A
+        WHERE
+            1 = 1
+        AND (
+            <if test="expCustomerCodeList != null and expCustomerCodeList.size() != 0">
+                A.KANBAN_CUST_CODE IN
+                <foreach item="expCustomerCodeItem" index="expCustomerCodeIndex" collection="expCustomerCodeList" open="(" separator="," close=")">  
+                    #{expCustomerCodeItem}
+                </foreach>
+            </if>
+            <if test="expCustomerCodeList != null and expCustomerCodeList.size() != 0 and invCustomerCodeList != null and invCustomerCodeList.size() != 0">
+                OR
+            </if>
+            <if test="invCustomerCodeList != null and invCustomerCodeList.size() != 0">
+                <foreach item="invCustomerCodeItem" index="invCustomerCodeIndex" collection="invCustomerCodeList" open="(" separator="OR" close=")">  
+                    A.INV_CUST_CODE LIKE '%'||#{invCustomerCodeItem}||'%'
+                </foreach>
+            </if>
+        )
+    </select>
+    
+    <select id="findAllParts" parameterType="com.chinaplus.web.inv.entity.CPVIVF11SupportEntity" resultType="com.chinaplus.web.inv.entity.CPVIVF11SupportEntity" flushCache="true">
+        SELECT
+            A.PARTS_ID AS partsId,
+            A.TTC_PARTS_NO AS ttcPartsNo,
+            A.UOM_CODE AS uomCode,
+            A.CUSTOMER_ID AS customerId,
+            A.CUSTOMER_CODE AS ttcCustCode,
+            A.KANBAN_CUST_CODE AS expCustCode,
+            A.INV_CUST_CODE AS invCustCode,
+            B.SUPPLIER_ID AS supplierId,
+            B.EXP_PARTS_ID AS expPartsId,
+            B.TTC_SUPP_CODE AS ttcSuppCode,
+            B.SUPP_PARTS_NO AS suppPartsNo,
+            C.REGION_CODE AS impRegion,
+            D.REGION_CODE AS expRegion
+        FROM
+            TNM_PARTS_MASTER A
+        INNER JOIN
+            TNM_EXP_PARTS B ON A.PARTS_ID = B.PARTS_ID
+        INNER JOIN
+            TNM_CUSTOMER C ON A.CUSTOMER_ID = C.CUSTOMER_ID
+        INNER JOIN
+            TNM_SUPPLIER D ON B.SUPPLIER_ID = D.SUPPLIER_ID
+        WHERE
+            A.OFFICE_ID = #{officeId}
+        <if test="currentCustomers != null and currentCustomers.size() != 0">
+            AND A.CUSTOMER_ID IN
+            <foreach item="currentCustomerItem" index="currentCustomerIndex" collection="currentCustomers" open="(" separator="," close=")">  
+                #{currentCustomerItem}
+            </foreach>
+        </if>
+        AND EXISTS (
+            SELECT 
+                1
+            FROM
+                TNM_PARTS_MASTER E
+            WHERE
+                E.OFFICE_ID = #{officeId}
+            AND (
+                <if test="expCustomerCodeList != null and expCustomerCodeList.size() != 0">
+                    E.KANBAN_CUST_CODE IN
+                    <foreach item="expCustomerCodeItem" index="expCustomerCodeIndex" collection="expCustomerCodeList" open="(" separator="," close=")">  
+                        #{expCustomerCodeItem}
+                    </foreach>
+                </if>
+                <if test="expCustomerCodeList != null and expCustomerCodeList.size() != 0 and invCustomerCodeList != null and invCustomerCodeList.size() != 0">
+                    OR
+                </if>
+                <if test="invCustomerCodeList != null and invCustomerCodeList.size() != 0">
+                    <foreach item="invCustomerCodeItem" index="invCustomerCodeIndex" collection="invCustomerCodeList" open="(" separator="OR" close=")">  
+                        E.INV_CUST_CODE LIKE '%'||#{invCustomerCodeItem}||'%'
+                    </foreach>
+                </if>
+            )
+            AND A.CUSTOMER_ID = E.CUSTOMER_ID
+        )
+        ORDER BY
+            A.PARTS_ID ASC,
+            B.TTC_SUPP_CODE ASC
+    </select>
+    
+    <select id="findOrderMonth" parameterType="com.chinaplus.web.inv.entity.CPVIVF11SupportEntity" resultType="com.chinaplus.web.inv.entity.CPVIVF11SupportEntity" flushCache="true">
+        SELECT
+            A.ORDER_MONTH AS orderMonth
+        FROM
+            TNM_KB_ISSUED_DATE A
+        WHERE
+            A.CUSTOMER_ID = #{customerId}
+        AND A.FROM_DATE <![CDATA[<=]]> #{minIssuedDate}
+        AND A.TO_DATE <![CDATA[>=]]> #{maxIssuedDate}
+    </select>
+    
+    <select id="findKanbanPlanNo" parameterType="com.chinaplus.web.inv.entity.CPVIVF11SupportEntity" resultType="com.chinaplus.web.inv.entity.CPVIVF11SupportEntity" flushCache="true">
+        SELECT DISTINCT
+            A.KANBAN_PLAN_NO AS kanbanPlanNo
+        FROM
+            TNT_KANBAN A
+        WHERE
+            A.OFFICE_ID = #{officeId}
+        AND A.CUSTOMER_ID = #{customerId}
+        AND A.SUPPLIER_ID = #{supplierId}
+        AND A.ORDER_MONTH = #{orderMonth}
+        AND A.STATUS != 99
+    </select>
+    
+    <select id="findIrregularCount" parameterType="com.chinaplus.core.bean.ObjectParam" resultType="int" flushCache="true">
+        SELECT
+            COUNT(1) AS cnt
+        FROM
+            TNT_INVOICE_SUMMARY
+        WHERE
+            UPLOAD_ID = #{data}
+        AND NON_SHIPPING_ROUTE = 1
+    </select>
+    
+    <select id="findSupplementaryCount" parameterType="com.chinaplus.core.bean.ObjectParam" resultType="int" flushCache="true">
+        SELECT
+            COUNT(1) AS cnt
+        FROM
+            TNT_INVOICE_SUMMARY
+        WHERE
+            UPLOAD_ID = #{data}
+        AND UPLOAD_STATUS = 1
+    </select>
+    
+    <update id="updateInvoiceSummaryQty" parameterType="com.chinaplus.web.inv.entity.CPVIVF11SupportEntity">
+        UPDATE
+            TNT_INVOICE_SUMMARY
+        SET
+            INVOICE_QTY = (
+                SELECT
+                    SUM(C.QTY)
+                FROM
+                    TNT_INVOICE_SUMMARY A
+                INNER JOIN 
+                    TNT_INVOICE B ON A.INVOICE_SUMMARY_ID = B.INVOICE_SUMMARY_ID
+                INNER JOIN 
+                    TNT_INVOICE_PARTS C ON B.INVOICE_ID = C.INVOICE_ID
+                WHERE
+                    A.INVOICE_SUMMARY_ID = #{invoiceSummaryId}
+            )
+        WHERE
+            INVOICE_SUMMARY_ID = #{invoiceSummaryId}
+    </update>
+    
+    <select id="findUploadedInvoices" parameterType="com.chinaplus.web.inv.entity.CPVIVF11SupportEntity" resultType="com.chinaplus.web.inv.entity.CPVIVF11SupportEntity" flushCache="true">
+        SELECT
+            B.INVOICE_NO AS invoiceNo,
+            D.KANBAN_PLAN_NO AS kanbanPlanNo,
+            D.TRANSPORT_MODE AS transMode,
+            D.ETD AS etd,
+            D.ETA AS eta,
+            D.IMP_INB_PLAN_DATE AS inbPlanDate,
+            C.PARTS_ID AS partsId,
+            SUM(C.QTY) AS invoiceQty
+        FROM
+            TNT_INVOICE_SUMMARY A
+        INNER JOIN
+            TNT_INVOICE B ON A.INVOICE_SUMMARY_ID = B.INVOICE_SUMMARY_ID
+        INNER JOIN
+            TNT_INVOICE_PARTS C ON B.INVOICE_ID = C.INVOICE_ID
+        INNER JOIN
+            TNT_INVOICE_GROUP D ON B.INVOICE_GROUP_ID = D.INVOICE_GROUP_ID
+        WHERE
+            A.UPLOAD_ID = #{uploadId}
+        AND A.UPLOAD_STATUS = 2
+        AND A.NON_SHIPPING_ROUTE IS NULL
+        GROUP BY
+            B.INVOICE_NO,
+            D.KANBAN_PLAN_NO,
+            D.TRANSPORT_MODE,
+            D.ETD,
+            D.ETA,
+            D.IMP_INB_PLAN_DATE,
+            C.PARTS_ID
+        ORDER BY
+            D.KANBAN_PLAN_NO ASC,
+            D.TRANSPORT_MODE ASC,
+            D.ETD ASC,
+            D.ETA ASC,
+            D.IMP_INB_PLAN_DATE ASC,
+            B.INVOICE_NO ASC
+    </select>
+    
+    <select id="findNeedAdjuestKanbanPlan" parameterType="com.chinaplus.web.inv.entity.CPVIVF11AdjustEntity" resultType="com.chinaplus.web.inv.entity.CPVIVF11AdjustEntity" flushCache="true">
+        SELECT DISTINCT
+            A.KANBAN_ID AS kanbanId,
+            A.KANBAN_PLAN_NO AS kanbanPlanNo,
+            A.ORDER_MONTH AS orderMonth,
+            B.KANBAN_SHIPPING_ID AS kanbanShippingId,
+            B.SHIPPING_UUID AS shippingUUID,
+            B.ORIGINAL_VERSION AS originalVersion,
+            B.REVISION_VERSION AS revisionVersion,
+            B.TRANSPORT_MODE AS transportMode,
+            B.COMPLETED_FLAG AS completedFlag,
+            B.NIRD_FLAG AS nirdFlag,
+            B.ETD AS etd,
+            B.ETA AS eta,
+            B.IMP_INB_PLAN_DATE AS inbPlanDate,
+            D.KANBAN_PLAN_ID AS differBoxId,
+            E.KANBAN_PLAN_ID AS dummyBoxId,
+            C.PARTS_ID AS partsId,
+            C.QTY AS planQty
+        FROM
+            TNT_KANBAN A
+        INNER JOIN
+            (SELECT 
+                MAX(KANBAN_ID) AS KANBAN_ID 
+            FROM 
+                TNT_KANBAN 
+            WHERE 
+                KANBAN_PLAN_NO = #{kanbanPlanNo}
+            ) K ON A.KANBAN_ID = K.KANBAN_ID
+        INNER JOIN
+            TNT_KANBAN_SHIPPING B ON A.KANBAN_ID = B.KANBAN_ID
+        INNER JOIN
+            TNT_KANBAN_SHIPPING_PARTS C ON B.KANBAN_SHIPPING_ID = C.KANBAN_SHIPPING_ID
+        LEFT JOIN
+            TNT_KANBAN_PLAN D ON B.KANBAN_ID = D.KANBAN_ID AND B.SHIPPING_UUID = D.SHIPPING_UUID AND D.PLAN_TYPE = 1
+        LEFT JOIN
+            TNT_KANBAN_PLAN E ON B.KANBAN_ID = E.KANBAN_ID AND B.SHIPPING_UUID = E.SHIPPING_UUID AND E.PLAN_TYPE = 3
+        WHERE
+            A.STATUS != 99
+        AND B.COMPLETED_FLAG = 0
+        ORDER BY
+            A.KANBAN_PLAN_NO ASC,
+            B.TRANSPORT_MODE ASC,
+            B.ETD ASC,
+            B.ETA ASC,
+            B.IMP_INB_PLAN_DATE ASC
+    </select>
+    
+    <select id="findAllKanbanParts" parameterType="com.chinaplus.web.inv.entity.CPVIVF11AdjustEntity" resultType="com.chinaplus.web.inv.entity.CPVIVF11AdjustEntity" flushCache="true">
+        SELECT DISTINCT
+            A.KANBAN_ID AS kanbanId,
+            A.KANBAN_PLAN_NO AS kanbanPlanNo,
+            B.PARTS_ID AS partsId,
+            B.SPQ AS spq,
+            B.STATUS AS partStatus,
+            C.SHIPPING_ROUTE_CODE AS shippingRouteCode,
+            C.EXP_PARTS_ID AS expPartsId
+        FROM
+            TNT_KANBAN A
+        INNER JOIN
+            TNT_KANBAN_PARTS B ON A.KANBAN_ID = B.KANBAN_ID
+        INNER JOIN
+            TNM_EXP_PARTS C ON A.SUPPLIER_ID = C.SUPPLIER_ID AND B.PARTS_ID = C.PARTS_ID
+        WHERE
+            A.KANBAN_ID = #{kanbanId}
+    </select>
+    
+    <select id="findMaxOriginalVersion" parameterType="com.chinaplus.web.inv.entity.CPVIVF11AdjustEntity" resultType="com.chinaplus.web.inv.entity.CPVIVF11AdjustEntity" flushCache="true">
+        SELECT
+            MAX(A.ORIGINAL_VERSION) AS originalVersion
+        FROM
+            TNT_KANBAN_SHIPPING A
+        WHERE
+            A.KANBAN_ID = #{kanbanId}
+    </select>
+    
+</mapper>

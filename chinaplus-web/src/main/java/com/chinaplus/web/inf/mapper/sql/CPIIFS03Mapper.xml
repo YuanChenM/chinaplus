@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.inf.service.CPIIFS03Service">
+
+  <sql id="ConstDef">
+    <bind name="PENDING" value="@com.chinaplus.common.consts.CodeConst$InvoiceStatus@PENDING" />
+    <bind name="AISIN" value="@com.chinaplus.common.consts.CodeConst$BusinessPattern@AISIN" />
+    <bind name="N" value="@com.chinaplus.common.consts.CodeConst$PostRiFlag@N" />
+    <bind name="DONE" value="@com.chinaplus.common.consts.CodeConst$InvoiceUploadStatus@DONE" />
+    <bind name="Irregulars_DONE" value="@com.chinaplus.common.consts.CodeConst$InvoiceIrregularsStatus@DONE" />
+  </sql> 
+    
+  <sql id="getInvoiceSummaryList">
+        FROM           
+             TNT_INVOICE_SUMMARY   A
+             INNER  JOIN  TNM_USER  F  ON  A.CREATED_BY  =  F.USER_ID                           
+        WHERE         
+             A.INVOICE_STATUS = ${PENDING}                              
+             AND A.BUSINESS_PATTERN  =  ${AISIN}                             
+             AND A.OFFICE_ID =  #{swapData.officeId}                            
+             AND A.POST_RI_FLAG =  ${N}   
+             AND (A.UPLOAD_STATUS = #{DONE} OR A.UPLOAD_STATUS IS NULL)
+             AND (A.NON_SHIPPING_ROUTE = #{Irregulars_DONE} OR A.NON_SHIPPING_ROUTE IS NULL)
+      <!--   AND NOT EXISTS
+              (  
+                  SELECT 
+                         1
+                   FROM 
+                       TNT_MATCH_INVOICE  B
+                  WHERE                                                                 
+                       B.WHS_INVOICE_NO = A.INVOICE_NO   
+              ) -->
+            <if test="null != filters.invoiceNo and filters.invoiceNo.size()>0">
+                  AND A.INVOICE_NO IN 
+                <foreach item="item" index="index" collection="filters.invoiceNo" open="(" separator="," close=")">  
+                          #{item}
+                </foreach>
+            </if> 
+            <if test="null != filters.transportMode and filters.transportMode.size()>0">
+                  AND A.TRANSPORT_MODE IN 
+                <foreach item="item" index="index" collection="filters.transportMode" open="(" separator="," close=")">  
+                          #{item}
+                </foreach>
+            </if> 
+            <if test="null != filters.expRegion and filters.expRegion.size()>0">
+                  AND A.EXP_REGION IN 
+                <foreach item="item" index="index" collection="filters.expRegion" open="(" separator="," close=")">  
+                          #{item}
+                </foreach>
+            </if>  
+            <if test="null != filters.impRegion and filters.impRegion.size()>0">
+                  AND A.IMP_REGION IN 
+                <foreach item="item" index="index" collection="filters.impRegion" open="(" separator="," close=")">  
+                          #{item}
+                </foreach>
+            </if> 
+            <if test="null != filters.uploadedBy and filters.uploadedBy.size()>0">
+                  AND F.LOGIN_ID IN 
+                <foreach item="item" index="index" collection="filters.uploadedBy" open="(" separator="," close=")">  
+                          #{item}
+                </foreach>
+            </if>  
+            
+            <if test="filters.etdFrom != null and filters.etdFrom != ''">
+                 AND  A.ETD <![CDATA[>=]]> #{filters.etdFrom}
+            </if>
+            <if test="filters.etdTo != null and filters.etdTo != ''">
+                 AND  A.ETD <![CDATA[<=]]> #{filters.etdTo}
+            </if>       
+            <if test="filters.etaFrom != null and filters.etaFrom != ''">
+                 AND  A.ETA <![CDATA[>=]]> #{filters.etaFrom}
+            </if>
+            <if test="filters.etaTo != null and filters.etaTo != ''">
+                 AND  A.ETA <![CDATA[<=]]> #{filters.etaTo}
+            </if>                                   
+            <if test="filters.bldateFrom != null and filters.bldateFrom != ''">
+                 AND  A.BL_DATE <![CDATA[>=]]> #{filters.bldateFrom}
+            </if>
+            <if test="filters.bldateTo != null and filters.bldateTo != ''">
+                 AND  A.BL_DATE <![CDATA[<=]]> #{filters.bldateTo}
+            </if> 
+            <if test="filters.uploadedDateFrom != null and filters.uploadedDateFrom != ''">
+                 AND  A.UPLOADED_Date <![CDATA[>=]]> #{filters.uploadedDateFrom}
+            </if>
+            <if test="filters.uploadedDateTo != null and filters.uploadedDateTo != ''">
+                 AND  A.UPLOADED_Date <![CDATA[<=]]> #{filters.uploadedDateTo}
+            </if>    
+            <if test="filters.vesselName != null and filters.vesselName != ''">
+                AND A.VESSEL_NAME LIKE #{filters.vesselName} ESCAPE '!'
+            </if>   
+            <if test="filters.blno != null and filters.blno != ''">
+                AND A.BL_NO LIKE #{filters.blno} ESCAPE '!'
+            </if>
+            <if test="filters.status != null and filters.status != ''">
+                <if test="filters.status == 1">
+                    AND COALESCE(A.INBOUND_QTY,0) = 0
+                </if>
+                <if test="filters.status == 2">
+                    AND COALESCE(A.INBOUND_QTY,0) > 0
+                </if>
+            </if>
+  </sql>
+
+  <!-- <cache /> -->
+  <select id="findPageListCount" parameterType="com.chinaplus.core.bean.PageParam"
+    resultType="int">
+    <include refid="ConstDef"/>
+        SELECT  SUM(1) 
+    <include refid="getInvoiceSummaryList" />
+  </select>
+
+  <!-- <cache /> -->
+  <select id="findPageList" parameterType="com.chinaplus.core.bean.PageParam"
+    resultType="com.chinaplus.web.inf.entity.CPIIFS03Entity">
+    <include refid="ConstDef"/>
+        SELECT
+        *
+        FROM (
+        SELECT                                   
+                A.INVOICE_SUMMARY_ID AS invoiceSummaryId,
+                A.INVOICE_NO  AS  invoiceNo,                               
+                A.VESSEL_NAME AS  vesselName,                                
+                A.BL_NO       AS  blno,                              
+                A.BL_DATE     AS  bldate,                                
+                A.EXP_REGION  AS  expRegion,                             
+                A.IMP_REGION  AS  impRegion,                             
+                A.TRANSPORT_MODE AS  transportMode,                             
+                A.ETD  AS etd,                                
+                A.ETA  AS eta,                                
+                F.LOGIN_ID  AS  uploadedBy,                             
+                A.UPLOADED_Date AS uploadedDate,
+                CASE WHEN COALESCE(A.INBOUND_QTY, 0) = 0 THEN 1 ELSE 2 END AS status,
+                ROWNUMBER() over(ORDER BY A.INVOICE_SUMMARY_ID) as rownum
+        <include refid="getInvoiceSummaryList" />
+        ORDER BY A.INVOICE_NO
+        )
+        WHERE
+        <include refid="com.chinaplus.const.pagingCondition" /> 
+  </select>
+    
+    
+  <select id="getInvoiceNo" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+       <include refid="ConstDef"/>
+       SELECT   
+          DISTINCT
+          A.INVOICE_NO AS id,
+          A.INVOICE_NO  AS  text
+          <include refid="getInvoiceSummaryList" />
+          ORDER BY A.INVOICE_NO
+  </select>  
+  
+  <select id="getRegionCode" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+       SELECT   
+          DISTINCT
+          A.REGION_CODE AS id,
+          A.REGION_CODE  AS  text
+       FROM 
+          TNM_REGION A
+       ORDER BY A.REGION_CODE
+    </select>  
+    
+    <select id="getUploadedBy" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+       <include refid="ConstDef"/>
+       SELECT   
+          F.LOGIN_ID AS id,
+          F.LOGIN_ID  AS  text
+       <include refid="getInvoiceSummaryList" />
+        ORDER BY A.UPLOADED_BY
+    </select>  
+    
+    <!--<select id="getMatchInvoiceByParam" parameterType="com.chinaplus.core.bean.BaseParam" resultType="com.chinaplus.web.inf.entity.TntMatchInvoiceEntity">
+        SELECT 
+            D.OFFICE_ID AS officeId,
+            D.INVOICE_NO AS invoiceNo,
+            A.INVOICE_NO AS whsInvoiceNo,
+            Date(A.IF_DATE_TIME) AS dataDate,
+            C.WHS_ID AS whsId,
+            #{swapData.userId} AS matchedBy
+        FROM 
+            TNT_IF_IMP_IP A
+            INNER JOIN TNM_WAREHOUSE C ON C.WHS_CODE = A.WHS_CODE
+            INNER JOIN (
+                SELECT 
+                    B.OFFICE_ID,
+                    B.INVOICE_NO,
+                    #{filters.ifIpId} AS IF_IP_ID
+                FROM
+                    TNT_INVOICE_SUMMARY B
+                WHERE
+                    B.INVOICE_SUMMARY_ID = #{filters.invoiceSummaryId}
+            ) D ON D.IF_IP_ID = A.IF_IP_ID
+        WHERE 
+            A.IF_IP_ID = #{filters.ifIpId}
+    </select>
+    
+    <select id="getexistListByParam"  parameterType="com.chinaplus.core.bean.BaseParam" resultType="com.chinaplus.web.inf.entity.TntMatchInvoiceEntity">
+        SELECT 
+            A.WHS_INVOICE_NO
+        FROM 
+            TNT_MATCH_INVOICE A
+        WHERE
+            A.DATA_DATE = #{filters.dataDate}
+        AND A.WHS_INVOICE_NO = #{filters.whsInvoiceNo}
+    </select> -->
+
+   <!--<insert id="insertMatchInvoice"  parameterType="com.chinaplus.web.inf.entity.TntMatchInvoiceEntity"> 
+     INSERT INTO  
+          TNT_MATCH_INVOICE
+            (  MATCH_INVOICE_ID,
+               OFFICE_ID,
+               WHS_ID,
+               INVOICE_NO,
+               
+               WHS_INVOICE_NO,
+               STATUS,
+               DATA_DATE,
+               MATCHED_DATE,
+               MATCHED_BY,
+               
+               CREATED_BY,
+               CREATED_DATE,
+               UPDATED_BY,
+               UPDATED_DATE,
+               VERSION             
+            )
+          VALUES
+            (                     
+                SEQ_TNT_MATCH_INVOICE.NEXTVAL,
+                #{officeId,jdbcType=INTEGER},
+                #{whsId,jdbcType=INTEGER},
+                #{invoiceNo,jdbcType=VARCHAR},
+                
+                #{whsInvoiceNo,jdbcType=VARCHAR},
+                #{status,jdbcType=INTEGER},
+                #{dataDate,jdbcType=DATE},
+                #{matchedDate,jdbcType=TIMESTAMP},              
+                #{matchedBy,jdbcType=INTEGER},
+                
+                #{matchedBy,jdbcType=INTEGER},
+                CURRENT TIMESTAMP,
+                #{matchedBy,jdbcType=INTEGER},
+                CURRENT TIMESTAMP,
+                 1  
+              )
+   </insert> 
+   
+   <update id="updateMatchInvoice" parameterType="com.chinaplus.web.inf.entity.TntMatchInvoiceEntity">
+           UPDATE
+               TNT_MATCH_INVOICE A
+           SET 
+               A.STATUS = 1,
+               A.MATCHED_DATE = #{matchedDate,jdbcType=TIMESTAMP},
+               A.MATCHED_BY = #{matchedBy},
+               A.UPDATED_BY = #{matchedBy},
+               A.UPDATED_DATE = CURRENT TIMESTAMP,
+               A.VERSION = A.VERSION + 1
+           WHERE 
+               A.DATA_DATE = #{dataDate}
+           AND A.WHS_INVOICE_NO = #{whsInvoiceNo}
+   </update> -->
+</mapper>

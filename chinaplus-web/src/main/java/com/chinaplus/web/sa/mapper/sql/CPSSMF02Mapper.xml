@@ -1,0 +1,368 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chinaplus.web.sa.service.CPSSMF02Service">
+    <sql id="ConstDef">
+        <bind name="BUSINESS_PATTERN_VV" value="@com.chinaplus.common.consts.CodeConst$BusinessPattern@V_V"/>
+        <bind name="BATCH_TYPE_SSMS" value="@com.chinaplus.common.consts.CodeConst$SyncTimeDataType@SSMS"/>
+    </sql>
+    <select id="searchShippingPlanInfo" parameterType="com.chinaplus.core.bean.BaseParam"
+        resultType="com.chinaplus.web.sa.entity.CPSSMF01Entity" flushCache="true">
+        <include refid="ConstDef"/>
+        SELECT
+            ORDER_MASTER.ORDER_ID AS orderId 
+            , SS_PLAN.SS_PLAN_ID AS ssPlanId
+            , SS_PLAN.TRANSPORT_MODE AS transportMode
+            , SS_PLAN.ETD AS etd
+            , SS_PLAN.ETA AS eta
+            , SS_PLAN.CC_DATE AS ccDate
+            , SS_PLAN.IMP_INB_PLAN_DATE AS impInbPlanDate
+            , SS_PLAN.ORIGINAL_VERSION AS originalVersion
+            , SS_PLAN.REVISION_VERSION AS revisionVersion
+            , SS_PLAN.REVISION_REASON AS revisionReason
+            , SS_PLAN.NIRD_FLAG AS nirdFlag
+            , SS_PLAN.COMPLETED_FLAG AS completedFlag
+            , ORDER_STATUS.PARTS_ID AS partsId
+            , PARTS_MASTER.UOM_CODE AS uom
+            , PARTS_MASTER.TTC_PARTS_NO AS ttcPartsNo
+            , PARTS_MASTER.PARTS_NAME_EN AS partsNameEn
+            , PARTS_MASTER.PARTS_NAME_CN AS partsNameCn
+            , EXP_PARTS.EXP_REGION AS expRegion
+            , EXP_PARTS.TTC_SUPP_CODE AS ttcSupplierCode
+            , PARTS_MASTER.IMP_REGION AS impRegion
+            , PARTS_MASTER.CUSTOMER_CODE AS customerCode
+            , PARTS_MASTER.CUST_PARTS_NO AS customerPartsNo
+            , ORDER_MASTER.CUSTOMER_ORDER_NO AS customerOrderNo
+            , PARTS_MASTER.CUST_BACK_NO AS custBackNo
+            , ORDER_MASTER.IMP_PO_NO AS ipo
+            , ORDER_STATUS.EXP_PO_NO AS epo
+            , ORDER_MASTER.ORDER_TYPE AS orderType
+            , EXP_PARTS.DELAY_ADJUSTMENT_PATTERN AS delayAdjustmentPattern
+            , PARTS_MASTER.SPQ AS spq
+            , ORDER_MASTER.EXP_SO_DATE AS expSoDate
+            , ORDER_STATUS.ORDER_QTY AS orderQty
+            , ORDER_STATUS.FORCE_COMPLETED_QTY AS forceCompletedQty
+            , SS_PARTS.QTY AS qty
+        FROM 
+            TNF_ORDER_STATUS ORDER_STATUS
+            INNER JOIN TNT_ORDER ORDER_MASTER 
+                ON ORDER_MASTER.IMP_PO_NO = ORDER_STATUS.IMP_PO_NO AND ORDER_MASTER.CUSTOMER_ORDER_NO = ORDER_STATUS.CUSTOMER_ORDER_NO AND ORDER_MASTER.BUSINESS_PATTERN = ORDER_STATUS.BUSINESS_PATTERN AND ORDER_STATUS.BUSINESS_PATTERN = #{BUSINESS_PATTERN_VV}
+            LEFT JOIN TNT_SS_MASTER SS_MASTER 
+                ON ORDER_MASTER.ORDER_ID = SS_MASTER.ORDER_ID AND ORDER_MASTER.OFFICE_ID = SS_MASTER.OFFICE_ID
+            LEFT JOIN TNT_SS_PLAN SS_PLAN 
+                ON SS_MASTER.SS_ID = SS_PLAN.SS_ID
+            LEFT JOIN TNT_SS_PARTS SS_PARTS 
+                ON ORDER_STATUS.ORDER_STATUS_ID = SS_PARTS.ORDER_STATUS_ID AND SS_PLAN.SS_PLAN_ID = SS_PARTS.SS_PLAN_ID
+            INNER JOIN TNM_PARTS_MASTER PARTS_MASTER 
+                ON PARTS_MASTER.BUSINESS_PATTERN = ORDER_STATUS.BUSINESS_PATTERN AND PARTS_MASTER.OFFICE_ID = ORDER_MASTER.OFFICE_ID AND PARTS_MASTER.PARTS_ID = ORDER_STATUS.PARTS_ID AND ORDER_MASTER.CUSTOMER_ID = PARTS_MASTER.CUSTOMER_ID
+            INNER JOIN TNM_EXP_PARTS EXP_PARTS 
+                ON PARTS_MASTER.OFFICE_ID = PARTS_MASTER.OFFICE_ID AND PARTS_MASTER.PARTS_ID = EXP_PARTS.PARTS_ID AND EXP_PARTS.SUPPLIER_ID = ORDER_STATUS.SUPPLIER_ID
+            INNER JOIN 
+                ( 
+                    SELECT 
+                        DISTINCT A.ORDER_ID, C.EXP_PARTS_ID, B.EXP_PO_NO 
+                    FROM 
+                        TNT_ORDER A 
+                        INNER JOIN TNT_ORDER_DETAIL B ON A.ORDER_ID = B.ORDER_ID 
+                        INNER JOIN TNM_EXP_PARTS C ON B.EXP_PARTS_ID = C.EXP_PARTS_ID 
+                ) X 
+                ON EXP_PARTS.EXP_PARTS_ID = X.EXP_PARTS_ID 
+                AND ORDER_MASTER.ORDER_ID = X.ORDER_ID 
+                AND ORDER_STATUS.EXP_PO_NO = X.EXP_PO_NO 
+        WHERE 
+            (SS_PLAN.REVISION_VERSION IS NULL OR SS_PLAN.REVISION_VERSION = 0)
+            AND SS_MASTER.OFFICE_ID = #{currentOfficeId, jdbcType=INTEGER}
+        <if test="filters.ipoOrderNo != null and filters.ipoOrderNo != ''">
+            AND ORDER_MASTER.IMP_PO_NO=#{filters.ipoOrderNo, jdbcType=VARCHAR}
+        </if>
+        <if test="filters.customerOrderNo != null and filters.customerOrderNo != ''">
+            AND ORDER_MASTER.CUSTOMER_ORDER_NO=#{filters.customerOrderNo, jdbcType=VARCHAR}
+        </if>
+        <if test="(filters.invoiceEtdFrom != null and filters.invoiceEtdFrom != '') or (filters.invoiceEtdTo != null and filters.invoiceEtdTo != '') or (filters.invoiceEtaFrom != null and filters.invoiceEtaFrom != '') or (filters.invoiceEtaTo != null and filters.invoiceEtaTo != '')">
+            <if test="filters.orderListByInvoice != null and filters.orderListByInvoice.size() > 0">
+            AND SS_MASTER.ORDER_ID IN
+                <foreach item="order" index="Index" collection="filters.orderListByInvoice" open="(" separator="," close=")">  
+                    #{order.orderId}
+                </foreach>
+            </if> 
+            <if test="filters.orderListByInvoice == null or filters.orderListByInvoice.size() == 0">
+                AND SS_MASTER.ORDER_ID is NULL
+            </if>
+        </if>
+        <if test="filters.orderList != null and filters.orderList.size() > 0">
+            AND SS_MASTER.ORDER_ID IN
+                <foreach item="order" index="Index" collection="filters.orderList" open="(" separator="," close=")">  
+                    #{order.orderId}
+                </foreach>
+            AND SS_MASTER.SS_ID IN 
+                    (SELECT MIN(SS_ID) FROM TNT_SS_MASTER WHERE ORDER_ID IN
+                        <foreach item="order" index="Index" collection="filters.orderList" open="(" separator="," close=")">  
+                            #{order.orderId}
+                        </foreach>
+                    GROUP BY ORDER_ID )
+            AND SS_PLAN.CREATED_DATE IN ( 
+                    SELECT
+                        MIN(BB.CREATED_DATE) 
+                    FROM
+                        TNT_SS_MASTER AA
+                        INNER JOIN TNT_SS_PLAN BB ON AA.SS_ID = BB.SS_ID
+                    WHERE
+                        AA.ORDER_ID IN 
+                        <foreach item="order" index="Index" collection="filters.orderList" open="(" separator="," close=")">  
+                            #{order.orderId}
+                        </foreach>
+                    GROUP BY
+                        AA.ORDER_ID ) 
+        </if>
+        <if test="filters.planList != null and filters.planList.size() > 0">
+            AND SS_MASTER.ORDER_ID IN
+                (SELECT ORDER_ID FROM TNT_SS_MASTER WHERE SS_ID IN
+                    <foreach item="ssPlan" index="Index" collection="filters.planList" open="(" separator="," close=")">  
+                        #{ssPlan.ssId}
+                    </foreach>
+                <if test="filters.orderList != null and filters.orderList.size() > 0">
+                AND ORDER_ID IN
+                    <foreach item="order" index="Index" collection="filters.orderList" open="(" separator="," close=")">  
+                        #{order.orderId}
+                    </foreach>
+                </if>
+                GROUP BY ORDER_ID)
+        </if>
+        <if test="filters.orderList == null or filters.orderList.size() == 0">
+            AND SS_MASTER.ORDER_ID is NULL
+        </if>
+        <if test="filters.ttsPartsNo != null and filters.ttsPartsNo != ''">
+            AND PARTS_MASTER.TTC_PARTS_NO = #{filters.ttsPartsNo}
+        </if>
+        <if test="filters.expRegionList != null and filters.expRegionList.size() > 0">
+            AND EXP_PARTS.EXP_REGION IN
+                <foreach item="region" index="Index" collection="filters.expRegionList" open="(" separator="," close=")">  
+                    #{region}
+                </foreach>
+        </if>
+        <if test="filters.supplierCodeList != null and filters.supplierCodeList.size() > 0">
+            AND EXP_PARTS.TTC_SUPP_CODE IN
+                <foreach item="supplierCode" index="Index" collection="filters.supplierCodeList" open="(" separator="," close=")">  
+                    #{supplierCode}
+                </foreach>
+        </if>
+        <if test="filters.impRegionList != null and filters.impRegionList.size() > 0">
+            AND PARTS_MASTER.IMP_REGION IN
+                <foreach item="region" index="Index" collection="filters.impRegionList" open="(" separator="," close=")">  
+                    #{region}
+                </foreach>
+        </if>
+        <if test="filters.customerCodeList != null and filters.customerCodeList.size() > 0">
+            AND PARTS_MASTER.CUSTOMER_CODE IN
+                <foreach item="customerCode" index="Index" collection="filters.customerCodeList" open="(" separator="," close=")">  
+                    #{customerCode}
+                </foreach>
+        </if>
+        ORDER BY ORDER_MASTER.IMP_PO_NO
+            , ORDER_MASTER.CUSTOMER_ORDER_NO
+            , PARTS_MASTER.CUSTOMER_CODE
+            , PARTS_MASTER.TTC_PARTS_NO
+            , ORDER_STATUS.EXP_PO_NO
+            , EXP_PARTS.TTC_SUPP_CODE
+    </select>
+    <select id="searchInvoiceInfo" parameterType="com.chinaplus.core.bean.BaseParam"
+        resultType="com.chinaplus.web.sa.entity.CPSSMF01Entity" flushCache="true">
+        <include refid="ConstDef"/>
+        SELECT INV.INVOICE_ID AS invoiceId
+          , INV.INVOICE_NO AS invoiceNo
+          , INV_SUMMARY.TRANSPORT_MODE AS transportMode
+          , INV.ETD AS etd
+          , INV.ETA AS eta
+          , INV.CC_DATE AS ccDate
+          , INV.IMP_INB_PLAN_DATE AS impInbPlanDate
+          , INV.IMP_INB_ACTUAL_DATE AS ipmInbActulDate
+          , INV.REVISION_REASON AS revisionReason
+          , INV.REVISION_VERSION AS revisionVersion
+          , INV.ORIGINAL_VERSION AS originalVersion
+          , INV_PARTS.PARTS_ID AS partsId
+          , PARTS_MASTER.UOM_CODE AS uom
+          , PARTS_MASTER.TTC_PARTS_NO AS ttcPartsNo
+          , PARTS_MASTER.CUSTOMER_CODE AS customerCode
+          , INV_PARTS.IMP_PO_NO AS ipo
+          , INV_PARTS.EXP_PO_NO AS epo
+          , INV_PARTS.CUSTOMER_ORDER_NO AS customerOrderNo
+          , SUPPLIER.SUPPLIER_CODE AS ttcSupplierCode
+          , INV_PARTS.QTY AS qty
+        FROM
+          TNT_INVOICE_PARTS INV_PARTS
+          INNER JOIN TNT_INVOICE INV
+            ON INV.INVOICE_ID = INV_PARTS.INVOICE_ID 
+          INNER JOIN TNT_INVOICE_SUMMARY INV_SUMMARY 
+            ON INV.INVOICE_SUMMARY_ID = INV_SUMMARY.INVOICE_SUMMARY_ID 
+            AND INV_SUMMARY.BUSINESS_PATTERN = #{BUSINESS_PATTERN_VV}
+            AND INV_SUMMARY.OFFICE_ID = INV.OFFICE_ID
+            AND INV_SUMMARY.INVOICE_STATUS NOT IN (1, 99)
+          INNER JOIN TNM_PARTS_MASTER PARTS_MASTER 
+            ON PARTS_MASTER.BUSINESS_PATTERN = #{BUSINESS_PATTERN_VV} 
+            AND PARTS_MASTER.OFFICE_ID = INV.OFFICE_ID 
+            AND INV_PARTS.PARTS_ID = PARTS_MASTER.PARTS_ID 
+          INNER JOIN TNM_SUPPLIER SUPPLIER 
+            ON SUPPLIER.SUPPLIER_ID = INV_PARTS.SUPPLIER_ID 
+          INNER JOIN TNM_CUSTOMER CUSTOMER 
+            ON CUSTOMER.BUSINESS_PATTERN = #{BUSINESS_PATTERN_VV}
+            AND CUSTOMER.OFFICE_ID = INV.OFFICE_ID 
+            AND CUSTOMER.CUSTOMER_CODE = PARTS_MASTER.CUSTOMER_CODE 
+          INNER JOIN TNT_ORDER ORDER_MASTER 
+            ON ORDER_MASTER.OFFICE_ID = INV.OFFICE_ID 
+            AND ORDER_MASTER.IMP_PO_NO = INV_PARTS.IMP_PO_NO 
+            AND ORDER_MASTER.CUSTOMER_ORDER_NO = INV_PARTS.CUSTOMER_ORDER_NO 
+            AND ORDER_MASTER.CUSTOMER_ID = CUSTOMER.CUSTOMER_ID
+        WHERE 
+            INV.OFFICE_ID = #{currentOfficeId, jdbcType=INTEGER}
+            <if test="filters.planInfoList != null and filters.planInfoList.size() > 0">
+                AND ORDER_MASTER.ORDER_ID IN
+                    <foreach item="order" index="Index" collection="filters.planInfoList" open="(" separator="," close=")">  
+                        #{order.orderId}
+                    </foreach>
+            </if>
+            <if test="filters.ttsPartsNo != null and filters.ttsPartsNo != ''">
+                AND PARTS_MASTER.TTC_PARTS_NO = #{filters.ttsPartsNo}
+            </if>
+            <if test="filters.supplierCodeList != null and filters.supplierCodeList.size() > 0">
+                AND SUPPLIER.SUPPLIER_CODE IN
+                    <foreach item="supplierCode" index="Index" collection="filters.supplierCodeList" open="(" separator="," close=")">  
+                        #{supplierCode}
+                    </foreach>
+            </if>
+        ORDER BY INV.INVOICE_NO, INV_PARTS.IMP_PO_NO, INV_PARTS.CUSTOMER_ORDER_NO, PARTS_MASTER.CUSTOMER_CODE 
+    </select>
+    <select id="searchOrderList" parameterType="com.chinaplus.core.bean.BaseParam"
+        resultType="com.chinaplus.common.entity.TntOrder" flushCache="true">
+        SELECT A.ORDER_ID AS orderId
+            , A.IMP_PO_NO AS impPoNo
+            , A.CUSTOMER_ORDER_NO AS customerOrderNo
+        FROM TNT_ORDER A 
+        WHERE A.OFFICE_ID=#{currentOfficeId, jdbcType=INTEGER}
+        <if test="filters.ipoOrderNo != null and filters.ipoOrderNo != ''">
+            AND A.IMP_PO_NO=#{filters.ipoOrderNo, jdbcType=VARCHAR}
+        </if>
+        <if test="filters.customerOrderNo != null and filters.customerOrderNo != ''">
+            AND A.CUSTOMER_ORDER_NO=#{filters.customerOrderNo, jdbcType=VARCHAR}
+        </if>
+        <if test="filters.saleDateFrom != null and filters.saleDateFrom != ''">
+            AND A.EXP_SO_DATE <![CDATA[ >= ]]> #{filters.saleDateFrom}
+        </if>
+        <if test="filters.saleDateTo != null and filters.saleDateTo != ''">
+            AND A.EXP_SO_DATE <![CDATA[ <= ]]> #{filters.saleDateTo}
+        </if>
+    </select>
+    <select id="searchSsPlanList" parameterType="com.chinaplus.core.bean.BaseParam"
+        resultType="com.chinaplus.common.entity.TntSsPlan" flushCache="true">
+        SELECT SS_ID AS ssId
+        FROM TNT_SS_PLAN 
+        WHERE SS_ID IN ( 
+            SELECT SS_ID 
+            FROM TNT_SS_MASTER AA
+            INNER JOIN (SELECT MAX(REVISION_VERSION) AS REVISION_VERSION, ORDER_ID FROM TNT_SS_MASTER GROUP BY ORDER_ID) BB
+            ON AA.REVISION_VERSION = BB.REVISION_VERSION AND AA.ORDER_ID = BB.ORDER_ID
+            WHERE OFFICE_ID=#{currentOfficeId, jdbcType=INTEGER}
+        )
+        <if test="filters.planEtdFrom != null and filters.planEtdFrom != ''">
+            AND ETD <![CDATA[ >= ]]> #{filters.planEtdFrom, jdbcType=VARCHAR}
+        </if>
+        <if test="filters.planEtdTo != null and filters.planEtdTo != ''">
+            AND ETD <![CDATA[ <= ]]> #{filters.planEtdTo, jdbcType=VARCHAR}
+        </if>
+        <if test="filters.planEtaFrom != null and filters.planEtaFrom != ''">
+            AND ETA <![CDATA[ >= ]]> #{filters.planEtaFrom}
+        </if>
+        <if test="filters.planEtaTo != null and filters.planEtaTo != ''">
+            AND ETA <![CDATA[ <= ]]> #{filters.planEtaTo}
+        </if>
+        GROUP BY SS_ID
+    </select>
+    <select id="searchOrderListByInvoice" parameterType="com.chinaplus.core.bean.BaseParam"
+        resultType="com.chinaplus.common.entity.TntOrder" flushCache="true">
+        SELECT ORDER_ID AS orderId
+            , IMP_PO_NO AS impPoNo
+            , CUSTOMER_ORDER_NO AS customerOrderNo
+        FROM TNT_ORDER
+        WHERE (IMP_PO_NO || CUSTOMER_ORDER_NO) IN ( 
+            SELECT ( INVOICE_PARTS.IMP_PO_NO || INVOICE_PARTS.CUSTOMER_ORDER_NO ) 
+            FROM TNT_INVOICE_PARTS INVOICE_PARTS 
+            INNER JOIN TNT_INVOICE INVOICE 
+              ON INVOICE.INVOICE_ID = INVOICE_PARTS.INVOICE_ID 
+            WHERE INVOICE.OFFICE_ID=#{currentOfficeId, jdbcType=INTEGER}
+            <if test="filters.invoiceEtdFrom != null and filters.invoiceEtdFrom != ''">
+                AND INVOICE.ETD <![CDATA[ >= ]]> #{filters.invoiceEtdFrom, jdbcType=VARCHAR}
+            </if>
+            <if test="filters.invoiceEtdTo != null and filters.invoiceEtdTo != ''">
+                AND INVOICE.ETD <![CDATA[ <= ]]> #{filters.invoiceEtdTo, jdbcType=VARCHAR}
+            </if>
+            <if test="filters.invoiceEtaFrom != null and filters.invoiceEtaFrom != ''">
+                AND INVOICE.ETA <![CDATA[ >= ]]> #{filters.invoiceEtaFrom}
+            </if>
+            <if test="filters.invoiceEtaTo != null and filters.invoiceEtaTo != ''">
+                AND INVOICE.ETA <![CDATA[ <= ]]> #{filters.invoiceEtaTo}
+            </if> 
+            GROUP BY INVOICE_PARTS.IMP_PO_NO , INVOICE_PARTS.CUSTOMER_ORDER_NO
+        )
+        <if test="filters.ipoOrderNo != null and filters.ipoOrderNo != ''">
+            AND IMP_PO_NO=#{filters.ipoOrderNo, jdbcType=VARCHAR}
+        </if>
+        <if test="filters.customerOrderNo != null and filters.customerOrderNo != ''">
+            AND CUSTOMER_ORDER_NO=#{filters.customerOrderNo, jdbcType=VARCHAR}
+        </if>
+        <if test="filters.saleDateFrom != null and filters.saleDateFrom != ''">
+            AND EXP_SO_DATE <![CDATA[ >= ]]> #{filters.saleDateFrom}
+        </if>
+        <if test="filters.saleDateTo != null and filters.saleDateTo != ''">
+            AND EXP_SO_DATE <![CDATA[ <= ]]> #{filters.saleDateTo}
+        </if>
+    </select>
+    <select id="searchOrderListByPlan" parameterType="com.chinaplus.core.bean.BaseParam"
+        resultType="com.chinaplus.common.entity.TntOrder" flushCache="true">
+        SELECT IMP_PO_NO AS impPoNo
+            , CUSTOMER_ORDER_NO AS customerOrderNo
+        FROM TNT_ORDER
+        WHERE OFFICE_ID=#{currentOfficeId, jdbcType=INTEGER}
+        AND ORDER_ID IN (
+            SELECT ORDER_ID FROM TNT_SS_MASTER WHERE SS_ID IN (
+                SELECT SS_ID FROM TNT_SS_PLAN 
+                WHERE 1=1 
+                <if test="filters.planEtdFrom != null and filters.planEtdFrom != ''">
+                    AND ETD <![CDATA[ >= ]]> #{filters.planEtdFrom, jdbcType=VARCHAR}
+                </if>
+                <if test="filters.planEtdTo != null and filters.planEtdTo != ''">
+                    AND ETD <![CDATA[ <= ]]> #{filters.planEtdTo, jdbcType=VARCHAR}
+                </if>
+                <if test="filters.planEtaFrom != null and filters.planEtaFrom != ''">
+                    AND ETA <![CDATA[ >= ]]> #{filters.planEtaFrom}
+                </if>
+                <if test="filters.planEtaTo != null and filters.planEtaTo != ''">
+                    AND ETA <![CDATA[ <= ]]> #{filters.planEtaTo}
+                </if>
+                GROUP BY SS_ID
+            )
+            GROUP BY ORDER_ID
+        )
+        <if test="filters.ipoOrderNo != null and filters.ipoOrderNo != ''">
+            AND IMP_PO_NO=#{filters.ipoOrderNo, jdbcType=VARCHAR}
+        </if>
+        <if test="filters.customerOrderNo != null and filters.customerOrderNo != ''">
+            AND CUSTOMER_ORDER_NO=#{filters.customerOrderNo, jdbcType=VARCHAR}
+        </if>
+        <if test="filters.saleDateFrom != null and filters.saleDateFrom != ''">
+            AND EXP_SO_DATE <![CDATA[ >= ]]> #{filters.saleDateFrom}
+        </if>
+        <if test="filters.saleDateTo != null and filters.saleDateTo != ''">
+            AND EXP_SO_DATE <![CDATA[ <= ]]> #{filters.saleDateTo}
+        </if>
+        GROUP BY IMP_PO_NO, CUSTOMER_ORDER_NO
+    </select>
+    <select id="searchDataSyncTime" parameterType="com.chinaplus.core.bean.BaseParam"
+        resultType="com.chinaplus.common.entity.TntSyncTime" flushCache="true">
+        <include refid="ConstDef"/>
+        SELECT OFFICE_ID AS officeId
+            , BATCH_TYPE AS dataType
+            , IF_DATE_TIME AS impSyncTime
+        FROM TNT_IF_BATCH
+        WHERE OFFICE_ID = #{filters.officeId}
+        OR BATCH_TYPE = #{BATCH_TYPE_SSMS} 
+    </select>
+</mapper>

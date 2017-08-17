@@ -1,0 +1,181 @@
+/**
+ * @screen CPIIFS01 ----- Invoice List Screen
+ * @author zhang_chi
+ */
+CPIIFS01 = {
+    xtype : 'gridpanel',
+    id : chinaplus.screen.CPIIFS01,
+    title : chinaplus.label.CPIIFS01_Label_PageTitle,
+    autoScroll : true,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    border : true,
+    closable : false,
+    columnLines : true,
+    enableColumnHide : false,
+    enableColumnMove : false,
+    qtip : true,
+    selType : 'cellmodel',
+    // selModel : Ext.create('Ext.ux.selection.CheckBoxModel', {
+    // checkOnly : true
+    // }),
+    viewConfig : {
+        loadMask : false
+    },
+    plugins : [{
+                ptype : 'gridheaderfilters',
+                allSingleFilter : false
+            }, {
+                ptype : 'emptystoreview'
+            }, {
+                ptype : 'headerfiltertoolbar',
+                showMore : true
+            }],
+    header : false,
+    headerPosition : 'bottom',
+    columns : [{
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPIIFS01_Grid_OfficeCode + '</div>',
+                align : 'left',
+                width : 150,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'officeCode',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : false,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPIIFS01, 'main/officelist', 'Combo', chinaplus.screen.CPIIFS01 + '_officeStore')
+                },
+                renderer : function(v, p, record) {
+                    return v;
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPIIFS01_Grid_DateSyncType + '</div>',
+                align : 'left',
+                width : 170,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'batchTypeName',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    options : chinaplus.master.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_IF_BATCH_TYPE)
+                },
+                renderer : function(v, p, record) {
+                    return v;
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPIIFS01_Grid_LastProcessTime + '</div>',
+                align : 'center',
+                width : 150,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'dateTime',
+                sortable : false
+                ,
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPIIFS01_Grid_Status + '</div>',
+                align : 'center',
+                width : 120,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'status',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    options : chinaplus.master.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_IF_BATCH_STATUS)
+                },
+                renderer : function(value, p, record) {
+                    var resustatus = chinaplus.master.getMasterName(chinaplus.master.consts.TnmCodeCategory_IF_BATCH_STATUS, value);
+                    if (value == '0') {
+                        var formatStr = '<a href="#" onclick="Ext.getCmp(chinaplus.screen.CPIIFS01).downloadFile(' + record.data.batchType + ',\'' + record.data.officeCode + '\')">' + resustatus + '</a>';
+                        return formatStr;
+                    } else {
+                        return resustatus;
+                    }
+                }
+            }],
+    tbar : [{
+                text : chinaplus.label.CPIIFS01_Button_SynchronizeNow,
+                iconCls : 'btn-refresh',
+                handler : function() {
+                    CPIIFS01.synchronizeNowData();
+                }
+            }],
+    store : TRF.util.createStore(chinaplus.screen.CPIIFS01, 'inf/CPIIFS01/getCPIIFS01EntityList', 'CPIIFS01EntityList', chinaplus.screen.CPIIFS01 + '_CPIIFS01EntityStore'),
+
+    /**
+     * The initialize function.
+     * 
+     * @param params. the parameter object passed to this screen.
+     */
+    initialize : function() {
+
+        var me = this;
+        var gridStore = this.store;
+
+        TRF.util.dataLoadStart(chinaplus.screen.CPIIFS01);
+        TRF.util.loadStore(gridStore, null, function() {
+                    TRF.util.dataLoadEnd(chinaplus.screen.CPIIFS01);
+                    gridStore.on('beforeload', function() {
+                         TRF.core.mask(TRF.core.maskMsg.load, null, me);
+                     });
+                     gridStore.on('load', function() {
+                         TRF.core.unmask(me);
+                     });
+                }, {
+                    filters : {}
+                });
+
+        this.doLayout();
+        TRF.util.addGridTip(this);
+    },
+
+    /**
+     * go detail screen.
+     * 
+     * @param params. the parameter object passed to this screen.
+     */
+    downloadFile : function(batchType, officeCode) {
+    
+        var params = {
+            'batchType' : batchType,
+            'officeCode' : officeCode
+        };
+        var fcn = function() {
+        
+        };
+        TRF.util.downloadSubmit(fcn, chinaplus.screen.CPIIFS01, "inf/CPIIFS01/downloadcheck", params, "inf/CPIIFS01/download", false);
+    },
+
+    /**
+     * synchronizeNow Data
+     */
+    synchronizeNowData : function() {
+    	var me = this;
+        var params = {};
+        var backFun = function(applicationData) {
+            if (applicationData.success) {
+                var lsMsgs = TRF.util.getMessage('i1004', [chinaplus.label.CPIIFS01_Button_SynchronizeNow]);
+                TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_INFO, lsMsgs, lsMsgs, function() {
+                		me.store.loadPage(1);
+                        });
+            }
+        };
+        TRF.util.ajaxSubmit(backFun, chinaplus.screen.CPIIFS01, 'inf/CPIIFS01/synchronizeNowData', null, params);
+    }
+
+}

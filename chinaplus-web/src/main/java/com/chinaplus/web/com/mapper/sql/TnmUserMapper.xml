@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.com.service.LoginService">
+
+    <sql id="ConstDef">
+        <bind name="ACTIVE" value="@com.chinaplus.common.consts.CodeConst$InactiveFlag@ACTIVE" />  
+    </sql>
+
+   <!-- <cache /> -->
+   <select id="findByCondition" resultType="com.chinaplus.common.bean.UserAccessInfo" parameterType="com.chinaplus.core.bean.BaseParam">
+         SELECT 
+                A.OFFICE_ID AS officeId
+               ,C.ROOT_ID AS sysRootId
+               ,F.SCREEN_ID AS rootId
+               ,C.SYS_SCREEN_ID AS sysResourceId
+               ,E.SCREEN_ID AS resourceId           
+               ,D.TIME_ZONE AS timezone
+               ,D.OFFICE_CODE AS officeCode
+               ,D.REGION_CODE AS regionCode
+               ,D.INACTIVE_FLAG AS inactiveFlag
+               ,MAX(B.ACCESS_LEVEL) AS accessLevel
+         FROM 
+         TNM_USER_OFFICE_ROLE A
+         INNER JOIN TNM_ROLE_RESOURCE B ON B.ROLE_ID = A.ROLE_ID
+         INNER JOIN TNM_MENU_RESOURCE C ON C.SYS_SCREEN_ID = B.SYS_SCREEN_ID
+         INNER JOIN TNM_OFFICE D ON D.OFFICE_ID = A.OFFICE_ID
+         INNER JOIN TNM_SCREEN E ON E.SYS_SCREEN_ID = C.SYS_SCREEN_ID
+         INNER JOIN TNM_SCREEN F ON F.SYS_SCREEN_ID = C.ROOT_ID
+         WHERE A.USER_ID = #{swapData.userId}
+         GROUP BY 
+                A.OFFICE_ID
+               ,C.ROOT_ID
+               ,F.SCREEN_ID
+               ,C.SYS_SCREEN_ID
+               ,E.SCREEN_ID
+               ,E.SCREEN_URL
+               ,D.TIME_ZONE
+               ,D.OFFICE_CODE
+               ,D.REGION_CODE
+               ,C.ROOT_SORT_NO
+               ,C.SCREEN_SORT_NO
+               ,D.INACTIVE_FLAG
+         ORDER BY
+                D.OFFICE_CODE ASC
+               ,C.ROOT_SORT_NO ASC
+               ,C.SCREEN_SORT_NO ASC
+    </select>
+    
+    
+    <select id="findBusinessPatternListFlag"  resultType="com.chinaplus.common.bean.BusinessPattern" parameterType="com.chinaplus.core.bean.BaseParam">
+         SELECT  
+            DISTINCT
+            B.OFFICE_ID AS officeId,
+            B.ALL_CUSTOMER_FLAG AS allCustomerFlag
+         FROM  
+            TNM_USER_CUSTOMER B 
+            INNER JOIN TNM_USER C  ON  B.USER_ID = C.USER_ID
+        WHERE  
+            C.USER_ID = #{swapData.userId}
+    </select>
+    
+    <select id="findBusinessPatternList"  resultType="com.chinaplus.common.bean.BusinessPattern" parameterType="com.chinaplus.core.bean.BaseParam">
+         SELECT  
+            A.OFFICE_ID AS officeId,
+            A.CUSTOMER_ID AS customerId,
+            A.CUSTOMER_CODE AS  customerCode,
+            A.BUSINESS_PATTERN AS businessPattern,
+            B.ALL_CUSTOMER_FLAG AS allCustomerFlag,
+            A.INACTIVE_FLAG AS inactiveFlag
+         FROM  
+            TNM_CUSTOMER  A
+            INNER JOIN TNM_USER_CUSTOMER B  ON   A.CUSTOMER_ID =  B.CUSTOMER_ID  AND  B.OFFICE_ID = A.OFFICE_ID
+            INNER JOIN TNM_USER C  ON  B.USER_ID = C.USER_ID
+        WHERE  
+            A.OFFICE_ID =  #{swapData.officeId} 
+            AND  C.USER_ID = #{swapData.userId}
+    </select>
+    
+    <select id="findBusinessPatternListById"  resultType="com.chinaplus.common.bean.BusinessPattern" parameterType="com.chinaplus.core.bean.BaseParam">
+         SELECT  
+            A.OFFICE_ID AS officeId,
+            A.CUSTOMER_ID AS customerId,
+            A.CUSTOMER_CODE AS  customerCode,
+            A.BUSINESS_PATTERN AS businessPattern,
+            A.INACTIVE_FLAG AS inactiveFlag
+         FROM  
+            TNM_CUSTOMER  A
+        WHERE  
+            A.OFFICE_ID =  #{swapData.officeId}
+    </select>
+
+</mapper>

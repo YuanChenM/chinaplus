@@ -1,0 +1,254 @@
+/**
+ * Irregular Shipping Schedule
+ * 
+ * @screen CPVIVS04
+ * @author gu_chengchen
+ */
+CPVIVS04 = {
+    id : chinaplus.screen.CPVIVS04,
+    title : chinaplus.label.CPVIVS04_Label_PageTitle,
+    xtype : 'form',
+    frame : true,
+    autoHeight : false,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    autoScroll : true,
+    items : [{
+                id : chinaplus.screen.CPVIVS04 + '_irregularGrid',
+                xtype : 'grid',
+                autoScroll : true,
+                border : true,
+                closable : false,
+                enableColumnHide : false,
+                enableColumnMove : false,
+                qtip : true,
+                columnLines : true,
+                viewConfig : {
+                    loadMask : false
+                },
+                plugins : [Ext.create('Ext.grid.plugin.CellEditing', {
+                                    clicksToEdit : 1,
+                                    listeners : {
+                                        edit : function(o, content) {
+                                            var value = content.value;
+                                            var field = content.field;
+                                            if (!Ext.isEmpty(value)) {
+                                                if (field == 'eta') {
+                                                    content.record.data.eta = value;
+                                                } else if (field == 'planInbound') {
+                                                    content.record.data.planInbound = value;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }), {
+                            ptype : 'gridheaderfilters'
+                        }, {
+                            ptype : 'emptystoreview'
+                        }],
+                header : false,
+                height : 260,
+                columns : [{
+                            xtype : 'gridcolumn',
+                            text : '<div style="text-align:center">' + chinaplus.label.CPVIVS04_Grid_VesselName + '</div>',
+                            width : 130,
+                            items : [{
+                                        xtype : 'header',
+                                        hidden : true
+                                    }],
+                            dataIndex : 'vesselName',
+                            sortable : false
+                        }, {
+                            xtype : 'gridcolumn',
+                            text : '<div style="text-align:center">' + chinaplus.label.CPVIVS04_Grid_ETD + '</div>',
+                            width : 100,
+                            items : [{
+                                        xtype : 'header',
+                                        hidden : true
+                                    }],
+                            dataIndex : 'disEtd',
+                            sortable : false,
+                            align : 'center'
+                        }, {
+                            id : chinaplus.screen.CPVIVS04 + '_eta',
+                            xtype : 'gridcolumn',
+                            text : '<div style="text-align:center">' + chinaplus.label.CPVIVS04_Grid_ETA + '</div>',
+                            width : 100,
+                            items : [{
+                                        xtype : 'header',
+                                        hidden : true
+                                    }],
+                            dataIndex : 'eta',
+                            sortable : false,
+                            align : 'center',
+                            renderer : function(v, p, r) {
+                                if (Ext.isEmpty(v)) {
+                                    return v;
+                                }
+                                var dateFormat;
+                                if (TRF.core.language == chinaplus.consts.code.Language.CN) {
+                                    dateFormat = TRF.cnst.GLOBAL_DATE_YEAR_MONTH_DAY_FORMAT;
+                                } else {
+                                    dateFormat = TRF.cnst.GLOBAL_DATETIME_SHORT_FORMAT;
+                                }
+                                return Ext.util.Format.date(v, dateFormat);
+                            }
+                        }, {
+                            id : chinaplus.screen.CPVIVS04 + '_planInbound',
+                            xtype : 'gridcolumn',
+                            text : '<div style="text-align:center">' + chinaplus.label.CPVIVS04_Grid_PlanInbound + '</div>',
+                            width : 100,
+                            items : [{
+                                        xtype : 'header',
+                                        hidden : true
+                                    }],
+                            dataIndex : 'planInbound',
+                            sortable : false,
+                            align : 'center',
+                            renderer : function(v, p, r) {
+                                if (Ext.isEmpty(v)) {
+                                    return v;
+                                }
+                                var dateFormat;
+                                if (TRF.core.language == chinaplus.consts.code.Language.CN) {
+                                    dateFormat = TRF.cnst.GLOBAL_DATE_YEAR_MONTH_DAY_FORMAT;
+                                } else {
+                                    dateFormat = TRF.cnst.GLOBAL_DATETIME_SHORT_FORMAT;
+                                }
+                                return Ext.util.Format.date(v, dateFormat);
+                            }
+                        }, {
+                            xtype : 'gridcolumn',
+                            text : '<div style="text-align:center">' + chinaplus.label.CPVIVS04_Grid_IrregularShippingRoute + '</div>',
+                            width : 140,
+                            items : [{
+                                        xtype : 'header',
+                                        hidden : true
+                                    }],
+                            dataIndex : 'shippingRoute',
+                            sortable : false
+                        }],
+                store : TRF.util.createStore(chinaplus.screen.CPVIVS04, 'inv/CPVIVS04/loadIrregularData', 'IrregularList', chinaplus.screen.CPVIVS04 + '_irregularStore')
+            }, {
+                xtype : 'label',
+                html : '<div style="margin-top:5px;color:red;">' + chinaplus.label.CPVIVS04_Label_Remark + '</div>'
+            }],
+    tbar : [{
+                text : chinaplus.label.CPVIVS04_Button_OK,
+                iconCls : 'btn-confirm',
+                id : chinaplus.screen.CPVIVS04 + "_ok",
+                handler : function() {
+                    Ext.getCmp(chinaplus.screen.CPVIVS04).confirm();
+                }
+            }, {
+                text : chinaplus.label.CPVIVS04_Button_Cancel,
+                iconCls : 'btn-cancel',
+                id : chinaplus.screen.CPVIVS04 + "_cancel",
+                handler : function() {
+                    TRF.util.removePopupApplication(chinaplus.screen.CPVIVS04);
+                }
+            }],
+    uploadId : '',
+    forwardPage : '',
+
+    /**
+     * The initialize function.
+     * 
+     * @param params the parameter object passed to this screen
+     */
+    initialize : function(params) {
+
+        var irregularGird = Ext.getCmp(chinaplus.screen.CPVIVS04 + '_irregularGrid');
+        var gridStore = irregularGird.store;
+        gridStore.on('load', function() {
+                    var dateFormat;
+                    if (TRF.core.language == chinaplus.consts.code.Language.CN) {
+                        dateFormat = TRF.cnst.GLOBAL_DATE_YEAR_MONTH_DAY_FORMAT;
+                    } else {
+                        dateFormat = TRF.cnst.GLOBAL_DATETIME_SHORT_FORMAT;
+                    }
+                    var eta = Ext.getCmp(chinaplus.screen.CPVIVS04 + '_eta');
+                    eta.editor = new Ext.form.DateField({
+                                allowBlank : true,
+                                format : dateFormat,
+                                editable : false,
+                                fieldStyle : 'background:rgb(255,255,153)',
+                                plugins : [{
+                                            ptype : 'datePickerClear'
+                                        }]
+                            });
+                    var planInboudDate = Ext.getCmp(chinaplus.screen.CPVIVS04 + '_planInbound');
+                    planInboudDate.editor = new Ext.form.DateField({
+                                allowBlank : true,
+                                format : dateFormat,
+                                editable : false,
+                                fieldStyle : 'background:rgb(255,255,153)',
+                                plugins : [{
+                                            ptype : 'datePickerClear'
+                                        }]
+                            });
+
+                });
+
+        // Load irregular data list
+        var uploadId = params.uploadId;
+        var forwardPage = params.forwardPage;
+        Ext.getCmp(chinaplus.screen.CPVIVS04).uploadId = uploadId;
+        Ext.getCmp(chinaplus.screen.CPVIVS04).forwardPage = forwardPage;
+        TRF.util.loadStore(gridStore, {
+                    uploadId : uploadId
+                }, function() {
+                    gridStore.on('beforeload', function() {
+                                TRF.core.mask(TRF.core.maskMsg.load, null, irregularGird);
+                            });
+                    gridStore.on('load', function() {
+                                TRF.core.unmask(irregularGird);
+                            });
+                });
+        irregularGird.doLayout();
+        TRF.util.addGridTip(irregularGird);
+    },
+
+    /**
+     * Confirm irregular shipping.
+     */
+    confirm : function() {
+        var dateFormat;
+        if (TRF.core.language == chinaplus.consts.code.Language.CN) {
+            dateFormat = TRF.cnst.GLOBAL_DATE_YEAR_MONTH_DAY_FORMAT;
+        } else {
+            dateFormat = TRF.cnst.GLOBAL_DATETIME_SHORT_FORMAT;
+        }
+        var gridStore = Ext.getStore(chinaplus.screen.CPVIVS04 + '_irregularStore');
+        var records = [];
+        gridStore.each(function(record, index) {
+                    var data = record.data;
+                    var eta = data.eta;
+                    if (!Ext.isEmpty(eta)) {
+                        data.eta = Ext.util.Format.date(eta, dateFormat);
+                    }
+                    var planInboudDate = data.planInbound;
+                    if (!Ext.isEmpty(planInboudDate)) {
+                        data.planInbound = Ext.util.Format.date(planInboudDate, dateFormat);
+                    }
+                    Ext.Array.push(records, data);
+                });
+        var backFun = function(responseData) {
+            if (responseData.success) {
+                var forwardPage = Ext.getCmp(chinaplus.screen.CPVIVS04).forwardPage;
+                if (forwardPage == chinaplus.screen.CPVIVS02) {
+                    Ext.getCmp(chinaplus.screen.CPVIVS02).irregularCallBackFlg = 1;
+                } else if (forwardPage == chinaplus.screen.CPVIVS01) {
+                    Ext.getCmp(chinaplus.screen.CPVIVS01).irregularCallBackFlg = 1;
+                }
+                TRF.util.removePopupApplication(chinaplus.screen.CPVIVS04);
+            }
+        };
+        var uploadId = Ext.getCmp(chinaplus.screen.CPVIVS04).uploadId;
+        TRF.util.ajaxSubmit(backFun, chinaplus.screen.CPVIVS04, 'inv/CPVIVS04/confirm', {
+                    uploadId : uploadId
+                }, {
+                    datas : records
+                });
+    }
+
+}

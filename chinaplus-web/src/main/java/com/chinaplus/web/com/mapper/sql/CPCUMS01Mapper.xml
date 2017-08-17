@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.com.service.CPCUMS01Service">
+
+    <!-- get Role list -->
+    <sql id="getUserList">
+        FROM
+        TNM_USER A
+        INNER JOIN TNM_OFFICE B ON (B.OFFICE_ID = A.DEFAULT_OFFICE_ID)
+        LEFT JOIN TNM_USER_CUSTOMER C ON A.USER_ID = C.USER_ID 
+        LEFT JOIN TNM_CUSTOMER D ON (C.CUSTOMER_ID = D.CUSTOMER_ID OR (C.OFFICE_ID = D.OFFICE_ID AND C.ALL_CUSTOMER_FLAG = 1)) AND D.INACTIVE_FLAG = 0
+        <where>
+            <if test="filters.loginId != null">
+                AND A.LOGIN_ID LIKE #{filters.loginId} ESCAPE '!'
+            </if>
+            <if test="filters.userName != null">
+                AND A.USER_NAME LIKE #{filters.userName} ESCAPE '!'
+            </if>
+            <if test="filters.mailAddr != null">
+                AND A.MAIL_ADDR LIKE #{filters.mailAddr} ESCAPE '!'
+            </if>
+            <if test="filters.defaultLang != null">
+                AND A.DEFAULT_LANG = #{filters.defaultLang}
+            </if>
+            <if test="null != filters.defaultOffice and filters.defaultOffice.size()>0">
+                AND A.DEFAULT_OFFICE_ID IN 
+                <foreach item="item" index="index" collection="filters.defaultOffice" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+            </if>
+            <if test="filters.status != null">
+                AND A.STATUS = #{filters.status}
+            </if>
+            <if test="null != filters.customerCodeSet and filters.customerCodeSet.size()>0">
+                AND A.USER_ID IN (
+                   SELECT
+                       A.USER_ID
+                   FROM
+                       TNM_USER A
+                           LEFT JOIN TNM_USER_CUSTOMER C ON A.USER_ID = C.USER_ID 
+                           LEFT JOIN TNM_CUSTOMER D ON (C.CUSTOMER_ID = D.CUSTOMER_ID OR (C.OFFICE_ID = D.OFFICE_ID AND C.ALL_CUSTOMER_FLAG = 1)) AND D.INACTIVE_FLAG = 0
+                   WHERE
+                       D.CUSTOMER_CODE IN 
+                    <foreach item="item" index="index" collection="filters.customerCodeSet" open="(" separator="," close=")">  
+                          #{item}
+                    </foreach>
+                )
+            </if>
+        </where>
+    </sql>
+
+    <!-- <cache /> -->
+    <select id="findPageListCount" parameterType="com.chinaplus.core.bean.PageParam"
+        resultType="int">
+        SELECT COUNT(0)
+        FROM (
+        SELECT
+        A.USER_ID AS userId
+        ,A.LOGIN_ID AS loginId
+        ,A.USER_NAME AS userName
+        ,A.MAIL_ADDR AS mailAddr
+        ,A.DEFAULT_LANG AS defaultLang
+        ,B.OFFICE_CODE AS defaultOfficeName
+        ,A.STATUS AS status
+        ,A.VERSION AS version
+        ,ROWNUMBER() over(ORDER BY A.USER_ID) as rownum
+        ,xml2clob(xmlagg(xmlelement(NAME A, D.CUSTOMER_CODE || ','))) AS customerCodeSet
+        <include refid="getUserList" />
+        GROUP BY
+            A.USER_ID,
+            A.LOGIN_ID,
+            A.USER_NAME,
+            A.MAIL_ADDR,
+            A.DEFAULT_LANG,
+            B.OFFICE_CODE,
+            A.STATUS,
+            A.VERSION
+        ORDER BY A.USER_ID
+        )
+    </select>
+
+    <!-- <cache /> -->
+    <select id="findPageList" parameterType="com.chinaplus.core.bean.PageParam"
+        resultType="com.chinaplus.web.com.entity.CPCUMS01Entity">
+
+        SELECT
+        *
+        FROM (
+        SELECT
+        A.USER_ID AS userId
+        ,A.LOGIN_ID AS loginId
+        ,A.USER_NAME AS userName
+        ,A.MAIL_ADDR AS mailAddr
+        ,A.DEFAULT_LANG AS defaultLang
+        ,B.OFFICE_CODE AS defaultOfficeName
+        ,A.STATUS AS status
+        ,A.VERSION AS version
+        ,ROWNUMBER() over(ORDER BY A.USER_ID) as rownum
+        ,xml2clob(xmlagg(xmlelement(NAME A, D.CUSTOMER_CODE || ','))) AS customerCodeSet
+        <include refid="getUserList" />
+        GROUP BY
+            A.USER_ID,
+            A.LOGIN_ID,
+            A.USER_NAME,
+            A.MAIL_ADDR,
+            A.DEFAULT_LANG,
+            B.OFFICE_CODE,
+            A.STATUS,
+            A.VERSION
+        ORDER BY A.USER_ID
+        )
+        WHERE
+        <include refid="com.chinaplus.const.pagingCondition" />
+    </select>
+
+</mapper>

@@ -1,0 +1,225 @@
+/**
+ * CPMCLS03                                        
+ * 
+ * @author shi_yuxi
+ * @screen CPMCLS03
+ */
+
+CPMCLS03 = {
+    xtype : 'form',
+    id : chinaplus.screen.CPMCLS03,
+    title : chinaplus.label.CPMCLS03_Label_PageTitle,
+    frame : true,
+    autoHeight : false,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    autoScroll : true,
+    buttonAlign : 'left',
+    fieldDefaults : {
+        labelAlign : 'right',
+        labelWidth : 200
+    },
+    items : [{
+                    margin : '10 0 10 0',
+                    xtype : 'textfield',
+                    msgTarget : 'side',
+                    fieldLabel : chinaplus.label.CPMCLS03_Label_NonTTCCustCd,
+                    width : 450,
+                    autoFitErrors : false,
+                    id : chinaplus.screen.CPMCLS03 + '_ttcCode',
+                    style : 'width:50%;',
+                    listeners : {
+                        afterrender : function(o) {
+                            if (TRF.util.isDetailTabMode_View()) {
+                                TRF.util.makeCmpReadOnly(o);
+                            }
+                        }
+                    }
+                },{
+                id : chinaplus.screen.CPMCLS03 + '_TTCCustomerList',
+                xtype : 'gridpanel',
+                autoScroll : true,
+                border : false,
+                closable : false,
+                enableColumnHide : false,
+                enableColumnMove : false,
+                qtip : true,
+                columnLines : true,
+                columnLines : true,
+                selModel : Ext.create('Ext.ux.selection.CheckBoxModel', {
+                            checkOnly : true
+                        }),
+                columns : [{
+                            xtype : 'gridcolumn',
+                            text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPMCLS03_Grid_NonTTCCustCd + '</div>',
+                            width : 408,
+                            items : [{
+                                        xtype : 'header',
+                                        hidden : true
+                                    }],
+                            dataIndex : 'kanbCustomerCode',
+                            sortable : false,
+                        },{
+                            xtype : 'gridcolumn',
+                            dataIndex : 'nonTtcCustId',
+                            items : [{
+                                        xtype : 'header',
+                                        hidden : true
+                                    }],
+                            hidden : true
+                        }],
+                dockedItems : [{
+                                xtype: 'toolbar',
+                                hidden : true,
+                                id : chinaplus.screen.CPMCLS03 + '_btnToolBar',
+                                hidden : TRF.util.isDetailTabMode_View() ? true : false,
+                                dock: 'top',
+                                items: [{
+                                            xtype : 'button',
+                                            text : chinaplus.label.CPMCLS03_Button_Add,
+                                            id : chinaplus.screen.CPMCLS03 + '_Add',
+                                            iconCls : 'btn-add',
+                                            handler : function () {
+                                                var my = Ext.getCmp(chinaplus.screen.CPMCLS03);
+                                                my.addItem();
+                                            }
+                                        }, {
+                                            xtype : 'button',
+                                            text : chinaplus.label.CPMCLS03_Button_Remove,
+                                            id : chinaplus.screen.CPMCLS03 + '_Remove',
+                                            iconCls : 'btn-remove',
+                                            /**remove record*/
+                                            handler : function () {
+                                                var my = Ext.getCmp(chinaplus.screen.CPMCLS03);
+                                                my.removeItem();
+                                            }
+                                       }]
+                                }],
+                store : TRF.util.createStore(chinaplus.screen.CPMCLS03, 'mm/CPMCLS03/getNonList', 'TnmNonTtcCustomer', chinaplus.screen.CPMCLS03 + '_wareHouseCodeStore',{})
+            }],
+            tbar : [ {
+                xtype : 'button',
+                id : chinaplus.screen.CPMCLS03 + '_btnSave',
+                iconCls : 'btn-save',
+                text : chinaplus.label.CPMCLS03_Button_Save,
+                handler : function() {
+                    var ttcStore =  Ext.getStore(chinaplus.screen.CPMCLS03 + '_wareHouseCodeStore');
+                    var records = [];
+                        ttcStore.each(function(recordttc, index) {
+                            records[index] = recordttc.data;
+                        });
+                     
+                     var ajaxUrl = 'mm/CPMCLS03/save';
+                     var func = function(responseData) {
+                         if(responseData.success) {
+                             // show success message
+                             Ext.getCmp(chinaplus.screen.CPMCLS03).isEdited = false;
+                             TRF.util.showMessageBoxByMsgIdAndArgs('i1002');
+                             TRF.util.setDetailTabMode_View();
+                            var detailApplicationId = 'CPMCLS03';
+                            TRF.util.addApplication(detailApplicationId, detailApplicationId, true);
+                         }
+                     }
+			        var confirmMsg = TRF.util.getMessage('c1001', [chinaplus.label.CPMCLS03_Button_Save]);
+			        var confirmMsgL = [];
+			        TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_QUESTION, confirmMsg, confirmMsgL,
+			            function(btn){
+			                if (btn == 'yes') {
+                    TRF.util.ajaxSubmit(func, 'CPMCLS03', ajaxUrl, null, {datas: records});
+                }
+			            });
+                }
+            }, {
+                xtype : 'button',
+                id : chinaplus.screen.CPMCLS03 + '_btnModify',
+                iconCls : 'btn-modify',
+                text : chinaplus.label.CPMCLS03_Button_Modify,
+                handler : function() {
+                    TRF.util.setDetailTabMode_Edit();
+                    var detailApplicationId = 'CPMCLS03';
+                    TRF.util.addApplication(detailApplicationId, detailApplicationId, true);
+                }
+            } ],
+            
+    // add for #0214061 begin
+    needConfirmChange : TRF.util.isDetailTabMode_View() ? false : true,
+    // add for #0214061 end
+            
+    /**
+     * The initialize function.
+     * 
+     * @param params.
+     *            the parameter object passed to this screen.
+     */
+    initialize : function(inParam) {
+        if(TRF.util.isDetailTabMode_View()) {
+            Ext.getCmp(chinaplus.screen.CPMCLS03 + '_btnSave').hide();
+        } else {
+            Ext.getCmp(chinaplus.screen.CPMCLS03 + '_btnModify').hide();
+        }
+        TRF.util.loadStore(Ext.getCmp(chinaplus.screen.CPMCLS03 + '_TTCCustomerList').store); 
+        
+    },
+    addItem : function()
+    {
+        var ttcCode = Ext.getCmp(chinaplus.screen.CPMCLS03 + '_ttcCode').getValue();
+        // check select
+        var msgs = [];
+        var flag = false;
+        if (Ext.isEmpty(ttcCode)) {
+            Ext.Array.push(msgs, TRF.util.getMessage('w1003_001', 'CPMCLS03_Label_NonTTCCustCd'));
+            flag = true;
+        } else {
+            if (ttcCode.trim().length > 20) {
+                Ext.Array.push(msgs, TRF.util.getMessage('w1003_004', ['CPMCLS03_Label_NonTTCCustCdList', 20]));
+                flag = true;
+            }
+        }
+        if (flag) {
+            TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, TRF.util.getMessage('w1003'), msgs);
+            return;
+        }
+        // get store
+        var preStore = Ext.getCmp(chinaplus.screen.CPMCLS03 + '_TTCCustomerList').store;
+        
+        if(preStore && preStore.isStore)
+        {
+            // check not exits
+            var datas = preStore.getRange();
+            if (datas.length > 0) {
+                for(var i = 0; i < datas.length; i++){
+                    var data = datas[i];
+                    if(data.get('kanbCustomerCode') == ttcCode){
+                        // show message
+                        var message = TRF.util.getMessage('w1003_015',[ttcCode, "CPMCLS03_Label_NonTTCCustCdList"]);
+                        TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, message,[message]);
+                        return;
+                    }
+                }
+            }
+        }
+        // set into store
+        var values = {};
+        values["kanbCustomerCode"] = ttcCode;
+        values["nonTtcCustId"] = '-1';
+        preStore.add(values);
+        Ext.getCmp(chinaplus.screen.CPMCLS03 + '_ttcCode').setValue("");
+        // reflesh
+        Ext.getCmp(chinaplus.screen.CPMCLS03).isEdited = true;
+    },
+    removeItem : function(){
+        // grid panel
+        var gridpanel = Ext.getCmp(chinaplus.screen.CPMCLS03).down('gridpanel');
+        var lsMsgs = [];
+        // no select 
+        var selectionArray = gridpanel.getSelectionModel().getSelection();
+        if (selectionArray.length == 0) {
+            Ext.Array.push(lsMsgs, TRF.util.getMessage('w1011'));
+            TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, TRF.util.getMessage('w1011'), lsMsgs);
+            return;
+        }
+        gridpanel.getStore().remove(selectionArray);
+        // set is edited
+        Ext.getCmp(chinaplus.screen.CPMCLS03).isEdited = true;
+    }
+    
+}

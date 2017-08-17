@@ -1,0 +1,24 @@
+<!--
+@screen ReRunShippingPlan
+@author cheng_xingfei
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.batch.migration.service.ReRunShippingPlanService">
+    
+    <select id="getExpPartsIdList" parameterType="com.chinaplus.batch.migration.bean.ReRunShippingPlanEntity" resultType="com.chinaplus.batch.migration.bean.ReRunShippingPlanEntity">
+        
+        SELECT DISTINCT
+          EXP_PARTS_ID AS expPartsId
+        FROM
+          TNM_EXP_PARTS EP
+          INNER JOIN TNM_OFFICE O
+          ON O.OFFICE_ID = EP.OFFICE_ID
+        WHERE
+          O.OFFICE_CODE = #{officeCode}
+          AND BUSINESS_PATTERN = #{businessPattern}
+          AND PARTS_ID IS NOT NULL
+          
+    </select>
+    
+</mapper>

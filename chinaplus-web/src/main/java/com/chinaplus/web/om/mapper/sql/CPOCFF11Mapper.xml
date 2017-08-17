@@ -1,0 +1,444 @@
+<!--
+@screen CPOCSF11
+@author li_feng
+-->
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.om.service.CPOCFF11Service">
+        
+	<sql id="ConstDef">
+		<bind name="ACTIVE" value="@com.chinaplus.common.consts.CodeConst$User$Status@ACTIVE" />
+		<bind name="WORKINGDAY" value="@com.chinaplus.common.consts.CodeConst$WorkingDay@WORKING_DAY" />
+		<bind name="V-V" value="@com.chinaplus.common.consts.CodeConst$BusinessPattern@V_V" />
+		<bind name="AISIN" value="@com.chinaplus.common.consts.CodeConst$BusinessPattern@AISIN" />
+		<bind name="COMPLETED" value="@com.chinaplus.common.consts.CodeConst$PartsStatus@COMPLETED" />
+		<bind name="INACTIVE" value="@com.chinaplus.common.consts.CodeConst$InactiveFlag@ACTIVE" />
+	</sql>
+    
+	<!-- get customer calendar -->
+	<select id="getCalendarInfoLst" parameterType="com.chinaplus.core.bean.PageParam" resultType="com.chinaplus.web.om.entity.CPOCFF11Entity">
+		<include refid="ConstDef"/>
+        SELECT
+            E.CALENDAR_ID AS CALENDARID, 
+            E.CALENDAR_DATE AS CALENDARDATE, 
+            E.WORKING_FLAG AS WORKINGFLAG, 
+            A.CUSTOMER_CODE AS CUSTOMERCODE, 
+            A.CUSTOMER_ID AS CUSTOMERID 
+        FROM
+            TNM_CUSTOMER A
+        LEFT JOIN
+            (
+                SELECT 
+                    D.CALENDAR_ID, 
+                    D.CALENDAR_DATE, 
+                    D.WORKING_FLAG, 
+                    C.CUSTOMER_ID
+                FROM
+                    TNM_CALENDAR_MASTER B
+                INNER JOIN
+                    TNM_CALENDAR_PARTY C ON B.CALENDAR_ID = C.CALENDAR_ID 
+                INNER JOIN
+                    TNM_CALENDAR_DETAIL D ON B.CALENDAR_ID = D.CALENDAR_ID 
+                WHERE
+                    B.INACTIVE_FLAG  = ${INACTIVE}
+                    AND D.CALENDAR_DATE >= #{swapData.parmStartFcDate} 
+	AND D.CALENDAR_DATE <![CDATA[<=]]> #{swapData.parmEndFcDate}
+            ) E ON A.CUSTOMER_ID = E.CUSTOMER_ID
+        WHERE
+            A.OFFICE_ID = #{currentOfficeId}
+        AND
+            A.CUSTOMER_CODE
+        IN
+		<foreach item="customerCode" index="Index" collection="swapData.customerCodeLst" open="(" separator="," close=")">  
+                #{customerCode}
+		</foreach>
+        ORDER BY 
+            A.CUSTOMER_CODE
+            ,E.CALENDAR_DATE
+            
+	</select>
+    
+	<!-- get last forecast month -->
+	<select id="getLastFcMonth" parameterType="com.chinaplus.core.bean.PageParam" resultType="com.chinaplus.web.om.entity.CPOCFF11Entity">
+		<include refid="ConstDef"/>
+        SELECT
+           MAX(A.LAST_FC_MONTH) AS LASTFCMONTH, 
+           B.CUSTOMER_CODE AS CUSTOMERCODE 
+        FROM
+            TNT_CFC_MASTER A
+        INNER JOIN 
+            TNM_CUSTOMER B ON A.CUSTOMER_ID = B.CUSTOMER_ID
+        WHERE
+            A.STATUS = ${ACTIVE}
+        AND
+            B.OFFICE_ID = #{currentOfficeId}
+        AND
+            B.CUSTOMER_CODE
+        IN
+		<foreach item="customerCode" index="Index" collection="swapData.customerCodeLst" open="(" separator="," close=")">  
+                #{customerCode}
+		</foreach>
+        GROUP BY
+            B.CUSTOMER_CODE
+	</select>
+    
+    <!-- get first forecast month -->
+    <select id="getFirstFcMonth" parameterType="com.chinaplus.core.bean.PageParam" resultType="com.chinaplus.web.om.entity.CPOCFF11Entity">
+        <include refid="ConstDef"/>
+        SELECT
+           MIN(A.FIRST_FC_MONTH) AS FIRSTFCMONTH, 
+           B.CUSTOMER_CODE AS CUSTOMERCODE 
+        FROM
+            TNT_CFC_MASTER A
+        INNER JOIN 
+            TNM_CUSTOMER B ON A.CUSTOMER_ID = B.CUSTOMER_ID
+        WHERE
+            A.STATUS = ${ACTIVE}
+        AND
+            A.LAST_FC_MONTH >= #{swapData.parmLastFcMonth} 
+        AND
+            B.OFFICE_ID = #{currentOfficeId}
+        AND
+            B.CUSTOMER_CODE
+        IN
+        <foreach item="customerCode" index="Index" collection="swapData.customerCodeLst" open="(" separator="," close=")">  
+                #{customerCode}
+        </foreach>
+        GROUP BY
+            B.CUSTOMER_CODE
+    </select>
+
+	<!-- get Registered Parts -->
+	<select id="getRegisteredParts" parameterType="com.chinaplus.core.bean.ObjectParam" resultType="com.chinaplus.common.entity.TnmPartsMaster">
+		<include refid="ConstDef"/>
+        SELECT 
+            A.PARTS_ID AS PARTSID,
+            A.BUSINESS_PATTERN AS BUSINESSPATTERN,
+            A.TTC_PARTS_NO AS TTCPARTSNO,
+            A.CUST_PARTS_NO AS CUSTPARTSNO,
+            A.CUSTOMER_CODE AS CUSTOMERCODE,
+            A.CUSTOMER_ID AS CUSTOMERID,
+            A.PARTS_TYPE AS PARTSTYPE,
+            A.CAR_MODEL AS CARMODEL,
+            A.UOM_CODE AS UOMCODE,
+            A.ORDER_LOT AS ORDERLOT,
+            A.SPQ AS SPQ,
+            A.OLD_TTC_PARTS_NO AS OLDTTCPARTSNO,
+            A.PARTS_NAME_EN AS PARTSNAMEEN,
+            A.PARTS_NAME_CN AS PARTSNAMECN
+        FROM  
+            TNM_PARTS_MASTER A
+        INNER JOIN 
+            TNM_EXP_PARTS B ON A.PARTS_ID = B.PARTS_ID
+        WHERE 
+            A.OFFICE_ID = #{currentOfficeId}
+        And
+            B.PARTS_STATUS = ${COMPLETED}
+        AND
+            A.CUSTOMER_CODE 
+        IN
+		<foreach item="cusCd" index="Index" collection="swapData.allCustomerCodeLst" open="(" separator="," close=")">  
+                #{cusCd}
+		</foreach>
+	</select>
+    
+	<!-- get last received date -->
+	<select id="getLastReceivedDate" parameterType="com.chinaplus.core.bean.ObjectParam" resultType="com.chinaplus.web.om.entity.CPOCFF11Entity">
+        SELECT 
+            A.FC_DATE AS FCDATE,
+            A.FIRST_FC_MONTH AS FIRSTFCMONTH, 
+            A.LAST_FC_MONTH AS LASTFCMONTH, 
+            B.CUSTOMER_CODE AS CUSTOMERCODE 
+        FROM 
+            TNT_CFC_MASTER A
+        INNER JOIN
+            ( 
+                SELECT 
+                    MAX(C.CFC_ID) AS CFCID, 
+                    D.CUSTOMER_CODE
+                FROM  
+                    TNT_CFC_MASTER C
+                INNER JOIN 
+                    TNM_CUSTOMER D ON C.CUSTOMER_ID = D.CUSTOMER_ID 
+                WHERE 
+                    C.FIRST_FC_MONTH <![CDATA[<=]]> #{swapData.parmLastFcMonth} 
+                AND 
+                    C.LAST_FC_MONTH >= #{swapData.parmStartFcMonth} 
+                AND 
+                    D.OFFICE_ID = #{currentOfficeId} 
+                AND 
+                    D.CUSTOMER_CODE 
+                IN 
+		<foreach item="customerCode" index="Index" collection="swapData.customerCodeLst" open="(" separator="," close=")">  
+                        #{customerCode}
+		</foreach>
+                GROUP BY 
+                    D.CUSTOMER_CODE
+            ) B ON A.CFC_ID = B.CFCID
+        WHERE
+            A.FC_DATE > #{swapData.parmReceivedDate}
+	</select>
+    
+	<!-- *****************************************new************************************************************ -->
+    
+	<!-- get getallocation type -->
+	<select id="getallocationType" parameterType="com.chinaplus.core.bean.ObjectParam" resultType="com.chinaplus.web.om.entity.DBTEMPEntity">
+		<include refid="ConstDef"/>
+        SELECT
+            ALLOCATION_FC_TYPE AS ALLOCATIONFCTYPE
+        FROM
+            TNM_PARTS_MASTER
+        WHERE
+            PARTS_ID = #{swapData.partsId} 
+	</select>
+    
+
+    
+	<!-- find Old Data -->
+	<select id="findOldData" parameterType="com.chinaplus.core.bean.ObjectParam" resultType="com.chinaplus.web.om.entity.DBTEMPEntity">
+        SELECT 
+            A.CFC_NO AS CFCNO
+            ,A.CFC_ID AS CFCID
+        FROM
+            TNT_CFC_MASTER A
+        INNER JOIN
+            TNM_CUSTOMER B
+        ON 
+            A.CUSTOMER_ID = B.CUSTOMER_ID
+        WHERE
+            B.CUSTOMER_CODE = #{swapData.CustomerCode}
+        AND
+            A.OFFICE_ID = #{currentOfficeId}
+        AND
+            A.CUSTOMER_ID = B.CUSTOMER_ID
+        AND
+            A.FIRST_FC_MONTH = #{swapData.FirstFcMonth}
+        AND
+            A.LAST_FC_MONTH = #{swapData.LastFcMonth}
+        AND
+            A.FC_DATE =  #{swapData.ReceivedDate}  
+	</select>
+    
+	<!-- delete Old Data -->
+	<delete id="deleteOldDataDay" parameterType="com.chinaplus.core.bean.ObjectParam">
+        DELETE 
+        FROM
+            TNT_CFC_DAY
+        WHERE
+            CFC_ID = #{swapData.CFCID}
+	</delete>
+	<delete id="deleteOldDataMonth" parameterType="com.chinaplus.core.bean.ObjectParam">
+        DELETE 
+        FROM
+            TNT_CFC_MONTH
+        WHERE
+            CFC_ID = #{swapData.CFCID}
+	</delete>
+	<delete id="deleteOldDataMaster" parameterType="com.chinaplus.core.bean.ObjectParam">        
+        DELETE 
+        FROM
+            TNT_CFC_MASTER
+        WHERE
+            CFC_ID = #{swapData.CFCID}
+	</delete>
+    
+	<!-- find Diff Received Date Data -->
+	<select id="findDiffReceivedDateData" parameterType="com.chinaplus.core.bean.ObjectParam" resultType="com.chinaplus.web.om.entity.DBTEMPEntity">
+		<include refid="ConstDef"/>
+        SELECT 
+            A.CFC_NO AS CFCNO
+            ,A.CFC_ID AS CFCID
+            ,A.FC_DATE AS FCDATE
+        FROM
+            TNT_CFC_MASTER A
+        INNER JOIN
+            TNM_CUSTOMER B
+        ON 
+            A.CUSTOMER_ID = B.CUSTOMER_ID
+        WHERE
+            B.CUSTOMER_CODE = #{swapData.CustomerCode}
+        AND
+            A.OFFICE_ID = #{currentOfficeId}
+        AND
+            A.CUSTOMER_ID = B.CUSTOMER_ID
+        AND
+            A.FIRST_FC_MONTH = #{swapData.FirstFcMonth}
+        AND
+            A.LAST_FC_MONTH = #{swapData.LastFcMonth} 
+        ORDER BY 
+            A.CFC_ID DESC
+	</select>
+	
+	<!-- get all date -->
+    <select id="findDiffCalendar" parameterType="com.chinaplus.core.bean.ObjectParam" resultType="com.chinaplus.web.om.entity.CPOCFF11Entity">
+    <include refid="ConstDef"/>
+        SELECT
+            C.CUSTOMER_CODE AS CUSTOMERCODE
+            ,C.BUSINESS_PATTERN AS BUSINESSPATTERN
+            ,A.CALENDAR_DATE AS CALENDARDATE
+            ,A.WORKING_FLAG AS WORKINGFLAG
+            ,A.CALENDAR_ID AS CALENDARID
+        FROM
+            TNM_CUSTOMER C
+        INNER JOIN    
+            TNM_CALENDAR_PARTY D ON C.CUSTOMER_ID = D.CUSTOMER_ID
+        INNER JOIN 
+            TNM_CALENDAR_MASTER B ON D.CALENDAR_ID = B.CALENDAR_ID
+        INNER JOIN 
+            TNM_CALENDAR_DETAIL A ON B.CALENDAR_ID = A.CALENDAR_ID     
+        WHERE
+            C.OFFICE_ID = #{currentOfficeId}
+        AND
+            B.INACTIVE_FLAG  = ${INACTIVE}
+        AND
+            C.CUSTOMER_CODE 
+        IN
+            <foreach item="customerCode" index="Index" collection="swapData.CustomerCodeLst" open="(" separator="," close=")">  
+                #{customerCode}
+            </foreach>
+        AND
+            A.CALENDAR_DATE
+        BETWEEN 
+            #{swapData.StartFcDate} 
+        AND
+            #{swapData.EndFcDate}           
+    </select>
+	
+	
+    
+	<!-- Insert Data -->
+	<insert id="insertIntoMaster" parameterType="com.chinaplus.core.bean.ObjectParam">
+		<include refid="ConstDef"/>
+        INSERT INTO
+            TNT_CFC_MASTER
+            (CFC_ID
+            ,CFC_NO
+            ,OFFICE_ID
+            ,BUSINESS_PATTERN
+            ,CUSTOMER_ID
+            ,FIRST_FC_MONTH
+            ,LAST_FC_MONTH
+            ,FC_DATE
+            ,UPLOADED_BY
+            ,UPLOADED_DATE
+            ,REMARK
+            ,STATUS
+            ,CREATED_BY
+            ,CREATED_DATE
+            ,UPDATED_BY
+            ,UPDATED_DATE
+            ,VERSION)
+        VALUES
+            (#{swapData.CFCID}
+            ,#{swapData.CFCNO}
+            ,#{currentOfficeId}
+            ,#{swapData.BusinessPattern}
+            ,(SELECT CUSTOMER_ID FROM TNM_CUSTOMER WHERE CUSTOMER_CODE = #{swapData.CustomerCode} AND OFFICE_ID = #{currentOfficeId})
+            ,#{swapData.FirstFcMonth}
+            ,#{swapData.LastFcMonth}
+            ,#{swapData.ReceivedDate}
+            ,#{loginUserId}
+            ,#{swapData.UploadDate}
+            ,#{swapData.remark}
+            ,${ACTIVE}
+            ,#{loginUserId}
+            ,#{swapData.createdDate}
+            ,#{loginUserId}
+            ,#{swapData.updatedDate}
+            ,1)         
+	</insert>
+    
+	<!-- Insert Data -->
+	<insert id="insertIntoMonth" parameterType="com.chinaplus.core.bean.ObjectParam">
+		<include refid="ConstDef"/>
+        INSERT INTO
+            TNT_CFC_MONTH
+            (CFC_MONTH_ID
+            ,CFC_ID
+            ,PARTS_ID
+            ,CFC_MONTH
+            ,CFC_QTY
+            ,STATUS
+            ,CREATED_BY
+            ,CREATED_DATE
+            ,UPDATED_BY
+            ,UPDATED_DATE
+            ,VERSION)
+        VALUES
+            (#{swapData.CFCMONTHID}
+            ,#{swapData.CFCID}
+            ,#{swapData.partsId}
+            ,#{swapData.month}
+            ,#{swapData.qty}
+            ,${ACTIVE}
+            ,#{loginUserId}
+            ,#{swapData.createdDate}
+            ,#{loginUserId}
+            ,#{swapData.updatedDate}
+            ,1)
+	</insert>
+    
+	<!-- Insert Data -->
+	<insert id="insertIntoDay" parameterType="com.chinaplus.core.bean.ObjectParam">
+		<include refid="ConstDef"/>
+        INSERT INTO
+            TNT_CFC_DAY
+            (CFC_DAY_ID
+            ,CFC_ID
+            ,CFC_MONTH_ID
+            ,PARTS_ID
+            ,CFC_DATE
+            ,CFC_QTY
+            ,VALID_FLAG
+            ,CREATED_BY
+            ,CREATED_DATE
+            ,UPDATED_BY
+            ,UPDATED_DATE
+            ,VERSION)
+        VALUES
+            
+            <foreach item="cfcDay" index="Index" collection="swapData.cfcDayList"  separator="," >  
+            (NEXTVAL FOR SEQ_TNT_CFC_DAY
+            ,#{swapData.CFCID}
+            ,#{swapData.CFCMONTHID}
+            ,#{swapData.partsId}
+            ,#{cfcDay.cfcDate}
+            ,#{cfcDay.cfcQty}
+            ,1
+            ,#{loginUserId}
+            ,#{swapData.createdDate}
+            ,#{loginUserId}
+            ,#{swapData.updatedDate}
+            ,1)
+            </foreach>
+            
+	</insert>
+	
+	<!-- get Registered Parts -->
+    <select id="getCfcMonthParts" parameterType="com.chinaplus.core.bean.ObjectParam" resultType="com.chinaplus.common.entity.TnmPartsMaster">
+        <include refid="ConstDef"/>
+        SELECT 
+            B.PARTS_ID AS PARTSID,
+            A.BUSINESS_PATTERN AS BUSINESSPATTERN,
+            A.TTC_PARTS_NO AS TTCPARTSNO,
+            A.CUST_PARTS_NO AS CUSTPARTSNO,
+            A.CUSTOMER_CODE AS CUSTOMERCODE
+        FROM  
+            TNM_PARTS_MASTER A
+        INNER JOIN 
+            TNT_CFC_MONTH B ON A.PARTS_ID = B.PARTS_ID
+        WHERE 
+            A.OFFICE_ID = #{currentOfficeId}
+        AND
+            A.CUSTOMER_CODE 
+        IN
+        <foreach item="cusCd" index="Index" collection="swapData.allCustomerCodeLst" open="(" separator="," close=")">  
+                #{cusCd}
+        </foreach>
+    </select>
+	
+    
+</mapper>
+

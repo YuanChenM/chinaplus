@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.sa.service.CPSSMF11Service">
+    
+    <select id="findPartInfo" parameterType="com.chinaplus.web.sa.entity.CPSSMF11PartEntity" resultType="com.chinaplus.web.sa.entity.CPSSMF11PartEntity" flushCache="true">
+        SELECT DISTINCT
+            A.ORDER_ID AS orderId,
+            A.CUSTOMER_ID AS customerId,
+            B.ORDER_STATUS_ID AS orderStatusId,
+            B.SUPPLIER_ID AS supplierId,
+            B.PARTS_ID AS partsId,
+            B.ORDER_QTY AS orderQty,
+            B.FORCE_COMPLETED_QTY AS forceCompletedQty,
+            C.UOM_CODE AS uomCode
+        FROM
+            TNT_ORDER A
+        INNER JOIN
+            TNF_ORDER_STATUS B ON A.IMP_PO_NO = B.IMP_PO_NO AND A.CUSTOMER_ORDER_NO = B.CUSTOMER_ORDER_NO
+        INNER JOIN
+            TNM_PARTS_MASTER C ON B.PARTS_ID = C.PARTS_ID AND A.CUSTOMER_ID = C.CUSTOMER_ID
+        INNER JOIN
+            TNM_CUSTOMER E ON E.CUSTOMER_ID = C.CUSTOMER_ID
+        INNER JOIN
+            TNM_SUPPLIER F ON B.SUPPLIER_ID = F.SUPPLIER_ID
+        WHERE
+            A.OFFICE_ID = #{officeId}
+        <if test="currentCustomers != null and currentCustomers.size() != 0">
+            AND A.CUSTOMER_ID IN
+            <foreach item="currentCustomerItem" index="currentCustomerIndex" collection="currentCustomers" open="(" separator="," close=")">  
+                #{currentCustomerItem}
+            </foreach>
+        </if>
+        <if test="impPoNo != null and impPoNo != ''">
+            AND B.IMP_PO_NO = #{impPoNo}
+        </if>
+        <if test="expPoNo != null and expPoNo != ''">
+            AND B.EXP_PO_NO = #{expPoNo}
+        </if>
+        <if test="customerOrderNo != null and customerOrderNo != ''">
+            AND B.CUSTOMER_ORDER_NO = #{customerOrderNo}
+        </if>
+        <if test="ttcPartsNo != null and ttcPartsNo != ''">
+            AND C.TTC_PARTS_NO = #{ttcPartsNo}
+        </if>
+        <if test="custPartsNo != null and custPartsNo != ''">
+            AND C.CUST_PARTS_NO = #{custPartsNo}
+        </if>
+        <if test="ttcCustCode != null and ttcCustCode != ''">
+            AND E.CUSTOMER_CODE = #{ttcCustCode}
+        </if>
+        <if test="ttcSuppCode != null and ttcSuppCode != ''">
+            AND F.SUPPLIER_CODE = #{ttcSuppCode}
+        </if>
+    </select>
+    
+    <select id="findNotCompletedPlans" parameterType="com.chinaplus.web.sa.entity.CPSSMF11PlanEntity" resultType="com.chinaplus.web.sa.entity.CPSSMF11PlanEntity" flushCache="true">
+        SELECT
+            A.ORDER_ID AS orderId,
+            A.SS_ID AS lastSsId,
+            A.REVISION_VERSION AS lastVersion,
+            C.SS_PLAN_ID AS ssPlanId,
+            C.TRANSPORT_MODE AS transportMode,
+            C.ETD AS etd,
+            C.ETA AS eta,
+            C.CC_DATE AS ccDate,
+            C.IMP_INB_PLAN_DATE AS inboundPlanDate,
+            C.ORIGINAL_VERSION AS originalVersion,
+            C.REVISION_VERSION AS revisionVersion,
+            C.REVISION_REASON AS revisionReason,
+            C.NIRD_FLAG AS nirdFlag
+        FROM
+            TNT_SS_MASTER A
+        INNER JOIN
+            (SELECT
+                M.ORDER_ID,
+                MAX(N.REVISION_VERSION) AS REVISION_VERSION
+            FROM
+                TNT_ORDER M
+            INNER JOIN
+                TNT_SS_MASTER N ON M.ORDER_ID = N.ORDER_ID
+            WHERE
+                M.OFFICE_ID = #{officeId}
+            <if test="currentCustomers != null and currentCustomers.size() != 0">
+                AND M.CUSTOMER_ID IN
+                <foreach item="currentCustomerItem" index="currentCustomerIndex" collection="currentCustomers" open="(" separator="," close=")">  
+                    #{currentCustomerItem}
+                </foreach>
+            </if>
+            <if test="impPoNo != null and impPoNo != ''">
+                AND M.IMP_PO_NO = #{impPoNo}
+            </if>
+            <if test="customerOrderNo != null and customerOrderNo != ''">
+                AND M.CUSTOMER_ORDER_NO = #{customerOrderNo}
+            </if>
+            <if test="custId != null">
+                AND M.CUSTOMER_ID = #{custId}
+            </if>
+            GROUP BY
+                M.ORDER_ID
+            ) B ON A.ORDER_ID = B.ORDER_ID AND A.REVISION_VERSION = B.REVISION_VERSION
+        LEFT JOIN
+            TNT_SS_PLAN C ON A.SS_ID = C.SS_ID AND C.COMPLETED_FLAG = 0
+    </select>
+    
+    <select id="findAllInvoices" parameterType="com.chinaplus.web.sa.entity.CPSSMF11PlanEntity" resultType="com.chinaplus.web.sa.entity.CPSSMF11PlanEntity" flushCache="true">
+        SELECT DISTINCT
+            A.INVOICE_SUMMARY_ID AS invoiceSummaryId,
+            A.INVOICE_NO AS invoiceNo,
+            A.TRANSPORT_MODE AS transportMode,
+            B.INVOICE_ID AS invoiceId,
+            B.ORIGINAL_VERSION AS originalVersion,
+            B.REVISION_VERSION AS revisionVersion,
+            B.REVISION_REASON AS revisionReason,
+            B.VANNING_DATE AS vanningDate,
+            B.ETD AS etd,
+            B.ETA AS eta,
+            B.CC_DATE AS ccDate,
+            B.IMP_INB_PLAN_DATE AS inboundPlanDate,
+            B.IMP_INB_ACTUAL_DATE AS inboundActualDate
+        FROM
+            TNT_INVOICE_SUMMARY A
+        INNER JOIN
+            TNT_INVOICE B ON A.INVOICE_SUMMARY_ID = B.INVOICE_SUMMARY_ID
+        INNER JOIN
+            TNT_INVOICE_PARTS C ON B.INVOICE_ID = C.INVOICE_ID
+        INNER JOIN
+            TNM_PARTS_MASTER D ON C.PARTS_ID = D.PARTS_ID
+        WHERE
+            A.OFFICE_ID = #{officeId}
+        AND (A.INVOICE_STATUS != 1 AND A.INVOICE_STATUS != 99)
+        <if test="impPoNo != null and impPoNo != ''">
+            AND C.IMP_PO_NO = #{impPoNo}
+        </if>
+        <if test="customerOrderNo != null and customerOrderNo != ''">
+            AND C.CUSTOMER_ORDER_NO = #{customerOrderNo}
+        </if>
+        <if test="custId != null">
+            AND D.CUSTOMER_ID = #{custId}
+        </if>
+    </select>
+    
+    <select id="findMaxOriginalVersion" parameterType="com.chinaplus.web.sa.entity.CPSSMF11UploadEntity" resultType="com.chinaplus.web.sa.entity.CPSSMF11UploadEntity" flushCache="true">
+        SELECT
+            MAX(A.ORIGINAL_VERSION) AS maxOriginalVersion
+        FROM
+            TNT_SS_PLAN A
+        WHERE
+            A.SS_ID = #{lastSsId}
+    </select>
+    
+    <update id="deleteNonPartsPlan" parameterType="com.chinaplus.web.sa.entity.CPSSMF11UploadEntity">
+        UPDATE
+           TNT_SS_PLAN
+        SET
+            COMPLETED_FLAG = 1
+        WHERE
+            SS_PLAN_ID IN (
+                SELECT
+                    A.SS_PLAN_ID
+                FROM
+                    TNT_SS_PLAN A
+                WHERE
+                    A.SS_ID = #{lastSsId}
+                AND NOT EXISTS ( SELECT 1 FROM TNT_SS_PARTS B WHERE A.SS_PLAN_ID = B.SS_PLAN_ID )
+            )
+    </update>
+    
+</mapper>

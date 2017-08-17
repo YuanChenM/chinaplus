@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- CommonMapper.xml @screen common @author ma_b -->
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.common.service.ScreenInfoService">
+
+    <!-- getScreenInfo -->
+    <select id="getScreenInfo" resultType="com.chinaplus.common.bean.TnmAuthorizationEx" parameterType="com.chinaplus.common.bean.TnmAuthorizationEx">
+        SELECT A.SCREEN_ID AS screenId
+             , A.SCREEN_URL AS screenUrl
+             , A.PROJECT_FLAG AS projectFlag
+             , C.SCREEN_ID AS authScreenId
+             , B.AUTH_CODE AS authCode
+             , B.AUTH_TYPE AS authType
+             , B.ACCESS_LEVEL AS accessLevel
+          FROM TNM_SCREEN A
+          LEFT JOIN TNM_AUTHORIZATION B ON B.SYS_SCREEN_ID = A.SYS_SCREEN_ID
+          LEFT JOIN TNM_SCREEN C ON C.SYS_SCREEN_ID = B.AUTH_SCREEN_ID
+          ORDER BY A.SCREEN_ID, B.AUTH_TYPE
+    </select>
+    
+</mapper>

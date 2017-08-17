@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.batch.migration.service.DevanPatchService">
+
+    <select id="getNeedReviseDevanInfo" parameterType="com.chinaplus.batch.migration.bean.DevanPatchEntity" resultType="com.chinaplus.batch.migration.bean.DevanPatchEntity">
+         SELECT A.INVOICE_NO AS invoiceNo
+              , A.PARTS_ID AS partsId
+              , A.MODULE_NO AS moduleNo
+              , (B.QTY - A.QTY) AS qty 
+           FROM (SELECT A.INVOICE_NO
+                      , A.MODULE_NO
+                      , A.PARTS_ID
+                      , SUM(A.QTY) AS QTY 
+                   FROM TNT_IP_KANBAN A 
+                  WHERE A.DATA_TYPE = 1 
+                  GROUP BY
+                        A.PARTS_ID
+                      , A.MODULE_NO
+                      , A.INVOICE_NO) A 
+          INNER JOIN TNT_INVOICE_SUMMARY C 
+             ON C.INVOICE_NO = A.INVOICE_NO 
+            AND C.INVOICE_STATUS <![CDATA[<]]> 99 
+          INNER JOIN ( 
+                 SELECT INVOICE_SUMMARY_ID
+                      , MODULE_NO
+                      , PARTS_ID
+                      , SUM(QTY) AS QTY 
+                   FROM TNT_INVOICE_CONTAINER 
+                  GROUP BY
+                        INVOICE_SUMMARY_ID
+                      , MODULE_NO
+                      , PARTS_ID) B 
+             ON B.INVOICE_SUMMARY_ID = C.INVOICE_SUMMARY_ID 
+            AND B.MODULE_NO = A.MODULE_NO 
+            AND B.PARTS_ID = A.PARTS_ID 
+          WHERE A.QTY <![CDATA[<>]]> B.QTY 
+          ORDER BY
+                A.INVOICE_NO
+              , A.PARTS_ID
+              , A.MODULE_NO
+    </select>
+    
+    <update id="reviseQtyForDevan" parameterType="com.chinaplus.batch.migration.bean.DevanPatchEntity">
+        UPDATE 
+            TNT_IP_KANBAN 
+        SET 
+            QTY = QTY + #{qty}
+          , UPDATED_DATE = CURRENT TIMESTAMP
+        WHERE
+            IP_KANBAN_ID = (
+                SELECT MAX(IP_KANBAN_ID)
+                  FROM TNT_IP_KANBAN
+                 WHERE INVOICE_NO = #{invoiceNo}
+                   AND MODULE_NO = #{moduleNo}
+                   AND PARTS_ID = #{partsId}
+                   AND DATA_TYPE = 1
+            )
+    </update>
+    
+    <update id="reviseQtyForImpInbound" parameterType="com.chinaplus.batch.migration.bean.DevanPatchEntity">
+        UPDATE 
+            TNT_IP_KANBAN
+        SET 
+            QTY = QTY + (SELECT QTY FROM TNT_IP WHERE PID_NO = TNT_IP_KANBAN.PID_NO)
+          , UPDATED_DATE = CURRENT TIMESTAMP
+        WHERE
+            IP_KANBAN_ID IN (
+                SELECT MAX(IP_KANBAN_ID)
+                  FROM TNT_IP_KANBAN
+                 WHERE INVOICE_NO = #{invoiceNo}
+                   AND MODULE_NO = #{moduleNo}
+                   AND PARTS_ID = #{partsId}
+                   AND DATA_TYPE = 2
+                 GROUP BY 
+                       PID_NO
+            )
+    </update>
+    
+    <select id="getPidInfoForInbound" parameterType="com.chinaplus.batch.migration.bean.DevanPatchEntity" resultType="com.chinaplus.batch.migration.bean.DevanPatchEntity">
+        SELECT K.IF_IP_ID AS ifIpId
+             , K.ACTION_TYPE AS actionType
+             , K.PID_NO AS pidNo
+          FROM TNT_IF_IMP_IP K 
+         WHERE PID_NO IN ( 
+                SELECT PID_NO 
+                  FROM TNT_IP_KANBAN
+                 WHERE INVOICE_NO = #{invoiceNo}
+                   AND MODULE_NO = #{moduleNo}
+                   AND PARTS_ID = #{partsId}
+                   AND DATA_TYPE = 2
+              ) 
+          AND K.ACTION_TYPE = 10
+        ORDER BY 
+              K.ACTION_TYPE
+    </select>
+        
+    <update id="reviseImpStockQty" parameterType="com.chinaplus.batch.migration.bean.DevanPatchEntity">
+       UPDATE TNF_IMP_STOCK
+          SET SYSTEM_STOCK_QTY = IMP_STOCK_QTY
+            , UPDATED_DATE = CURRENT TIMESTAMP
+        WHERE SYSTEM_STOCK_QTY > IMP_STOCK_QTY
+          AND BUSINESS_PATTERN = 2
+    </update>
+        
+    <select id="getImpStockByDayList" parameterType="com.chinaplus.batch.migration.bean.DevanPatchEntity" resultType="com.chinaplus.batch.migration.bean.DevanPatchEntity">
+        SELECT PARTS_ID AS partsId
+             , END_DATE AS endDate
+             , IMP_STOCK_QTY AS qty
+             , WHS_ID AS whsId
+             , DAY_OUTBOUND_QTY AS obQty
+          FROM TNF_IMP_STOCK_BY_DAY
+         WHERE SUPPLIER_ID IS NULL
+         ORDER BY
+               PARTS_ID
+             , END_DATE
+    </select>
+    
+    <update id="reviseImpStockByDay" parameterType="com.chinaplus.batch.migration.bean.DevanPatchEntity">
+       UPDATE TNF_IMP_STOCK_BY_DAY
+          SET IMP_STOCK_QTY = IMP_STOCK_QTY + #{qty}
+            , SYSTEM_STOCK_QTY = SYSTEM_STOCK_QTY + #{qty}
+            , DAY_OUTBOUND_QTY = DAY_OUTBOUND_QTY + #{obQty}
+            , UPDATED_DATE = CURRENT TIMESTAMP
+        WHERE PARTS_ID = #{partsId}
+          AND SUPPLIER_ID IS NOT NULL
+          AND END_DATE = #{endDate}
+          AND WHS_ID = #{whsId}
+    </update>  
+    
+    <delete id="deleteAllDayQty" parameterType="com.chinaplus.batch.migration.bean.DevanPatchEntity">
+       DELETE FROM TNF_IMP_STOCK_BY_DAY WHERE SUPPLIER_ID IS NULL
+    </delete>    
+</mapper>

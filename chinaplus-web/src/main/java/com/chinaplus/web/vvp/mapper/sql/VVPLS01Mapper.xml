@@ -1,0 +1,63 @@
+<!-- @screen VVPLS01 @author ren_yi -->
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.vvp.service.VVPLS01Service">
+
+	<sql id="whereSql">
+		<if test="null != filters">
+			<if
+				test="null != filters.fullCompanyName and '' != filters.fullCompanyName">
+				and A.FULL_COMPANY_NAME LIKE #{filters.fullCompanyName} ESCAPE '!'
+			</if>
+		</if>
+	</sql>
+
+	<select id="getAllList" parameterType="com.chinaplus.core.bean.PageParam"
+		resultType="com.chinaplus.web.vvp.entity.VVPLS01Entity">
+		SELECT * FROM (
+			select
+			  A.SUPPLIER_ID as supplierId
+			  , A.EXPORT_OFFICE as exportOfficeCode
+			  , B.OFFICE_CODE as exportOfficeName
+			  , A.FULL_COMPANY_NAME AS fullCompanyName
+			  , A.HEADQUARTER_OFFICE AS headquarterCode
+			  , C.REGION_CODE as headquarterName
+			  , A.OFFICE_BRANCH AS officeBranchCode
+			  , D.REGION_CODE as officeBranchName
+			  , A.PRODUCT_MATEIAL AS productMateialCode
+			  , A.SECTION_OF_THE_CAR AS sectionofthecarCode
+			  , A.PRODUCTION_PROCESS AS productionProcessCode
+			  , A.OVERALL_EVALUATION AS overallEvaluationCode
+			  , A.CREATED_DATE AS createdDate
+			  , A.LAST_UPDATED_DATE AS lastUpdatedDate
+			  , A.STATUS as statusCode 
+			from
+			  VVP_Suppiler A 
+			 INNER JOIN TNM_OFFICE B
+			  ON B.OFFICE_ID = A.EXPORT_OFFICE
+			 LEFT JOIN TNM_REGION C
+			  ON C.REGION_ID = A.HEADQUARTER_OFFICE
+			 LEFT JOIN TNM_REGION D
+			  ON D.REGION_ID = A.OFFICE_BRANCH
+			where
+			  1=1
+			  <include refid="whereSql" />
+			ORDER BY
+			  A.CREATED_DATE DESC
+			)
+	
+	</select>
+	<select id="getAllListCount" parameterType="com.chinaplus.core.bean.BaseParam"
+		resultType="int">
+		SELECT
+		count(*)
+		FROM VVP_Suppiler A
+		where
+		 1=1
+		<include refid="whereSql" />
+
+	</select>
+
+</mapper>

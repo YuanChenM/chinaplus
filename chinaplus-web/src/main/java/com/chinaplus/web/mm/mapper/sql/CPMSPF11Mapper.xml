@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.mm.service.CPMSPF11Service">
+	
+	<sql id="ConstDef">
+		<bind name="VV" value="@com.chinaplus.common.consts.CodeConst$BusinessPattern@V_V" />
+		<bind name="AISIN" value="@com.chinaplus.common.consts.CodeConst$BusinessPattern@AISIN" />
+	</sql>
+	
+    <select id="getReasonCount" parameterType="com.chinaplus.core.bean.BaseParam"
+        resultType="int">
+        SELECT 
+           COUNT(1)
+        FROM 
+            TNM_REASON
+        WHERE
+            BUSINESS_PATTERN = #{swapData.businessPattern}
+            AND REASON_DESC = #{swapData.reasonDesc}
+    </select>
+    <insert id="addReason" parameterType="com.chinaplus.common.entity.TnmReason">
+        INSERT 
+        INTO 
+        TNM_REASON (
+            REASON_ID,
+            BUSINESS_PATTERN,
+            REASON_DESC,
+            REASON_CODE,
+            INACTIVE_FLAG,
+            CREATED_BY,
+            UPDATED_BY,
+            CREATED_DATE,
+            UPDATED_DATE,
+            VERSION
+        )
+        VALUES
+        (
+            SEQ_TNM_REASON.nextval,
+            #{businessPattern},
+            #{reasonDesc},
+            #{reasonCode},
+            #{inactiveFlag},
+            #{createdBy},
+            #{updatedBy},
+            #{createdDate},
+            #{updatedDate},
+            #{version}
+        )
+    </insert>
+    
+    <update id="updateReason" parameterType="com.chinaplus.common.entity.TnmReason">
+        UPDATE 
+            TNM_REASON
+        SET
+            INACTIVE_FLAG = #{inactiveFlag},
+            UPDATED_BY = #{updatedBy},
+            UPDATED_DATE = #{updatedDate},
+            VERSION = VERSION + 1
+        WHERE 
+            BUSINESS_PATTERN = #{businessPattern} 
+            AND REASON_DESC = #{reasonDesc}
+    </update>
+    <select id="getMaxVVReasonCode" parameterType="com.chinaplus.core.bean.BaseParam"
+        resultType="com.chinaplus.common.entity.TnmReason">
+    	<include refid="ConstDef"/>
+        select COALESCE(max(reason_code), 0) AS reasonCode
+        from tnm_reason where business_pattern  = ${VV}
+        and reason_code != '999' 
+    </select>
+    <select id="getMaxAISINReasonCode" parameterType="com.chinaplus.core.bean.BaseParam"
+        resultType="com.chinaplus.common.entity.TnmReason">
+    	<include refid="ConstDef"/>
+        select COALESCE(max(reason_code), 0) AS reasonCode
+        from tnm_reason where business_pattern  = ${AISIN}
+        and reason_code != '999' 
+    </select>
+    
+</mapper>

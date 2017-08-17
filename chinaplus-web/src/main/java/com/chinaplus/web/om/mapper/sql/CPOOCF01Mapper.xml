@@ -1,0 +1,192 @@
+<!--
+@screen CPOOCF01
+@author shi_yuxi
+-->
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="com.chinaplus.web.om.service.CPOOCF01Service">
+    <select id="findMainList" parameterType="com.chinaplus.core.bean.BaseParam" 
+        resultType="com.chinaplus.web.om.entity.CPOOCF01Entity">
+        SELECT
+            ROWNUMBER() over() AS no
+            ,A.PARTS_ID AS partsId
+            ,A.TTC_PARTS_NO AS ttcPartNo
+            ,A.CUST_PARTS_NO AS customerPartNo
+            ,A.OLD_TTC_PARTS_NO AS oldTtcPartNo
+            ,A.CUSTOMER_CODE AS customerCode
+            ,B.TTC_SUPP_CODE AS supplierCode
+            ,B.SUPPLIER_ID AS supplierId
+            ,A.PARTS_TYPE AS partType
+            ,A.ORDER_LOT AS orderlot
+            ,C.IMP_STOCK_QTY AS impStockQty
+            ,A.UOM_CODE AS uomCode
+        FROM
+            TNM_PARTS_MASTER A
+            INNER JOIN TNM_EXP_PARTS B ON A.PARTS_ID=B.PARTS_ID
+            LEFT JOIN TNF_IMP_STOCK_BY_DAY C
+            ON A.PARTS_ID=C.PARTS_ID
+            AND A.OFFICE_ID = C.OFFICE_ID
+            AND C.SUPPLIER_ID = B.SUPPLIER_ID
+            AND C.END_DATE =#{swapData.csDate}
+            WHERE A.OFFICE_ID = #{swapData.officeId}
+            AND A.CUSTOMER_ID = #{swapData.customerId}
+            AND B.PARTS_STATUS = #{swapData.partsStatus}
+            AND B.INACTIVE_FLAG = #{swapData.inActiveFlag}
+        GROUP BY 
+            A.PARTS_ID
+            , A.TTC_PARTS_NO
+            , A.CUST_PARTS_NO
+            , A.OLD_TTC_PARTS_NO
+            , A.CUSTOMER_CODE
+            , B.TTC_SUPP_CODE
+            , B.SUPPLIER_ID
+            , A.PARTS_TYPE
+            , A.ORDER_LOT
+            , C.IMP_STOCK_QTY
+            , A.UOM_CODE
+        ORDER BY 
+            A.TTC_PARTS_NO,
+            B.SUPPLIER_ID
+    </select>
+    
+    <select id="findBalance" parameterType="com.chinaplus.core.bean.BaseParam" 
+        resultType="com.chinaplus.web.om.entity.CPOOCF01CompareByDayEntity">
+        SELECT 
+            IMP_PO_NO AS impPoNo
+            ,KANBAN_PLAN_NO AS  kanbanPlanNo                                        
+            ,PARTS_ID AS partsId                                            
+            ,SUPPLIER_ID AS supplierId                                         
+            ,ORDER_BALANCE_QTY AS orderBalanceQty                                         
+        FROM                                              
+            TNF_BALANCE_BY_DAY                                          
+        WHERE                                              
+            CUSTOMER_ID = #{swapData.customerId}
+            AND END_DATE = #{swapData.balanceDate}
+        ORDER BY 
+            IMP_PO_NO
+    </select>
+    
+    <select id="findCurrentQty" parameterType="com.chinaplus.core.bean.BaseParam" 
+        resultType="com.chinaplus.web.om.entity.CPOOCF01CurrentMonthEntity">
+        select
+            SUM(B.ORDER_QTY) AS sumQty
+            ,B.PARTS_ID AS partsId
+            ,C.SUPPLIER_ID AS supplierId
+            ,A.IMP_PO_NO AS impPoNo
+        FROM                                                                
+            TNT_ORDER A                                                             
+        INNER JOIN TNT_ORDER_DETAIL B ON A.ORDER_ID = B.ORDER_ID
+        INNER JOIN TNM_EXP_PARTS C ON C.EXP_PARTS_ID = B.EXP_PARTS_ID                                                       
+        WHERE                                                                   
+            A.OFFICE_ID = #{swapData.officeId}
+        AND A.EXP_SO_DATE <![CDATA[>=]]> #{swapData.firstDate}
+        AND A.EXP_SO_DATE <![CDATA[<=]]> #{swapData.lastDate}                                            
+        AND A.CUSTOMER_ID = #{swapData.customerId}
+        AND B.STATUS = #{swapData.status}
+        GROUP BY                                                        
+            B.PARTS_ID,                                                             
+            C.SUPPLIER_ID,
+            A.IMP_PO_NO
+    </select>
+    
+    <select id="findCurrentQtyAisin" parameterType="com.chinaplus.core.bean.BaseParam" 
+        resultType="com.chinaplus.web.om.entity.CPOOCF01CurrentMonthEntity">
+        SELECT
+            A.KANBAN_PLAN_NO AS impPoNo
+            ,A.SUPPLIER_ID AS supplierId
+            ,B.PARTS_ID AS partsId
+            ,B.QTY AS sumQty
+        FROM
+            TNT_KANBAN A
+        INNER JOIN TNT_KANBAN_PARTS B ON A.KANBAN_ID = B.KANBAN_ID
+        WHERE
+            A.OFFICE_ID = #{swapData.officeId}
+        AND A.CUSTOMER_ID = #{swapData.customerId}
+        AND A.ORDER_MONTH = #{swapData.orderMonth}
+        AND A.STATUS = #{swapData.status}
+    </select>
+    <select id="findNearestDate" parameterType="com.chinaplus.core.bean.BaseParam"
+        resultType="com.chinaplus.web.om.entity.CPOOCF01Entity">
+        SELECT
+            A.PARTS_ID AS partsId
+            ,A.ENDING_STOCK_DATE AS endingStockDate
+            ,A.STOCK_QTY AS stockQty
+        FROM
+            TNT_CUSTOMER_STOCK A 
+            INNER JOIN (
+                SELECT
+                X.PARTS_ID as PARTSID
+                , MIN(ABS(DAYS(X.ENDING_STOCK_DATE) - DAYS(DATE('${swapData.csDate1}')))) AS AAA 
+                FROM
+                TNT_CUSTOMER_STOCK X 
+                WHERE
+                X.OFFICE_ID = #{swapData.officeId}
+                AND X.CUSTOMER_ID = #{swapData.customerId}
+                AND X.ENDING_STOCK_DATE <![CDATA[>=]]> #{swapData.twoMonthAgo}
+                AND X.STATUS = 1
+                GROUP BY
+                X.PARTS_ID
+            ) B 
+            ON A.PARTS_ID = B.PARTSID 
+            AND B.AAA = ABS(DAYS(A.ENDING_STOCK_DATE) - DAYS(DATE('${swapData.csDate1}'))) 
+        WHERE
+            A.OFFICE_ID = #{swapData.officeId}
+            AND A.CUSTOMER_ID = #{swapData.customerId}
+            AND A.ENDING_STOCK_DATE <![CDATA[>=]]> #{swapData.twoMonthAgo}
+            AND A.STATUS = 1
+    </select>
+    
+    <select id="findDateList" parameterType="com.chinaplus.core.bean.BaseParam" 
+        resultType="com.chinaplus.web.om.entity.CPOOCF01DateEntity">
+        SELECT
+            C.PARTS_ID AS partsId,
+            C.CFC_MONTH AS cfcMonth,
+            C.CFC_QTY AS cfcQty,
+            E.FC_DATE AS fcDate
+        FROM
+            TNT_CFC_MONTH C
+        INNER JOIN TNT_CFC_MASTER E ON C.CFC_ID = E.CFC_ID AND E.STATUS = #{swapData.status}
+        WHERE
+        C.CFC_MONTH_ID IN
+        (
+        SELECT
+            MAX(B.CFC_MONTH_ID)
+        FROM
+        TNT_CFC_MASTER A
+        INNER JOIN TNT_CFC_MONTH B ON A.CFC_ID = B.CFC_ID
+        WHERE 
+        	A.CFC_ID IN 
+                <foreach collection="swapData.cfcIdList" item="item" index="index" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            AND A.OFFICE_ID = #{swapData.officeId}
+            AND A.CUSTOMER_ID = #{swapData.customerId}
+            <if test="swapData.monthRangeFrom != null and swapData.monthRangeFrom != ''">
+            AND B.CFC_MONTH <![CDATA[>=]]> #{swapData.monthRangeFrom}
+            </if>
+            <if test="swapData.monthRangeTo != null and swapData.monthRangeTo != ''">
+            AND B.CFC_MONTH <![CDATA[<=]]> #{swapData.monthRangeTo}
+            </if>
+            AND A.STATUS = #{swapData.status}
+        GROUP BY
+            B.PARTS_ID,
+            B.CFC_MONTH
+        )
+        ORDER BY
+            C.CFC_MONTH,
+            C.PARTS_ID 
+    </select>
+    <select id="checkRange" parameterType="com.chinaplus.core.bean.BaseParam" 
+        resultType="com.chinaplus.web.om.entity.CPOOCF01Entity">
+        SELECT
+            MIN(FIRST_FC_MONTH) AS checkMinDate,
+            MAX(LAST_FC_MONTH) AS checkMaxDate
+        FROM
+            TNT_CFC_MASTER
+        WHERE
+            OFFICE_ID = #{swapData.officeId}
+            AND CUSTOMER_ID = #{swapData.customerId}
+    </select>
+</mapper>

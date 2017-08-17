@@ -1,0 +1,286 @@
+/**
+ * @screen CPCUMS01 ----- User List Screen
+ * @author zhang_chi
+ */
+CPCUMS01 = {
+    xtype : 'gridpanel',
+    id : chinaplus.screen.CPCUMS01,
+    title : chinaplus.label.CPCUMS01_Label_PageTitle,
+    autoScroll : true,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    border : true,
+    closable : false,
+    columnLines : true,
+    enableColumnHide : false,
+    enableColumnMove : false,
+    qtip : true,
+    selType : 'cellmodel',
+    selModel : Ext.create('Ext.ux.selection.CheckBoxModel', {
+                checkOnly : true
+            }),
+    viewConfig : {
+        loadMask : false
+    },
+    plugins : [{
+                ptype : 'gridheaderfilters',
+                allSingleFilter : false
+            }, {
+                ptype : 'emptystoreview'
+            }, {
+                ptype : 'headerfiltertoolbar',
+                showMore : true
+            }],
+    header : false,
+    headerPosition : 'bottom',
+    columns : [{
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPCUMS01_Grid_LoginId + '</div>',
+                align : 'left',
+                width : 120,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'loginId',
+                sortable : false,
+                resizable : false,
+                locked : true,
+                filter : 'string',
+                renderer : function(v, p, record) {
+                    var formatStr = '<a href="#" onclick="Ext.getCmp(chinaplus.screen.CPCUMS01).gotoDetailScreen({1})">{0}</a>';
+                    return Ext.String.format(formatStr, Ext.String.htmlEncode(v), record.data.userId);
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPCUMS01_Grid_UserName + '</div>',
+                align : 'left',
+                width : 180,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'userName',
+                sortable : false,
+                filter : 'string'
+            }, {
+                xtype : 'gridcolumn',
+                width : 260,
+                text : '<div style="text-align:center">' + chinaplus.label.CPCUMS01_Grid_MailAddress + '</div>',
+                align : 'left',
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'mailAddr',
+                sortable : false,
+                filter : 'string'
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPCUMS01_Grid_DefaultLang + '</div>',
+                align : 'left',
+                width : 120,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'defaultLang',
+                sortable : false,
+                filter : 'string',
+                renderer : function(value) {
+                    return chinaplus.master.getMasterName(chinaplus.master.consts.TnmCodeCategory_Language, value);
+                },
+                filter : {
+                    type : 'list',
+                    multiSelect : false,
+                    options : chinaplus.master.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_Language)
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPCUMS01_Grid_DefaultOffice + '</div>',
+                align : 'left',
+                width : 120,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'defaultOffice',
+                sortable : false,
+                filter : 'string',
+                renderer : function(v, p, record) {
+                    return record.data.defaultOfficeName;
+                },
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPCUMS01, 'common/loadAllOffices', 'Combo', chinaplus.screen.CPCUMS01 + '_officeStore')
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPCUMS01_Grid_Status + '</div>',
+                align : 'left',
+                width : 130,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'status',
+                sortable : false,
+                renderer : function(value) {
+                    return chinaplus.master.getMasterName(chinaplus.master.consts.TnmCodeCategory_UserStatus, value);
+                },
+                filter : {
+                    type : 'list',
+                    multiSelect : false,
+                    options : chinaplus.master.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_UserStatus)
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center">' + chinaplus.label.CPCUMS01_Grid_CustomerCode + '</div>',
+                align : 'left',
+                width : 200,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'customerCodeSet',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPMCLS01, 'mm/CPMCLS01/loadCustomers', 'Combo', chinaplus.screen.CPMCLS01 + '_customerCodeStore')
+                }
+            }, {
+                xtype : 'gridcolumn',
+                hidden : true,
+                dataIndex : 'userId'
+            }, {
+                xtype : 'gridcolumn',
+                hidden : true,
+                dataIndex : 'version'
+            }],
+    tbar : [{
+                text : chinaplus.label.CPCUMS01_Button_CreateNew,
+                iconCls : 'btn-add',
+                id : chinaplus.screen.CPCUMS01 + '_Button_CreateNew',
+                handler : function() {
+                    TRF.util.setDetailTabMode_New();
+                    TRF.util.addApplication(chinaplus.screen.CPCUMS02, chinaplus.screen.CPCUMS02, true);
+                }
+            }, {
+                text : chinaplus.label.CPCUMS01_Button_Delete,
+                iconCls : 'btn-remove',
+                id : chinaplus.screen.CPCUMS01 + '_Button_Delete',
+                handler : function() {
+                    CPCUMS01.deleteFunc();
+                }
+            }],
+    store : TRF.util.createStore(chinaplus.screen.CPCUMS01, 'com/CPCUMS01/getUserDetailsList', 'UserInfoList', chinaplus.screen.CPCUMS01 + '_userDetailsListStore'),
+
+    /**
+     * The initialize function.
+     * 
+     * @param params. the parameter object passed to this screen.
+     */
+    initialize : function(params) {
+        TRF.util.setDefaultValuesForToolBar(this, 'status', '1');
+        var gridStore = this.store;
+        var  me = this;
+
+        TRF.util.dataLoadStart(chinaplus.screen.CPCUMS01);
+        TRF.util.loadStore(gridStore, null, function() {
+                    TRF.util.dataLoadEnd(chinaplus.screen.CPCUMS01);
+                    gridStore.on('beforeload', function() {
+                         TRF.core.mask(TRF.core.maskMsg.load, null, me);
+                     });
+                     gridStore.on('load', function() {
+                         TRF.core.unmask(me);
+                     });
+                }, {
+                    filters : {
+                        status : '1'
+                    }
+                });
+        this.doLayout();
+        TRF.util.addGridTip(this);
+    },
+
+    /**
+     * go detail screen.
+     * 
+     * @param params. the parameter object passed to this screen.
+     */
+    gotoDetailScreen : function(userId) {
+        TRF.util.setDetailTabMode_View();
+        TRF.util.addApplication(chinaplus.screen.CPCUMS02, chinaplus.screen.CPCUMS02, true, userId);
+    },
+
+    /**
+     * Delete Role
+     */
+    deleteFunc : function() {
+
+        // select check
+        var popMsg = TRF.util.getMessage('w1011');
+        var lsMsgs = [];
+
+        var selectionArray = Ext.getCmp(chinaplus.screen.CPCUMS01).getSelectionModel().getSelection();
+
+        // must select one
+        if (selectionArray.length == 0) {
+            Ext.Array.push(lsMsgs, popMsg);
+            TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, popMsg, lsMsgs);
+            return;
+        }
+
+        // do selected inactive
+        var selectedDatas = new Array();
+        for (var i = 0; i < selectionArray.length; i++) {
+            var status = selectionArray[i].data.status;
+            // check
+            if (status == chinaplus.consts.code.UserStatus.INACTIVE) {
+                // add message
+                Ext.Array.push(lsMsgs, TRF.util.getMessage('w1002_004', [selectionArray[i].data.loginId,
+                                        chinaplus.master.getMasterName(chinaplus.master.consts.TnmCodeCategory_UserStatus, status)]));
+            } else {
+                // set into data
+                selectedDatas[i] = {
+                    'userId' : selectionArray[i].data.userId,
+                    'loginId' : selectionArray[i].data.loginId,
+                    'version' : selectionArray[i].data.version
+                };
+            }
+        }
+
+        if (lsMsgs.length > 0) {
+            popMsg = TRF.util.getMessage('w1002', ['CPCUMS01_Button_Delete']);
+            // Ext.Array.push(lsMsgs, popMsg);
+            TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, popMsg, lsMsgs);
+            return;
+        }
+
+        // delete confirm
+        var me = this;
+        var confirmMsg = TRF.util.getMessage('c1001', [chinaplus.label.CPCUMS01_Button_Delete]);
+        var confirmMsgL = [];
+        TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_QUESTION, confirmMsg, confirmMsgL, function(btn) {
+                    if (btn == 'yes') {
+
+                        var params = {};
+                        params[TRF.cnst.DATAS] = selectedDatas;
+
+                        var backFun = function(applicationData) {
+                            if (applicationData.success) {
+                                var lsMsgs = TRF.util.getMessage('i1004', ['CPCUMS01_Button_Delete']);
+                                TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_INFO, lsMsgs, lsMsgs, function() {
+                                            me.store.reload();
+                                        });
+                            }
+                        };
+
+                        // submit
+                        TRF.util.ajaxSubmit(backFun, chinaplus.screen.CPCUMS01, 'com/CPCUMS01/deleteUser', null, params);
+
+                    }// end if
+                });
+    }
+}

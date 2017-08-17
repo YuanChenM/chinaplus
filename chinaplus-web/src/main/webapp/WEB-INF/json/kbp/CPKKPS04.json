@@ -1,0 +1,334 @@
+/**
+ * Kanban Issued Plan Upload
+ * 
+ * @screen CPKKPS04
+ * @author shiyang
+ */
+CPKKPS04 = {
+    id : chinaplus.screen.CPKKPS04,
+    title : chinaplus.label.CPKKPS04_Label_PageTitle,
+    xtype : 'form',
+    frame : true,
+    autoHeight : false,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    autoScroll : true,
+    fieldDefaults : {
+        labelAlign : 'right',
+        labelWidth : 150
+    },
+    items : [{
+                xtype : 'combo',
+                fieldLabel : chinaplus.label.CPKKPS04_Label_TTCSupplierCode,
+                id : chinaplus.screen.CPKKPS04 + '_ttcSupplierCode',
+                msgTarget : 'side',
+                name : 'ttcSupplierCode',
+                width : 500,
+                labelSeparator : '',
+                margin : '30 0 10 10',
+                store : TRF.util.createStore(chinaplus.screen.CPKKPS04, 'common/loadActiveSuppliers', 'Combo', chinaplus.screen.CPKKPS04 + '_ttcSupplierCodeStore', {}, -1),
+                displayField : 'text',
+                queryParam : false,
+                valueField : 'id',
+                allowBlank : true,
+                fieldStyle : 'background:rgb(255,255,153)',
+                forceSelection : true,
+                editable : false,
+                enableKeyEvents : true
+            }, {
+                xtype : 'label',
+                html : '<div style="color:red;margin-left:60px">' + chinaplus.label.CPKKPS04_Label_SupplierRemark + '</div>'
+            }, {
+                xtype : 'fileuploadfield',
+                fieldLabel : chinaplus.label.CPKKPS04_Label_FileName,
+                buttonText : chinaplus.label.CPKKPS04_Button_Browse,
+                id : chinaplus.screen.CPKKPS04 + '_fileuploadfield',
+                name : 'fileData',
+                width : 500,
+                labelSeparator : '',
+                margin : '20 0 0 10',
+                editable : false,
+                fieldStyle : 'background:rgb(255,255,153)',
+                hideLabel : false,
+                autoFitErrors : false
+            }, {
+                xtype : 'checkcombo',
+                fieldLabel : chinaplus.label.CPKKPS04_Label_RevisionReason,
+                id : chinaplus.screen.CPKKPS04 + '_revisionReason',
+                margin : '20 0 0 10',
+                msgTarget : 'side',
+                name : 'revisionReason',
+                width : 500,
+                addAllSelector : true,
+                multiSelect : true,
+                labelSeparator : '',
+                store : TRF.util.createStore(chinaplus.screen.CPKKPS04, 'common/loadRevisionReasonsForAisin', 'Combo', chinaplus.screen.CPKKPS04 + '_revisionReasonStore'),
+                displayField : 'text',
+                queryMode : 'local',
+                fieldStyle : 'background:rgb(255,255,153)',
+                // queryParam : false,
+                valueField : 'id',
+                autoFitErrors : false,
+                allowBlank : true,
+                forceSelection : true,
+                editable : false,
+                enableKeyEvents : true,
+                listeners : {
+                    change : function() {
+                        CPKKPS04.changeRevisionReason();
+                    }
+                }
+            }, {
+                xtype : 'textfield',
+                fieldLabel : chinaplus.label.CPKKPS04_Label_DetailedReason,
+                margin : '20 0 0 10',
+                msgTarget : 'side',
+                name : 'detailedReason',
+                width : 500,
+                labelSeparator : '',
+                // maxLength : 80,
+                autoFitErrors : false,
+                allowBlank : true,
+                id : chinaplus.screen.CPKKPS04 + '_detailedReason'
+            }, {
+                xtype : 'container',
+                items : [{
+                            xtype : 'button',
+                            iconCls : 'btn-upload',
+                            width : 200,
+                            height : 25,
+                            text : chinaplus.label.CPKKPS04_Button_MonthlyKanban,
+                            margin : '30 0 0 28',
+                            handler : function() {
+                                CPKKPS04.btnUploadMonthlyKanbanPlanAction();
+                            }
+                        }, {
+                            xtype : 'button',
+                            iconCls : 'btn-upload',
+                            width : 200,
+                            height : 25,
+                            text : chinaplus.label.CPKKPS04_Button_RevisedKanban,
+                            margin : '30 0 0 28',
+                            handler : function() {
+                                CPKKPS04.btnUploadRevisedKanbanPlanAction();
+                            }
+                        }]
+            }],
+
+    /**
+     * The initialize function.
+     */
+    initialize : function() {
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPKKPS04 + '_revisionReasonStore'));
+        Ext.getCmp(chinaplus.screen.CPKKPS04 + '_detailedReason').setReadOnly(true);
+        Ext.getCmp(chinaplus.screen.CPKKPS04 + '_detailedReason').setFieldStyle('background:#cccccc;');
+    },
+
+    /**
+     * If "Other" is selected, then Detailed Revision Reason become to a
+     * inputText column. If "Other" is no selected, then Detailed Revision
+     * Reason become to a label column.
+     */
+    changeRevisionReason : function() {
+        var revisionReason = Ext.getCmp(chinaplus.screen.CPKKPS04 + '_revisionReason').getValue();
+        if (revisionReason.indexOf(chinaplus.consts.code.RevisionReason.OTHER) > -1) {
+            // If Revision Reason include "Other", then Detailed Reason must be
+            // input.
+            Ext.getCmp(chinaplus.screen.CPKKPS04 + '_detailedReason').setReadOnly(false);
+            Ext.getCmp(chinaplus.screen.CPKKPS04 + '_detailedReason').setFieldStyle('background:rgb(255,255,153);');
+        } else {
+            // Otherwise the Detailed Reason become to can not input column.
+            Ext.getCmp(chinaplus.screen.CPKKPS04 + '_detailedReason').setReadOnly(true);
+            Ext.getCmp(chinaplus.screen.CPKKPS04 + '_detailedReason').setFieldStyle('background:#cccccc;');
+            Ext.getCmp(chinaplus.screen.CPKKPS04 + '_detailedReason').setValue('');
+        }
+    },
+
+    /**
+     * btn[Upload Monthly Kanban Plan] Click
+     */
+    btnUploadMonthlyKanbanPlanAction : function() {
+        if (CPKKPS04.check('btnUploadMonthlyKanbanPlanAction')) {
+            Ext.getCmp(chinaplus.screen.CPKKPS04).uploadCommon('kbp/CPKKPF11/upload');
+        }
+    },
+
+    /**
+     * btn[Upload Revised Kanban Plan] Click
+     */
+    btnUploadRevisedKanbanPlanAction : function() {
+        if (CPKKPS04.check('btnUploadRevisedKanbanPlanAction')) {
+            Ext.getCmp(chinaplus.screen.CPKKPS04).uploadCommon('kbp/CPKKPF12/upload');
+        }
+    },
+
+    /**
+     * POP Message Common
+     */
+    popMessageCommon : function(message, messageDetail, item) {
+        var popMsg = TRF.util.getMessage(message);
+        var lsMsgs = [];
+        Ext.Array.push(lsMsgs, TRF.util.getMessage(messageDetail, item));
+        TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, popMsg, lsMsgs);
+    },
+
+    /**
+     * Check Input
+     */
+    check : function(btn) {
+
+        if (btn == 'btnUploadMonthlyKanbanPlanAction') {
+            // No TTC Supplier Code is selected.
+            var ttcSupplierCode = Ext.getCmp(chinaplus.screen.CPKKPS04 + '_ttcSupplierCode').getValue();
+            if (ttcSupplierCode == null || ttcSupplierCode == '') {
+                CPKKPS04.popMessageCommon('w1001', 'w1001_005', chinaplus.label.CPKKPS04_Label_TTCSupplierCode);
+                return false;
+            }
+        }
+
+        var revisionReason = Ext.getCmp(chinaplus.screen.CPKKPS04 + '_revisionReason').getValue();
+        if (btn == 'btnUploadRevisedKanbanPlanAction') {
+            // No Revision Reason is selected.
+            if (revisionReason == null || revisionReason == '') {
+                CPKKPS04.popMessageCommon('w1001', 'w1001_005', chinaplus.label.CPKKPS04_Label_RevisionReason);
+                return false;
+            }
+        }
+
+        // No File is input.
+        var fileuploadfield = Ext.getCmp(chinaplus.screen.CPKKPS04 + '_fileuploadfield').getValue();
+        if (fileuploadfield == null || fileuploadfield == '') {
+            CPKKPS04.popMessageCommon('w1001', 'w1001_001', chinaplus.label.CPKKPS04_Label_FileName);
+            return false;
+        }
+
+        if (revisionReason != undefined && revisionReason.indexOf(chinaplus.consts.code.RevisionReason.OTHER) > -1) {
+            var detailedReason = Ext.getCmp(chinaplus.screen.CPKKPS04 + '_detailedReason').getValue();
+            if (detailedReason == null || detailedReason == '') {
+                // Revision Reason include "Other" and Detailed Revision Reason
+                // is empty.
+                CPKKPS04.popMessageCommon('w1001', 'w1001_005', chinaplus.label.CPKKPS04_Label_DetailedReason);
+                return false;
+            } else {
+                // Length of Detailed Revision Reason > 80.
+                if (detailedReason.length > 80) {
+                    var params = [];
+                    params.push(chinaplus.label.CPKKPS04_Label_DetailedReason);
+                    params.push(80);
+                    CPKKPS04.popMessageCommon('w1001', 'w1001_006', params);
+                    return false;
+                }
+            }
+        }
+        return true;
+    },
+
+    /**
+     * Edit Revision Reason
+     */
+    editRevisionReason : function() {
+        var revisionReasonCode = Ext.getCmp(chinaplus.screen.CPKKPS04 + '_revisionReason').getValue();
+        var revisionReason = Ext.getCmp(chinaplus.screen.CPKKPS04 + '_revisionReason').getRawValue();
+        if (revisionReasonCode != undefined && revisionReasonCode.indexOf(chinaplus.consts.code.RevisionReason.OTHER) > -1) {
+            var detailedReason = Ext.getCmp(chinaplus.screen.CPKKPS04 + '_detailedReason').getValue();
+            revisionReason = revisionReason.substring(0, revisionReason.lastIndexOf(','));
+            if (revisionReason == null || revisionReason == '' || revisionReason == undefined) {
+                return detailedReason;
+            } else {
+                return revisionReason + ',' + detailedReason;
+            }
+        }
+        return revisionReason;
+    },
+
+    /**
+     * Upload Monthly Kanban Plan
+     */
+    uploadCommon : function(url) {
+        var form = this.getForm();
+        var params = {
+            'uploadProcess' : 'check',
+            'supplierId' : Ext.getCmp(chinaplus.screen.CPKKPS04 + '_ttcSupplierCode').getValue(),
+            'revisionCodeSet' : Ext.getCmp(chinaplus.screen.CPKKPS04 + '_revisionReason').getValue(),
+            'revisionReason' : CPKKPS04.editRevisionReason(),
+            'detailedReason' : Ext.getCmp(chinaplus.screen.CPKKPS04 + '_detailedReason').getValue()
+        };
+
+        var backFun = function(applicationData) {
+            // uploadResult = '0': update successful.
+            // uploadResult = '2': 2 confirm message when download CPKKPF11
+            // uploadResult = '3': 2 confirm message when download CPKKPF12
+            // uploadResult = 'c1009': for CPKKPF12 only
+            // uploadResult = confirm message code (CPKKPF11/CPKKPF12)
+            if (applicationData.result.uploadResult == '0') {
+                TRF.util.showMessageBoxByMsgIdAndArgs('i1001');
+                TRF.util.removePopupApplication(chinaplus.screen.CPKKPS04);
+            } else {
+                if (applicationData.result.uploadResult == 'c1005' || applicationData.result.uploadResult == 'c1006' || applicationData.result.uploadResult == 'c1010') {
+                    var conMsg = TRF.util.getMessage(applicationData.result.uploadResult);
+                    TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_QUESTION, conMsg, [conMsg], function(btn) {
+                                if (btn == 'yes') {
+                                    params = {
+                                        'sessionKey' : applicationData.result,
+                                        'uploadProcess' : 'yes',
+                                        'supplierId' : Ext.getCmp(chinaplus.screen.CPKKPS04 + '_ttcSupplierCode').getValue(),
+                                        'revisionCodeSet' : Ext.getCmp(chinaplus.screen.CPKKPS04 + '_revisionReason').getValue(),
+                                        'revisionReason' : CPKKPS04.editRevisionReason(),
+                                        'detailedReason' : Ext.getCmp(chinaplus.screen.CPKKPS04 + '_detailedReason').getValue()
+                                    };
+                                    TRF.util.uploadSubmit(form, backFun, chinaplus.screen.CPKKPS04, url, params);
+                                }
+                            });
+                } else if (applicationData.result.uploadResult == 'c1009') {
+                    var conMsg = TRF.util.getMessage(applicationData.result.uploadResult);
+                    TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_QUESTION, conMsg, [conMsg], function(btn) {
+                                if (btn == 'yes') {
+                                    params = {
+                                        'sessionKey' : applicationData.result,
+                                        'uploadProcess' : 'confirm',
+                                        'supplierId' : Ext.getCmp(chinaplus.screen.CPKKPS04 + '_ttcSupplierCode').getValue(),
+                                        'revisionCodeSet' : Ext.getCmp(chinaplus.screen.CPKKPS04 + '_revisionReason').getValue(),
+                                        'revisionReason' : CPKKPS04.editRevisionReason(),
+                                        'detailedReason' : Ext.getCmp(chinaplus.screen.CPKKPS04 + '_detailedReason').getValue()
+                                    };
+                                    TRF.util.uploadSubmit(form, backFun, chinaplus.screen.CPKKPS04, url, params);
+                                }
+                            });
+                } else if (applicationData.result.uploadResult == '2') {
+                    var conMsgC1005 = TRF.util.getMessage('c1005');
+                    var conMsgC1006 = TRF.util.getMessage('c1006');
+                    TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_QUESTION, [conMsgC1005, conMsgC1006], [conMsgC1005, conMsgC1006], function(btn) {
+                                if (btn == 'yes') {
+                                    params = {
+                                        'sessionKey' : applicationData.result,
+                                        'uploadProcess' : 'yes',
+                                        'supplierId' : Ext.getCmp(chinaplus.screen.CPKKPS04 + '_ttcSupplierCode').getValue(),
+                                        'revisionCodeSet' : Ext.getCmp(chinaplus.screen.CPKKPS04 + '_revisionReason').getValue(),
+                                        'revisionReason' : CPKKPS04.editRevisionReason(),
+                                        'detailedReason' : Ext.getCmp(chinaplus.screen.CPKKPS04 + '_detailedReason').getValue()
+                                    };
+                                    TRF.util.uploadSubmit(form, backFun, chinaplus.screen.CPKKPS04, url, params);
+                                }
+                            });
+                } else if (applicationData.result.uploadResult == '3') {
+                    var conMsgC1005 = TRF.util.getMessage('c1005');
+                    var conMsgC1010 = TRF.util.getMessage('c1010');
+                    TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_QUESTION, [conMsgC1005, conMsgC1010], [conMsgC1005, conMsgC1010], function(btn) {
+                                if (btn == 'yes') {
+                                    params = {
+                                        'sessionKey' : applicationData.result,
+                                        'uploadProcess' : 'yes',
+                                        'supplierId' : Ext.getCmp(chinaplus.screen.CPKKPS04 + '_ttcSupplierCode').getValue(),
+                                        'revisionCodeSet' : Ext.getCmp(chinaplus.screen.CPKKPS04 + '_revisionReason').getValue(),
+                                        'revisionReason' : CPKKPS04.editRevisionReason(),
+                                        'detailedReason' : Ext.getCmp(chinaplus.screen.CPKKPS04 + '_detailedReason').getValue()
+                                    };
+                                    TRF.util.uploadSubmit(form, backFun, chinaplus.screen.CPKKPS04, url, params);
+                                }
+                            });
+                }
+            }
+        }
+
+        TRF.util.uploadSubmit(form, backFun, chinaplus.screen.CPKKPS04, url, params);
+    }
+}

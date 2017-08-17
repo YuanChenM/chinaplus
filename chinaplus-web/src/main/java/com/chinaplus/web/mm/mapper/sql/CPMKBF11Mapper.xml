@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chinaplus.web.mm.service.CPMKBF11Service">
+
+    <sql id="ConstDef">
+        <bind name="InactiveFlag_ACTIVE" value="@com.chinaplus.common.consts.CodeConst$InactiveFlag@ACTIVE" />
+    </sql>
+    <select id="findAllList" parameterType="com.chinaplus.core.bean.BaseParam" resultType="com.chinaplus.web.mm.entity.CPMKBF01Entity">
+            SELECT 
+                C.OFFICE_CODE || '|' ||  B.CUSTOMER_CODE AS officeAndCusmtor,
+                to_date(A.ORDER_MONTH, 'yyyymm') AS orderMonthDate,
+                C.REGION_CODE AS regionCode,
+                A.ORDER_MONTH AS orderMonth,
+                C.OFFICE_CODE AS officeCode,
+                B.CUSTOMER_CODE AS customerCode,
+                A.FROM_DATE AS fromDate,
+                A.TO_DATE AS toDate
+            FROM
+                TNM_KB_ISSUED_DATE A                                                                
+                INNER 
+                JOIN 
+                    TNM_CUSTOMER B 
+                ON 
+                    A.CUSTOMER_ID=B.CUSTOMER_ID                                                                
+                INNER 
+                JOIN 
+                    TNM_OFFICE C 
+                ON 
+                    C.OFFICE_ID=B.OFFICE_ID
+            WHERE 1 = 1          
+            AND    
+                B.OFFICE_ID 
+            IN
+            <foreach item="officeId" index="officeIdIndex" collection="userOfficeIds" open="(" separator="," close=")">  
+                #{officeId}
+            </foreach>
+            <if test="null != swapData.officeCode and '' != swapData.officeCode">
+                AND C.OFFICE_CODE = #{swapData.officeCode}
+            </if>
+            <if test="null != swapData.customerCode and '' != swapData.customerCode">
+                AND B.CUSTOMER_CODE = #{swapData.customerCode}
+            </if>
+            <if test="null != swapData.orderMonth and '' != swapData.orderMonth">
+                AND A.ORDER_MONTH = #{swapData.orderMonth}
+            </if>
+    </select>
+    
+    <select id="findAllCustmor" parameterType="com.chinaplus.core.bean.BaseParam" resultType="com.chinaplus.web.mm.entity.OfficeAndCustmorEntity">
+            SELECT
+            o.OFFICE_CODE AS officeCode,
+            cus.CUSTOMER_CODE AS customerCode
+            FROM
+            tnm_office o
+            INNER JOIN tnm_customer cus ON cus.OFFICE_ID = o.OFFICE_ID 
+            WHERE
+            o.OFFICE_ID
+            IN
+            <foreach item="officeId" index="officeIdIndex" collection="userOfficeIds" open="(" separator="," close=")">  
+                #{officeId}
+            </foreach>
+    </select>
+    <select id="findUserOfficeCodes" parameterType="com.chinaplus.core.bean.BaseParam" resultType="com.chinaplus.web.mm.entity.UserOfficeCodesEntity">
+            SELECT 
+            o.OFFICE_CODE AS officeCodes
+            FROM
+                tnm_office o
+            WHERE
+            1 = 1          
+            AND    
+                o.OFFICE_ID 
+            IN
+            <foreach item="officeId" index="officeIdIndex" collection="userOfficeIds" open="(" separator="," close=")">  
+                #{officeId}
+            </foreach>
+    </select>
+    <select id="findUserCustmors" parameterType="com.chinaplus.core.bean.BaseParam" resultType="com.chinaplus.web.mm.entity.UserCustmorEntity">
+            <include refid="ConstDef"/>
+            SELECT 
+            c.BUSINESS_PATTERN AS bussinessPattern,
+            c.CUSTOMER_CODE AS custmorCode
+            FROM 
+                tnm_customer c
+            INNER 
+            JOIN 
+                tnm_user_customer uc
+            ON 
+                c.customer_id = uc.customer_id
+            WHERE
+                uc.OFFICE_ID = #{swapData.officeId}
+            AND uc.USER_ID = #{swapData.userId}
+            AND c.INACTIVE_FLAG = #{InactiveFlag_ACTIVE}
+    </select>
+    <select id="findCustomerIdByCode" parameterType="com.chinaplus.core.bean.BaseParam" resultType="com.chinaplus.web.mm.entity.CPMKBF01Entity">
+            SELECT 
+                c.customer_id AS customerId
+            FROM 
+                tnm_customer c 
+            INNER 
+            JOIN 
+                tnm_office o
+            ON
+                c.OFFICE_ID = o.OFFICE_ID
+            WHERE
+                c.CUSTOMER_CODE = #{swapData.customerCode}
+            AND 
+                o.OFFICE_CODE = #{swapData.officeCode}
+    </select>
+    
+    <insert id="addKbData" parameterType="com.chinaplus.core.bean.BaseParam">
+        INSERT 
+        INTO 
+        TNM_KB_ISSUED_DATE (
+            KB_ISSUED_ID,
+            CUSTOMER_ID,
+            ORDER_MONTH,
+            FROM_DATE,
+            TO_DATE,
+            CREATED_BY,
+            UPDATED_BY,
+            CREATED_DATE,
+            UPDATED_DATE,
+            VERSION
+        )
+        VALUES
+        (
+            SEQ_TNM_KB_ISSUED_DATE.nextval,
+            #{swapData.entity.customerId},
+            #{swapData.entity.orderMonth},
+            #{swapData.entity.fromDate},
+            #{swapData.entity.toDate},
+            #{loginUserId},
+            #{loginUserId},
+            #{swapData.entity.createdDate},
+            #{swapData.entity.updatedDate},
+            #{swapData.entity.version}
+        )
+    </insert>
+    
+    <select id="findKbIssuedId" parameterType="com.chinaplus.core.bean.BaseParam" resultType="com.chinaplus.web.mm.entity.CPMKBF01Entity">
+            SELECT 
+                A.KB_ISSUED_ID AS kbIssuedId
+            FROM
+                TNM_KB_ISSUED_DATE A                                                                
+                INNER 
+                JOIN 
+                    TNM_CUSTOMER B 
+                ON 
+                    A.CUSTOMER_ID=B.CUSTOMER_ID                                                                
+                INNER 
+                JOIN 
+                    TNM_OFFICE C 
+                ON 
+                    C.OFFICE_ID=B.OFFICE_ID
+            WHERE 1 = 1          
+            AND    
+                c.OFFICE_CODE = #{swapData.entity.officeCode}
+            AND 
+                B.CUSTOMER_CODE = #{swapData.entity.customerCode}
+            AND
+                A.ORDER_MONTH = #{swapData.entity.orderMonth}
+    </select>
+    
+    <update id="updateKbData" parameterType="com.chinaplus.core.bean.BaseParam">
+        UPDATE 
+            TNM_KB_ISSUED_DATE
+        SET
+            FROM_DATE = #{swapData.entity.fromDate},
+            TO_DATE = #{swapData.entity.toDate},
+            UPDATED_BY = #{loginUserId},
+            UPDATED_DATE = #{swapData.entity.updatedDate},
+            VERSION = VERSION + 1
+        WHERE 
+            KB_ISSUED_ID = #{swapData.entity.kbIssuedId}
+    </update>
+</mapper>

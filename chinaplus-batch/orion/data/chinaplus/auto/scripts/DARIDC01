@@ -1,0 +1,18 @@
+#!/bin/sh
+#Daily batch
+. /orion/data/chinaplus/auto/files/ENV/BASEENV
+
+/orion/data/chinaplus/auto/scripts/DARIDC71 $1 $2
+
+ret=$?
+
+if [ $ret -ne ${RET_OK_AAUTO} ]; then
+	 exit $ret
+fi
+
+#Rundown,StockStatus
+
+/orion/data/chinaplus/auto/scripts/DARIDC81 $3 $1 $2
+
+ret=$?
+exit ${ret} 

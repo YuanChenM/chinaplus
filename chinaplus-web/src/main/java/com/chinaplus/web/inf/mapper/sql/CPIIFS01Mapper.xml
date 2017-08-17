@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.inf.service.CPIIFS01Service">
+
+    <sql id="getDataList">
+        FROM                                    
+        TNT_IF_BATCH  A
+        LEFT JOIN TNM_OFFICE B  ON  A.OFFICE_ID = B.OFFICE_ID  
+    </sql>
+
+    <sql id="whereSql">
+        WHERE 1 = 1
+        <if test="null != filters">
+            <if test="null != filters.officeCode and '' != filters.officeCode">
+                and A.OFFICE_ID = #{filters.officeCode}
+            </if>
+            <if test="null != filters.batchTypeName and filters.batchTypeName.size()>0">
+                and A.BATCH_TYPE IN 
+                <foreach item="item" index="index" collection="filters.batchTypeName" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+            </if>
+            <if test="null != filters.status and filters.status.size()>0">
+                and A.STATUS IN 
+                <foreach item="item" index="index" collection="filters.status" open="(" separator="," close=")">  
+                      #{item}
+                </foreach>
+            </if>
+        </if>
+    </sql>
+
+    <!-- <cache /> -->
+    <select id="findPageListCount" parameterType="com.chinaplus.core.bean.PageParam"
+        resultType="int">
+        SELECT COUNT(0)
+        <include refid="getDataList" />
+    <include refid="whereSql" />
+    </select>
+
+    <!-- <cache /> -->
+    <select id="findPageList" parameterType="com.chinaplus.core.bean.PageParam"
+        resultType="com.chinaplus.web.inf.entity.CPIIFS01Entity">
+        SELECT
+        *
+        FROM (
+        SELECT   
+            B.OFFICE_CODE AS officeCode,                                
+            A.IF_BATCH_ID AS batchId,  
+            A.BATCH_TYPE AS batchType,                                                          
+            A.BATCH_TYPE_NAME AS batchTypeName,                        
+            A.IF_DATE_TIME AS dateTime,                       
+            A.STATUS AS status,                   
+            ROWNUMBER() over(ORDER BY A.IF_BATCH_ID) as rownum
+        <include refid="getDataList" />
+        <include refid="whereSql" />
+        ORDER BY A.IF_BATCH_ID
+        )
+        WHERE
+        <include refid="com.chinaplus.const.pagingCondition" />
+    </select>
+
+</mapper>

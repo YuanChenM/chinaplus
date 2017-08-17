@@ -1,0 +1,64 @@
+/**
+ * Information
+ * 
+ * @screen CPCIFS01
+ * @author zhang_chi
+ */
+CPCIFS01 = {
+    id : chinaplus.screen.CPCIFS01,
+    title : chinaplus.label.CPCIFS01_Label_PageTitle,
+    xtype : 'form',
+    frame : true,
+    // overflowY : 'auto',
+    // minWidth : 600,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    border : false,
+    autoHeight : false,
+    // closable : false,
+    isControl : false,
+    autoScroll : true,
+    items : [{
+                xtype : 'container',
+                minWidth : 600,
+                layout : 'column',
+                margin : '20 20 10 20',
+                items : [{
+                            xtype : 'label',
+                            text : chinaplus.label.CPCIFS01_Label_InterfaceDataTiming,
+                            style : 'font-weight:bold',
+                            margin : '10 0 0 30'
+                        }]
+
+            }, {
+                xtype : 'container',
+                minWidth : 800,
+                layout : 'column',
+                margin : '20 50 10 20',
+                items : [{
+                            margin : '10 10 0 30',
+                            minWidth : 600,
+                            xtype : 'panel',
+                            autoHeight : false,
+                            bodyPadding : '10 10 10 10',
+                            height : 110,
+                            items : [{
+                                        margin : '10 0 0 20',
+                                        xtype : 'label',
+                                        id : chinaplus.label.CPCIFS01 + "_officeCodeDate"
+                                    }]
+                        }]
+            }],
+
+    /**
+     * initialize
+     */
+    initialize : function() {
+        var params = {};
+        var func = function(responseData) {
+            if (null != responseData && null != responseData.result) {
+                Ext.getCmp(chinaplus.label.CPCIFS01 + '_officeCodeDate').setData(responseData.result);
+            }
+        }
+        TRF.util.ajaxSubmit(func, chinaplus.screen.CPCIFS01, 'com/CPCIFS01/loadOfficeSyncTime', params, null);
+    }
+}

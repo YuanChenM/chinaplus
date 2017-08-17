@@ -1,0 +1,551 @@
+<!--
+@screen CPIIFB01
+@author yang_jia1
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.common.service.SsmsCommonService">
+
+    <sql id="ConstDef_Order">
+        <bind name="PARTY_TYPE_OFFICE" value="@com.chinaplus.common.consts.CodeConst$CalendarParty@TTC_IMPORT_OFFICE" />
+    </sql>
+    
+    <update id="modOrderIfValidFlag" parameterType="com.chinaplus.common.entity.IFOrderEntity">
+        UPDATE 
+            TNT_IF_EXP_ORDER C
+        SET 
+            VALID_FLAG = 1
+        WHERE
+        <if test="expPartsIdList == null or expPartsIdList.size() == 0">
+            IF_DATE_TIME = #{ifDateTime,jdbcType=TIMESTAMP}
+        AND 
+        </if>
+            HANDLE_FLAG <![CDATA[<>]]> 1
+        AND
+        EXISTS 
+            (
+        SELECT 
+            * 
+        FROM 
+            TNM_EXP_PARTS P 
+        WHERE 
+            P.EXP_CODE = C.EXP_CODE 
+        AND 
+            P.SSMS_MAIN_ROUTE = C.MAIN_ROUTE 
+        AND 
+            P.EXP_SUPP_CODE = C.SSMS_SUPPLIER_CODE
+        AND 
+            P.TTC_PARTS_NO = C.TTC_PARTS_NO
+        AND 
+            P.SSMS_CUST_CODE = C.SSMS_CUSTOMER_CODE
+        AND 
+            P.PARTS_STATUS = 2
+        <if test="expPartsIdList != null and expPartsIdList.size() > 0">
+        AND
+            P.EXP_PARTS_ID
+            IN
+            <foreach item="param" index="index" collection="expPartsIdList" open="(" separator="," close=")">  
+            #{param}  
+            </foreach>
+        </if>
+            )
+    </update>
+    
+    <select id="getOrderIfList" parameterType="com.chinaplus.common.entity.IFOrderEntity" resultType="com.chinaplus.common.entity.IFOrderEntity">
+        <include refid="ConstDef_Order"/>
+        SELECT
+             DISTINCT(O.IF_ORDER_ID) AS ifOrderId
+           , O.DATA_ID AS dataId
+           , O.EXP_CODE AS expCode
+           , O.MAIN_ROUTE AS mainRoute
+           , O.VENDOR_ROUTE AS vendorRoute
+           , O.IMP_PO_NO AS impPoNo
+           , O.SSMS_SUPPLIER_CODE AS ssmsSupplierCode
+           , O.SO_DATE AS soDate
+           , O.PO_DATE AS poDate
+           , O.TRANSPORT_MODE AS transportModeStr
+           , O.EXP_PO_NO AS expPoNo
+           , O.EXP_PO_ITEM_NO AS expPoItemNo
+           , O.SSMS_CUSTOMER_CODE AS ssmsCustomerCode
+           , O.CUSTOMER_ORDER_NO AS customerOrderNo
+           , O.TTC_PARTS_NO AS ttcPartsNo
+           , O.ORDER_QTY AS orderQty
+           , O.EXP_INB_PLAN_DATE AS expInbPlanDateStr
+           , O.ORDER_TYPE AS orderType
+           , O.IF_DATE_TIME AS ifDateTime
+           , O.VALID_FLAG AS validFlag
+           , O.HANDLE_FLAG AS handleFlag
+           , O.CREATED_BY AS createdBy
+           , O.CREATED_DATE AS createdDate
+           , O.UPDATED_BY AS updatedBy
+           , O.UPDATED_DATE AS updatedDate
+           , O.VERSION AS version
+           , M.CUSTOMER_ID AS customerId
+           , M.OFFICE_ID AS officeId
+           , P.EXP_REGION AS expRegion
+           , P.SUPPLIER_ID AS supplierId
+           , P.EXP_PARTS_ID AS expPartsId
+           , P.ORDER_LOT AS orderLot
+           , M.PARTS_ID AS partsId
+           , P.SPQ AS spq
+           , P.SHIPPING_ROUTE_CODE AS shippingRouteCode
+           , W.WHS_ID AS impWhsId
+           , P.SHIPPING_ROUTE_CODE AS shippingRouteCode
+           , F.IMP_STOCK_FLAG AS impStockFlag
+           , P.AIR_ETD_LEADTIME AS airEtdLt
+           , P.AIR_ETA_LEADTIME AS airEtaLt
+           , P.AIR_INBOUND_LEADTIME AS airInboundLt
+           , P.SEA_ETA_LEADTIME AS seaEtaLt
+           , P.SEA_INBOUND_LEADTIME AS seaInboundLt
+           , P.BUSINESS_PATTERN AS businessPattern
+           , M.ORDER_DAY AS orderDay
+           , CP.CALENDAR_ID calendarId
+        FROM
+           TNT_IF_EXP_ORDER O
+        INNER JOIN 
+           TNM_EXP_PARTS P
+        ON
+           O.EXP_CODE = P.EXP_CODE
+        AND
+           O.MAIN_ROUTE = P.SSMS_MAIN_ROUTE
+        AND
+           O.SSMS_SUPPLIER_CODE = P.EXP_SUPP_CODE
+        AND
+           O.TTC_PARTS_NO = P.TTC_PARTS_NO
+        AND
+           O.SSMS_CUSTOMER_CODE = P.SSMS_CUST_CODE
+        AND
+           P.PARTS_STATUS = 2
+        INNER JOIN
+           TNM_PARTS_MASTER M
+        ON
+           P.PARTS_ID = M.PARTS_ID
+        INNER JOIN
+            TNM_WAREHOUSE W  
+        ON
+            W.WHS_CODE = M.IMP_WHS_CODE
+        INNER JOIN
+            TNM_OFFICE F
+        ON
+            F.OFFICE_ID = M.OFFICE_ID
+        LEFT JOIN
+            TNM_CALENDAR_PARTY CP
+        ON
+            CP.PARTY_TYPE = #{PARTY_TYPE_OFFICE}
+        AND
+            CP.OFFICE_ID = F.OFFICE_ID
+        WHERE
+           O.VALID_FLAG = 1
+        <if test="expPartsIdList == null or expPartsIdList.size() == 0">
+        AND
+           O.IF_DATE_TIME = #{ifDateTime,jdbcType=TIMESTAMP}
+        </if>
+        AND
+           O.HANDLE_FLAG 
+        IN 
+        <foreach item="param" index="index" collection="handleFlagParam" open="(" separator="," close=")">  
+            #{param}  
+        </foreach>
+        <if test="expPartsIdList != null and expPartsIdList.size() > 0">
+        AND 
+            P.EXP_PARTS_ID 
+            IN
+            <foreach item="param" index="index" collection="expPartsIdList" open="(" separator="," close=")">  
+            #{param}  
+            </foreach>
+        </if> 
+        ORDER BY
+             O.IMP_PO_NO
+           , O.CUSTOMER_ORDER_NO
+           , O.IF_ORDER_ID
+    </select>
+    
+    <select id="getMinExpInbPlanDateByOrder" parameterType="com.chinaplus.common.entity.IFOrderEntity" resultType="com.chinaplus.common.entity.IFOrderEntity">
+        <include refid="ConstDef_Order"/>
+        SELECT
+          O.IMP_PO_NO AS impPoNo
+          , O.CUSTOMER_ORDER_NO AS customerOrderNo
+          , M.CUSTOMER_ID AS customerId
+          , min(O.EXP_INB_PLAN_DATE) AS minExpInbPlanDate
+        FROM
+          TNT_IF_EXP_ORDER O
+          INNER JOIN TNM_EXP_PARTS P
+            ON O.EXP_CODE = P.EXP_CODE
+            AND O.MAIN_ROUTE = P.SSMS_MAIN_ROUTE
+            AND O.SSMS_SUPPLIER_CODE = P.EXP_SUPP_CODE
+            AND O.TTC_PARTS_NO = P.TTC_PARTS_NO
+            AND O.SSMS_CUSTOMER_CODE = P.SSMS_CUST_CODE
+          INNER JOIN TNM_PARTS_MASTER M
+            ON P.PARTS_ID = M.PARTS_ID
+        GROUP BY
+          O.IMP_PO_NO
+          , O.CUSTOMER_ORDER_NO
+          , M.CUSTOMER_ID
+    </select>
+    
+    <select id="checkOrderSSMSExist" parameterType="com.chinaplus.common.entity.IFOrderEntity" resultType="com.chinaplus.common.entity.IFOrderEntity">
+        SELECT 
+              ORDER_ID AS orderId
+            , OFFICE_ID AS officeId
+            , EXP_REGION AS expRegion  
+            , IMP_PO_NO AS impPoNo
+            , CUSTOMER_ORDER_NO AS customerOrderNo  
+            , CUSTOMER_ID AS customerId
+            , EXP_SO_DATE AS expSoDate
+            , ORDER_TYPE AS orderType
+        FROM
+            TNT_ORDER
+        WHERE
+            IMP_PO_NO = #{impPoNo,jdbcType=VARCHAR}
+        AND
+            CUSTOMER_ORDER_NO = #{customerOrderNo,jdbcType=VARCHAR}
+        AND
+            CUSTOMER_ID = #{customerId,jdbcType=INTEGER}
+    </select>
+    
+    <select id="checkOrderDetailExist" parameterType="com.chinaplus.common.entity.IFOrderEntity" resultType="com.chinaplus.common.entity.IFOrderEntity">
+        SELECT 
+                ORDER_DETAIL_ID AS orderDetailId   
+              , ORDER_ID AS orderId
+              , EXP_PO_NO AS expPoNo
+              , EXP_PO_DATE AS expPoDate
+              , EXP_PARTS_ID AS expPartsId
+              , PARTS_ID AS partsId
+              , EXP_PO_ITEM_NO AS expPoItemNo
+              , EXP_INB_PLAN_DATE AS impPlanInboundDate
+              , TRANSPORT_MODE AS tansportMode
+              , SPQ AS spq
+              , ORDER_LOT AS orderLot
+              , ORIGINAL_QTY AS originalQty
+              , ORDER_QTY AS orderQty
+              , EXP_REGION AS expRegion
+              , FORCE_COMPLETED_BY AS forceCompletedBy
+        FROM
+            TNT_ORDER_DETAIL
+        WHERE
+            EXP_PO_NO = #{expPoNo,jdbcType=VARCHAR}
+        AND 
+            EXP_PO_ITEM_NO = #{expPoItemNo,jdbcType=VARCHAR}
+        AND
+            STATUS <![CDATA[<>]]> 99
+    </select>
+    
+    <update id="modOrderSSMS" parameterType="com.chinaplus.common.entity.IFOrderEntity">
+        UPDATE 
+            TNT_ORDER
+        SET 
+              OFFICE_ID = #{officeId,jdbcType=INTEGER}
+            , IMP_PO_NO = #{impPoNo,jdbcType=VARCHAR}
+            , CUSTOMER_ORDER_NO = #{customerOrderNo,jdbcType=VARCHAR}
+            , CUSTOMER_ID = #{customerId,jdbcType=INTEGER}
+            , EXP_SO_DATE = #{expSoDate,jdbcType=DATE}
+            , ORDER_TYPE = #{orderType,jdbcType=VARCHAR}
+            , VERSION = VERSION + 1
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+        WHERE
+            IMP_PO_NO = #{impPoNo,jdbcType=VARCHAR}
+        AND 
+            CUSTOMER_ORDER_NO = #{customerOrderNo,jdbcType=VARCHAR}
+        AND
+            CUSTOMER_ID = #{customerId,jdbcType=INTEGER}
+    </update>
+    
+    <insert id="addOrderSSMS" parameterType="com.chinaplus.common.entity.IFOrderEntity">
+        INSERT 
+        INTO 
+        TNT_ORDER (
+              ORDER_ID
+            , OFFICE_ID 
+            , EXP_REGION    
+            , IMP_PO_NO  
+            , CUSTOMER_ORDER_NO    
+            , CUSTOMER_ID
+            , EXP_SO_DATE
+            , ORDER_TYPE
+            , BUSINESS_PATTERN 
+            , CREATED_BY
+            , CREATED_DATE   
+            , UPDATED_BY  
+            , UPDATED_DATE    
+            , VERSION
+        )
+        VALUES
+        (
+            #{orderId,jdbcType=INTEGER},
+            #{officeId,jdbcType=INTEGER},
+            #{expRegion,jdbcType=VARCHAR},
+            #{impPoNo,jdbcType=VARCHAR},
+            #{customerOrderNo,jdbcType=VARCHAR},
+            #{customerId,jdbcType=INTEGER},
+            #{expSoDate,jdbcType=DATE},
+            #{orderType,jdbcType=VARCHAR},
+            #{businessPattern,jdbcType=INTEGER},
+            #{createdBy,jdbcType=INTEGER},
+            #{createdDate,jdbcType=TIMESTAMP},
+            #{updatedBy,jdbcType=INTEGER},
+            #{updatedDate,jdbcType=TIMESTAMP},
+            #{version,jdbcType=INTEGER}
+        )
+    </insert>
+    
+    <update id="modOrderDetail" parameterType="com.chinaplus.common.entity.IFOrderEntity">
+        UPDATE 
+            TNT_ORDER_DETAIL
+        SET 
+              EXP_PO_DATE = #{expPoDate,jdbcType=DATE}
+            , EXP_PARTS_ID = #{expPartsId,jdbcType=INTEGER}  
+            , PARTS_ID = #{partsId,jdbcType=VARCHAR}
+            , EXP_PO_ITEM_NO = #{expPoItemNo,jdbcType=VARCHAR}
+            , EXP_INB_PLAN_DATE = #{expInbPlanDate,jdbcType=DATE}
+            , TRANSPORT_MODE = #{tansportMode,jdbcType=INTEGER}
+            , ORIGINAL_TRANSPORT_MODE = #{originalTransportMode,jdbcType=INTEGER}
+            , SPQ = #{spq,jdbcType=DECIMAL}
+            , ORDER_LOT = #{orderLot,jdbcType=DECIMAL}
+            , ORIGINAL_QTY = #{originalQty,jdbcType=DECIMAL}
+            , ORDER_QTY = #{orderQty,jdbcType=DECIMAL}
+            , STATUS = 1
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+            , VERSION = VERSION + 1
+        WHERE
+            EXP_PO_NO = #{expPoNo,jdbcType=VARCHAR}
+        AND 
+            EXP_PO_ITEM_NO = #{expPoItemNo,jdbcType=VARCHAR}
+        AND 
+            STATUS <![CDATA[<>]]> 99  
+    </update>
+    
+    <insert id="addOrderDetail" parameterType="com.chinaplus.common.entity.IFOrderEntity">
+        INSERT 
+        INTO 
+            TNT_ORDER_DETAIL (
+              ORDER_DETAIL_ID
+            , ORDER_ID
+            , EXP_PO_NO
+            , EXP_PO_DATE
+            , EXP_PARTS_ID
+            , PARTS_ID
+            , EXP_PO_ITEM_NO
+            , EXP_INB_PLAN_DATE
+            , ORIGINAL_TRANSPORT_MODE
+            , TRANSPORT_MODE
+            , SPQ
+            , ORDER_LOT
+            , ORIGINAL_QTY
+            , ORDER_QTY 
+            , STATUS
+            , EXP_REGION
+            , CREATED_BY
+            , CREATED_DATE   
+            , UPDATED_BY  
+            , UPDATED_DATE    
+            , VERSION
+        )
+        VALUES
+        (
+            SEQ_TNT_ORDER_DETAIL.NEXTVAL,
+            #{orderId,jdbcType=INTEGER},
+            #{expPoNo,jdbcType=VARCHAR},
+            #{expPoDate,jdbcType=DATE},
+            #{expPartsId,jdbcType=INTEGER},
+            #{partsId,jdbcType=INTEGER},
+            #{expPoItemNo,jdbcType=VARCHAR},
+            #{expInbPlanDate,jdbcType=DATE},
+            #{originalTransportMode,jdbcType=INTEGER},
+            #{tansportMode,jdbcType=INTEGER},
+            #{spq,jdbcType=DECIMAL},
+            #{orderLot,jdbcType=DECIMAL},
+            #{originalQty,jdbcType=DECIMAL},
+            #{orderQty,jdbcType=DECIMAL},
+            1,
+            #{expRegion,jdbcType=VARCHAR},
+            #{createdBy,jdbcType=INTEGER},
+            #{createdDate,jdbcType=TIMESTAMP},
+            #{updatedBy,jdbcType=INTEGER},
+            #{updatedDate,jdbcType=TIMESTAMP},
+            1
+        )
+    </insert>
+    
+     <select id="checkOrderStatusExist" parameterType="com.chinaplus.common.entity.TnfOrderStatus" resultType="com.chinaplus.common.entity.TnfOrderStatus">
+        SELECT 
+              ORDER_STATUS_ID AS orderStatusId
+            , IMP_PO_NO AS impPoNo
+            , EXP_PO_NO AS expPoNo
+            , CUSTOMER_ORDER_NO AS customerOrderNo
+            , PARTS_ID AS partsId
+            , SUPPLIER_ID AS supplierId
+            , ORDER_QTY AS orderQty
+            , EXP_INBOUND_QTY AS expInboundQty
+            , EXP_OUTBOUND_QTY AS expOutboundQty
+            , EXP_ONSHIPPING_QTY AS expOnshippingQty
+            , SHIPPING_STATUS_FLAG AS shippingStatusFlag
+            , CREATED_BY AS createdBy
+            , CREATED_DATE AS createdDate  
+            , UPDATED_BY AS updatedBy
+            , UPDATED_DATE AS updatedDate
+            , VERSION AS version
+        FROM
+            TNF_ORDER_STATUS 
+        WHERE
+            IMP_PO_NO = #{impPoNo,jdbcType=VARCHAR}
+        AND 
+            EXP_PO_NO = #{expPoNo,jdbcType=VARCHAR}
+        AND
+            CUSTOMER_ORDER_NO = #{customerOrderNo,jdbcType=VARCHAR}  
+        AND
+            PARTS_ID = #{partsId,jdbcType=INTEGER} 
+        AND 
+            SUPPLIER_ID = #{supplierId,jdbcType=INTEGER} 
+    </select>
+    
+    <update id="modOrderStatus" parameterType="com.chinaplus.common.entity.TnfOrderStatus">
+        UPDATE 
+            TNF_ORDER_STATUS
+        SET 
+            <if test="impPoNo != null and impPoNo != ''">
+              IMP_PO_NO = #{impPoNo,jdbcType=VARCHAR}
+            </if>
+            <if test="expPoNo != null and expPoNo != ''">
+            , EXP_PO_NO = #{expPoNo,jdbcType=VARCHAR}
+            </if>
+            <if test="customerOrderNo != null and customerOrderNo != ''">
+            , CUSTOMER_ORDER_NO = #{customerOrderNo,jdbcType=VARCHAR}
+            </if>
+            <if test="partsId != null and partsId != ''">
+            , PARTS_ID = #{partsId,jdbcType=INTEGER}
+            </if>
+            <if test="supplierId != null and supplierId != ''">
+            , SUPPLIER_ID = #{supplierId,jdbcType=INTEGER}
+            </if>
+            <if test="orderQty != null and orderQty != ''">
+            , ORDER_QTY = ORDER_QTY + #{orderQty,jdbcType=DECIMAL}
+            </if>
+            <if test="expInboundQty != null and expInboundQty != ''">
+            , EXP_INBOUND_QTY = EXP_INBOUND_QTY + #{expInboundQty,jdbcType=DECIMAL}
+            </if>
+            <if test="expOutboundQty != null and expOutboundQty != ''">
+            , EXP_OUTBOUND_QTY = EXP_OUTBOUND_QTY + #{expOutboundQty,jdbcType=DECIMAL}
+            </if>
+            <if test="expOnshippingQty != null and expOnshippingQty != ''">
+            , EXP_ONSHIPPING_QTY = EXP_ONSHIPPING_QTY + #{expOnshippingQty,jdbcType=DECIMAL}
+            </if>
+            <if test="shippingStatusFlag !=null and shippingStatusFlag != ''">
+            , SHIPPING_STATUS_FLAG = #{shippingStatusFlag,jdbcType=INTEGER}
+            </if>
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+            , VERSION = VERSION + 1
+        WHERE
+            ORDER_STATUS_ID = #{orderStatusId,jdbcType=INTEGER}
+    </update>
+    
+    <insert id="addOrderStatus" parameterType="com.chinaplus.common.entity.TnfOrderStatus">
+        INSERT 
+        INTO 
+            TNF_ORDER_STATUS (
+              ORDER_STATUS_ID
+            , IMP_PO_NO
+            , EXP_PO_NO
+            , CUSTOMER_ORDER_NO
+            , PARTS_ID
+            , ORDER_MONTH
+            , SUPPLIER_ID
+            , ORDER_QTY
+            , EXP_INBOUND_QTY
+            , EXP_OUTBOUND_QTY
+            , EXP_ONSHIPPING_QTY
+            , IN_RACK_QTY
+            , IMP_STOCK_QTY
+            , IMP_ADJUSTED_QTY
+            , IMP_PREPARE_OB_QTY
+            , IMP_DELIVERED_QTY
+            , IMP_ECI_QTY
+            , IMP_NG_QTY
+            , TRANSFER_OUT_QTY
+            , FORCE_COMPLETED_QTY
+            , SHIPPING_STATUS_FLAG
+            , BUSINESS_PATTERN
+            , CREATED_BY
+            , CREATED_DATE   
+            , UPDATED_BY  
+            , UPDATED_DATE    
+            , VERSION
+        )
+        VALUES
+        (
+            #{orderStatusId,jdbcType=INTEGER},
+            #{impPoNo,jdbcType=VARCHAR},
+            #{expPoNo,jdbcType=VARCHAR},
+            #{customerOrderNo,jdbcType=VARCHAR},
+            #{partsId,jdbcType=INTEGER},
+            #{orderMonth,jdbcType=VARCHAR},
+            #{supplierId,jdbcType=INTEGER},
+            #{orderQty,jdbcType=DECIMAL},
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            #{shippingStatusFlag,jdbcType=INTEGER},
+            #{businessPattern,jdbcType=INTEGER},
+            #{createdBy,jdbcType=INTEGER},
+            #{createdDate,jdbcType=TIMESTAMP},
+            #{updatedBy,jdbcType=INTEGER},
+            #{updatedDate,jdbcType=TIMESTAMP},
+            1
+        )
+    </insert>
+    
+    <update id="modOrderIfHandleFlag" parameterType="com.chinaplus.common.entity.IFOrderEntity">
+        UPDATE 
+            TNT_IF_EXP_ORDER
+        SET 
+              HANDLE_FLAG = #{handleFlag,jdbcType=INTEGER}
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+        WHERE
+            IF_ORDER_ID = #{ifOrderId,jdbcType=INTEGER}
+    </update>
+   
+   <!-- Get send mail object-->
+   <select id="getSendMailObject" resultType="com.chinaplus.common.entity.TnmUser" parameterType="com.chinaplus.core.bean.BaseParam">
+        SELECT
+            USER.USER_NAME AS userName
+            , USER.MAIL_ADDR AS mailAddr
+        FROM
+            TNM_USER USER
+            INNER JOIN TNM_USER_OFFICE_ROLE USER_OFFICE_ROLE ON USER_OFFICE_ROLE.USER_ID = USER.USER_ID
+        WHERE
+            USER_OFFICE_ROLE.OFFICE_ID = #{swapData.officeId}
+        GROUP BY
+            USER.USER_NAME
+            , USER.MAIL_ADDR
+   </select>
+   
+   <select id="getCldDetailList" resultType="com.chinaplus.common.bean.TnmCalendarDetailEx" parameterType="com.chinaplus.common.bean.TnmCalendarDetailEx">
+     SELECT
+       CDL.CALENDAR_YEAR AS calendarYear
+       , CDL.CALENDAR_DATE AS calendarDate
+       , CDL.WORKING_FLAG AS workingFlag
+     FROM
+       TNM_CALENDAR_DETAIL CDL
+       INNER JOIN TNM_CALENDAR_MASTER CDM
+         ON CDM.CALENDAR_ID = CDL.CALENDAR_ID
+     WHERE
+       CDL.CALENDAR_ID = #{calendarId, jdbcType=INTEGER}
+       AND CDL.CALENDAR_DATE <![CDATA[>=]]> #{fromDate, jdbcType=DATE}
+       AND CDL.CALENDAR_DATE <![CDATA[<=]]> #{toDate, jdbcType=DATE}
+   </select>
+    
+</mapper>

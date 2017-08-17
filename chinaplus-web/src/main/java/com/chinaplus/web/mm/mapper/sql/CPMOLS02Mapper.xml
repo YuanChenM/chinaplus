@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.mm.service.CPMOLS02Service">
+
+    <select id="getOfficeById" parameterType="com.chinaplus.core.bean.BaseParam"
+        resultType="com.chinaplus.web.mm.entity.CPMOLS02Entity">
+        SELECT
+            A.OFFICE_ID AS officeId,
+            A.TIME_ZONE AS timeZone,
+            A.OFFICE_CODE AS officeCode,
+            A.OFFICE_NAME AS officeName,
+            A.REGION_CODE AS regionCode,
+            A.IMP_STOCK_FLAG AS impStockFlag,
+            A.SEND_DATA_TIME AS dataDateTime,
+            A.ADDRESS1 AS address1,
+            A.ADDRESS2 AS address2,
+            A.ADDRESS3 AS address3,
+            A.ADDRESS4 AS address4,
+            A.POSTAL_CODE AS postalCode,
+            A.CONTACT1 AS contact1,
+            A.TELEPHONE1 AS telephone1,
+            A.FAX1 AS fax1,
+            A.EMAIL1 AS email1,
+            A.CONTACT2 AS contact2,
+            A.TELEPHONE2 AS telephone2,
+            A.FAX2 AS fax2,
+            A.EMAIL2 AS email2,
+            CASE WHEN A.INACTIVE_FLAG = 1 THEN 'Y' ELSE 'N' END AS inActiveFlag,
+            C.LOGIN_ID AS createdBy,
+            A.CREATED_DATE AS createdDate,
+            D.LOGIN_ID AS updatedBy,
+            A.UPDATED_DATE AS updatedDate,
+            A.VERSION AS version
+        FROM TNM_OFFICE A
+        LEFT JOIN TNM_USER C ON A.CREATED_BY=C.USER_ID
+        LEFT JOIN TNM_USER D ON A.UPDATED_BY=D.USER_ID
+        WHERE 1=1
+        <if test="filters.officeId != null and filters.officeId != ''">
+            AND A.OFFICE_ID=#{filters.officeId}
+        </if>
+        <if test="filters.officeCode != null and filters.officeCode != ''">
+                AND A.OFFICE_CODE=#{filters.officeCode}
+        </if> 
+    </select>
+
+    <select id="getCountInfo" resultType="int"
+        parameterType="com.chinaplus.core.bean.BaseParam">
+        select 
+            COUNT(0) 
+        FROM TNM_OFFICE 
+            WHERE 1=1
+            <if test="filters.officeCode != null and filters.officeCode != ''">
+                AND OFFICE_CODE=#{filters.officeCode}
+            </if>
+            <if test="filters.officeId != null and filters.officeId != ''">
+                AND OFFICE_ID=#{filters.officeId}
+            </if>
+            
+            <if test="filters.version != null and filters.version != ''">
+                AND VERSION=#{filters.version}
+            </if>
+    </select>
+
+    <update id="modifyOffice" parameterType="com.chinaplus.web.mm.entity.CPMOLS02Entity">
+        UPDATE TNM_OFFICE
+            SET
+        ADDRESS1=#{address1},
+        ADDRESS2=#{address2},
+        ADDRESS3=#{address3},
+        ADDRESS4=#{address4},
+        POSTAL_CODE=#{postalCode},
+        CONTACT1=#{contact1},
+        TELEPHONE1=#{telephone1},
+        FAX1=#{fax1},
+        EMAIL1=#{email1},
+        CONTACT2=#{contact2},
+        TELEPHONE2=#{telephone2},
+        FAX2=#{fax2},
+        EMAIL2=#{email2},
+        OFFICE_NAME=#{officeName},
+        REGION_CODE=#{regionCode},
+        TIME_ZONE=#{timeZone},
+        IMP_STOCK_FLAG=#{impStockFlag},
+        UPDATED_BY = #{updatedBy},
+        UPDATED_DATE = #{updatedDate},
+        VERSION = #{version}
+            WHERE OFFICE_ID=#{officeId}
+    </update>
+    
+    <insert id="insertEntity" parameterType="com.chinaplus.web.mm.entity.CPMOLS02Entity">
+        insert into 
+        TNM_OFFICE(
+            OFFICE_ID,
+            OFFICE_CODE,
+            OFFICE_NAME,
+            REGION_CODE,
+            ADDRESS1,
+            ADDRESS2,
+            ADDRESS3,
+            ADDRESS4,
+            POSTAL_CODE,
+            CONTACT1,
+            TELEPHONE1,
+            FAX1,
+            EMAIL1,
+            CONTACT2,
+            TELEPHONE2,
+            FAX2,
+            EMAIL2,
+            TIME_ZONE,
+            INACTIVE_FLAG,
+            CREATED_BY,
+            CREATED_DATE,
+            UPDATED_BY,
+            UPDATED_DATE,
+            VERSION,
+            IMP_STOCK_FLAG
+        )
+        values(
+            SEQ_TNM_OFFICE.nextval,            
+            #{officeCode},
+            #{officeName},
+            #{regionCode},
+            #{address1},
+            #{address2},
+            #{address3},
+            #{address4},
+            #{postalCode},
+            #{contact1},
+            #{telephone1},
+            #{fax1},
+            #{email1},
+            #{contact2},
+            #{telephone2},
+            #{fax2},
+            #{email2},
+            #{timeZone},
+            #{inActiveFlag},
+            #{createdBy},
+            #{createdDate},
+            #{updatedBy},
+            #{updatedDate},
+            #{version},
+            #{impStockFlag}
+        )
+    </insert>
+
+</mapper>
+

@@ -1,0 +1,527 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.batch.migration.service.SameModuleRepairForService">
+
+    <select id="getSameModuleNoList" parameterType="com.chinaplus.batch.migration.bean.SameModuleRepairForEntity" resultType="com.chinaplus.batch.migration.bean.SameModuleRepairForEntity">
+        SELECT DISTINCT
+          A.MODULE_NO AS moduleNo
+        FROM
+          TNT_IP A 
+          INNER JOIN TNM_EXP_PARTS B 
+            ON B.EXP_PARTS_ID = A.EXP_PARTS_ID 
+          INNER JOIN TNT_IF_EXP_INVOICE C 
+            ON C.MODULE_NO = A.MODULE_NO 
+            AND C.INVOICE_NO = A.INVOICE_NO 
+            AND C.MAIN_ROUTE <![CDATA[<>]]> B.SSMS_MAIN_ROUTE
+    </select>
+
+    <select id="getAllInvoiceNoOfSameModule" parameterType="com.chinaplus.batch.migration.bean.SameModuleRepairForEntity" resultType="com.chinaplus.batch.migration.bean.SameModuleRepairForEntity">
+        SELECT
+          DISTINCT A.INVOICE_NO AS invoiceNo
+          , A.TRANSPORT_MODE AS transportMode
+        FROM
+          TNT_IF_EXP_INVOICE A 
+        WHERE
+          A.MODULE_NO 
+        IN
+          <foreach item="moduleNo" index="index" collection="moduleNoList" open="(" separator="," close=")">
+          #{moduleNo}
+          </foreach>
+    </select>
+
+    <select id="getAllInvoiceOfQtyError" parameterType="com.chinaplus.batch.migration.bean.SameModuleRepairForEntity" resultType="com.chinaplus.batch.migration.bean.SameModuleRepairForEntity">
+        SELECT DISTINCT
+          A.INVOICE_NO AS invoiceNo
+          , A.TRANSPORT_MODE AS transportMode
+        FROM
+          TNT_IF_EXP_INVOICE A
+        WHERE
+          A.INVOICE_NO IN (
+            SELECT DISTINCT
+              D.INVOICE_NO
+            FROM
+              (
+                SELECT
+                  M.INVOICE_NO
+                  , M.CONTAINER_NO
+                  , M.MODULE_NO
+                  , NVL(M.ORIGINAL_PARTS_ID, M.PARTS_ID) AS PARTS_ID
+                  , SUM(
+                    CASE
+                      WHEN N.QTY IS NULL
+                      THEN M.QTY
+                      ELSE DECIMAL (N.QTY)
+                      END
+                  ) AS QTY
+                FROM
+                  TNT_IP M
+                  LEFT JOIN TNT_IF_IMP_IP N
+                    ON N.PID_NO = M.PID_NO
+                    AND N.ACTION_TYPE = 3
+                    AND N.HANDLE_FLAG = 1
+                WHERE
+                  (M.STATUS <![CDATA[<]]> 5 OR N.IF_IP_ID IS NOT NULL) 
+                GROUP BY
+                  M.INVOICE_NO
+                  , M.CONTAINER_NO
+                  , M.MODULE_NO
+                  , NVL(M.ORIGINAL_PARTS_ID, M.PARTS_ID)
+              ) B
+              LEFT JOIN TNT_INVOICE_CONTAINER C
+                ON B.MODULE_NO = C.MODULE_NO
+                AND B.PARTS_ID = C.PARTS_ID
+                AND (
+                  B.CONTAINER_NO IS NULL
+                  OR B.CONTAINER_NO = C.CONTAINER_NO
+                )
+              INNER JOIN TNT_INVOICE_SUMMARY D
+                ON D.INVOICE_SUMMARY_ID = C.INVOICE_SUMMARY_ID
+                AND D.INVOICE_NO = B.INVOICE_NO
+                AND D.BUSINESS_PATTERN = 1
+                AND D.OFFICE_ID = #{officeId}
+            WHERE
+              B.QTY <![CDATA[<>]]> C.QTY
+          )
+    </select>
+
+    <select id="getContainerAndPartsNotMatched" parameterType="com.chinaplus.batch.migration.bean.SameModuleRepairForEntity" resultType="com.chinaplus.batch.migration.bean.SameModuleRepairForEntity">
+        SELECT DISTINCT
+          A.INVOICE_NO AS invoiceNo
+          , A.TRANSPORT_MODE AS transportMode
+        FROM
+          TNT_INVOICE_SUMMARY A
+          INNER JOIN TNT_INVOICE B
+            ON B.INVOICE_ID = (
+              SELECT
+                MIN(INVOICE_ID)
+              FROM
+                TNT_INVOICE
+              WHERE
+                INVOICE_SUMMARY_ID = A.INVOICE_SUMMARY_ID
+            )
+          INNER JOIN (
+            SELECT
+              SUM(QTY) AS QTY
+              , INVOICE_SUMMARY_ID
+            FROM
+              TNT_INVOICE_CONTAINER
+            GROUP BY
+              INVOICE_SUMMARY_ID
+          ) C
+            ON C.INVOICE_SUMMARY_ID = A.INVOICE_SUMMARY_ID
+          INNER JOIN (
+            SELECT
+              SUM(ORIGINAL_QTY) AS QTY
+              , INVOICE_ID
+            FROM
+              TNT_INVOICE_PARTS
+            GROUP BY
+              INVOICE_ID
+          ) D
+            ON D.INVOICE_ID = B.INVOICE_ID
+        WHERE
+          A.BUSINESS_PATTERN = 1
+          AND A.OFFICE_ID = #{officeId}
+          AND D.QTY <![CDATA[<>]]> C.QTY
+    </select>
+
+    <select id="getAllErrorIpDataByModuleNo" parameterType="com.chinaplus.batch.migration.bean.SameModuleRepairForEntity" resultType="com.chinaplus.batch.migration.bean.SameModuleRepairForEntity">
+        SELECT
+          A.IP_ID AS ipId
+          , A.MODULE_NO AS moduleNo
+          , P.SSMS_MAIN_ROUTE AS mainRoute
+        FROM
+          TNT_IP A 
+          INNER JOIN TNM_EXP_PARTS P 
+            ON P.EXP_PARTS_ID = A.EXP_PARTS_ID 
+          INNER JOIN TNT_IF_EXP_INVOICE V 
+            ON V.MODULE_NO = A.MODULE_NO 
+            AND V.INVOICE_NO = A.INVOICE_NO 
+        WHERE
+          A.MODULE_NO = #{moduleNo}
+        AND
+          P.SSMS_MAIN_ROUTE <![CDATA[<>]]> V.MAIN_ROUTE 
+        ORDER BY
+          A.MODULE_NO
+    </select>
+    
+    <select id="getInvoiceNo" parameterType="com.chinaplus.batch.migration.bean.SameModuleRepairForEntity" resultType="com.chinaplus.batch.migration.bean.SameModuleRepairForEntity">
+        SELECT DISTINCT
+          A.INVOICE_NO AS invoiceNo
+          , A.MODULE_NO AS moduleNo
+          , A.MAIN_ROUTE AS mainRoute
+        FROM
+          TNT_IF_EXP_INVOICE A 
+        WHERE
+          A.MODULE_NO = #{moduleNo}
+          AND A.MAIN_ROUTE = #{mainRoute}
+        FETCH FIRST 1 ROWS ONLY
+    </select>
+    
+    <update id="updateIpInvoiceNo" parameterType="com.chinaplus.batch.migration.bean.SameModuleRepairForEntity">
+        UPDATE 
+            TNT_IP
+        SET 
+            INVOICE_NO = #{invoiceNo}
+          , UPDATED_DATE = CURRENT TIMESTAMP
+          , VERSION = VERSION + 1
+        WHERE
+            IP_ID = #{ipId}
+    </update>
+    
+    <update id="updateIfInvoiceNoFlag" parameterType="com.chinaplus.batch.migration.bean.SameModuleRepairForEntity">
+        UPDATE
+            TNT_IF_EXP_INVOICE 
+        SET
+          VALID_FLAG = 1
+          , HANDLE_FLAG = 1
+          , UPDATED_DATE = CURRENT TIMESTAMP
+        WHERE
+          MODULE_NO IN 
+          <foreach item="moduleNo" index="index" collection="moduleNoList" open="(" separator="," close=")">
+          #{moduleNo}
+          </foreach>
+        AND
+          INVOICE_NO IN 
+          <foreach item="invoiceNo" index="index" collection="invoiceNoList" open="(" separator="," close=")">
+          #{invoiceNo}
+          </foreach>
+        AND
+          HANDLE_FLAG = 0
+    </update>
+    
+    <select id="checkInvoiceSummaryExist" parameterType="com.chinaplus.common.entity.TntInvoiceSummary" resultType="com.chinaplus.common.entity.TntInvoiceSummary">
+        SELECT 
+          INVOICE_SUMMARY_ID AS invoiceSummaryId
+          , UPLOAD_ID AS uploadId
+          , INVOICE_STATUS AS invoiceStatus
+          , INVOICE_NO AS invoiceNo
+          , INVOICE_QTY AS invoiceQty
+        FROM
+          TNT_INVOICE_SUMMARY 
+        WHERE
+          INVOICE_NO = #{invoiceNo}
+        FETCH FIRST 1 ROWS ONLY
+    </select>
+    
+    <!--
+    <select id="getInvoiceSummaryQty" parameterType="com.chinaplus.common.entity.TntInvoiceSummary" resultType="com.chinaplus.common.entity.TntInvoiceSummary">
+        SELECT
+          SUM(A.QTY) AS invoiceQty
+        FROM
+          TNT_IP A 
+        WHERE
+          A.INVOICE_NO = #{invoiceNo}
+        FETCH FIRST 1 ROWS ONLY
+    </select>
+    -->
+    
+    <!--
+    <select id="getInvoiceContainerQty" parameterType="com.chinaplus.common.entity.TntInvoiceSummary" resultType="com.chinaplus.common.entity.TntInvoiceContainer">
+        SELECT
+          A.CONTAINER_NO AS containerNo
+          , A.MODULE_NO AS moduleNo
+          , A.PARTS_ID AS partsId
+          , SUM(A.QTY) AS qty
+        FROM
+          TNT_IP A 
+        WHERE
+          A.INVOICE_NO = #{invoiceNo}
+        GROUP BY
+          A.MODULE_NO
+          , A.CONTAINER_NO
+          , A.PARTS_ID 
+        ORDER BY
+          A.CONTAINER_NO
+          , A.MODULE_NO
+          , A.PARTS_ID
+    </select>
+    -->
+    
+    <select id="getInvoiceContainerQty" parameterType="com.chinaplus.batch.migration.bean.SameModuleRepairForEntity" resultType="com.chinaplus.batch.migration.bean.SameModuleRepairForEntity">
+        SELECT
+          A.INVOICE_NO AS invoiceNo
+          , A.CONTAINER_NO AS containerNo
+          , A.MODULE_NO AS moduleNo
+          , NVL(A.ORIGINAL_PARTS_ID, A.PARTS_ID) AS partsId
+          , SUM(
+            CASE
+              WHEN B.QTY IS NULL
+              THEN A.QTY
+              ELSE DECIMAL (B.QTY)
+              END
+          ) AS qty
+        FROM
+          TNT_IP A
+          LEFT JOIN TNT_IF_IMP_IP B
+            ON B.PID_NO = A.PID_NO
+            AND B.ACTION_TYPE = 3
+            AND B.HANDLE_FLAG = 1
+        WHERE
+          A.INVOICE_NO IN
+          <foreach item="invoiceNo" index="index" collection="invoiceNoList" open="(" separator="," close=")">
+          #{invoiceNo}
+          </foreach>
+        AND
+          (A.STATUS <![CDATA[<]]> 5 OR B.IF_IP_ID IS NOT NULL) 
+        GROUP BY
+          A.INVOICE_NO
+          , A.CONTAINER_NO
+          , A.MODULE_NO
+          , NVL(A.ORIGINAL_PARTS_ID, A.PARTS_ID)
+    </select>
+    
+    <!--
+    <select id="getInvoicePartsQty" parameterType="com.chinaplus.common.entity.TntInvoiceSummary" resultType="com.chinaplus.common.entity.TntInvoicePart">
+        SELECT
+          A.PARTS_ID AS partsId
+          , A.SUPPLIER_ID AS supplierId
+          , A.IMP_PO_NO AS impPoNo
+          , A.CUSTOMER_ORDER_NO AS customerOrderNo
+          , A.EXP_PO_NO AS expPoNo
+          , SUM(A.QTY) AS qty
+        FROM
+          TNT_IP A 
+        WHERE
+          A.INVOICE_NO = #{invoiceNo}
+        GROUP BY
+          A.INVOICE_NO
+          , A.PARTS_ID
+          , A.SUPPLIER_ID
+          , A.IMP_PO_NO
+          , A.CUSTOMER_ORDER_NO
+          , A.EXP_PO_NO 
+        ORDER BY
+          A.PARTS_ID
+          , A.SUPPLIER_ID
+    </select>
+    -->
+    
+    <select id="getInvoicePartsQty" parameterType="com.chinaplus.batch.migration.bean.SameModuleRepairForEntity" resultType="com.chinaplus.batch.migration.bean.SameModuleRepairForEntity">
+        SELECT
+          A.INVOICE_NO AS invoiceNo
+          , NVL(A.ORIGINAL_PARTS_ID, A.PARTS_ID) AS partsId
+          , A.SUPPLIER_ID AS supplierId
+          , A.IMP_PO_NO AS impPoNo
+          , A.CUSTOMER_ORDER_NO AS customerOrderNo
+          , A.EXP_PO_NO AS expPoNo
+          , SUM(
+            CASE
+              WHEN B.QTY IS NULL
+              THEN A.QTY
+              ELSE DECIMAL (B.QTY)
+              END
+          ) AS qty
+        FROM
+          TNT_IP A
+          LEFT JOIN TNT_IF_IMP_IP B
+            ON B.PID_NO = A.PID_NO
+            AND B.ACTION_TYPE = 3
+            AND B.HANDLE_FLAG = 1
+        WHERE
+          A.INVOICE_NO IN
+          <foreach item="invoiceNo" index="index" collection="invoiceNoList" open="(" separator="," close=")">
+          #{invoiceNo}
+          </foreach>
+        AND
+          (A.STATUS <![CDATA[<]]> 5 OR B.IF_IP_ID IS NOT NULL) 
+        GROUP BY
+          A.INVOICE_NO
+          , NVL(A.ORIGINAL_PARTS_ID, A.PARTS_ID)
+          , A.SUPPLIER_ID
+          , A.IMP_PO_NO
+          , A.CUSTOMER_ORDER_NO
+          , A.EXP_PO_NO
+    </select>
+    
+    <select id="getAllInvoiceId" parameterType="com.chinaplus.common.entity.TntInvoiceSummary" resultType="com.chinaplus.common.entity.TntInvoice">
+        SELECT
+          A.INVOICE_ID AS invoiceId
+          , A.INVOICE_NO AS invoiceNo
+        FROM
+          TNT_INVOICE A 
+        WHERE
+          A.INVOICE_NO = #{invoiceNo}
+        ORDER BY
+          A.INVOICE_ID
+    </select>
+    
+    <update id="updateInvoiceSummary" parameterType="com.chinaplus.common.entity.TntInvoiceSummary">
+        UPDATE 
+            TNT_INVOICE_SUMMARY
+        SET 
+            INVOICE_QTY = #{invoiceQty}
+            , INVOICE_STATUS = 2
+            , UPDATED_BY = #{updatedBy}
+            , UPDATED_DATE = CURRENT TIMESTAMP
+            , VERSION = VERSION + 1
+        WHERE
+            INVOICE_SUMMARY_ID = #{invoiceSummaryId}
+    </update>
+    
+    <select id="checkInvoiceContainerExist" parameterType="com.chinaplus.batch.migration.bean.SameModuleRepairForEntity" resultType="com.chinaplus.batch.migration.bean.SameModuleRepairForEntity">
+        SELECT
+          A.INVOICE_CONTAINER_ID AS invoiceContainerId
+          , A.DEVANNED_DATE AS devannedDate
+        FROM
+          TNT_INVOICE_CONTAINER A 
+        WHERE
+          A.INVOICE_SUMMARY_ID = #{invoiceSummaryId} 
+          <!--
+          <if test="containerNo != null">
+          AND A.CONTAINER_NO = #{containerNo}
+          </if>
+          -->
+          AND A.MODULE_NO = #{moduleNo}
+          AND A.PARTS_ID = #{partsId}
+    </select>
+    
+    <delete id="deleteTntInvoiceContainer" parameterType="com.chinaplus.batch.migration.bean.SameModuleRepairForEntity">
+        DELETE
+        FROM
+          TNT_INVOICE_CONTAINER A 
+        WHERE
+          A.INVOICE_SUMMARY_ID = #{invoiceSummaryId} 
+          <!--
+          <if test="containerNo != null">
+          AND A.CONTAINER_NO = #{containerNo}
+          </if>
+          -->
+          AND A.MODULE_NO = #{moduleNo}
+          AND A.PARTS_ID = #{partsId}
+    </delete>
+    
+    <insert id="insertTntInvoiceContainer" parameterType="com.chinaplus.batch.migration.bean.SameModuleRepairForEntity">
+        INSERT 
+        INTO 
+        TNT_INVOICE_CONTAINER (
+              INVOICE_CONTAINER_ID
+            , INVOICE_SUMMARY_ID
+            , CONTAINER_NO
+            , SEAL_NO
+            , MODULE_NO
+            , QTY
+            , PARTS_ID
+            , STATUS
+            , CREATED_BY
+            , CREATED_DATE
+            , UPDATED_BY
+            , UPDATED_DATE
+            , VERSION
+        )
+        VALUES
+        (
+            SEQ_TNT_INVOICE_CONTAINER.NEXTVAL,
+            #{invoiceSummaryId},
+            #{containerNo,jdbcType=VARCHAR},
+            #{sealNo,jdbcType=VARCHAR},
+            #{moduleNo,jdbcType=VARCHAR},
+            #{qty,jdbcType=DECIMAL},
+            #{partsId,jdbcType=INTEGER},
+            #{status,jdbcType=INTEGER},
+            #{createdBy},
+            CURRENT TIMESTAMP,
+            #{updatedBy},
+            CURRENT TIMESTAMP,
+            1
+        )
+    </insert>
+    
+    <update id="updateTntInvoiceContainer" parameterType="com.chinaplus.batch.migration.bean.SameModuleRepairForEntity">
+        UPDATE 
+            TNT_INVOICE_CONTAINER
+        SET 
+            QTY = #{qty}
+            <if test="containerNo != null">
+            , CONTAINER_NO = #{containerNo}
+            </if>
+            , UPDATED_BY = #{updatedBy}
+            , UPDATED_DATE = CURRENT TIMESTAMP
+            , VERSION = VERSION + 1
+        WHERE
+          INVOICE_SUMMARY_ID = #{invoiceSummaryId} 
+          <if test="containerNo != null">
+          AND (CONTAINER_NO = #{containerNo} OR CONTAINER_NO IS NULL)
+          </if>
+          AND MODULE_NO = #{moduleNo}
+          AND PARTS_ID = #{partsId}
+    </update>
+     
+    <select id="checkInvoicePartsExists" parameterType="com.chinaplus.batch.migration.bean.SameModuleRepairForEntity" resultType="com.chinaplus.batch.migration.bean.SameModuleRepairForEntity">
+    
+        SELECT
+          IVP.INVOICE_DETAIL_ID AS invoiceDetailId
+        FROM
+          TNT_INVOICE_PARTS IVP
+        WHERE
+          IVP.INVOICE_ID = #{invoiceId}
+          AND IVP.PARTS_ID = #{partsId}
+          AND IVP.SUPPLIER_ID = #{supplierId}
+          AND IVP.IMP_PO_NO = #{impPoNo}
+          AND IVP.CUSTOMER_ORDER_NO = #{customerOrderNo}
+          AND IVP.EXP_PO_NO = #{expPoNo}
+        FETCH FIRST 1 ROWS ONLY
+  
+    </select>
+    
+    <insert id="insertTntInvoiceParts" parameterType="com.chinaplus.batch.migration.bean.SameModuleRepairForEntity">
+        INSERT 
+        INTO 
+        TNT_INVOICE_PARTS (
+              INVOICE_DETAIL_ID
+            , INVOICE_ID
+            , PARTS_ID
+            , SUPPLIER_ID
+            , IMP_PO_NO
+            , EXP_PO_NO
+            , CUSTOMER_ORDER_NO
+            , ORIGINAL_QTY
+            , QTY 
+            , CREATED_BY
+            , CREATED_DATE
+            , UPDATED_BY
+            , UPDATED_DATE
+            , VERSION
+        )
+        VALUES
+        (
+            SEQ_TNT_INVOICE_PARTS.NEXTVAL,
+            #{invoiceId,jdbcType=INTEGER},
+            #{partsId,jdbcType=INTEGER},
+            #{supplierId,jdbcType=INTEGER},
+            #{impPoNo,jdbcType=VARCHAR},
+            #{expPoNo,jdbcType=VARCHAR},
+            #{customerOrderNo,jdbcType=VARCHAR},
+            #{originalQty,jdbcType=DECIMAL},
+            #{qty,jdbcType=DECIMAL},
+            #{createdBy},
+            CURRENT TIMESTAMP,
+            #{updatedBy},
+            CURRENT TIMESTAMP,
+            1
+        )
+    </insert>
+    
+    <update id="updateTntInvoiceParts" parameterType="com.chinaplus.batch.migration.bean.SameModuleRepairForEntity">
+    
+        UPDATE 
+            TNT_INVOICE_PARTS
+        SET 
+              ORIGINAL_QTY = #{originalQty}
+            , QTY = #{qty}
+            , UPDATED_DATE = CURRENT TIMESTAMP
+            , UPDATED_BY = #{updatedBy}
+            , VERSION = VERSION + 1
+        WHERE
+          INVOICE_ID = #{invoiceId}
+          AND PARTS_ID = #{partsId}
+          AND SUPPLIER_ID = #{supplierId}
+          AND IMP_PO_NO = #{impPoNo}
+          AND CUSTOMER_ORDER_NO = #{customerOrderNo}
+          AND EXP_PO_NO = #{expPoNo}
+          
+    </update>
+    
+</mapper>

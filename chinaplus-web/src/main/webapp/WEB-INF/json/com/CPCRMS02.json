@@ -1,0 +1,381 @@
+/**
+ * @screen CPCRMS02(Role Detail Info Screen)
+ * @author shi_yuxi
+ */
+CPCRMS02 = {
+	id : chinaplus.screen.CPCRMS02,
+	title : chinaplus.label.CPCRMS02_Label_PageTitle,
+	xtype : 'form',
+	style : 'border-width:0 0 0 0;',
+	frame : true,
+	buttonAlign : 'left',
+	autoHeight : true,
+	autoScroll : true,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+	fieldDefaults : {
+	    margin : 2,
+	    labelSeparator : '',    
+		labelAlign : 'right',
+		labelWidth : 150
+	},
+	items : [
+	       {
+                xtype : 'textfield',
+                hidden : true,
+                id : chinaplus.screen.CPCRMS02 + '_roleId',
+                name : 'roleId'
+           },
+	       {
+                xtype : 'textfield',
+                hidden : true,
+                id : chinaplus.screen.CPCRMS02 + '_version',
+                name : 'version'
+           },
+	       {	            
+                margin : '10 0 0 0',
+                xtype : 'textfield',
+                maxLength : 50,
+                msgTarget : 'side',
+                enforceMaxLength : true,
+                fieldLabel : chinaplus.label.CPCRMS02_Label_RoleName,
+                width : 600,
+                autoFitErrors: false,
+                fieldStyle : 'background:rgb(255,255,153)',
+                id : chinaplus.screen.CPCRMS02 + '_roleName',
+                name : 'roleName',
+                style : 'width:50%;',
+                listeners : {
+                    afterrender : function(o) {
+                        if (TRF.util.isDetailTabMode_View()) {
+                            TRF.util.makeCmpReadOnly(o);
+                        }
+                    }
+                }
+            },
+            {
+                margin : '10 0 0 0',
+                xtype : 'textareafield',
+                maxLength : 200,
+                enforceMaxLength : true,
+                width : 582,
+                fieldLabel : chinaplus.label.CPCRMS02_Label_RoleNotes,
+                id : chinaplus.screen.CPCRMS02 + '_roleNotes',
+                name : 'roleNotes',
+                style : 'width:50%;',
+                listeners : {
+                    afterrender : function(o) {
+                        if (TRF.util.isDetailTabMode_View()) {
+                            TRF.util.makeCmpReadOnly(o);
+                        }
+                    }
+                }
+            },
+			{
+			    margin : '10 0 0 20',
+				xtype : 'container',
+				layout : 'column',
+				//autoScroll : true,
+				autoHeight : true,
+				style : 'text-align:left;',
+				items : [
+						{
+							columnWidth : 0.035,
+							xtype : 'label',
+							html : '&#160;'
+						},
+						{
+							columnWidth : 0.375,
+							xtype : 'container',
+							items : [ {
+								id : chinaplus.screen.CPCRMS02 + '_ccrGrid',
+								xtype : 'grid',
+								//autoScroll : true,
+								//height : 540,
+								width : 761,
+								border : true,
+								closable : false,
+								collapsible : true,
+								enableColumnHide : false,
+								enableColumnMove : false,
+								enableColumnResize : false,
+								qtip : true,
+								header : false,
+								columnLines : true,
+								viewConfig : {
+									loadMask : false
+								},
+								columns : [ {
+									xtype : 'gridcolumn',
+									header : '<div style="text-align:center;" class="x-grid-title">' + chinaplus.label.CPCRMS02_Grid_ScreenName + '</div>',
+									align : 'left',
+									dataIndex : 'resourceId',
+									renderer : function(value){
+									    return TRF.util.getLabel(value);
+									},
+									sortable : false,
+									width: 280
+								}, {
+								    xtype : 'gridcolumn',
+									header : chinaplus.label.CPCRMS02_Grid_Non,
+									align : 'center',
+									width : 80,
+                                    sortable : false,
+									renderer : function(value, meta, record, rIndex, cIndex, store, view){
+									    var chkFlg = '';
+                                        var disFlg = TRF.util.isDetailTabMode_View() ? ' disabled ' : '';
+									    // accessLevel
+                                        var level = record.get('accessLevel');
+                                        if(chinaplus.consts.code.AccessLevel.NONE*1 == level*1){
+                                            chkFlg = 'checked=true';
+                                        } 
+                                        return '<input type="radio" value="'+ chinaplus.consts.code.AccessLevel.NONE + '" id="'+record.get('resourceId')+'_Non" name="' + record.get('resourceId')+'" ' + chkFlg + disFlg  + '/>';
+                                    }
+								}, {
+									xtype : 'gridcolumn',
+									header : chinaplus.label.CPCRMS02_Grid_Low,
+									align : 'center',
+									width : 80,
+									sortable : false,
+                                    renderer : function(value, meta, record, rIndex, cIndex, store, view){
+                                        var chkFlg = '';
+                                        var disFlg = TRF.util.isDetailTabMode_View() ? ' disabled ' : '';
+                                        var minLevel = record.get('minSelectedLevel');
+                                        if(chinaplus.consts.code.AccessLevel.LOW < minLevel*1) {
+                                            disFlg = ' disabled ';
+                                        }
+                                        // accessLevel
+                                        var level = record.get('accessLevel');
+                                        if(chinaplus.consts.code.AccessLevel.LOW == level*1){
+                                            chkFlg = 'checked=true';
+                                        }
+                                        return '<input type="radio" value="'+ chinaplus.consts.code.AccessLevel.LOW + '" id="'+record.get('resourceId')+'_Low" name="'+record.get('resourceId')+'" ' + chkFlg + disFlg + '/>';
+                                    }
+								}, {
+                                    xtype : 'gridcolumn',
+                                    header : chinaplus.label.CPCRMS02_Grid_Med1,
+                                    align : 'center',
+                                    width : 80,
+                                    sortable : false,
+                                    renderer : function(value, meta, record, rIndex, cIndex, store, view){
+                                        var chkFlg = '';
+                                        var disFlg = TRF.util.isDetailTabMode_View() ? ' disabled ' : '';
+                                        var minLevel = record.get('minSelectedLevel');
+                                        if(chinaplus.consts.code.AccessLevel.MED1 < minLevel*1) {
+                                            disFlg = ' disabled ';
+                                        }
+                                        // accessLevel
+                                        var level = record.get('accessLevel');
+                                        if(chinaplus.consts.code.AccessLevel.MED1 == level*1){
+                                            chkFlg = 'checked=true';
+                                        }
+                                        return '<input type="radio" value="'+ chinaplus.consts.code.AccessLevel.MED1 + '" id="'+record.get('resourceId')+'_Med1" name="'+record.get('resourceId')+'" ' + chkFlg + disFlg  + '/>';
+                                    }
+                                },{
+                                    xtype : 'gridcolumn',
+                                    header : chinaplus.label.CPCRMS02_Grid_Med2,
+                                    align : 'center',
+                                    width : 80,
+                                    sortable : false,
+                                    renderer : function(value, meta, record, rIndex, cIndex, store, view){
+                                        var chkFlg = '';
+                                        var disFlg = TRF.util.isDetailTabMode_View() ? ' disabled ' : '';
+                                        var minLevel = record.get('minSelectedLevel');
+                                        if(chinaplus.consts.code.AccessLevel.MED2 < minLevel*1) {
+                                            disFlg = ' disabled ';
+                                        }
+                                        // accessLevel
+                                        var level = record.get('accessLevel');
+                                        if(chinaplus.consts.code.AccessLevel.MED2 == level*1){
+                                            chkFlg = 'checked=true';
+                                        }
+                                        return '<input type="radio" value="'+ chinaplus.consts.code.AccessLevel.MED2 + '" id="'+record.get('resourceId')+'_Med2" name="'+record.get('resourceId')+'" ' + chkFlg + disFlg  + '/>';
+                                    }
+                                }, {
+                                    xtype : 'gridcolumn',
+                                    header : chinaplus.label.CPCRMS02_Grid_High,
+                                    align : 'center',
+                                    width : 80,
+                                    sortable : false,
+                                    renderer : function(value, meta, record, rIndex, cIndex, store, view){
+                                        var chkFlg = '';
+                                        var disFlg = TRF.util.isDetailTabMode_View() ? ' disabled ' : '';
+                                        var minLevel = record.get('minSelectedLevel');
+                                        if(chinaplus.consts.code.AccessLevel.HIGH < minLevel*1) {
+                                            disFlg = ' disabled ';
+                                        }
+                                        // accessLevel
+                                        var level = record.get('accessLevel');
+                                        if(chinaplus.consts.code.AccessLevel.HIGH == level*1){
+                                            chkFlg = 'checked=true';
+                                        }
+                                        return '<input type="radio" value="'+ chinaplus.consts.code.AccessLevel.HIGH + '" id="'+record.get('resourceId')+'_High" name="'+record.get('resourceId')+'" ' + chkFlg + disFlg  + '/>';
+                                    }
+                                 }, {
+                                     xtype : 'gridcolumn',
+                                     header : chinaplus.label.CPCRMS02_Grid_Main,
+                                     align : 'center',
+                                     width : 80,
+                                     sortable : false,
+                                     renderer : function(value, meta, record, rIndex, cIndex, store, view){
+                                        var chkFlg = '';
+                                        var disFlg = TRF.util.isDetailTabMode_View() ? ' disabled ' : '';
+                                        // accessLevel
+                                        var level = record.get('accessLevel');
+                                        if(chinaplus.consts.code.AccessLevel.MAIN == level*1){
+                                            chkFlg = 'checked=true';
+                                        }
+                                        return '<input type="radio" value="'+ chinaplus.consts.code.AccessLevel.MAIN + '" id="'+record.get('resourceId')+'_Main" name="'+record.get('resourceId')+'" ' + chkFlg + disFlg + '/>';
+                                    }
+                                } ],
+								store : TRF.util.createStore(chinaplus.screen.CPCRMS02,'manage/CPCRMS02/getRoleDetail', 'Role', chinaplus.screen.CPCRMS02 + '_RoleStore', {})
+							} ]
+						} ]
+			} ],
+	tbar : [ {
+		text : chinaplus.label.CPCRMS02_Button_Modify,
+		iconCls : 'btn-modify',
+        id : chinaplus.screen.CPCRMS02 + "_btnModify",
+        hidden : TRF.util.isDetailTabMode_View() ? false : true,
+		handler : function() {
+		    CPCRMS02.modifyFunc();		
+		}
+	}, {
+		text : chinaplus.label.CPCRMS02_Button_Save,
+		iconCls : 'btn-save',
+		id : chinaplus.screen.CPCRMS02 + "_btnSave",
+		hidden : TRF.util.isDetailTabMode_View() ? true : false,
+		handler : function() {
+			CPCRMS02.saveFunc();
+		}
+	}, {
+		text : chinaplus.label.CPCRMS02_Button_Reset,
+		iconCls : 'btn-check',
+		id : chinaplus.screen.CPCRMS02 + "_btnReset",
+		hidden : TRF.util.isDetailTabMode_View() ? true : false,
+		handler : function() {
+			CPCRMS02.resetFunc();
+		}
+	} ],	
+	
+	needConfirmChange : !TRF.util.isDetailTabMode_View(),	
+	
+	/**
+	 * The initialize function.
+	 * 
+	 * @param params  the parameter object passed to this screen.
+	 */
+	initialize : function(roleId) {
+	
+	   var me = this;
+	
+	   TRF.util.dataLoadStart(chinaplus.screen.CPCRMS02);
+
+	   var grid = Ext.getCmp(chinaplus.screen.CPCRMS02 + '_ccrGrid');
+
+       // If action is Create New
+       var param = roleId == null ? {} : {roleId : roleId};
+       if(roleId != null && roleId != "") {
+            TRF.util.detailSubmit(function(){}, me, 'manage/CPCRMS02/getRoleInfo', param);
+       }
+       
+       TRF.util.loadStore(grid.store, param, function() {
+           TRF.util.dataLoadEnd(chinaplus.screen.CPCRMS02);
+       });
+
+       this.doLayout();
+       TRF.util.addFieldTipToPanel(this);
+       TRF.util.addGridTip(grid);
+	},
+	/**
+     * save
+     */
+    saveFunc : function() {
+      
+        var popMsg = TRF.util.getMessage('w1003');
+        var lsMsgs = [];
+
+        // get all datas     
+        var detailInfo = TRF.util.getDetailInfo(Ext.getCmp(chinaplus.screen.CPCRMS02));
+
+        // get roleName
+        var roleName = detailInfo['roleName'];
+        // get roleNotes
+        var roleNotes = detailInfo['roleNotes'];
+       
+        // If roleName is blank
+        if (null == roleName || "" == roleName) {
+            Ext.Array.push(lsMsgs,TRF.util.getMessage('w1003_001', 'CPCRMS02_Label_RoleName'));
+        }
+        
+        // If roleName is over length
+        if (roleName.length > 50) {
+            Ext.Array.push(lsMsgs, TRF.util.getMessage('w1003_004', ['CPCRMS02_Label_RoleName',50]));
+        }
+        // If roleNotes is over length
+        if (roleNotes.length > 200) {
+            Ext.Array.push(lsMsgs, TRF.util.getMessage('w1003_004', ['CPCRMS02_Label_RoleNotes',200]));
+        }
+        
+        // if has check error
+        if(!Ext.isEmpty(lsMsgs)){
+            //Ext.Array.push(lsMsgs,popMsg);
+            TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, popMsg, lsMsgs);
+            return;
+        }
+
+        // get access level
+        var store = Ext.getCmp(chinaplus.screen.CPCRMS02 + '_ccrGrid').store;
+        var record = store.data;
+        var accesLevellst = []
+        // combine access level
+        for (var i = 0; i < record.length; ++i) {
+            var id = record.getAt(i).get('resourceId');
+            var sysId = record.getAt(i).get('sysResourceId');
+            var level = '0';
+            var search = 'input[name="' + id + '"]';
+            Ext.each(Ext.query(search), function(obj) {
+                if(obj.checked) {
+                    level = obj.value;
+                }
+            });
+            
+            accesLevellst.push({sysResourceId: sysId, resourceId : id, accessLevel: level });
+		}
+		
+		// add into params
+        detailInfo['roleResource'] = accesLevellst;
+        
+        // callAjax to do insert or update
+        var backFun = function(responseData) {
+            if(responseData.success){
+            
+                // show message
+                var message = TRF.util.getMessage('i1002');
+                TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_INFO, message, [message]);
+                
+                // reflesh
+                TRF.util.setDetailTabMode_View();
+                Ext.getCmp(chinaplus.screen.CPCRMS02).isEdited = false;
+                TRF.util.addApplication(chinaplus.screen.CPCRMS02, chinaplus.screen.CPCRMS02, true, responseData.result);
+            }
+        };
+
+        // submit
+        TRF.util.ajaxSubmit(backFun, chinaplus.screen.CPCRMS02, 'manage/CPCRMS02/updateDetail', null, {data: detailInfo});
+     },
+    /**
+     * modify
+     */
+    modifyFunc : function() {
+        TRF.util.setDetailTabMode_Edit();
+        TRF.util.addApplication(chinaplus.screen.CPCRMS02, chinaplus.screen.CPCRMS02, true, Ext.getCmp(chinaplus.screen.CPCRMS02 + '_roleId').getRawValue());
+    },
+    /**
+     * reset
+     */
+    resetFunc : function() {
+        
+        TRF.util.addApplication(chinaplus.screen.CPCRMS02, chinaplus.screen.CPCRMS02, true, Ext.getCmp(chinaplus.screen.CPCRMS02 + '_roleId').getValue());
+    }    
+ 
+}

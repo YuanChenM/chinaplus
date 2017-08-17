@@ -1,0 +1,7 @@
+#!/bin/sh
+#Extract data from interface table, and insert the data into business table
+
+/orion/data/chinaplus/auto/scripts/BASE/ttlogixbusiness.sh DARIDC61 $1 $2 $3
+
+ret=$?
+exit ${ret} 

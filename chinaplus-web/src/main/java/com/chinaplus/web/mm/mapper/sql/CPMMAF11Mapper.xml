@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chinaplus.web.mm.service.CPMMAF11Service">
+    <select id="getCusOffice" parameterType="com.chinaplus.core.bean.BaseParam"
+        resultType="int">
+        SELECT 
+           COUNT(*)
+        FROM 
+            TNM_CUSTOMER c
+        INNER JOIN TNM_OFFICE o
+        on c.OFFICE_ID = o.OFFICE_ID
+        WHERE 
+        o.OFFICE_CODE = #{swapData.impOfficeCode}
+        AND c.CUSTOMER_CODE = #{swapData.ttcCustomerCode}
+    </select>
+    
+    <select id="getUserOffice" parameterType="com.chinaplus.core.bean.BaseParam"
+        resultType="int">
+        SELECT 
+            COUNT(*)
+        FROM 
+            TNM_USER_OFFICE_ROLE r
+        INNER JOIN TNM_USER u
+        ON r.USER_ID = u.USER_ID
+        INNER JOIN TNM_OFFICE o
+        on o.OFFICE_ID = r.OFFICE_ID
+        where 
+            u.LOGIN_ID = #{swapData.loginId}
+        and 
+            o.OFFICE_CODE = #{swapData.impOfficeCode}
+    </select>
+    
+    <select id="checkExist" parameterType="com.chinaplus.core.bean.BaseParam"
+        resultType="int">
+        SELECT 
+        COUNT(*)
+        FROM
+        TNM_EMAIL_ALERT A
+        INNER JOIN TNM_CUSTOMER B ON A.CUSTOMER_ID=B.CUSTOMER_ID
+        INNER JOIN TNM_USER C ON C.USER_ID=A.USER_ID
+        INNER JOIN TNM_OFFICE D ON D.OFFICE_ID=B.OFFICE_ID
+        WHERE
+        C.LOGIN_ID = #{swapData.loginId}
+        AND D.OFFICE_CODE = #{swapData.impOfficeCode}
+        AND B.CUSTOMER_CODE = #{swapData.ttcCustomerCode}
+    </select>
+    <insert id="addEmailAlert" parameterType="com.chinaplus.web.mm.entity.CPMMAF01Entity">
+        INSERT 
+        INTO 
+        TNM_EMAIL_ALERT (
+            EMAIL_ALERT_ID,
+            USER_ID,
+            CUSTOMER_ID,
+            ALERT_LEVEL,
+            INACTIVE_FLAG,
+            CREATED_BY,
+            UPDATED_BY,
+            CREATED_DATE,
+            UPDATED_DATE,
+            VERSION,
+            REMARK
+        )
+        VALUES
+        (
+            SEQ_TNM_EMAIL_ALERT.nextval,
+            #{loginId},
+            #{ttcCustomerCode},
+            #{alertLevel},
+            #{inActiveFlag},
+            #{createdBy},
+            #{updatedBy},
+            #{createdDate},
+            #{updatedDate},
+            #{version},
+            #{remark}
+        )
+    </insert>
+    
+    <update id="updateEmailAlert" parameterType="com.chinaplus.web.mm.entity.CPMMAF01Entity">
+        UPDATE 
+            TNM_EMAIL_ALERT
+        SET
+            ALERT_LEVEL = #{alertLevel},
+            INACTIVE_FLAG = #{inActiveFlag},
+            UPDATED_BY = #{updatedBy},
+            UPDATED_DATE = #{updatedDate},
+            VERSION = VERSION + 1,
+            REMARK = #{remark}            
+        WHERE 
+            USER_ID = #{loginId} 
+            AND CUSTOMER_ID = #{ttcCustomerCode}
+    </update>
+</mapper>

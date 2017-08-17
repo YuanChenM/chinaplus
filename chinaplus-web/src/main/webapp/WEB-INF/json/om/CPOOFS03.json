@@ -1,0 +1,224 @@
+/**
+ * @screen CPOOFS03(popup)
+ * @author shi_yuxi
+ */
+CPOOFS03 = {
+    xtype : 'gridpanel',
+    id : chinaplus.screen.CPOOFS03,
+    title : chinaplus.label.CPOOFS03_Label_PageTitle,
+    border : true,
+    closable : false,
+    enableColumnHide : false,
+    enableColumnMove : false,
+    isControl : true,
+    autoScroll : true,
+    qtip : true,
+    selType : 'cellmodel',
+    columnLines : true,
+    viewConfig : {
+        loadMask : false
+    },
+    header : false,
+    headerPosition : 'bottom',
+    autoScroll : true,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    columns : [{
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPOOFS03_Grid_WestCustomerCode + '</div>',
+                width : 120,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'westCustCode',
+                sortable : false,
+                renderer : function(v, p, r) {
+                    if (r.data.showFlag == 1) {
+                        return '<label style="color:#bfbfd5;">' + v + '</label>';
+                    } else {
+                        return v;
+                    }
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPOOFS03_Grid_WestPartsNo + '</div>',
+                width : 128,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'westPartsNo',
+                sortable : false,
+                renderer : function(v, p, r) {
+                    if (r.data.showFlag == 1) {
+                        return '<label style="color:#bfbfd5;">' + v + '</label>';
+                    } else {
+                        return v;
+                    }
+                }
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPOOFS03_Grid_TTCPartsNo + '</div>',
+                width : 128,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'ttcPartsNo',
+                sortable : false
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPOOFS03_Grid_TTCCustomerCode + '</div>',
+                width : 135,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'customerCode',
+                sortable : false
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPOOFS03_Grid_TTCSupplierCode + '</div>',
+                width : 120,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'supplierCode',
+                sortable : false
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPOOFS03_Grid_SSMSMainRoute + '</div>',
+                width : 120,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'ssmsMainRoute',
+                sortable : false
+                ,
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPOOFS03_Grid_SSMSVendorRoute + '</div>',
+                width : 120,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'ssmsVendorRoute',
+                sortable : false
+            }, {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPOOFS03_Grid_SSMSSupplierCode + '</div>',
+                width : 120,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'ssmsSupplierCode',
+                sortable : false
+            }, {
+                xtype : 'gridcolumn',
+                text : ' ',
+                width : 62,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                sortable : false,
+                renderer : function(v, p, r) {
+                    // accessLevel
+                    var chkFlg = '';
+                    var result = '<div style="text-align:center;"><input type="radio" value="' + r.data.expPartsId + '" id="' + r.data.expPartsId + '_Main" name="' + r.data.westCustCode + r.data.westPartsNo
+                            + '" ' + chkFlg + '/></div>';
+                    return result;
+                }
+            }],
+    tbar : [{
+                text : chinaplus.label.CPOOFS03_Button_ConfirmChoose,
+                iconCls : 'btn-upload-2',
+                id : chinaplus.screen.CPOOFS03 + '_Button_ConfirmChoose',
+                handler : function() {
+                    Ext.getCmp(chinaplus.screen.CPOOFS03).saveData();
+                }
+            }, {
+                text : chinaplus.label.CPOOFS03_Button_CancelUpload,
+                iconCls : 'btn-download',
+                id : chinaplus.screen.CPOOFS03 + '_Button_CancelUpload',
+                handler : function() {
+                    
+                    var confirmMsg = TRF.util.getMessage('c1001', chinaplus.label.CPOOFS03_Button_CancelUpload);
+                    var confirmMsgL = [confirmMsg];
+                    TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_QUESTION, confirmMsg, confirmMsgL,
+                        function(btn){
+                            if(btn == 'yes'){
+                                TRF.util.removePopupApplication(chinaplus.screen.CPOOFS03);
+                            }//end if
+                        }
+                    ); 
+                }
+            }],
+    store : TRF.util.createStore(chinaplus.screen.CPOOFS03, 'om/CPOOFF11/getMainRoute', 'MainRoute', chinaplus.screen.CPOOFS03 + '_projectStore', {
+                load : TRF.util.addEnterListenerToFocusableLink
+            }),
+    /**
+     * The initialize function.
+     * 
+     * @param params.
+     *            the parameter object passed to this screen.
+     */
+    initialize : function(params) {
+
+        CPOOFS03_sessionKey = params.sessionKey;
+        var gridStore = this.store;
+        TRF.util.dataLoadStart(chinaplus.screen.CPOOFS03);
+        TRF.util.loadStore(gridStore, params, function() {
+                    TRF.util.dataLoadEnd(chinaplus.screen.CPOOFS03);
+                });
+
+        this.doLayout();
+        TRF.util.addGridTip(this);
+    },
+    saveData : function() {
+        var search = 'input';
+        var mainRoute = '';
+        Ext.each(Ext.query(search), function(obj) {
+                    if (obj.checked) {
+                        mainRoute = mainRoute + obj.value + ',';
+                    }
+                });
+        mainRoute = mainRoute.substring(0, mainRoute.length - 1);
+
+        var CPOCFF11_backFun = function(applicationData) {
+            if (null != applicationData.messageCodes && applicationData.messageCodes.length == 0) {
+                TRF.util.showMessageBoxByMsgIdAndArgs('i1001');
+                TRF.util.removePopupApplication(chinaplus.screen.CPOOFS02);
+                TRF.util.removePopupApplication(chinaplus.screen.CPOOFS03);
+                Ext.getCmp(chinaplus.screen.CPOOFS01).store.reload();
+            } else {
+                TRF.util.removePopupApplication(chinaplus.screen.CPOOFS03);
+            }
+        }
+        var orderMonth = Ext.getCmp(chinaplus.screen.CPOOFS02 + '_orderMonth').getValue();
+        var remark = Ext.getCmp(chinaplus.screen.CPOOFS02 + '_uploadRemark').getValue();
+        var params = {
+            'sessionKey' : CPOOFS03_sessionKey,
+            'uploadProcess' : 'popup',
+            'mainRoute' : mainRoute,
+            'orderMonth' : orderMonth,
+            'remark' : remark
+        };
+
+        var form = Ext.getCmp(chinaplus.screen.CPOOFS02).getForm();
+        TRF.util.uploadSubmit(form, CPOCFF11_backFun, chinaplus.screen.CPOOFS03, 'om/CPOOFF11/upload', params);
+    },
+    cancel : function() {
+            var params = {
+                            'sessionKey' : CPOOFS03_sessionKey,
+                            'uploadProcess' : 'no'
+                        };
+            var form = Ext.getCmp(chinaplus.screen.CPOOFS02).getForm();
+            TRF.util.uploadSubmit(form, null, chinaplus.screen.CPOOFS03, 'om/CPOOFF11/upload', params);
+    }
+    
+}

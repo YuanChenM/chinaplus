@@ -1,0 +1,8 @@
+#Batch ID
+BATCH_ID=CPIIFB15
+
+#Log File
+BATCH_LOG_FILE=DARIDC21.log
+
+#working path
+WORKING_PATH=/orion/data/chinaplus/auto/files/workingpath

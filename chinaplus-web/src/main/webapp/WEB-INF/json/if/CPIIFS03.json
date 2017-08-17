@@ -1,0 +1,417 @@
+/**
+ * @screen CPIIFS03 ----- Invoice List detail Screen
+ * @author zhang_chi
+ */
+CPIIFS03 = {
+	id : chinaplus.screen.CPIIFS03,
+	title : chinaplus.label.CPIIFS03_Label_PageTitle,
+	xtype : 'panel',
+	overflowY : 'auto',
+	minWidth : 600,
+	height : Ext.getCmp('tabpanelId').getHeight() - 30,
+	border : false,
+	autoHeight : true,
+	closable : false,
+	items : [{
+		xtype : 'form',
+		frame : true,
+		autoHeight : false,
+		height : 40,
+		width : '100%',
+		fieldDefaults : {
+			labelAlign : 'right',
+			labelWidth : 130,
+			labelSeparator : ''
+		},
+		items : [{
+			xtype : 'textfield',
+			margin : '9 0 9 0',
+			fieldLabel : chinaplus.label.CPIIFS02_Grid_TTLogixInvoiceNo,
+			id : chinaplus.screen.CPIIFS03 + '_ttcinvocieno',
+			text : ''
+		}, {
+			xtype : 'textfield',
+			hidden : true,
+			id : chinaplus.screen.CPIIFS03 + '_ttcofficeId',
+			text : ''
+		}, {
+            xtype : 'textfield',
+            hidden : true,
+            id : chinaplus.screen.CPIIFS03 + '_dataDate',
+            text : ''
+        }],
+	},{
+		xtype : 'gridpanel',
+		id : chinaplus.screen.CPIIFS03 + "_invoiceNoGrid",
+		title : chinaplus.label.CPIIFS03_Label_PageTitle,
+		autoScroll : true,
+		//height : 400,
+		border : true,
+		closable : false,
+		columnLines : true,
+		enableColumnHide : false,
+		enableColumnMove : false,
+		qtip : true,
+		selType : 'cellmodel',
+		viewConfig : {
+			loadMask : false
+		},
+		plugins : [{
+					ptype : 'gridheaderfilters',
+					allSingleFilter : false
+				}, {
+					ptype : 'headerfiltertoolbar',
+					showMore : true
+				}],
+		header : false,
+		headerPosition : 'bottom',
+		columns : [{
+			xtype : 'gridcolumn',
+			text : ' ',
+			width : 62,
+			items : [{
+						xtype : 'header',
+						hidden : true
+					}],
+			sortable : false,
+			renderer : function(v, p, r) {
+				// accessLevel
+				var chkFlg = '';
+				var invoiceNo = r.data.invoiceNo;
+				var result = '<div style="text-align:center;"><input type="radio" value="'
+						+ invoiceNo
+						+ '" id="'
+						+ invoiceNo
+						+ '" name="radioList" ' + chkFlg + '/></div>';
+				return result;
+			}
+		}, {
+			xtype : 'gridcolumn',
+			text : '<div style="text-align:center">'
+					+ chinaplus.label.CPIIFS03_Grid_SSMSInvoiceNo + '</div>',
+			align : 'left',
+			width : 150,
+			items : [{
+						xtype : 'header',
+						hidden : true
+					}],
+			dataIndex : 'invoiceNo',
+			sortable : false,
+			filter : {
+				type : 'list',
+				multiSelect : true,
+				optionsStore : TRF.util.createStore(chinaplus.screen.CPIIFS03,
+						'inf/CPIIFS03/loadInvoiceNo', 'Combo',
+						chinaplus.screen.CPIIFS03 + '_invoiceNoStore')
+			}
+		}, {
+			xtype : 'gridcolumn',
+			text : '<div style="text-align:center">'
+					+ chinaplus.label.CPIIFS03_Grid_ETD + '</div>',
+			align : 'center',
+			width : 130,
+			items : [{
+						xtype : 'header',
+						hidden : true
+					}],
+			dataIndex : 'etd',
+			sortable : false,
+			filter : 'date',
+			filterPlugins : [{
+						ptype : 'datePickerClear'
+					}]
+		}, {
+			xtype : 'gridcolumn',
+			text : '<div style="text-align:center">'
+					+ chinaplus.label.CPIIFS03_Grid_ETA + '</div>',
+			align : 'center',
+			width : 130,
+			items : [{
+						xtype : 'header',
+						hidden : true
+					}],
+			dataIndex : 'eta',
+			sortable : false,
+			filter : 'date',
+			filterPlugins : [{
+						ptype : 'datePickerClear'
+					}]
+		}, {
+			xtype : 'gridcolumn',
+			text : '<div style="text-align:center">'
+					+ chinaplus.label.CPIIFS03_Grid_TransportMode + '</div>',
+			align : 'left',
+			width : 120,
+			items : [{
+						xtype : 'header',
+						hidden : true
+					}],
+			dataIndex : 'transportMode',
+			sortable : false,
+			renderer : function(value) {
+				return chinaplus.master.getMasterName(
+						chinaplus.master.consts.TnmCodeCategory_TransportMode,
+						value);
+			},
+			filter : {
+				type : 'list',
+				multiSelect : true,
+				options : chinaplus.master
+						.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_TransportMode)
+				,
+			}
+		}, {
+			xtype : 'gridcolumn',
+			text : '<div style="text-align:center">'
+					+ chinaplus.label.CPIIFS03_Grid_VesselName + '</div>',
+			align : 'left',
+			width : 140,
+			items : [{
+						xtype : 'header',
+						hidden : true
+					}],
+			dataIndex : 'vesselName',
+			sortable : false,
+			filter : 'string'
+			,
+		}, {
+			xtype : 'gridcolumn',
+			text : '<div style="text-align:center">'
+					+ chinaplus.label.CPIIFS03_Grid_BLNo + '</div>',
+			align : 'left',
+			width : 130,
+			items : [{
+						xtype : 'header',
+						hidden : true
+					}],
+			dataIndex : 'blno',
+			sortable : false,
+			filter : 'string'
+			,
+		}, {
+			xtype : 'gridcolumn',
+			text : '<div style="text-align:center">'
+					+ chinaplus.label.CPIIFS03_Grid_BLDate + '</div>',
+			align : 'center',
+			width : 130,
+			items : [{
+						xtype : 'header',
+						hidden : true
+					}],
+			dataIndex : 'bldate',
+			sortable : false,
+			filter : 'date',
+			filterPlugins : [{
+						ptype : 'datePickerClear'
+					}]
+		}, {
+			xtype : 'gridcolumn',
+			text : '<div style="text-align:center">'
+					+ chinaplus.label.CPIIFS03_Grid_EXPRegion + '</div>',
+			align : 'center',
+			width : 90,
+			items : [{
+						xtype : 'header',
+						hidden : true
+					}],
+			dataIndex : 'expRegion',
+			sortable : false,
+			filter : {
+				type : 'list',
+				multiSelect : true,
+				optionsStore : TRF.util.createStore(chinaplus.screen.CPIIFS03,
+						'inf/CPIIFS03/loadRegionCode', 'Combo',
+						chinaplus.screen.CPIIFS03 + '_expRegionStore')
+			}
+		}, {
+			xtype : 'gridcolumn',
+			text : '<div style="text-align:center">'
+					+ chinaplus.label.CPIIFS03_Grid_IMPRegion + '</div>',
+			align : 'center',
+			width : 90,
+			items : [{
+						xtype : 'header',
+						hidden : true
+					}],
+			dataIndex : 'impRegion',
+			sortable : false,
+			filter : {
+				type : 'list',
+				multiSelect : true,
+				optionsStore : TRF.util.createStore(chinaplus.screen.CPIIFS03,
+						'inf/CPIIFS03/loadRegionCode', 'Combo',
+						chinaplus.screen.CPIIFS03 + '_impRegionStore')
+			}
+		}, {
+			xtype : 'gridcolumn',
+			text : '<div style="text-align:center">'
+					+ chinaplus.label.CPIIFS03_Grid_UploadedBy + '</div>',
+			align : 'left',
+			width : 90,
+			items : [{
+						xtype : 'header',
+						hidden : true
+					}],
+			dataIndex : 'uploadedBy',
+			sortable : false,
+			filter : {
+				type : 'list',
+				multiSelect : true,
+				optionsStore : TRF.util.createStore(chinaplus.screen.CPIIFS03,
+						'inf/CPIIFS03/loadUploadedBy', 'Combo',
+						chinaplus.screen.CPIIFS03 + '_uploadedByStore')
+			}
+		}, {
+			xtype : 'gridcolumn',
+			text : '<div style="text-align:center">'
+					+ chinaplus.label.CPIIFS03_Grid_UploadedDate + '</div>',
+			align : 'center',
+			width : 130,
+			items : [{
+						xtype : 'header',
+						hidden : true
+					}],
+			dataIndex : 'uploadedDate',
+			sortable : false,
+			filter : 'date',
+			filterPlugins : [{
+						ptype : 'datePickerClear'
+					}]
+		}, {
+			xtype : 'gridcolumn',
+			text : '<div style="text-align:center">'
+					+ chinaplus.label.CPIIFS03_Grid_Status + '</div>',
+			align : 'left',
+			width : 120,
+			items : [{
+						xtype : 'header',
+						hidden : true
+					}],
+			dataIndex : 'status',
+			sortable : false,
+			filter : {
+				type : 'list',
+				multiSelect : false,
+				options : chinaplus.master
+						.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_InvoiceMatchStatus)
+			},
+			renderer : function(v, p, record) {
+				return chinaplus.master.getMasterName(
+						chinaplus.master.consts.TnmCodeCategory_InvoiceMatchStatus, v);
+			}
+		}],
+		store : TRF.util.createStore(chinaplus.screen.CPIIFS03,
+				'inf/CPIIFS03/getCPIIFS03EntityList', 'CPIIFS03EntityList',
+				chinaplus.screen.CPIIFS03 + '_CPIIFS03EntityStore')
+	}],
+	tbar : [{
+				xtype : 'button',
+				text : chinaplus.label.CPIIFS03_Button_OK,
+				iconCls : 'btn-ok',
+				id : chinaplus.screen.CPIIFS03 + '_ok',
+				handler : function() {
+					CPIIFS03.saveData();
+				}
+			}, {
+				xtype : 'button',
+				text : chinaplus.label.CPIIFS03_Button_Cancel,
+				iconCls : 'btn-cancel',
+				id : chinaplus.screen.CPIIFS03 + '_cancel',
+				handler : function() {
+					CPIIFS03.cancelData();
+				}
+			}],
+
+	/**
+	 * The initialize function.
+	 * 
+	 * @param params.
+	 *            the parameter object passed to this screen.
+	 */
+	initialize : function(param) { 
+
+		var app = Ext.getCmp(chinaplus.screen.CPIIFS03);
+		var invoiceGrid = Ext.getCmp(chinaplus.screen.CPIIFS03 + '_invoiceNoGrid');
+		var gridStore = invoiceGrid.store;
+		
+		Ext.getCmp(chinaplus.screen.CPIIFS03 + '_ttcinvocieno').setValue(param.wrongInvocie);
+		Ext.getCmp(chinaplus.screen.CPIIFS03 + '_ttcofficeId').setValue(param.officeId);
+		Ext.getCmp(chinaplus.screen.CPIIFS03 + '_dataDate').setValue(param.dataDate);
+		
+		TRF.util.makeCmpReadOnly(Ext.getCmp(chinaplus.screen.CPIIFS03 + '_ttcinvocieno'));
+		invoiceGrid.setHeight(app.getHeight() - 67);
+		
+		TRF.util.dataLoadStart(chinaplus.screen.CPIIFS03);
+		
+		TRF.util.loadStore(gridStore,{'officeId' : param.officeId}, function(gridStore) {
+					TRF.util.dataLoadEnd(chinaplus.screen.CPIIFS03);
+				}, null);
+				
+	    // reload office
+	    TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPIIFS03 + '_uploadedByStore'), {'officeId' : param.officeId}, null, null);
+	    TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPIIFS03 + '_invoiceNoStore'), {'officeId' : param.officeId}, null, null);
+
+		this.doLayout();
+		//TRF.util.addGridTip(this);
+	},
+
+	/**
+	 * save Data
+	 */
+	saveData : function() {
+		var whsInvoiceNo = Ext.getCmp(chinaplus.screen.CPIIFS03 + '_ttcinvocieno').getValue();
+        var officeId = Ext.getCmp(chinaplus.screen.CPIIFS03 + '_ttcofficeId').getValue();
+        var dataDate = Ext.getCmp(chinaplus.screen.CPIIFS03 + '_dataDate').getValue();
+		var invoiceNo = '';
+		Ext.each(Ext.query('input'), function(obj) {
+					if (obj.checked) {
+						invoiceNo = obj.value;
+					}
+				});
+
+		// select check
+		var popMsg = TRF.util.getMessage('w1011');
+		var lsMsgs = [];
+
+		// must select one
+		if (invoiceNo == '') {
+			Ext.Array.push(lsMsgs, popMsg);
+			TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, popMsg, lsMsgs);
+			return;
+		}
+
+		// save confirm
+		var me = this;
+		var confirmMsg = TRF.util.getMessage('c1001', [chinaplus.label.CPIIFS02_Grid_MatchInvoice]);
+		var confirmMsgL = [];
+		TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_QUESTION, confirmMsg, confirmMsgL, 
+		         function(btn) {
+					if (btn == 'yes') {
+						var backFun = function(applicationData) {
+							if (applicationData.success) {
+								TRF.util.loadApplication(
+										chinaplus.screen.CPIIFS02,
+										chinaplus.screen.CPIIFS02, true, null);
+								TRF.util
+										.removeApplication(chinaplus.screen.CPIIFS03);
+							}
+						};
+						var params = {
+							'whsInvoiceNo' : whsInvoiceNo,
+							'officeId' : officeId,
+							'dataDate' : dataDate,
+							'invoiceNo' : invoiceNo
+						};
+						// submit
+						TRF.util.ajaxSubmit(backFun, chinaplus.screen.CPIIFS03, 'inf/CPIIFS03/saveData', params, null);
+					}
+				});
+	},
+
+	/**
+	 * cancel Data
+	 */
+	cancelData : function() {
+		TRF.util.removeApplication(chinaplus.screen.CPIIFS03);
+	}
+}

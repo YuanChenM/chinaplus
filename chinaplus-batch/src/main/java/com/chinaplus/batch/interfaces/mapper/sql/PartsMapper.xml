@@ -1,0 +1,390 @@
+<!--
+@screen CPIIFB01
+@author yang_jia1
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.chinaplus.batch.interfaces.service.CPIIFB04Service">
+    
+    <sql id="ConstDef">
+        <bind name="NOT_REGISTERED" value="@com.chinaplus.batch.common.consts.BatchConst$PartsStatus@NOT_REGISTERED" />
+        <bind name="NO" value="@com.chinaplus.batch.common.consts.BatchConst$BuildOutIndicator@NO" />
+    </sql>
+    
+    <update id="modPartsIfValidFlag" parameterType="com.chinaplus.batch.interfaces.bean.Parts">
+        UPDATE 
+            TNM_IF_PARTS C
+        SET 
+            VALID_FLAG = #{vaildFlag,jdbcType=INTEGER}
+        WHERE
+        EXISTS 
+            (
+        SELECT 
+            * 
+        FROM 
+            TNM_SSMS_CUSTOMER S 
+        WHERE 
+            S.SSMS_CUSTOMER_CODE = C.CUSTOMER_CODE 
+        AND 
+            S.EXP_CODE = C.EXP_CODE 
+        AND 
+            S.ORION_PLUS_FLAG = 1
+            )
+        AND
+            IF_DATE_TIME = #{ifDateTime,jdbcType=TIMESTAMP}
+    </update>
+    
+    <select id="getPartsIfList" parameterType="com.chinaplus.batch.interfaces.bean.Parts" resultType="com.chinaplus.batch.interfaces.bean.Parts">
+        SELECT 
+             P.DATA_ID AS dataId
+           , P.EXP_CODE AS expCode
+           , P.MAIN_ROUTE AS represetativeRoute
+           , P.TTC_PARTS_NO AS partsNo
+           , P.DISPLAY_PARTS_NO AS displayPN
+           , P.CUSTOMER_PARTS_NO AS customerPartsNo
+           , P.TTC_PARTS_NAME AS TTCPartsName
+           , P.CUSTOMER_CODE AS customerCode
+           , P.SUPPLIER_CODE AS supplierCode 
+           , P.SPQ AS spq
+           , P.ORDER_LOT AS orderLot
+           , P.UOM AS uom
+           , P.TRANSPORT_MODE AS transportMode
+           , P.BUILDOUT_FLAG AS buildoutFlag
+           , P.IF_DATE_TIME AS ifDateTime
+           , P.VALID_FLAG AS validFlag
+           , P.HANDLE_FLAG AS handleFlag
+           , P.CREATED_BY AS createdBy
+           , P.CREATED_DATE AS createdDate
+           , P.UPDATED_BY AS updatedBy
+           , P.UPDATED_DATE AS updatedDate
+           , P.VERSION as version
+           , C.VENDOR_ROUTE AS vendorRoute
+           , C.OFFICE_ID AS officeId
+           , P.IF_PARTS_ID AS ifPartsId
+           , OF.OFFICE_CODE AS officeCode
+           , OF.TIME_ZONE AS timeZone
+        FROM
+           TNM_IF_PARTS P
+        INNER JOIN 
+           TNM_SSMS_CUSTOMER C
+        ON
+           P.CUSTOMER_CODE = C.SSMS_CUSTOMER_CODE
+        AND
+           P.EXP_CODE = C.EXP_CODE
+        INNER JOIN
+           TNM_OFFICE OF
+        ON
+           OF.OFFICE_ID = C.OFFICE_ID
+        WHERE
+           P.IF_DATE_TIME <![CDATA[<=]]> #{ifDateTime,jdbcType=TIMESTAMP}
+        AND 
+           P.HANDLE_FLAG
+        IN 
+        <foreach item="param" index="index" collection="handleFlagParam" open="(" separator="," close=")">  
+            #{param}  
+        </foreach>
+        AND
+           P.VALID_FLAG = 1
+        AND 
+           C.ORION_PLUS_FLAG = 1 
+        ORDER BY
+           P.IF_PARTS_ID
+    </select>
+    
+    <select id="getPartsIfTimeExist" parameterType="com.chinaplus.batch.interfaces.bean.Parts" resultType="com.chinaplus.batch.interfaces.bean.Parts">
+        SELECT 
+           *
+        FROM
+           TNM_IF_PARTS P
+        WHERE
+    P.IF_DATE_TIME <![CDATA[<=]]> #{ifDateTime,jdbcType=TIMESTAMP}
+        AND 
+           P.HANDLE_FLAG 
+        IN 
+        <foreach item="param" index="index" collection="handleFlagParam" open="(" separator="," close=")">  
+            #{param}  
+        </foreach>
+    </select>
+    
+    <select id="checkPartsExist" parameterType="com.chinaplus.batch.interfaces.bean.Parts" resultType="com.chinaplus.batch.interfaces.bean.Parts">
+        SELECT 
+              EXP_PARTS_ID AS expPartsId
+            , PARTS_ID AS partsId
+            , INACTIVE_FLAG AS inactiveFlag
+        FROM
+            TNM_EXP_PARTS 
+        WHERE
+            TTC_PARTS_NO = #{partsNo,jdbcType=VARCHAR}
+        AND 
+            SSMS_MAIN_ROUTE = #{represetativeRoute,jdbcType=VARCHAR}
+        AND 
+            SSMS_CUST_CODE = #{customerCode,jdbcType=VARCHAR}
+        AND 
+            EXP_SUPP_CODE = #{supplierCode,jdbcType=VARCHAR}
+        ORDER BY
+            EXP_PARTS_ID
+    </select>
+    
+    <select id="queryInactiveFlag" parameterType="com.chinaplus.batch.interfaces.bean.Parts" resultType="com.chinaplus.batch.interfaces.bean.Parts">
+        SELECT 
+              EXP_PARTS_ID AS expPartsId
+            , PARTS_ID AS partsId
+            , INACTIVE_FLAG AS inactiveFlag
+        FROM
+            TNM_EXP_PARTS 
+        WHERE
+            PARTS_ID = #{partsId,jdbcType=INTEGER}
+    </select>
+    
+    <update id="modPartsSSMS" parameterType="com.chinaplus.batch.interfaces.bean.Parts">
+        UPDATE 
+            TNM_EXP_PARTS
+        SET 
+              EXP_CODE = #{expCode,jdbcType=VARCHAR}
+            , TTC_PARTS_NO = #{partsNo,jdbcType=VARCHAR}  
+            , TTC_PARTS_NAME = #{TTCPartsName,jdbcType=VARCHAR}   
+            , SSMS_CUST_CODE = #{customerCode,jdbcType=VARCHAR} 
+            , CUST_PARTS_NO = #{customerPartsNo,jdbcType=VARCHAR} 
+            , EXP_SUPP_CODE = #{supplierCode,jdbcType=VARCHAR}
+            , SSMS_MAIN_ROUTE = #{represetativeRoute,jdbcType=VARCHAR}
+            , SPQ = #{spq,jdbcType=DECIMAL}      
+            , ORDER_LOT = #{orderLot,jdbcType=DECIMAL}  
+            , EXP_UOM_CODE = #{uom,jdbcType=INTEGER} 
+            , BUILDOUT_FLAG = #{buildOutFlagInt,jdbcType=INTEGER}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}    
+            , VERSION = VERSION + 1
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+        WHERE
+            EXP_PARTS_ID = #{expPartsId,jdbcType=INTEGER} 
+    </update>
+    
+    <select id="checkPartsMaster" parameterType="com.chinaplus.batch.interfaces.bean.Parts" resultType="com.chinaplus.batch.interfaces.bean.Parts">
+        SELECT 
+               PARTS_ID AS partsId
+             , INACTIVE_FLAG AS inactiveFlag
+        FROM
+             TNM_PARTS_MASTER 
+        WHERE
+             PARTS_ID = #{partsId,jdbcType=INTEGER}
+    </select>
+    
+    <update id="modPartsMaster" parameterType="com.chinaplus.batch.interfaces.bean.Parts">
+        UPDATE 
+            TNM_PARTS_MASTER
+        SET 
+              PARTS_NAME_EN = #{TTCPartsName,jdbcType=VARCHAR}
+            , CUST_PARTS_NO = #{customerPartsNo,jdbcType=VARCHAR}  
+            , ORDER_LOT = #{orderLot,jdbcType=DECIMAL}   
+            , SPQ = #{spq,jdbcType=DECIMAL}
+            , UOM_CODE = #{uom,jdbcType=INTEGER}
+            , INACTIVE_FLAG = #{inactiveFlag,jdbcType=INTEGER}  
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}  
+            , VERSION = VERSION + 1
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+        WHERE
+            PARTS_ID = #{partsId,jdbcType=INTEGER}
+    </update>
+    
+    <insert id="addPartsSSMS" parameterType="com.chinaplus.batch.interfaces.bean.Parts">
+        <include refid="ConstDef"/>
+        INSERT 
+        INTO 
+        TNM_EXP_PARTS (
+              EXP_PARTS_ID
+            , BUSINESS_PATTERN
+            , EXP_CODE
+            , EXP_REGION
+            , TTC_PARTS_NO
+            , TTC_PARTS_NAME 
+            , SSMS_CUST_CODE
+            , CUST_PARTS_NO
+            , EXP_SUPP_CODE
+            , SSMS_MAIN_ROUTE
+            , SSMS_VENDOR_ROUTE
+            , SPQ  
+            , ORDER_LOT
+            , EXP_UOM_CODE
+            , BUILDOUT_FLAG
+            , PARTS_STATUS
+            , INACTIVE_FLAG
+            , CREATED_BY
+            , CREATED_DATE
+            , UPDATED_BY 
+            , UPDATED_DATE
+            , VERSION 
+        )
+        VALUES
+        (
+            #{expPartsId,jdbcType=INTEGER},
+            1,
+            #{expCode,jdbcType=VARCHAR},
+            #{expCode,jdbcType=VARCHAR},
+            #{partsNo,jdbcType=VARCHAR},
+            #{TTCPartsName,jdbcType=VARCHAR},
+            #{customerCode,jdbcType=VARCHAR},
+            #{customerPartsNo,jdbcType=VARCHAR},
+            #{supplierCode,jdbcType=VARCHAR},
+            #{represetativeRoute,jdbcType=VARCHAR},
+            #{vendorRoute,jdbcType=VARCHAR},
+            #{spq,jdbcType=DECIMAL},
+            #{orderLot,jdbcType=DECIMAL},
+            #{uom,jdbcType=VARCHAR},
+            #{buildOutFlagInt,jdbcType=INTEGER},  
+            ${NOT_REGISTERED},
+            null,
+            #{createdBy,jdbcType=INTEGER},
+            #{createdDate,jdbcType=TIMESTAMP},
+            #{updatedBy,jdbcType=INTEGER},
+            #{updatedDate,jdbcType=TIMESTAMP},
+            #{version,jdbcType=INTEGER}
+        )
+    </insert>
+    
+    <update id="modPartsIfHandleFlag" parameterType="com.chinaplus.batch.interfaces.bean.Parts">
+        UPDATE 
+            TNM_IF_PARTS
+        SET 
+              HANDLE_FLAG = #{handleFlag,jdbcType=INTEGER}
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+        WHERE
+            IF_PARTS_ID = #{ifPartsId,jdbcType=INTEGER}
+    </update>
+   
+   <!-- Get send mail object-->
+   <select id="getSendMailObject" resultType="com.chinaplus.common.entity.TnmUser" parameterType="com.chinaplus.core.bean.BaseParam">
+        SELECT
+            USER.USER_NAME AS userName
+            , USER.MAIL_ADDR AS mailAddr
+        FROM
+            TNM_USER USER
+            INNER JOIN TNM_USER_OFFICE_ROLE USER_OFFICE_ROLE ON USER_OFFICE_ROLE.USER_ID = USER.USER_ID
+        WHERE
+            USER_OFFICE_ROLE.OFFICE_ID = #{swapData.officeId}
+        GROUP BY
+            USER.USER_NAME
+            , USER.MAIL_ADDR
+   </select>
+   
+   <select id="getPartsMasterEntityListFP" resultType="com.chinaplus.batch.interfaces.bean.PartsMasterEntity" parameterType="com.chinaplus.core.bean.BaseParam">
+      SELECT
+            A.TTC_PARTS_NO AS  ttcPartsNo,
+            A.TTC_PARTS_NAME  AS  ttcPartsName,
+            B.PARTS_NAME_CN  AS  partsNameCn,
+            B.OLD_TTC_PARTS_NO  AS  oldTtcPartsNo,
+            A.EXP_UOM_CODE  AS  expUomCode,
+
+            A.EXP_REGION  AS  expRegion,
+            A.TTC_SUPP_CODE  AS  ttcSuppCode,
+            A.SSMS_MAIN_ROUTE  AS  ssmsMainRoute,
+            A.SSMS_VENDOR_ROUTE  AS  ssmsVendorRoute,
+            A.EXP_SUPP_CODE  AS  expSuppCode,
+
+            E.SUPPLIER_NAME  AS  supplierName,
+            A.SUPP_PARTS_NO  AS  suppPartsNo,
+            C.REGION_CODE  AS  impRegion,
+            C.OFFICE_CODE  AS  officeCode,
+            B.CUSTOMER_CODE   AS  customerCode,
+
+           <if test="swapData.type == 1 " >
+                A.SSMS_CUST_CODE  AS  expCustCode,
+           </if>
+           <if test="swapData.type == 2 " >
+                B.KANBAN_CUST_CODE  AS  expCustCode,
+           </if>
+            D.CUSTOMER_NAME  AS  customerName,
+            A.CUST_PARTS_NO  AS  custPartsNo,
+            B.CUST_BACK_NO  AS  custBackNo,
+            A.WEST_CUST_CODE  AS  westCustCode,
+
+            A.WEST_PARTS_NO  AS  westPartsNo,
+            B.INV_CUST_CODE  AS  invCustCode,
+            B.IMP_WHS_CODE  AS  impWhsCode,
+            A.ORDER_LOT  AS  orderLot,
+            A.SRBQ  AS  srbq,
+
+            A.SPQ  AS  spq,
+            B.SPQ_M3  AS  spqM3,
+            A.BUSINESS_PATTERN  AS  businessPattern,
+            B.BUSINESS_TYPE  AS  businessType,
+            B.PARTS_TYPE  AS  partsType,
+
+            B.CAR_MODEL  AS  carModel,
+            B.ORDER_DAY  AS  orderDay,
+            B.TARGET_MONTH   AS  targetMonth,
+            B.FORECAST_NUM   AS  forecastNum,
+            B.ORDER_FC_TYPE  AS  orderFcType,
+
+            B.EXP_CALENDAR_CODE   AS  expCalendarCode,
+            B.OS_CUST_STOCK_FLAG  AS  osCustStockFlag,
+            B.SA_CUST_STOCK_FLAG  AS  saCustStockFlag,
+            B.INVENTORY_BOX_FLAG  AS  inventoryBoxFlag,
+            B.MIN_STOCK  AS  minStock,
+
+            B.MAX_STOCK  AS  maxStock,
+            B.MIN_BOX  AS  minBox,
+            B.MAX_BOX  AS  maxBox,
+            B.ORDER_SAFETY_STOCK  AS  orderSafetyStock,
+            B.RUNDOWN_SAFETY_STOCK  AS  rundownSafetyStock,
+
+            B.OUTBOUND_FLUCTUATION  AS  outboundFluctuation,
+            B.SIMULATION_END_DATE_PATTERN  AS  simulationEndDatePattern,
+            A.SHIPPING_ROUTE_CODE  AS  shippingRouteCode,
+            A.DELAY_ADJUSTMENT_PATTERN  AS  delayAdjustmentPattern,
+            A.AIR_ETD_LEADTIME  AS  airEtdLeadtime,
+
+            A.AIR_ETA_LEADTIME AS  airEtaLeadtime,
+            A.AIR_INBOUND_LEADTIME  AS  airInboundLeadtime,
+            A.SEA_ETA_LEADTIME AS  seaEtaLeadtime,
+            A.SEA_INBOUND_LEADTIME AS  seaInboundLeadtime,
+            B.ALLOCATION_FC_TYPE  AS  allocationFcType,
+
+            B.CFC_ADJUSTMENT_TYPE1  AS  cfcAdjustmentType1,
+            B.CFC_ADJUSTMENT_TYPE2  AS  cfcAdjustmentType2,
+            A.REMARK1  AS  remark1,
+            A.REMARK2  AS  remark2,
+            A.REMARK3  AS  remark3,
+
+            A.BUILDOUT_FLAG   AS  buildoutFlag,
+            A.BUILDOUT_MONTH  AS  buildoutMonth,
+            A.LAST_PO_MONTH   AS  lastPoMonth,
+            A.LAST_DELIVERY_MONTH    AS  lastDeliveryMonth,
+            A.PARTS_STATUS    AS  partsStatus,
+            A.INACTIVE_FLAG   AS     inactiveFlag
+
+     FROM
+            TNM_EXP_PARTS A
+            LEFT JOIN  TNM_PARTS_MASTER   B   ON  A.PARTS_ID = B.PARTS_ID
+            LEFT JOIN TNM_OFFICE  C  ON  A.OFFICE_ID = C.OFFICE_ID
+            LEFT JOIN TNM_CUSTOMER  D  ON  B.CUSTOMER_ID = D.CUSTOMER_ID
+            LEFT JOIN TNM_SUPPLIER  E  ON  A.SUPPLIER_ID = E.SUPPLIER_ID
+     WHERE
+          A.BUSINESS_PATTERN  =  #{swapData.type}
+          AND  A.EXP_PARTS_ID   IN
+          <foreach item="item" index="index" collection="swapData.dataLists" open="(" separator="," close=")">
+                #{item.expPartsId}
+          </foreach>
+     <if test="swapData.type == 1 " >
+       ORDER BY C.OFFICE_CODE,
+                B.CUSTOMER_CODE,
+                A.TTC_PARTS_NO,
+                A.TTC_SUPP_CODE,
+                A.SSMS_CUST_CODE,
+                A.SSMS_MAIN_ROUTE,
+                A.EXP_SUPP_CODE
+     </if>
+     <if test="swapData.type == 2 " >
+       ORDER BY C.OFFICE_CODE,
+                B.CUSTOMER_CODE,
+                B.KANBAN_CUST_CODE,
+                B.TTC_PARTS_NO,
+                A.CUST_PARTS_NO,
+                A.TTC_SUPP_CODE,
+                A.SUPP_PARTS_NO
+     </if>
+   </select>
+    
+</mapper>

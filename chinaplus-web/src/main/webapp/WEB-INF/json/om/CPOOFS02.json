@@ -1,0 +1,168 @@
+/**
+ * @screen CPOOFS02  ---  forcast upload screen
+ * @author shi_yuxi
+ */
+CPOOFS02 = {
+    id : chinaplus.screen.CPOOFS02,
+    title : chinaplus.label.CPOOFS02_Label_PageTitle,
+    header : false,
+    xtype : 'form',
+    autoScroll : true,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    border : true,
+    closable : false,
+    frame : true,
+    defaultType : 'textfield',
+    fieldDefaults: {
+        labelSeparator : '',
+        labelAlign : 'right',
+        labelWidth : 150,
+        width : 350
+    },
+    items : [
+         {
+            margin : '50 0 0 0',
+            xtype : 'datefield',
+            fieldLabel : chinaplus.label.CPOOFS02_Label_OrderMonth,
+            id : chinaplus.screen.CPOOFS02 + '_orderMonth',
+            name : 'orderMonth',
+            format : 'M Y',
+            allowBlank : true,
+            editable : false,
+            labelSeparator : '',
+            fieldStyle : 'background:rgb(255,255,153)',
+            width : 402,
+            plugins : [ {
+                ptype : 'monthPicker'
+            } ],
+            autoFitErrors : false
+        },
+        {
+            margin : '10 0 0 0',
+            inputType : 'textfield',
+            maxLength : 80,
+            msgTarget : 'side',
+            fieldLabel : chinaplus.label.CPOOFS02_Label_UploadRemark,
+            autoFitErrors: false,
+            id : chinaplus.screen.CPOOFS02 + '_uploadRemark',
+            name : 'uploadRemark',
+            style : 'width:100%;',
+            width : 420
+        },
+        {
+            xtype : 'fileuploadfield',
+            fieldLabel : chinaplus.label.CPOOFS02_Label_FileName,
+            id : chinaplus.screen.CPOOFS02 + '_fileuploadfield',
+            name : 'fileData',
+            margin : '10 0 0 0',
+            vtype : 'excel',
+            width : 482,
+            labelSeparator : '',
+            buttonText : chinaplus.label.CPOOFS02_Button_Browse,
+            editable : false,
+            fieldStyle : 'background:rgb(255,255,153)',
+            hideLabel : false,
+            autoFitErrors : false,
+            buttonConfig : {
+                tabIndex : 0,
+                width : 75
+            }
+        },{
+                xtype : 'button',
+                iconCls : 'btn-upload',
+                width : 150,
+                height : 25,
+                margin : '10 0 0 155',
+                text : chinaplus.label.CPOOFS02_Button_UploadOrderForecast,
+                handler : function() {
+                    Ext.getCmp(chinaplus.screen.CPOOFS02).btnUploadActionKanban();
+                }
+        }
+    ],
+    initialize : function (param) {
+    },
+    /**
+     * btnUploadAction
+     */
+    btnUploadActionKanban : function() {
+        var form = this.getForm();
+        var orderMonth = Ext.getCmp(chinaplus.screen.CPOOFS02 + '_orderMonth').getValue();
+        var remark = Ext.getCmp(chinaplus.screen.CPOOFS02 + '_uploadRemark').getValue();
+        
+        //var params = {
+        //               uploadProcess : 'check',
+        //               orderMonth : orderMonth,
+        //               remark : remark
+        //             };
+        
+        //var backFun = function(applicationData) {
+        //    debugger;
+        //    if (applicationData.success || (null != applicationData.messageCodes && applicationData.messageCodes.length == 0)) {
+        //        TRF.util.showMessageBoxByMsgIdAndArgs('i1001');
+        //    }
+        //}
+        //TRF.util.uploadSubmit(form, backFun, chinaplus.screen.CPOOFS02, 'om/CPOOFF11/upload', params);
+
+        /**
+         * Get SessionKey function.
+         * 
+         * @param responseData have sessionKey
+         */
+        var func = function(responseData) {
+            var sessionKey = responseData.result;
+            /**
+             * Get MessageCodes
+             * 
+             * @param applicationData have messageCodes
+             */
+            var CPOCFF11_backFun = function(applicationData) {
+                if (null != applicationData.messageCodes && applicationData.messageCodes.length == 0) {
+                    var uploadFlag = applicationData.result.uploadFlag;
+                    if(uploadFlag == '1')
+                    {
+                        //popup
+                        var params = {
+                            'sessionKey' : sessionKey,
+                            'uploadProcess' : 'popup',
+                        };
+                        TRF.util.popupApplication(chinaplus.screen.CPOOFS03, chinaplus.screen.CPOOFS03, params, '1070*600');
+                        
+                    }
+                    else
+                    {
+                        TRF.util.showMessageBoxByMsgIdAndArgs('i1001');
+                        TRF.util.removePopupApplication(chinaplus.screen.CPOOFS02);
+                        Ext.getCmp(chinaplus.screen.CPOOFS01).store.reload();
+                    }
+                } else {
+                    if (applicationData.confirm == "yes") {
+                        var params = {
+                            'sessionKey' : sessionKey,
+                            'uploadProcess' : 'yes'
+                        };
+                        TRF.util.uploadSubmit(form, CPOCFF11_backFun, chinaplus.screen.CPOOFS02, 'om/CPOOFF11/upload', params);
+                    }
+                    else if(applicationData.confirm == "no")
+                    {
+                        var params = {
+                            'sessionKey' : sessionKey,
+                            'uploadProcess' : 'no'
+                        };
+                        TRF.util.uploadSubmit(form, null, chinaplus.screen.CPOOFS02, 'om/CPOOFF11/upload', params);
+                    }
+                }
+            }
+            if (responseData.success) {
+                var params = {
+                    'sessionKey' : sessionKey,
+                    'uploadProcess' : 'check',
+                    'orderMonth' : orderMonth,
+                    'remark' : remark
+                };
+                TRF.util.uploadSubmit(form, CPOCFF11_backFun, chinaplus.screen.CPOOFS02, 'om/CPOOFF11/upload', params);
+            }
+        }
+
+        TRF.util.ajaxSubmit(func, chinaplus.screen.CPOOFS02, 'common/getSessionKey', null, null);
+    }
+}

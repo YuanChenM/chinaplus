@@ -1,0 +1,221 @@
+/**
+ * Supplementary Data:the part qty in invoice of each supplier
+ * 
+ * @screen CPVIVS05
+ * @author gu_chengchen
+ */
+CPVIVS05 = {
+    id : chinaplus.screen.CPVIVS05,
+    title : chinaplus.label.CPVIVS05_Label_PageTitle,
+    xtype : 'form',
+    frame : true,
+    autoHeight : false,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    autoScroll : true,
+    items : [{
+                id : chinaplus.screen.CPVIVS05 + '_supplementaryGrid',
+                xtype : 'grid',
+                autoScroll : true,
+                border : true,
+                closable : false,
+                enableColumnHide : false,
+                enableColumnMove : false,
+                qtip : true,
+                columnLines : true,
+                viewConfig : {
+                    loadMask : false
+                },
+                plugins : [Ext.create('Ext.grid.plugin.CellEditing', {
+                                    clicksToEdit : 1,
+                                    listeners : {
+                                        edit : function(o, content) {
+                                            var uomCode = content.record.data.uomCode;
+                                            var value = content.value;
+                                            if (!Ext.isEmpty(value)) {
+                                                content.record.data.inputQty = TRF.util.getDecimalFormatNoComma(value, uomCode);
+                                            }
+                                        }
+                                    }
+                                }), {
+                            ptype : 'gridheaderfilters'
+                        }, {
+                            ptype : 'emptystoreview'
+                        }],
+                header : false,
+                height : 275,
+                columns : [{
+                            xtype : 'gridcolumn',
+                            text : '<div style="text-align:center">' + chinaplus.label.CPVIVS05_Grid_InvoiceNo + '</div>',
+                            width : 120,
+                            items : [{
+                                        xtype : 'header',
+                                        hidden : true
+                                    }],
+                            dataIndex : 'invoiceNo',
+                            sortable : false,
+                            renderer : function(v, p, r) {
+                                if (r.data.showFlag >= 1) {
+                                    return '<label style="color:#bfbfd5;">' + v + '</label>';
+                                } else {
+                                    return v;
+                                }
+                            }
+                        }, {
+                            xtype : 'gridcolumn',
+                            text : '<div style="text-align:center">' + chinaplus.label.CPVIVS05_Grid_TTCPartNo + '</div>',
+                            width : 120,
+                            items : [{
+                                        xtype : 'header',
+                                        hidden : true
+                                    }],
+                            dataIndex : 'ttcPartsNo',
+                            sortable : false,
+                            renderer : function(v, p, r) {
+                                if (r.data.showFlag >= 2) {
+                                    return '<label style="color:#bfbfd5;">' + v + '</label>';
+                                } else {
+                                    return v;
+                                }
+                            }
+                        }, {
+                            xtype : 'gridcolumn',
+                            text : '<div style="text-align:center">' + chinaplus.label.CPVIVS05_Grid_OrderMonth + '</div>',
+                            width : 100,
+                            items : [{
+                                        xtype : 'header',
+                                        hidden : true
+                                    }],
+                            dataIndex : 'disOrderMonth',
+                            sortable : false,
+                            align : 'center',
+                            renderer : function(v, p, r) {
+                                if (r.data.showFlag >= 3) {
+                                    return '<label style="color:#bfbfd5;">' + v + '</label>';
+                                } else {
+                                    return v;
+                                }
+                            }
+                        }, {
+                            xtype : 'gridcolumn',
+                            text : '<div style="text-align:center">' + chinaplus.label.CPVIVS05_Grid_InvoiceQty + '</div>',
+                            width : 110,
+                            items : [{
+                                        xtype : 'header',
+                                        hidden : true
+                                    }],
+                            dataIndex : 'qty',
+                            sortable : false,
+                            align : 'right',
+                            renderer : function(v, p, r) {
+                                var showValue = TRF.util.getDecimalFormat(v, r.data.uomCode);
+                                if (r.data.showFlag >= 3) {
+                                    return '<label style="color:#bfbfd5;">' + showValue + '</label>';
+                                } else {
+                                    return showValue;
+                                }
+                            }
+                        }, {
+                            xtype : 'gridcolumn',
+                            text : '<div style="text-align:center">' + chinaplus.label.CPVIVS05_Grid_TTCSupplierCode + '</div>',
+                            width : 110,
+                            items : [{
+                                        xtype : 'header',
+                                        hidden : true
+                                    }],
+                            dataIndex : 'ttcSuppCode',
+                            sortable : false
+                        }, {
+                            xtype : 'gridcolumn',
+                            text : '<div style="text-align:center">' + chinaplus.label.CPVIVS05_Grid_Qty + '</div>',
+                            width : 100,
+                            items : [{
+                                        xtype : 'header',
+                                        hidden : true
+                                    }],
+                            dataIndex : 'inputQty',
+                            sortable : false,
+                            align : 'right',
+                            renderer : function(v, p, r) {
+                                if (Ext.isEmpty(v)) {
+                                    return v;
+                                }
+                                return TRF.util.getDecimalFormat(v, r.data.uomCode);
+                            },
+                            editor : new Ext.form.NumberField({
+                                        allowBlank : true,
+                                        triggerAction : 'all',
+                                        allowDecimals : true,
+                                        hideTrigger : true,
+                                        enforceMaxLength : true,
+                                        allowExponential : false,
+                                        editable : true,
+                                        minValue : 0.000000,
+                                        maxValue : 9999999999.999999,
+                                        decimalPrecision : 6,
+                                        fieldStyle : 'background:rgb(255,255,153)'
+                                    })
+                        }],
+                store : TRF.util.createStore(chinaplus.screen.CPVIVS05, 'inv/CPVIVS05/loadSupplementaryData', 'SupplementaryList', chinaplus.screen.CPVIVS05
+                                + '_supplementaryStore')
+            }],
+    tbar : [{
+                text : chinaplus.label.CPVIVS05_Button_OK,
+                iconCls : 'btn-confirm',
+                id : chinaplus.screen.CPVIVS05 + "_ok",
+                handler : function() {
+                    Ext.getCmp(chinaplus.screen.CPVIVS05).confirm();
+                }
+            }, {
+                text : chinaplus.label.CPVIVS05_Button_CancelUpload,
+                iconCls : 'btn-cancel',
+                id : chinaplus.screen.CPVIVS05 + "_cancelUpload",
+                handler : function() {
+                    TRF.util.removePopupApplication(chinaplus.screen.CPVIVS05);
+                }
+            }],
+
+    /**
+     * The initialize function.
+     * 
+     * @param params the parameter object passed to this screen
+     */
+    initialize : function(params) {
+
+        var supplementaryGird = Ext.getCmp(chinaplus.screen.CPVIVS05 + '_supplementaryGrid');
+        var gridStore = supplementaryGird.store;
+
+        // Load supplementary data list
+        TRF.util.loadStore(gridStore, null, function() {
+                    gridStore.on('beforeload', function() {
+                                TRF.core.mask(TRF.core.maskMsg.load, null, supplementaryGird);
+                            });
+                    gridStore.on('load', function() {
+                                TRF.core.unmask(supplementaryGird);
+                            });
+                });
+        supplementaryGird.doLayout();
+        TRF.util.addGridTip(supplementaryGird);
+    },
+
+    /**
+     * Confirm supplier qty.
+     */
+    confirm : function() {
+        var gridStore = Ext.getStore(chinaplus.screen.CPVIVS05 + '_supplementaryStore');
+        var records = [];
+        gridStore.each(function(record, index) {
+                    var data = record.data;
+                    Ext.Array.push(records, data);
+                });
+        var backFun = function(responseData) {
+            if (responseData.success) {
+                Ext.getCmp(chinaplus.screen.CPVIVS02).supplierCallBackFlg = 1;
+                TRF.util.removePopupApplication(chinaplus.screen.CPVIVS05);
+            }
+        };
+        TRF.util.ajaxSubmit(backFun, chinaplus.screen.CPVIVS05, 'inv/CPVIVS05/confirm', null, {
+                    datas : records
+                });
+    }
+
+}

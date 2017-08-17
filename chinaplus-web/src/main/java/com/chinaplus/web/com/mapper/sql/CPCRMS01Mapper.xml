@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.com.service.CPCRMS01Service">
+
+    <!-- get Role list -->
+    <sql id="getRoleList">
+           FROM 
+                TNM_ROLE A
+           INNER JOIN 
+                TNM_USER B 
+           ON 
+                A.UPDATED_BY = B.USER_ID
+        <where>
+       <if test="filters.roleName != null">
+            AND 
+                A.ROLE_NAME 
+                LIKE 
+                #{filters.roleName} ESCAPE '!'
+        </if>
+        <if test="filters.roleNotes != null">
+            AND 
+                A.ROLE_NOTES 
+                LIKE 
+                #{filters.roleNotes} ESCAPE '!'
+        </if>
+        <if test="filters.updatedDateFrom != null and filters.updatedDateFrom != ''">
+            AND 
+                DATE(A.UPDATED_DATE) <![CDATA[>=]]> #{filters.updatedDateFrom}
+        </if>
+        <if test="filters.updatedDateTo != null and filters.updatedDateTo != ''">
+            AND 
+                DATE(A.UPDATED_DATE) <![CDATA[<=]]> #{filters.updatedDateTo}
+        </if>
+        <if test="filters.updateUser != null">
+            AND 
+                B.LOGIN_ID 
+                LIKE 
+                #{filters.updateUser} ESCAPE '!'
+        </if>
+        </where>
+    </sql>
+
+    <!-- <cache /> -->
+    <select id="findPageListCount" parameterType="com.chinaplus.core.bean.PageParam" resultType="int">
+         SELECT 
+         COUNT(1) 
+         <include refid= "getRoleList"/>
+    </select>
+    
+    <!-- <cache /> -->
+    <select id="findPageList" parameterType="com.chinaplus.core.bean.PageParam" resultType="com.chinaplus.web.com.entity.CPCRMS01Entity">
+         SELECT
+               *
+         FROM (
+             SELECT 
+                 A.ROLE_ID AS roleId
+                ,A.ROLE_NAME AS roleName
+                ,A.ROLE_NOTES AS roleNotes
+                ,A.UPDATED_DATE AS updatedDate
+                ,A.VERSION AS version
+                ,B.LOGIN_ID AS updateUser
+                ,ROWNUMBER() over(ORDER BY A.ROLE_ID) as rownum
+                <include refid= "getRoleList"/>
+             ORDER BY 
+                ROLE_ID
+            )
+         WHERE
+         <include refid="com.chinaplus.const.pagingCondition" />
+    </select>
+    
+    <!-- deleteRole -->
+    <delete id="deleteRole" parameterType="com.chinaplus.core.bean.ObjectParam">
+        DELETE 
+        FROM
+            TNM_ROLE
+        WHERE 
+            ROLE_ID 
+        IN
+        <foreach item="role" index="roleIdIndex" collection="datas" open="(" separator="," close=")">  
+            #{role.roleId}
+        </foreach>
+    </delete>
+    
+    <!-- deleteRoleResource -->
+    <delete id="deleteRoleResource" parameterType="com.chinaplus.core.bean.ObjectParam">
+        DELETE 
+        FROM
+            TNM_ROLE_RESOURCE
+        WHERE 
+            ROLE_ID 
+        IN
+        <foreach item="role" index="roleIdIndex" collection="datas" open="(" separator="," close=")">  
+            #{role.roleId}
+        </foreach>
+    </delete>
+    
+    <!-- deleteRoleUser -->
+    <delete id="deleteUserOfficeRole" parameterType="com.chinaplus.core.bean.ObjectParam">
+        DELETE 
+        FROM
+            TNM_USER_OFFICE_ROLE
+        WHERE 
+            ROLE_ID 
+        IN
+        <foreach item="role" index="roleIdIndex" collection="datas" open="(" separator="," close=")">  
+            #{role.roleId}
+        </foreach>
+    </delete>
+
+</mapper>

@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.mm.service.CPMSRF11Service">
+    
+    <sql id="ConstDef">
+        <bind name="VV" value="@com.chinaplus.common.consts.CodeConst$ShippingRouteType@VV" />  
+        <bind name="ACTIVE" value="@com.chinaplus.common.consts.CodeConst$InactiveFlag@ACTIVE" /> 
+        <bind name="INACTIVE" value="@com.chinaplus.common.consts.CodeConst$InactiveFlag@INACTIVE" /> 
+    </sql>
+    
+   <select id="getModInactiveFlag" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+        SELECT 
+               DISTINCT
+               A.CODE_VALUE AS id,
+               A.CODE_NAME  AS text
+        from  
+              TNM_CODE_CATEGORY  A
+        WHERE   
+              A.CODE_CATEGORY  =  'DISCONTINUE_INDICATOR'
+   </select> 
+   
+   <select id="getNewInactiveFlag" resultType="com.chinaplus.common.bean.ComboData" parameterType="com.chinaplus.core.bean.BaseParam">
+        <include refid="ConstDef"/>
+        SELECT 
+               DISTINCT 
+               A.CODE_VALUE AS id,
+               A.CODE_NAME  AS text
+        from  
+              TNM_CODE_CATEGORY  A
+        WHERE  
+              A.CODE_CATEGORY  =  'DISCONTINUE_INDICATOR'
+              AND  A.CODE_VALUE = ${ACTIVE}
+   </select> 
+   
+   <select id="getNewShipRCodeWSE" resultType="com.chinaplus.web.mm.entity.CPMSRF11Entity" parameterType="com.chinaplus.core.bean.BaseParam">
+     select  
+        A.SHIPPING_ROUTE_CODE as shippingRouteCode,
+        B.DELIVERY_START as  deliveryStart,
+        B.DELIVERY_END  as deliveryEnd,
+        A.SHIPPING_ROUTE_TYPE AS shippingRouteType,
+        B.INACTIVE_FLAG AS inactiveFlag    
+     from   
+        TNM_SR_MASTER  A
+        INNER  JOIN  TNM_SR_DETAIL  B   ON  A.SR_ID=B.SR_ID             
+     WHERE
+         A.SHIPPING_ROUTE_CODE  IN   
+       <foreach item="item" index="index" collection="swapData.cpmsrf11EntityList" open="(" separator="," close=")">    
+             #{item.shippingRouteCode}
+       </foreach>   
+      ORDER  BY  A.SHIPPING_ROUTE_CODE 
+    </select> 
+      
+    <select id="getModShipRCodeWSE" resultType="com.chinaplus.web.mm.entity.CPMSRF11Entity" parameterType="com.chinaplus.core.bean.BaseParam">
+     <include refid="ConstDef"/>
+     select  
+        A.SHIPPING_ROUTE_CODE as shippingRouteCode ,
+        B.DELIVERY_START as  deliveryStart,
+        B.DELIVERY_END  as deliveryEnd,
+        B.INACTIVE_FLAG AS inactiveFlag    
+     from   
+        TNM_SR_MASTER  A
+        INNER  JOIN  TNM_SR_DETAIL  B   ON  A.SR_ID=B.SR_ID             
+     WHERE
+         A.SHIPPING_ROUTE_TYPE = ${VV}       
+         AND    (      
+       <foreach collection="swapData.cpmsrf11EntityList" item="item" index="index" open="(" close=")" separator="or" >
+             A.SHIPPING_ROUTE_CODE =  #{item.shippingRouteCode}
+             AND B.DELIVERY_START  =  #{item.deliveryStart}
+             AND B.DELIVERY_END    =  #{item.deliveryEnd}
+       </foreach>   
+       )
+      ORDER  BY  A.SHIPPING_ROUTE_CODE 
+   </select> 
+   
+   <select id="getSice" resultType="com.chinaplus.web.mm.entity.CPMSRF11Entity" parameterType="com.chinaplus.core.bean.BaseParam">
+     <include refid="ConstDef"/>
+     select  
+        A.SHIPPING_ROUTE_CODE as shippingRouteCode ,
+        A.IMP_CC_LEADTIME as  impCcLeadtime,
+        A.IMP_INBOUND_LEADTIME as  impInboundLeadtime,
+        A.FROM_ETD AS fromEtd,
+        A.TO_ETD AS  toEtd,
+        A.OFFICE_ID AS  officeId,
+        A.SR_ID AS srId,
+        A.INACTIVE_FLAG AS inactiveFlag     
+     from   
+        TNM_SR_MASTER  A           
+     WHERE
+         A.SHIPPING_ROUTE_TYPE = ${VV}  
+         AND A.SHIPPING_ROUTE_CODE  IN     
+       <foreach collection="swapData.cpmsrf11EntityList" item="item" index="index" open="(" separator="," close=")">
+           #{item.shippingRouteCode}
+       </foreach>   
+      ORDER  BY  A.SHIPPING_ROUTE_CODE 
+   </select> 
+   
+   <select id="getShipRCodeEta" resultType="com.chinaplus.web.mm.entity.CPMSRF11Entity" parameterType="com.chinaplus.core.bean.BaseParam">
+     <include refid="ConstDef"/>
+     select  
+        A.SHIPPING_ROUTE_CODE as shippingRouteCode,
+        B.ETD   as etd,        
+        B.DELIVERY_START as  deliveryStart,
+        B.DELIVERY_END  as deliveryEnd,
+        B.INACTIVE_FLAG AS inactiveFlag
+     from   
+        TNM_SR_MASTER  A
+        INNER  JOIN  TNM_SR_DETAIL  B   ON  A.SR_ID=B.SR_ID           
+     WHERE
+         A.SHIPPING_ROUTE_TYPE = ${VV}  
+         AND A.SHIPPING_ROUTE_CODE  IN     
+       <foreach collection="swapData.cpmsrf11EntityList" item="item" index="index" open="(" separator="," close=")">
+           #{item.shippingRouteCode}
+       </foreach> 
+      ORDER  BY  A.SHIPPING_ROUTE_CODE 
+   </select> 
+   
+   <insert id="inertNewData" parameterType="com.chinaplus.web.mm.entity.CPMSRF11Entity" flushCache="true">  
+     <include refid="ConstDef"/>
+     <selectKey keyProperty="srId" resultType="int"  order="BEFORE">
+            VALUES NEXTVAL FOR SEQ_TNM_SR_MASTER
+     </selectKey>
+       insert  into
+           TNM_SR_MASTER (
+                 SR_ID,
+                 SHIPPING_ROUTE_CODE,
+                 SHIPPING_ROUTE_TYPE,
+                 OFFICE_ID,
+                 FROM_ETD,
+                 TO_ETD,
+                 IMP_CC_LEADTIME,
+                 IMP_INBOUND_LEADTIME,
+                 INACTIVE_FLAG,
+                 CREATED_BY,
+                 CREATED_DATE,
+                 UPDATED_BY,
+                 UPDATED_DATE,
+                 VERSION
+                 )
+           values 
+                  (#{srId},
+                   #{shippingRouteCode},
+                   ${VV},
+                   #{officeId,jdbcType=INTEGER},
+                   #{fromEtd},
+                   #{toEtd},
+                   #{impCcLeadtime},
+                   #{impInboundLeadtime},
+                   ${ACTIVE},
+                   #{createdBy},
+                   #{createdDate,jdbcType=TIMESTAMP},
+                   #{updatedBy},
+                   #{updatedDate,jdbcType=TIMESTAMP},
+                   1               
+                  )
+   </insert>
+   
+   <insert id="inertNewDataDetail" parameterType="com.chinaplus.web.mm.entity.CPMSRF11Entity"> 
+     <include refid="ConstDef"/>  
+           insert  into
+              TNM_SR_DETAIL (
+                    SR_DETAIL_ID,
+                    SR_ID,
+                    DELIVERY_START,
+                    DELIVERY_END,
+                    PACKING_END,
+                    LAST_VANNING,
+                    SHIPPING_INSTRUCTION,
+                    DOCS_PREPARATION,
+                    CUSTOM_CLEARANCE,
+                    CY_CUT,
+                    PORT_IN,
+                    ETD,
+                    ETA,
+                    INACTIVE_FLAG,
+                    CREATED_BY,
+                    CREATED_DATE,
+                    UPDATED_BY,
+                    UPDATED_DATE,
+                    VERSION         
+               )
+           values(NEXTVAL FOR  SEQ_TNM_SR_DETAIL,
+                    #{srId},
+                    #{deliveryStart},
+                    #{deliveryEnd},
+                    #{packingEnd},
+                    #{lastVanning},
+                    #{shippingInstruction},
+                    #{docsPreparation},
+                    #{customClearance},
+                    #{cyCut},
+                    #{portIn},
+                    #{etd},
+                    #{eta},
+                    ${ACTIVE},              
+                    #{createdBy},
+                    #{createdDate,jdbcType=TIMESTAMP},
+                    #{updatedBy},
+                    #{updatedDate,jdbcType=TIMESTAMP},
+                     1  
+                    )
+   </insert>
+
+   <update id="updateNewData" parameterType="com.chinaplus.web.mm.entity.CPMSRF11Entity">  
+     <include refid="ConstDef"/>
+       update  
+             TNM_SR_MASTER  
+        SET    
+             FROM_ETD =  #{fromEtd},
+             TO_ETD = #{toEtd},
+             IMP_CC_LEADTIME = #{impCcLeadtime},
+             IMP_INBOUND_LEADTIME =  #{impInboundLeadtime},
+             INACTIVE_FLAG =  ${ACTIVE},
+             UPDATED_BY =  #{updatedBy},
+             UPDATED_DATE =  #{updatedDate,jdbcType=TIMESTAMP},
+             VERSION = VERSION + 1
+        WHERE
+             SHIPPING_ROUTE_CODE =  #{shippingRouteCode}
+   </update>
+   
+   <insert id="updateNewDataDetail" parameterType="com.chinaplus.web.mm.entity.CPMSRF11Entity"> 
+        <include refid="ConstDef"/>  
+           insert  into
+              TNM_SR_DETAIL (
+                    SR_DETAIL_ID,
+                    SR_ID,
+                    DELIVERY_START,
+                    DELIVERY_END,
+                    PACKING_END,
+                    LAST_VANNING,
+                    SHIPPING_INSTRUCTION,
+                    DOCS_PREPARATION,
+                    CUSTOM_CLEARANCE,
+                    CY_CUT,
+                    PORT_IN,
+                    ETD,
+                    ETA,
+                    INACTIVE_FLAG,
+                    CREATED_BY,
+                    CREATED_DATE,
+                    UPDATED_BY,
+                    UPDATED_DATE,
+                    VERSION         
+               )
+           values(  
+                    NEXTVAL FOR  SEQ_TNM_SR_DETAIL,
+                    #{srId},
+                    #{deliveryStart},
+                    #{deliveryEnd},
+                    #{packingEnd},
+                    #{lastVanning},
+                    #{shippingInstruction},
+                    #{docsPreparation},
+                    #{customClearance},
+                    #{cyCut},
+                    #{portIn},
+                    #{etd},
+                    #{eta},
+                    ${ACTIVE},              
+                    #{createdBy},
+                    #{createdDate,jdbcType=TIMESTAMP},
+                    #{updatedBy},
+                    #{updatedDate,jdbcType=TIMESTAMP},
+                     1  
+                    )
+   </insert>
+   
+   <update id="updateModDataYN" parameterType="com.chinaplus.web.mm.entity.CPMSRF11Entity">  
+       <include refid="ConstDef"/>
+       update  
+             TNM_SR_MASTER  
+        SET    
+             FROM_ETD =  #{fromEtd},
+             TO_ETD = #{toEtd},
+             INACTIVE_FLAG =  ${ACTIVE},
+             IMP_CC_LEADTIME = #{impCcLeadtime},
+             IMP_INBOUND_LEADTIME =  #{impInboundLeadtime},
+             UPDATED_BY =  #{updatedBy},
+             UPDATED_DATE =  #{updatedDate,jdbcType=TIMESTAMP},
+             VERSION = VERSION + 1
+        WHERE
+             SHIPPING_ROUTE_CODE =  #{shippingRouteCode}
+   </update>
+   
+   <update id="updateModDataDetailYN" parameterType="com.chinaplus.web.mm.entity.CPMSRF11Entity">   
+        update      
+               TNM_SR_DETAIL 
+        set         
+                PACKING_END = #{packingEnd},
+                LAST_VANNING = #{lastVanning},
+                SHIPPING_INSTRUCTION = #{shippingInstruction},
+                DOCS_PREPARATION = #{docsPreparation},
+                CUSTOM_CLEARANCE = #{customClearance},
+                CY_CUT = #{cyCut},
+                PORT_IN = #{portIn},
+                ETD = #{etd},
+                ETA  = #{eta},
+                INACTIVE_FLAG = #{inactiveFlag},
+                UPDATED_BY = #{updatedBy} ,
+                UPDATED_DATE =  #{updatedDate,jdbcType=TIMESTAMP},
+                VERSION = VERSION +1   
+          where 
+                DELIVERY_START = #{deliveryStart}
+                AND  DELIVERY_END =  #{deliveryEnd}
+                AND SR_ID = #{srId}
+   </update>
+   
+   <update id="deleteMaster" parameterType="com.chinaplus.web.mm.entity.CPMSRF11Entity">  
+       <include refid="ConstDef"/>
+       UPDATE  
+             TNM_SR_MASTER  
+        SET    
+             INACTIVE_FLAG = ${INACTIVE},
+             UPDATED_BY =  #{updatedBy},
+             UPDATED_DATE =  #{updatedDate,jdbcType=TIMESTAMP},
+             VERSION = VERSION + 1
+        WHERE
+             SHIPPING_ROUTE_CODE =  #{shippingRouteCode}
+   </update>
+   
+</mapper>

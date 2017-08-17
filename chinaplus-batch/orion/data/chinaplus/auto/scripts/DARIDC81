@@ -1,0 +1,7 @@
+#!/bin/sh
+#Rundown,StockStatus
+
+/orion/data/chinaplus/auto/scripts/BASE/rundownstockstatus.sh DARIDC81_1 DARIDC81_2 DARIDC81_3 $1 $2
+
+ret=$?
+exit ${ret} 

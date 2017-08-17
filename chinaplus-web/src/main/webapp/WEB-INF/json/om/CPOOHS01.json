@@ -1,0 +1,521 @@
+/**
+ * @screen CPOOHS01(Order History Main Screen)
+ * @author Xiang_chao
+ */
+CPOOHS01 = {
+	xtype : 'gridpanel',
+	id : chinaplus.screen.CPOOHS01,
+	title : chinaplus.label.CPOOHS01_Label_PageTitle,
+	border : true,
+	closable : false,
+	enableColumnHide : false,
+	enableColumnMove : false,
+	isControl : true,
+	autoScroll : true,
+	qtip : true,
+	selType : 'cellmodel',
+	columnLines : true,
+	selModel : Ext.create('Ext.selection.CheckboxModel', {
+				checkOnly : true
+			}),
+	viewConfig : {
+		loadMask : false
+	},
+	plugins : [{
+				ptype : 'gridheaderfilters',
+				allSingleFilter : false
+			}, {
+				ptype : 'emptystoreview'
+			}, {
+				ptype : 'headerfiltertoolbar',
+				showMore : true
+			}],
+	header : false,
+	headerPosition : 'bottom',
+	autoScroll : true,
+	height : Ext.getCmp('tabpanelId').getHeight() - 30,
+	columns : [{
+		xtype : 'gridcolumn',
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'orderStatusId',
+		hidden : true
+	},{
+		xtype : 'gridcolumn',
+		text : '<div style="text-align:center" class="x-grid-title">'
+				+ chinaplus.label.CPOOHS01_Grid_TTCPartNo + '</div>',
+		width : 100,
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'ttcPartsNo',
+		sortable : false,
+		filter : 'string'
+	}, {
+		xtype : 'gridcolumn',
+		text : '<div style="text-align:center" class="x-grid-title">'
+				+ chinaplus.label.CPOOHS01_Grid_IPOOrderNo + '</div>',
+		width : 100,
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'impPONo',
+		sortable : false,
+		filter : 'string'
+	}, {
+		xtype : 'gridcolumn',
+		text : '<div style="text-align:center" class="x-grid-title">'
+				+ chinaplus.label.CPOOHS01_Grid_EPOOrderNo + '</div>',
+		width : 100,
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'expPONo',
+		sortable : false,
+		filter : 'string'
+	}, {
+		xtype : 'gridcolumn',
+		text : '<div style="text-align:center" class="x-grid-title">'
+				+ chinaplus.label.CPOOHS01_Grid_CustomerOrderNo + '</div>',
+		width : 100,
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'customerOrderNo',
+		sortable : false,
+		filter : 'string'
+	}, {
+		xtype : 'gridcolumn',
+		text : '<div style="text-align:center" class="x-grid-title">'
+				+ chinaplus.label.CPOOHS01_Grid_GSCMSOData + '</div>',
+		width : 100,
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'expSODate',
+		align : 'center',
+		sortable : false,
+		filter : 'date',
+		filterPlugins : [{
+					ptype : 'datePickerClear'
+				}]
+	}, {
+		xtype : 'gridcolumn',
+		text : '<div style="text-align:center" class="x-grid-title">'
+				+ chinaplus.label.CPOOHS01_Grid_ExpCountry + '</div>',
+		width : 80,
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'expRegion',
+		sortable : false,
+		align : 'center',
+		filter : {
+			type : 'list',
+			multiSelect : true,
+			optionsStore : TRF.util.createStore(chinaplus.screen.CPOOHS01,
+					'common/loadActiveRegions', 'Combo',
+					chinaplus.screen.CPOOHS01 + '_expCountryStore')
+		}
+	}, {
+		xtype : 'gridcolumn',
+		text : '<div style="text-align:center" class="x-grid-title">'
+				+ chinaplus.label.CPOOHS01_Grid_TTCSuppCode + '</div>',
+		width : 100,
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'ttcSuppCode',
+		sortable : false,
+		filter : {
+			type : 'list',
+			multiSelect : true,
+			optionsStore : TRF.util.createStore(chinaplus.screen.CPOOHS01,
+					'common/loadActiveSuppliersCode', 'Combo',
+					chinaplus.screen.CPOOHS01 + '_supplierStore')
+		}
+	}, {
+		xtype : 'gridcolumn',
+		text : '<div style="text-align:center" class="x-grid-title">'
+				+ chinaplus.label.CPOOHS01_Grid_TTCCusCode + '</div>',
+		width : 100,
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'ttcCusCode',
+		sortable : false,
+		filter : {
+			type : 'list',
+			multiSelect : true,
+			optionsStore : TRF.util.createStore(chinaplus.screen.CPOOHS01,
+					'common/loadOfficeCustomers', 'Combo',
+					chinaplus.screen.CPOOHS01 + '_customerStore')
+		}
+	}, {
+		xtype : 'gridcolumn',
+		text : '<div style="text-align:center" class="x-grid-title">'
+				+ chinaplus.label.CPOOHS01_Grid_TransportMode + '</div>',
+		width : 90,
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'transportMode',
+		sortable : false,
+		filter : {
+			type : 'list',
+			multiSelect : true,
+			options : chinaplus.master
+					.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_TransportMode)
+			//optionsStore : TRF.util.createStore(chinaplus.screen.CPOOHS01,
+			//		'om/CPOOHS01/loadTransportMode', 'Combo',
+			//		chinaplus.screen.CPOOHS01 + '_transportModeStore')
+		},
+		renderer : function(v, p, record) {
+			var str = '';
+			if (v == 3){
+				str = chinaplus.master.getMasterName(
+					chinaplus.master.consts.TnmCodeCategory_TransportMode, 1) + ','
+					 + chinaplus.master.getMasterName(
+					chinaplus.master.consts.TnmCodeCategory_TransportMode, 2);
+			} else {
+				str = chinaplus.master.getMasterName(
+					chinaplus.master.consts.TnmCodeCategory_TransportMode, v);
+			}
+			return str;
+		}
+
+	}, {
+		xtype : 'gridcolumn',
+		id : chinaplus.screen.CPOOHS01 + '_orderQty',
+		text : '<div style="text-align:center" class="x-grid-title">'
+				+ chinaplus.label.CPOOHS01_Grid_OrderQty + '</div>',
+		width : 100,
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'orderQty',
+		sortable : false,
+		align : 'right',
+		renderer : function(v, p, record) {
+			return TRF.util.getDecimalFormatByDigits(v, record.data.uomCode);
+		}
+	}, {
+		xtype : 'gridcolumn',
+		id : chinaplus.screen.CPOOHS01 + '_expBalanceOrder',
+		text : '<div style="text-align:center" class="x-grid-title">'
+				+ chinaplus.label.CPOOHS01_Grid_ExpBalanceOrder + '</div>',
+		width : 100,
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'expBalanceOrder',
+		sortable : false,
+		align : 'right',
+		renderer : function(v, p, record) {
+			return TRF.util.getDecimalFormatByDigits(v, record.data.uomCode);
+		}
+	}, {
+		xtype : 'gridcolumn',
+		id : chinaplus.screen.CPOOHS01 + '_expWHStock',
+		text : '<div style="text-align:center" class="x-grid-title">'
+				+ chinaplus.label.CPOOHS01_Grid_ExpWHStock + '</div>',
+		width : 100,
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'expWHStock',
+		sortable : false,
+		align : 'right',
+		renderer : function(v, p, record) {
+			return TRF.util.getDecimalFormatByDigits(v, record.data.uomCode);
+		}
+	}, {
+		xtype : 'gridcolumn',
+		id : chinaplus.screen.CPOOHS01 + '_onShippingQty',
+		text : '<div style="text-align:center" class="x-grid-title">'
+				+ chinaplus.label.CPOOHS01_Grid_OnShippingQty + '</div>',
+		width : 100,
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'onShippingQty',
+		sortable : false,
+		align : 'right',
+		renderer : function(v, p, record) {
+			return TRF.util.getDecimalFormatByDigits(v, record.data.uomCode);
+		}
+	}, {
+		xtype : 'gridcolumn',
+		id : chinaplus.screen.CPOOHS01 + '_inboundQty',
+		text : '<div style="text-align:center" class="x-grid-title">'
+				+ chinaplus.label.CPOOHS01_Grid_InboundQty + '</div>',
+		width : 100,
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'inboundQty',
+		sortable : false,
+		align : 'right',
+		renderer : function(v, p, record) {
+			return TRF.util.getDecimalFormatByDigits(v, record.data.uomCode);
+		}
+	}, {
+		xtype : 'gridcolumn',
+        id : chinaplus.screen.CPOOHS01 + '_cancelledQty',
+        text : '<div style="text-align:center" class="x-grid-title">'
+                + chinaplus.label.CPOOHS01_Grid_CancelledQty + '</div>',
+        width : 100,
+        items : [{
+                    xtype : 'header',
+                    hidden : true
+                }],
+        dataIndex : 'cancelledQty',
+        sortable : false,
+        align : 'right',
+        renderer : function(v, p, record) {
+            return TRF.util.getDecimalFormatByDigits(v, record.data.uomCode);
+        }
+    }, {
+		xtype : 'gridcolumn',
+		id : chinaplus.screen.CPOOHS01 + '_impOrderBalance',
+		text : '<div style="text-align:center" class="x-grid-title">'
+				+ chinaplus.label.CPOOHS01_Grid_ImpOrderBalance + '</div>',
+		width : 100,
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'impOrderBalance',
+		sortable : false,
+		align : 'right',
+		renderer : function(v, p, record) {
+			return TRF.util.getDecimalFormatByDigits(v, record.data.uomCode);
+		}
+	}, {
+		xtype : 'gridcolumn',
+		id : chinaplus.screen.CPOOHS01 + '_customerBalance',
+		text : '<div style="text-align:center" class="x-grid-title">'
+				+ chinaplus.label.CPOOHS01_Grid_CustomerBalance + '</div>',
+		width : 100,
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'customerBalance',
+		sortable : false,
+		align : 'right',
+		renderer : function(v, p, record) {
+			return TRF.util.getDecimalFormatByDigits(v, record.data.uomCode);
+		}
+	}, {
+		xtype : 'gridcolumn',
+		id : chinaplus.screen.CPOOHS01 + '_stockTransferOut',
+		text : '<div style="text-align:center" class="x-grid-title">'
+				+ chinaplus.label.CPOOHS01_Grid_StockTransferOut + '</div>',
+		width : 100,
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'stockTransferOut',
+		sortable : false,
+		align : 'right',
+		renderer : function(v, p, record) {
+			return TRF.util.getDecimalFormatByDigits(v, record.data.uomCode);
+		}
+	}, {
+		xtype : 'gridcolumn',
+		id : chinaplus.screen.CPOOHS01 + '_stockTransferTo',
+		text : '<div style="text-align:center" class="x-grid-title">'
+				+ chinaplus.label.CPOOHS01_Grid_StockTransferTo + '</div>',
+		width : 100,
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'transferToDetails',
+		sortable : false
+		,
+	}, {
+		xtype : 'gridcolumn',
+		id : chinaplus.screen.CPOOHS01 + '_stockTransferFrom',
+		text : '<div style="text-align:center" class="x-grid-title">'
+				+ chinaplus.label.CPOOHS01_Grid_StockTransferFrom + '</div>',
+		width : 100,
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'transferFrom',
+		sortable : false
+		,
+	}, {
+		xtype : 'gridcolumn',
+		id : chinaplus.screen.CPOOHS01 + '_status',
+		text : '<div style="text-align:center" class="x-grid-title">'
+				+ chinaplus.label.CPOOHS01_Grid_Status + '</div>',
+		width : 140,
+		items : [{
+					xtype : 'header',
+					hidden : true
+				}],
+		dataIndex : 'disOrderStatus',
+		sortable : false,
+		filter : {
+			type : 'list',
+			multiSelect : true,
+			options : chinaplus.master
+					.getMasterByCategory(chinaplus.master.consts.TnmCodeCategory_OrderHistoryStatus)
+		},
+		renderer : function(v, p, record) {
+			return chinaplus.master.getMasterName(
+					chinaplus.master.consts.TnmCodeCategory_OrderHistoryStatus,
+					v);
+		}
+
+	}],
+	tbar : [{
+				text : chinaplus.label.CPOOHS01_Button_ForceComplete,
+				iconCls : 'btn-confirm',
+				id : chinaplus.screen.CPOOHS01 + '_Button_ForceComplete',
+				handler : function() {
+					Ext.getCmp(chinaplus.screen.CPOOHS01).forceComplete();
+				}
+			}, {
+				text : chinaplus.label.CPOOHS01_Button_DlOrderHistory,
+				iconCls : 'btn-download',
+				id : chinaplus.screen.CPCRMS01 + '_Button_DlOrderHistory',
+				handler : function() {
+					Ext.getCmp(chinaplus.screen.CPOOHS01).download();
+				}
+			}],
+	store : TRF.util.createStore(chinaplus.screen.CPOOHS01, 'om/CPOOHS01/list',
+			'OrderHistory', chinaplus.screen.CPOOHS01 + '_projectStore', {
+				load : TRF.util.addEnterListenerToFocusableLink
+			}),
+	/**
+	 * The initialize function.
+	 * 
+	 * @param params.
+	 *            the parameter object passed to this screen.
+	 */
+	initialize : function(params) {
+		var me = this;
+		var gridStore = this.store;
+
+		TRF.util.dataLoadStart(chinaplus.screen.CPOOHS01);
+		TRF.util.loadStore(gridStore, null, function() {
+					gridStore.on('beforeload', function() {
+                                TRF.core.mask(TRF.core.maskMsg.load, null, me);
+                            });
+                    gridStore.on('load', function() {
+                                TRF.core.unmask(me);
+                            });
+					TRF.util.dataLoadEnd(chinaplus.screen.CPOOHS01);
+				});
+
+		this.doLayout();
+		TRF.util.addGridTip(this);
+	},
+	download : function() {
+		// Select check
+		var selectionArray = Ext.getCmp(chinaplus.screen.CPOOHS01)
+				.getSelectionModel().getSelection();
+		
+		var selectDatas = [];
+		var filters = [];
+		if (selectionArray.length == 0) {
+			//download with filter 
+			var filtertoolbar = Ext.getCmp(chinaplus.screen.CPOOHS01).getPlugin('headerfiltertoolbar');
+			filters = filtertoolbar.getHandlerFilters() || {};
+		} else {
+			selectionArray.forEach(function(record) {
+					selectDatas.push(record.data.orderStatusId);
+				});
+		}
+		
+        var backFuns = function(applicationData) {
+            if (applicationData.success) {
+                TRF.util.showMessageBoxByMsgIdAndArgs('i1003');
+            }
+        };
+		
+		// Download
+		var params = {};
+		params[TRF.cnst.SELECTEDDATAS] = selectDatas;
+		params[TRF.cnst.FILTERS] = filters;
+		TRF.util.downloadSubmit(backFuns, chinaplus.screen.CPOOHS01,
+			"om/CPOOHF01/downloadcheck", params, "om/CPOOHF01/download");
+
+	},
+	forceComplete : function() {
+		// Select check
+		var selectionArray = Ext.getCmp(chinaplus.screen.CPOOHS01)
+				.getSelectionModel().getSelection();
+		
+		if (selectionArray.length == 0) {
+			TRF.util.showMessageBoxByMsgIdAndArgs('w1011');
+			return;
+		}
+		var selectDatas = [];
+		var message = [];
+		selectionArray.forEach(function(record) {
+			if (record.data.onShippingQty != 0){
+				Ext.Array.push(message, 'w1027');
+				TRF.util.showMessageBoxByMsgIdAndArgs('w1027');
+				return;
+			}
+			if (record.data.disOrderStatus != 1){
+				Ext.Array.push(message, 'w1034');
+				TRF.util.showMessageBoxByMsgIdAndArgs('w1034');
+				return;
+			}
+			if (record.data.expWHStock != 0||record.data.expOutboundQty != 0){
+				Ext.Array.push(message, 'w1045');
+				TRF.util.showMessageBoxByMsgIdAndArgs('w1045');
+				return;
+			}
+			
+			selectDatas.push(record.data.orderStatusId);
+		});
+		if (message.length > 0 ) {
+			return;
+		}
+		// Force Complete
+		var me = this;
+        var confirmMsg = TRF.util.getMessage('c1001', [chinaplus.label.CPOOHS01_Button_ForceComplete]);
+        var confirmMsgL = [];
+        TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_QUESTION, confirmMsg, confirmMsgL,
+            function(btn){
+                if (btn == 'yes') {
+					var params = {};
+					params[TRF.cnst.SELECTEDDATAS] = selectDatas;
+					var backFun = function(applicationData) {
+			        	if(applicationData.success){
+			            	var lsMsgs = TRF.util.getMessage('i1004', [chinaplus.label.CPOOHS01_Button_ForceComplete]);
+			            	TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_INFO, lsMsgs, lsMsgs, function() { me.store.reload(); });
+			            }
+			      	};
+					TRF.util.actionSubmit(backFun, chinaplus.screen.CPOOHS01,
+					"om/CPOOHS01/forceComplete", params);
+                }//end if
+            }
+        );
+	}
+}

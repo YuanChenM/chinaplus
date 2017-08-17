@@ -1,0 +1,594 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chinaplus.batch.stock.service.CPSSSB01Service">
+    
+     <sql id="ConstDef">
+        <bind name="INACTIVEFLAG_N" value="@com.chinaplus.common.consts.CodeConst$InactiveFlag@ACTIVE" />
+        <bind name="PARTS_COMPLETED" value="@com.chinaplus.common.consts.CodeConst$PartsStatus@COMPLETED" />
+        <bind name="ON_SHIPPING" value="@com.chinaplus.common.consts.CodeConst$AttachType@ON_SHIPPING" />
+        <bind name="IP_STATUS_CANCELLED" value="@com.chinaplus.common.consts.CodeConst$IpStatus@CANCELLED" />
+        <bind name="PARTY_CUSTOMER" value="@com.chinaplus.common.consts.CodeConst$CalendarParty@CUSTOMER" />
+        <bind name="AFTER_GI" value="@com.chinaplus.common.consts.CodeConst$PostRiFlag@AFTER_GI" />
+        <bind name="ETD_DELAY_A" value="@com.chinaplus.common.consts.CodeConst$NotInRDReasonType@ETD_DELAY_A" />
+        <bind name="ETD_DELAY_B" value="@com.chinaplus.common.consts.CodeConst$NotInRDReasonType@ETD_DELAY_B" />
+        <bind name="INBOUND_DELAY" value="@com.chinaplus.common.consts.CodeConst$NotInRDReasonType@INBOUND_DELAY" />
+        <bind name="NG_ONHOLD" value="@com.chinaplus.common.consts.CodeConst$NotInRDReasonType@NG_ONHOLD" />
+        <bind name="USER_INACTIVE" value="@com.chinaplus.common.consts.CodeConst$User$Status@INACTIVE" />
+        <bind name="LEVEL1" value="@com.chinaplus.common.consts.CodeConst$AlertLevel@LEVEL1" />
+        <bind name="LEVEL2" value="@com.chinaplus.common.consts.CodeConst$AlertLevel@LEVEL2" />
+        <bind name="LEVEL3" value="@com.chinaplus.common.consts.CodeConst$AlertLevel@LEVEL3" />
+        <bind name="AlarmFlag_Y" value="@com.chinaplus.common.consts.CodeConst$AlarmFlag@Y" />
+    </sql>
+    
+    <select id="getOfficesFromDatabase" parameterType="com.chinaplus.batch.stock.bean.BasePartsInfoEntity" resultType="com.chinaplus.batch.stock.bean.BasePartsInfoEntity">
+        <include refid="ConstDef"/> 
+        SELECT 
+               A.OFFICE_ID AS officeId
+             , A.OFFICE_CODE AS officeCode
+             , A.TIME_ZONE AS timeZone
+          FROM 
+               TNM_OFFICE A
+         WHERE 
+               A.INACTIVE_FLAG = #{INACTIVEFLAG_N}
+        <if test = "officeCode != null">
+           AND
+               A.OFFICE_CODE = #{officeCode}
+        </if>
+    </select>
+               
+    <select id="getPartsMasterInfo" parameterType="com.chinaplus.batch.stock.bean.BasePartsInfoEntity" resultType="com.chinaplus.common.bean.TntStockStatusEx">
+        <include refid="ConstDef"/> 
+         SELECT 
+                DISTINCT
+                A.PARTS_ID AS partsId
+              , A.CUSTOMER_ID AS customerId
+              , A.OFFICE_ID AS officeId
+              , A.ORDER_DAY AS orderDay
+              , A.SPQ AS spq
+              , A.TTC_PARTS_NO AS ttcPartsNo
+              , A.OLD_TTC_PARTS_NO AS oldPartsNo
+              , A.FORECAST_NUM AS forecastNum
+              , A.OS_CUST_STOCK_FLAG AS osCustStockFlag
+              , A.SA_CUST_STOCK_FLAG AS saCustStockFlag
+              , A.INVENTORY_BOX_FLAG AS inventoryBoxFlag
+              , A.MAX_STOCK AS maxStock
+              , A.MIN_STOCK AS minStock
+              , A.MAX_BOX AS maxBox
+              , A.MIN_BOX AS minBox
+              , A.ORDER_SAFETY_STOCK AS orderSafetyStock
+              , A.OUTBOUND_FLUCTUATION AS outboundFluctuation
+              , B.DELAY_ADJUSTMENT_PATTERN AS delayAdjustmentPattern
+              , B.SUPPLIER_ID AS supplierId
+              , B.EXP_PARTS_ID AS expPartsId
+              , B.INACTIVE_FLAG AS inactiveFlag
+              , C.IMP_STOCK_FLAG AS impStockFlag
+              , C.CUST_STOCK_END_DATE AS endingStockDate
+              , C.END_CFC_DATE AS endCfcDate
+              , C.CUST_STOCK_QTY AS custStockQty
+              , C.TARGET_MONTH AS lastTargetMonth
+              , C.IN_RACK_QTY AS totalInRackQty
+              , C.IMP_WHS_QTY AS totalImpWhsQty
+              , C.PREPARED_OB_QTY AS totalPreparedObQty
+              , C.NG_QTY AS totalNgOnholdQty
+              , C.ECI_ONHOLD_QTY AS totalEciOnholdQty
+              , C.SIMULATION_END_DATE_PATTERN AS simulationEndDatePattern
+              , E.IMP_IN_RACK_QTY AS inRackQty
+              , (NVL(E.WHS_STOCK_QTY, 0) - NVL(E.NG_QTY, 0) - NVL(E.ONHOLD_QTY, 0)) AS impWhsQty
+              , (NVL(E.IMP_STOCK_QTY, 0) - NVL(E.WHS_STOCK_QTY, 0)) AS preparedObQty
+              , E.ONHOLD_QTY AS eciOnholdQty
+              , (NVL(D.EXP_BALANCE_QTY, 0) - NVL(D.EXP_PLAN_DELAY_QTY, 0)) AS expFuturePlanQty
+              , NVL(D.EXP_PLAN_DELAY_QTY, 0) AS expPlanDelayQty
+              , NVL(D.EXP_STOCK_QTY, 0) AS expStockQty
+              , NVL(D.EXP_ONSHIPPING_QTY, 0) AS expOnshippingQty
+              , F.ETD_DELAY_QTY AS etdDelayQty
+              , F.INBOUND_DELAY_QTY AS inboundDelayQty
+              , F.NG_ONHOLD_QTY AS ngOnholdQty
+              , G.LAST_OB_ACTUAL_DATE AS lastObActualDate
+              , H.TOTAL_CFC_QTY AS totalCfcQty4
+              , NVL(I.IMP_BALANCE_QTY, 0) AS impBalanceQty
+              , NVL(I.ONSHIPPING_QTY, 0) AS onShippingQty
+           FROM
+                TNM_PARTS_MASTER A 
+          INNER JOIN 
+                TNM_EXP_PARTS B 
+             ON 
+                B.PARTS_ID = A.PARTS_ID 
+            AND 
+                B.PARTS_STATUS = #{PARTS_COMPLETED}
+          INNER JOIN 
+                TNR_RD_MASTER C 
+             ON 
+                C.PARTS_ID = A.PARTS_ID 
+           LEFT JOIN 
+                TNF_EXP_PARTS_STATUS D 
+             ON D.PARTS_ID = B.PARTS_ID 
+            AND D.SUPPLIER_ID = B.SUPPLIER_ID 
+            AND D.END_DATE = #{stockDate}
+           LEFT JOIN 
+                  (SELECT 
+                          PARTS_ID
+                        , SUPPLIER_ID
+                        , SUM(NVL(IMP_IN_RACK_QTY, 0)) AS IMP_IN_RACK_QTY
+                        , SUM(NVL(IMP_STOCK_QTY, 0)) AS IMP_STOCK_QTY
+                        , SUM(NVL(SYSTEM_STOCK_QTY, 0)) AS WHS_STOCK_QTY
+                        , SUM(NVL(NG_QTY, 0)) AS NG_QTY
+                        , SUM(NVL(ONHOLD_QTY, 0)) AS ONHOLD_QTY
+                     FROM 
+                          TNF_IMP_STOCK_BY_DAY
+                    WHERE 
+                          END_DATE = #{stockDate}
+                    GROUP BY 
+                          PARTS_ID
+                        , SUPPLIER_ID ) E
+             ON E.PARTS_ID = B.PARTS_ID 
+            AND E.SUPPLIER_ID = B.SUPPLIER_ID 
+           LEFT JOIN ( 
+                  SELECT
+                         A.PARTS_ID
+                       , SUM( 
+                           CASE 
+                             WHEN A.REASON_TYPE IN (#{ETD_DELAY_A}, #{ETD_DELAY_B})
+                             THEN A.QTY 
+                             ELSE 0 
+                             END
+                         ) AS ETD_DELAY_QTY
+                       , SUM( 
+                           CASE 
+                             WHEN A.REASON_TYPE = #{INBOUND_DELAY}
+                             THEN A.QTY 
+                             ELSE 0 
+                             END
+                         ) AS INBOUND_DELAY_QTY
+                       , SUM( 
+                           CASE 
+                             WHEN A.REASON_TYPE = #{NG_ONHOLD}
+                             THEN A.QTY 
+                             ELSE 0 
+                             END
+                         ) AS NG_ONHOLD_QTY 
+                    FROM
+                         (SELECT DISTINCT
+                                 RUNDOWN_MASTER_ID
+                               , PARTS_ID
+                               , REASON_TYPE
+                               , IMP_PO_NO
+                               , EXP_PO_NO
+                               , ETD
+                               , ETA
+                               , TRANSPORT_MODE
+                               , INVOICE_NO
+                               , IMP_INB_DATE
+                               , PROCESS_DATE
+                               , QTY
+                            FROM TNR_NOT_IN_RUNDOWN) A 
+                   GROUP BY
+                         A.PARTS_ID) F 
+             ON 
+                F.PARTS_ID = A.PARTS_ID 
+           LEFT JOIN ( 
+                  SELECT
+                         A.PARTS_ID
+                       , A.SUPPLIER_ID
+                       , MAX(LAST_OB_ACTUAL_DATE) AS LAST_OB_ACTUAL_DATE 
+                    FROM
+                         ( 
+                           SELECT
+                                  DISTINCT
+                                  A.PARTS_ID
+                                , A.SUPPLIER_ID
+                                , DATE(A.IMP_OUTBOUND_DATE) AS LAST_OB_ACTUAL_DATE 
+                             FROM
+                                  TNT_IP A 
+                            WHERE  
+                                  A.IMP_OB_ACTUAL_DATE IS NULL
+                              AND
+                                  A.IMP_OUTBOUND_DATE IS NOT NULL
+                            UNION ALL 
+                           SELECT
+                                  DISTINCT
+                                  C.PARTS_ID
+                                , C.SUPPLIER_ID
+                                , A.GI_DATE AS LAST_OB_ACTUAL_DATE 
+                             FROM
+                                  TNT_INVOICE_SUMMARY A 
+                            INNER JOIN 
+                                  TNT_INVOICE B 
+                               ON 
+                                  B.INVOICE_SUMMARY_ID = A.INVOICE_SUMMARY_ID 
+                            INNER JOIN 
+                                  TNT_INVOICE_PARTS C 
+                               ON 
+                                  C.INVOICE_ID = B.INVOICE_ID 
+                            WHERE
+                                  A.GI_DATE IS NULL
+                              AND 
+                                  A.POST_RI_FLAG <![CDATA[<]]> #{AFTER_GI}) A 
+                   GROUP BY
+                         A.PARTS_ID
+                       , A.SUPPLIER_ID) G 
+             ON G.PARTS_ID = A.PARTS_ID 
+            AND G.SUPPLIER_ID = B.SUPPLIER_ID 
+           LEFT JOIN ( 
+                  SELECT
+                         A.PARTS_ID
+                       , SUM(A.CFC_QTY) AS TOTAL_CFC_QTY 
+                    FROM
+                         TNT_CFC_DAY A 
+                   INNER JOIN ( 
+                           SELECT
+                                  A1.PARTS_ID
+                                , A1.CFC_DATE
+                                , MAX(A1.CFC_ID) AS CFC_ID 
+                             FROM
+                                  TNT_CFC_DAY A1 
+                            WHERE
+                                  A1.CFC_DATE <![CDATA[>=]]> #{firstShareDate}
+                              AND A1.CFC_DATE <![CDATA[<=]]> #{lastShareDate}
+                            GROUP BY
+                                  A1.PARTS_ID
+                                , A1.CFC_DATE) B 
+                      ON B.CFC_ID = A.CFC_ID 
+                     AND B.PARTS_ID = A.PARTS_ID 
+                     AND B.CFC_DATE = A.CFC_DATE 
+                   GROUP BY
+                         A.PARTS_ID) H 
+             ON H.PARTS_ID = A.PARTS_ID 
+           LEFT JOIN ( 
+                  SELECT
+                         A.PARTS_ID
+                       , SUM( 
+                           CASE 
+                             WHEN A.ORDER_BALANCE_QTY <![CDATA[<]]> 0 
+                             THEN 0 
+                             ELSE A.ORDER_BALANCE_QTY 
+                             END
+                         ) AS IMP_BALANCE_QTY
+                       , SUM( 
+                           CASE 
+                             WHEN A.ORDER_BALANCE_QTY <![CDATA[<=]]> 0 
+                             THEN B.TOTAL_ONSHIPPING_QTY 
+                             ELSE 0 
+                             END
+                         ) AS ONSHIPPING_QTY 
+                    FROM
+                         TNF_BALANCE_BY_DAY A 
+                   INNER JOIN ( 
+                           SELECT
+                                  A1.PARTS_ID
+                                , A1.SUPPLIER_ID
+                                , A1.IMP_PO_NO
+                                , A1.KANBAN_PLAN_NO
+                                , SUM(A1.EXP_ONSHIPPING_QTY) AS TOTAL_ONSHIPPING_QTY 
+                             FROM
+                                  TNF_ORDER_STATUS A1 
+                            GROUP BY
+                                  A1.PARTS_ID
+                                , A1.SUPPLIER_ID
+                                , A1.IMP_PO_NO
+                                , A1.KANBAN_PLAN_NO) B 
+                      ON B.PARTS_ID = A.PARTS_ID 
+                     AND B.SUPPLIER_ID = A.SUPPLIER_ID 
+                     AND (B.IMP_PO_NO = A.IMP_PO_NO 
+                      OR  B.KANBAN_PLAN_NO = A.KANBAN_PLAN_NO)
+                   WHERE
+                         A.END_DATE = #{stockDate}
+                   GROUP BY
+                         A.PARTS_ID) I 
+             ON I.PARTS_ID = A.PARTS_ID 
+          <where>
+              <if test = "officeId != null">
+                 A.OFFICE_ID = #{officeId}
+              </if>
+          </where>
+          ORDER BY 
+                A.PARTS_ID
+              , B.SUPPLIER_ID
+    </select>
+        
+    <select id="getImpActualOutboundDetail" parameterType="com.chinaplus.batch.stock.bean.BasePartsInfoEntity" resultType="com.chinaplus.common.entity.TnfImpStockByDay">
+         SELECT
+                A.PARTS_ID AS partsId
+              , A.END_DATE AS endDate
+              , SUM(A.DAY_OUTBOUND_QTY) AS dayOutboundQty
+           FROM
+                TNF_IMP_STOCK_BY_DAY A 
+          WHERE
+                A.END_DATE <![CDATA[>=]]> #{firstShareDate}
+            AND 
+                A.END_DATE <![CDATA[<=]]> #{lastShareDate}
+          <if test = "officeId != null">
+            AND 
+                A.OFFICE_ID = #{officeId}
+          </if>
+          GROUP BY
+                A.PARTS_ID
+              , A.END_DATE 
+          ORDER BY
+                A.PARTS_ID
+              , A.END_DATE
+    </select>
+        
+    <select id="getRundownDetailInfo" parameterType="com.chinaplus.batch.stock.bean.BasePartsInfoEntity" resultType="com.chinaplus.common.entity.TntRdDetail">
+         SELECT
+                A.PARTS_ID AS partsId
+              , A.IMP_INB_PLAN_DATE AS impInbPlanDate
+              , A.ORDER_FORECAST_QTY AS orderForecastQty
+              , A.NOT_ETD_QTY AS notEtdQty
+              , A.ON_SHIPPING_QTY AS onShippingQty
+              , NVL(A.DAILY_USAGE_QTY, 0) AS daliyUsageQty
+              , A.WORKING_FLAG AS workingFlag
+              , A.ENDING_STOCK AS endingStock
+              , A.STOCK_DAYS AS stockDays
+              , A.NO_CFC_FLAG AS noCfcFlag
+              , A.NO_PFC_FLAG AS noPfcFlag
+              , A.SIMULATION_TYPE AS simulationType
+              , A.ADD_ON_MIN_QTY AS addOnMinQty
+              , A.ADD_ON_SAFTY_QTY AS addOnSaftyQty
+           FROM
+                TNR_RD_DETAIL A 
+          INNER JOIN
+                TNM_PARTS_MASTER B
+             ON 
+                B.PARTS_ID = A.PARTS_ID
+          <where>
+             <if test = "officeId != null">
+                B.OFFICE_ID = #{officeId}
+             </if>
+          </where> 
+          ORDER BY
+                A.PARTS_ID
+              , A.IMP_INB_PLAN_DATE
+    </select>
+            
+    <select id="getNextInboundPlanList" parameterType="com.chinaplus.batch.stock.bean.BasePartsInfoEntity" resultType="com.chinaplus.common.bean.TntRdDetailAttachEx">
+         <include refid="ConstDef"/>
+         SELECT
+                A.PARTS_ID AS partsId
+              , A.IMP_INB_PLAN_DATE AS impInbPlanDate
+              , A.INVOICE_NO AS invoiceNo
+              , SUM(A.QTY) AS qty
+           FROM
+                (SELECT DISTINCT
+                        RUNDOWN_DETAIL_ID
+                      , PARTS_ID
+                      , SUPPLIER_ID
+                      , ATTACH_TYPE
+                      , PFC_MONTH
+                      , IMP_PO_NO
+                      , ETD
+                      , ETA
+                      , IMP_INB_PLAN_DATE
+                      , QTY
+                      , INVOICE_NO
+                   FROM TNR_RD_ATTACH_SHIPPING ) A 
+          INNER JOIN ( 
+                  SELECT
+                         A.PARTS_ID
+                       , MIN(A.IMP_INB_PLAN_DATE) AS IMP_INB_PLAN_DATE 
+                    FROM
+                         TNR_RD_ATTACH_SHIPPING A 
+                   INNER JOIN
+                         TNM_PARTS_MASTER B 
+                      ON 
+                         B.PARTS_ID = A.PARTS_ID 
+                   WHERE
+                         A.ATTACH_TYPE = #{ON_SHIPPING}
+                   <if test = "officeId != null">
+                     AND 
+                         B.OFFICE_ID = #{officeId}
+                   </if>
+                   GROUP BY
+                         A.PARTS_ID) B 
+             ON 
+                B.PARTS_ID = A.PARTS_ID 
+            AND 
+                B.IMP_INB_PLAN_DATE = A.IMP_INB_PLAN_DATE 
+          WHERE 
+                A.ATTACH_TYPE = #{ON_SHIPPING}
+          GROUP BY
+                A.PARTS_ID
+              , A.IMP_INB_PLAN_DATE
+              , A.INVOICE_NO
+          ORDER BY
+                A.PARTS_ID
+              , A.IMP_INB_PLAN_DATE
+              , A.INVOICE_NO
+    </select>
+        
+    <select id="getCustomerDailyUsageList" parameterType="com.chinaplus.batch.stock.bean.BasePartsInfoEntity" resultType="com.chinaplus.common.entity.TntCfcDay">
+         SELECT
+                A.PARTS_ID AS partsId
+              , A.CFC_DATE AS cfcDate
+              , (CASE WHEN TRC.PARTS_ID IS NULL THEN A.CFC_QTY ELSE TRC.CFC_QTY END) AS cfcQty
+           FROM
+                TNT_CFC_DAY A 
+          INNER JOIN ( 
+                  SELECT
+                         A1.PARTS_ID
+                       , A1.CFC_DATE
+                       , MAX(A1.CFC_ID) AS CFC_ID 
+                    FROM
+                         TNT_CFC_DAY A1 
+                   INNER JOIN 
+                         TNM_PARTS_MASTER B1
+                      ON
+                         B1.PARTS_ID = A1.PARTS_ID
+                   WHERE
+                         A1.CFC_DATE <![CDATA[>=]]> #{stockDate}
+                   <if test = "officeId != null">
+                     AND 
+                         B1.OFFICE_ID = #{officeId}
+                   </if>
+                   GROUP BY
+                         A1.PARTS_ID
+                       , A1.CFC_DATE) B 
+             ON 
+                B.PARTS_ID = A.PARTS_ID 
+            AND 
+                B.CFC_DATE = A.CFC_DATE 
+            AND 
+                B.CFC_ID = A.CFC_ID 
+           LEFT JOIN 
+                TNT_RUNDOWN_CFC TRC
+             ON  
+                TRC.PARTS_ID = A.PARTS_ID 
+            AND 
+                TRC.CFC_DATE = A.CFC_DATE 
+          ORDER BY
+                A.PARTS_ID
+              , A.CFC_DATE
+    </select>
+
+    <select id="getCalendarList" parameterType="com.chinaplus.batch.stock.bean.BasePartsInfoEntity" resultType="com.chinaplus.common.bean.TnmCalendarDetailEx">
+         <include refid="ConstDef"/>
+         SELECT
+                A.CALENDAR_ID AS calendarId
+              , B.CALENDAR_DATE AS calendarDate
+              , B.WORKING_FLAG AS workingFlag
+           FROM
+                TNM_CALENDAR_MASTER A 
+          INNER JOIN 
+                TNM_CALENDAR_DETAIL B 
+             ON 
+                B.CALENDAR_ID = A.CALENDAR_ID 
+          WHERE
+                A.INACTIVE_FLAG = 0 
+            AND 
+                B.CALENDAR_DATE >= #{stockDate}
+          <if test = "officeId != null">
+            AND 
+                A.OFFICE_ID = #{officeId}
+          </if>
+            AND 
+                EXISTS ( 
+                        SELECT
+                               M.CALENDAR_ID
+                          FROM
+                               TNM_CALENDAR_PARTY M 
+                         WHERE
+                               M.CALENDAR_ID = A.CALENDAR_ID 
+                           AND
+                               M.PARTY_TYPE IN (#{PARTY_CUSTOMER})) 
+          ORDER BY
+                A.CALENDAR_ID
+              , B.CALENDAR_DATE
+    </select>
+            
+    <select id="getCalendarPartyInfo" parameterType="com.chinaplus.batch.stock.bean.BasePartsInfoEntity" resultType="com.chinaplus.common.bean.TnmCalendarPartyEx">
+         <include refid="ConstDef"/>
+         SELECT
+                A.CALENDAR_ID AS calendarId
+              , A.PARTY_TYPE AS partyType
+              , A.OFFICE_ID AS officeId
+              , A.SUPPLIER_ID AS supplierId
+              , A.CUSTOMER_ID AS customerId
+              , A.WHS_ID AS whsId
+           FROM
+                TNM_CALENDAR_PARTY A 
+          WHERE 
+                A.PARTY_TYPE IN (#{PARTY_CUSTOMER})
+          <if test = "officeId != null">
+            AND 
+                A.OFFICE_ID = #{officeId}
+          </if>
+          ORDER BY
+                A.PARTY_TYPE
+              , A.OFFICE_ID
+              , A.SUPPLIER_ID
+              , A.CUSTOMER_ID
+              , A.WHS_ID
+    </select>
+    
+    <delete id="deleteStockStatusInfo" parameterType="com.chinaplus.batch.stock.bean.BasePartsInfoEntity">
+        DELETE 
+          FROM 
+               TNR_STOCK_STATUS M
+         <where>
+             <if test = "officeId != null">
+                OFFICE_ID = #{officeId}
+             </if>
+         </where>
+    </delete>
+                
+    <select id="getMaxStockStatusId" resultType="java.lang.Integer" flushCache="true">
+        SELECT MAX(STOCK_STATUS_ID) + 1 FROM TNR_STOCK_STATUS
+    </select>
+                   
+    <select id="getUserMailInfoList" parameterType="com.chinaplus.batch.stock.bean.BasePartsInfoEntity" resultType="com.chinaplus.batch.stock.bean.BasePartsInfoEntity">
+        <include refid="ConstDef"/>
+        SELECT
+               DISTINCT
+               B.OFFICE_ID AS officeId
+             , A.USER_ID AS userId
+             , C.MAIL_ADDR AS mailAddr
+             , C.DEFAULT_LANG AS lang
+          FROM
+               TNM_EMAIL_ALERT A 
+         INNER JOIN 
+               TNR_STOCK_STATUS B 
+            ON 
+               B.CUSTOMER_ID = A.CUSTOMER_ID
+           AND
+               B.ALERT_LEVEL <![CDATA[<=]]> A.ALERT_LEVEL
+         INNER JOIN 
+               TNM_USER C
+            ON 
+               C.USER_ID = A.USER_ID
+           AND 
+               C.STATUS <![CDATA[<>]]> #{USER_INACTIVE}
+         WHERE 
+               A.INACTIVE_FLAG = #{INACTIVEFLAG_N}
+           AND 
+               B.OFFICE_ID = #{officeId}
+    </select>
+                   
+    <select id="getUserMailAlarmInfoList" parameterType="com.chinaplus.batch.stock.bean.BasePartsInfoEntity" resultType="com.chinaplus.batch.stock.bean.BasePartsInfoEntity">
+        <include refid="ConstDef"/>
+         SELECT 
+                TC.CUSTOMER_CODE AS customerCode
+              , SUM(CASE WHEN TSS.MIN_ALARM_1A = #{AlarmFlag_Y} 
+                           OR TSS.MIN_ALARM_1B = #{AlarmFlag_Y} 
+                           THEN 1 
+                         ELSE 0 
+                    END) AS alert1Cnt
+              , SUM(CASE WHEN TSS.SHORTAGE_DATE_TM IS NOT NULL 
+                           OR TSS.SHORTAGE_DATE_F1 IS NOT NULL 
+                           OR TSS.SHORTAGE_DATE_F2 IS NOT NULL 
+                           OR TSS.SHORTAGE_DATE_F3 IS NOT NULL 
+                           OR TSS.SHORTAGE_DATE_F4 IS NOT NULL 
+                           OR TSS.SHORTAGE_DATE_F5 IS NOT NULL 
+                           OR TSS.SHORTAGE_DATE_F6 IS NOT NULL 
+                           THEN 1 
+                         ELSE 0
+                    END) AS alert2Cnt
+              , SUM(CASE WHEN TSS.SAFETY_ALARM_3 = 1 
+                           THEN 1 
+                         ELSE 0 
+                    END) AS alert3Cnt
+           FROM 
+                TNM_EMAIL_ALERT TEA
+          INNER JOIN 
+                TNR_STOCK_STATUS TSS
+             ON 
+                TSS.ALERT_LEVEL <![CDATA[<=]]> TEA.ALERT_LEVEL
+            AND 
+                TEA.CUSTOMER_ID = TSS.CUSTOMER_ID
+          INNER JOIN 
+                TNM_CUSTOMER TC
+             ON 
+                TC.CUSTOMER_ID = TEA.CUSTOMER_ID
+          WHERE 
+                TSS.OFFICE_ID = #{officeId}
+            AND 
+                TEA.USER_ID = #{userId}
+            AND 
+                TEA.INACTIVE_FLAG = #{INACTIVEFLAG_N}
+          GROUP BY 
+                TC.CUSTOMER_CODE
+          ORDER BY 
+                alert1Cnt DESC
+              , alert2Cnt DESC
+              , alert3Cnt DESC
+              , customerCode
+    </select>
+</mapper>

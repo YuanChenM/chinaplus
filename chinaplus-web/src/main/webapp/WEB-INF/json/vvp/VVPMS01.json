@@ -1,0 +1,150 @@
+/**
+ * Main Screen
+ * 
+ * @screen VVPMS01
+ * @author ren_yi
+ */
+VVPMS01 = {
+    id : chinaplus.screen.VVPMS01,
+    title : chinaplus.label.VVPMS01_Label_PageTitle,
+    xtype : 'form',
+    autoHeight : false,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    autoScroll : true,
+    fieldDefaults : {
+        labelAlign : 'right',
+        labelWidth : 70
+    },
+    items : [{
+    	xtype : 'panel',
+    	frame : true,
+    	margin : '5 5 5 5',
+    	border : false,
+    	items : [{
+    			xtype : 'panel',
+    			autoScroll : false,
+    			border : false,
+    			fieldDefaults : {
+    				labelAlign : 'right',
+    				labelWidth : 170
+    			},
+    			items : [{
+    					xtype : 'container',
+    					layout : 'column',
+    					margin : '10 0 0 0',
+    					items : [{
+    							xtype : 'container',
+    							width : 240,
+    							items : [{
+    									xtype : 'panel',
+    									frame : true,
+    									layout : 'form',
+    							    	margin : '5 5 5 5',
+    							    	items : [{
+    							    		xtype : 'label',
+    			                            html : '<div style="height:20px; line-height:20px; ">' + 'CALENDAR' + '</div>'
+    							    	}, {
+    						                xtype: 'container',
+    						                margin : '0 0 0 5',
+    						                items: [{
+    						                    xtype: 'datepicker',
+    						                    width: 200,
+    						                    showToday : false
+    						                }]
+    						            }]
+    									
+    							}, {
+									xtype : 'panel',
+									frame : true,
+							    	layout : 'column',
+							    	margin : '15 5 5 5',
+							    	layout : 'form',
+							    	items : [{
+							    		xtype : 'label',
+			                            html : '<div style="height:20px; line-height:20px;">' + 'MENU' + '</div>'
+							    	}, {
+							    		xtype : 'label',
+							    		html : '<div style="color:#4F81BD; height:20px; line-height:20px; margin-top: 20px">' + 'SITE MAP' + '</div>'
+							    	}, {
+							    		xtype : 'label',
+							    		html : '<div style="color:#4F81BD; height:20px; line-height:20px; margin-top: 20px">' + 'USER GUIDE' + '</div>'
+							    	}]
+							}]
+    					}, {
+    						xtype : 'container',
+    						width : 400,
+    						margin : '5 5 5 30',
+    						frame : true,
+    						items :  [{
+    								xtype : 'panel',
+    		    					layout : 'form',
+    		    					frame : true,
+    								items : [{
+    									xtype : 'label',
+			                            html : '<div style="height:20px; line-height:20px;px">' + 'COURSE OVERVIEW ' + '</div>'
+    								}, {
+    									xtype : 'label',
+    									html : '<div style="color:#4F81BD; font-size:20px; height:20px; line-height:20px; margin-top: 50px">' + 'GPD ' + '</div>'
+    								}, {
+							    		xtype : 'label',
+							    		html : '<div style="color:#4F81BD; font-size:20px; height:20px; line-height:20px; margin-top: 50px">' + 'V-V OPERATION' + '</div>'
+							    	}, {
+							    		xtype : 'label',
+							    		html : '<div style="color:#4F81BD; font-size:20px; height:20px; line-height:20px; margin-top: 50px">' + 'AUTOMOTIVE INDUSTRY' + '</div>'
+							    	}, {
+							    		xtype : 'label',
+							    		html : '<div style="color:#4F81BD; font-size:20px; height:20px; line-height:20px; margin-top: 50px">' + 'TRADING' + '</div>'
+							    	}, {
+							    		xtype : 'label',
+							    		/*html : '<div style="color:#4F81BD; font-size:20px; height:20px; line-height:20px; ">' + 'SUPPLIER DATA BASE' + '</div>'*/
+							    		html : '<div style="margin-top: 50px"><a style="color:#4F81BD; text-decoration:none; font-size:20px;" tabIndex=-1 href="javascript:void(0)" onclick="VVPMS01.addApplication()"> '+ 'SUPPLIER DATA BASE' +' </a></div>',
+							    	}]
+    						}]
+    					}, {
+    						xtype : 'container',
+    						width : 240,
+                            frame : true,
+                            margin : '5 5 5 30',
+    						items :  [{
+								xtype : 'panel',
+								frame : true,
+								layout : 'form',
+								items : [{
+									xtype : 'label',
+		                            html : '<div ">' + 'LATEST NEWS ' + '</div>'
+								}, {
+						    		xtype : 'label',
+						    		html : '<div style="color:#4F81BD; font-size:10px; margin-top:10px">' + 'CBD Material Uploaded (23-24th Mar 2017)' + '</div>'
+						    	}, {
+						    		xtype : 'label',
+		                            html : '<div style="font-size:10px;">' + '12 Apr, 09:23 Elearning Team' + '</div>'
+						    	}, {
+						    		xtype : 'label',
+						    		html : '<div style="color:#4F81BD; font-size:10px; margin-top:10px">' + 'Country Data Uploaded (AU, VN, BR, IN, PK, AR, VE, TH, TW, ID, MY, PH, ZA) ' + '</div>'
+						    	}, {
+						    		xtype : 'label',
+		                            html : '<div style="font-size:10px;">' + '18 Jan, 15:06  Elearning Team' + '</div>'
+						    	}, {
+						    		xtype : 'label',
+						    		html : '<div style="color:#4F81BD; font-size:10px; margin-top:10px">' + 'Survey on V-V Portal Usagee' + '</div>'
+						    	}, {
+						    		xtype : 'label',
+		                            html : '<div style="font-size:10px;">' + '18 Jan, 15:06  Elearning Team' + '</div>'
+						    	}, {
+						    		xtype : 'label',
+		                            html : '<div style="font-size:10px; margin-top:10px">' + 'Older topics … ' + '</div>'
+						    	}]
+						}]
+    			  }]
+    	     }]
+    			
+    	}]
+    }],
+    addApplication : function() {
+        
+    	TRF.util.setDetailTabMode_New();
+        TRF.util.addApplication(chinaplus.screen.VVPLS01, chinaplus.screen.VVPLS01, true);
+    }
+
+
+}

@@ -1,0 +1,29 @@
+<!--
+@screen CPSKSS01
+@author shi_yuxi
+-->
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="com.chinaplus.web.sa.service.CPSKSS01Service">
+    <sql id="ConstDef">
+        <bind name="InactiveFlag_ACTIVE" value="@com.chinaplus.common.consts.CodeConst$InactiveFlag@ACTIVE" />
+    </sql>
+    <!-- get current office customers -->
+    <select id="getCurrentOfficeCustomers" parameterType="com.chinaplus.core.bean.BaseParam" 
+            resultType="com.chinaplus.common.bean.ComboData" >
+        <include refid="ConstDef"/>
+        SELECT
+            CUSTOMER_ID as id,
+            CUSTOMER_CODE as text
+        FROM
+            TNM_CUSTOMER
+        WHERE
+            OFFICE_ID = #{currentOfficeId}
+        AND INACTIVE_FLAG = ${InactiveFlag_ACTIVE}
+        AND BUSINESS_PATTERN in (${swapData.businessPattern})
+        ORDER BY
+            CUSTOMER_CODE ASC
+    </select>
+</mapper>

@@ -1,0 +1,1102 @@
+/**
+ * Shipping Status Download Screen                                          
+ * 
+ * @author li_feng
+ * @screen CPSSMS02
+ */
+
+CPSSMS02 = {
+    xtype : 'form',
+    id : chinaplus.screen.CPSSMS02,
+    title : chinaplus.label.CPSSMS02_Label_PageTitle,
+    frame : true,
+    autoHeight : false,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    autoScroll : true,
+    buttonAlign : 'left',
+    fieldDefaults : {
+        labelAlign : 'right',
+        labelWidth : 150
+    },
+    items : [
+            // row 1
+            {
+            border : true,
+            xtype : 'panel',
+            width : '100%',
+            minWidth : 1050,
+            layout : 'column',
+            margin : '20 20 10 20',
+            bodyPadding : '10 0',
+            //autoScroll : true,
+            items : [{
+                     //  row 1  Columns 1
+                        
+                        border : false,
+                        bodyPadding : '10 0',
+                        xtype : 'panel',
+                        autoHeight : false,
+                        height : 550,
+                        defaultType : 'combo',
+                        title : chinaplus.label.CPSSMS02_Grid_PartsMasterDownload,
+                        items : [{
+                                    xtype : 'textfield',
+                                    fieldLabel : chinaplus.label.CPSSMS02_Label_ImportOrderNo,
+                                    width : 492,
+                                    minWidth : 492,
+                                    id : chinaplus.screen.CPSSMS02 + '_importOrderNo',
+                                    name : 'importOrderNo',
+                                    labelSeparator : '',
+                                }, {
+                                    margin : '20 0 0 0',
+                                    xtype : 'textfield',
+                                    fieldLabel : chinaplus.label.CPSSMS02_Label_CustomerOrderNo,
+                                    width : 492,
+                                    minWidth : 492,
+                                    id : chinaplus.screen.CPSSMS02 + '_customerOrderNo',
+                                    name : 'customerOrderNo',
+                                    labelSeparator : '',
+                                }, {
+                                    margin : '20 0 0 0',
+                                    xtype : 'container',
+                                    layout : 'column',
+                                    autoScroll : true,
+                                    items : [{
+                                                // minWidth : 300,
+                                                xtype : 'container',
+                                                defaultType : 'datefield',
+                                                defaults : {
+                                                    format : "d  M  Y",
+                                                    msgTarget : 'side'
+                                                },
+                                                items : [{
+                                                            fieldLabel : chinaplus.label.CPSSMS02_Label_JpGscmSalesOrderCreateDateFrom,
+                                                            labelSeparator : '',
+                                                            id : chinaplus.screen.CPSSMS02 + '_jpGscmSalesOrderCreateDateFrom',
+                                                            endDateField : chinaplus.screen.CPSSMS02 + '_jpGscmSalesOrderCreateDateTo',
+                                                            editable : false,
+                                                            msgTarget : 'side',
+                                                            format : 'd M Y',
+                                                            name : 'jpGscmSalesOrderCreateDateFromDate',
+                                                            width : 300,
+                                                            minWidth : 300,
+                                                            forceSelection : true,
+                                                            autoFitErrors : false,
+                                                            fieldStyle : 'background:rgb(255,255,153)',
+                                                            listeners : {
+                                                                change : function() {
+                                                                    CPSSMS02.jpGscmSalesOrderCreateDateFromChange();
+                                                                }
+                                                            },
+                                                            plugins : [{
+                                                                        ptype : 'datePickerClear'
+                                                                    }]
+                                                        }]
+                                            }, {
+                                                
+                                                xtype : 'container',
+                                                autoHeight : true,
+                                                autoScroll : true,
+                                                defaultType : 'datefield',
+                                                defaults : {
+                                                    format : "d M Y",
+                                                    msgTarget : 'side'
+                                                },
+                                                items : [{
+                                                            fieldLabel : chinaplus.label.CPSSMS02_Label_JpGscmSalesOrderCreateDateTo,
+                                                            labelWidth : 60,
+                                                            labelSeparator : '',
+                                                            margin : '5px 0 0 0',
+                                                            id : chinaplus.screen.CPSSMS02 + '_jpGscmSalesOrderCreateDateTo',
+                                                            editable : false,
+                                                            format : "d M Y",
+                                                            name : 'jpGscmSalesOrderCreateDateToDate',
+                                                            startDateField : chinaplus.screen.CPSSMS02 + '_jpGscmSalesOrderCreateDateFrom',
+                                                            msgTarget : 'side',
+                                                            width : 210,
+                                                            forceSelection : true,
+                                                            autoFitErrors : false,
+                                                            fieldStyle : 'background:rgb(255,255,153)',
+                                                            listeners : {
+                                                                change : function() {
+                                                                    CPSSMS02.jpGscmSalesOrderCreateDateToChange();
+                                                                }
+                                                            },
+                                                            plugins : [{
+                                                                        ptype : 'datePickerClear'
+                                                                    }]
+                                                        }]
+                                            }]
+                                }, {
+                                    
+                                    margin : '20 0 0 0',
+                                    xtype : 'container',
+                                    layout : 'column',
+                                    autoScroll : true,
+                                    items : [{
+                                                // minWidth : 300,
+                                                xtype : 'container',
+                                                defaultType : 'datefield',
+                                                defaults : {
+                                                    format : "d M Y",
+                                                    msgTarget : 'side'
+                                                },
+                                                items : [{
+                                                            fieldLabel : chinaplus.label.CPSSMS02_Label_PlanEtdFrom,
+                                                            labelSeparator : '',
+                                                            id : chinaplus.screen.CPSSMS02 + '_planEtdFrom',
+                                                            endDateField : chinaplus.screen.CPSSMS02 + '_planEtdTo',
+                                                            editable : false,
+                                                            msgTarget : 'side',
+                                                            format : 'd M Y',
+                                                            name : 'planEtdFromDate',
+                                                            width : 300,
+                                                            minWidth : 300,
+                                                            forceSelection : true,
+                                                            autoFitErrors : false,
+                                                            fieldStyle : 'background:rgb(255,255,153)',
+                                                            listeners : {
+                                                                change : function() {
+                                                                    CPSSMS02.planEtdFromChange();
+                                                                }
+                                                            },
+                                                            plugins : [{
+                                                                        ptype : 'datePickerClear'
+                                                                    }]
+                                                        }]
+                                            },{
+                                                xtype : 'container',
+                                                autoHeight : true,
+                                                autoScroll : true,
+                                                defaultType : 'datefield',
+                                                defaults : {
+                                                    format : "d M Y",
+                                                    msgTarget : 'side'
+                                                },
+                                                items : [{
+                                                            fieldLabel : chinaplus.label.CPSSMS02_Label_PlanEtdTo,
+                                                            labelWidth : 60,
+                                                            labelSeparator : '',
+                                                            id : chinaplus.screen.CPSSMS02 + '_planEtdTo',
+                                                            editable : false,
+                                                            format : "d M Y",
+                                                            name : 'planEtdToDate',
+                                                            startDateField : chinaplus.screen.CPSSMS02 + '_planEtdFrom',
+                                                            msgTarget : 'side',
+                                                            width : 210,
+                                                            forceSelection : true,
+                                                            autoFitErrors : false,
+                                                            fieldStyle : 'background:rgb(255,255,153)',
+                                                            listeners : {
+                                                                change : function() {
+                                                                    CPSSMS02.planEtdToChange();
+                                                                }
+                                                            },
+                                                            plugins : [{
+                                                                        ptype : 'datePickerClear'
+                                                                    }]
+                                                        }]
+                                            }]
+                                }, {
+                                   
+                                    margin : '20 0 0 0',
+                                    xtype : 'container',
+                                    layout : 'column',
+                                    autoScroll : true,
+                                    items : [{
+                                                // minWidth : 300,
+                                                xtype : 'container',
+                                                defaultType : 'datefield',
+                                                defaults : {
+                                                    format : "d M Y",
+                                                    msgTarget : 'side'
+                                                },
+                                                items : [{
+                                                            fieldLabel : chinaplus.label.CPSSMS02_Label_PlanEtaFrom,
+                                                            labelSeparator : '',
+                                                            id : chinaplus.screen.CPSSMS02 + '_planEtaFrom',
+                                                            endDateField : chinaplus.screen.CPSSMS02 + '_planEtaTo',
+                                                            editable : false,
+                                                            msgTarget : 'side',
+                                                            format : 'd M Y',
+                                                            name : 'planEtaFromDate',
+                                                            width : 300,
+                                                            minWidth : 300,
+                                                            forceSelection : true,
+                                                            autoFitErrors : false,
+                                                            fieldStyle : 'background:rgb(255,255,153)',
+                                                            listeners : {
+                                                                change : function() {
+                                                                    CPSSMS02.planEtaFromChange();
+                                                                }
+                                                            },
+                                                            plugins : [{
+                                                                        ptype : 'datePickerClear'
+                                                                    }]
+                                                        }]
+                                            }, {
+                                                xtype : 'container',
+                                                autoHeight : true,
+                                                autoScroll : true,
+                                                defaultType : 'datefield',
+                                                defaults : {
+                                                    format : "d M Y",
+                                                    msgTarget : 'side'
+                                                },
+                                                items : [{
+                                                            fieldLabel : chinaplus.label.CPSSMS02_Label_PlanEtaTo,
+                                                            labelWidth : 60,
+                                                            labelSeparator : '',
+                                                            id : chinaplus.screen.CPSSMS02 + '_planEtaTo',
+                                                            editable : false,
+                                                            format : "d M Y",
+                                                            name : 'planEtaToDate',
+                                                            startDateField : chinaplus.screen.CPSSMS02 + '_planEtaFrom',
+                                                            msgTarget : 'side',
+                                                            width : 210,
+                                                            forceSelection : true,
+                                                            autoFitErrors : false,
+                                                            fieldStyle : 'background:rgb(255,255,153)',
+                                                            listeners : {
+                                                                change : function() {
+                                                                    CPSSMS02.planEtaToChange();
+                                                                }
+                                                            },
+                                                            plugins : [{
+                                                                        ptype : 'datePickerClear'
+                                                                    }]
+                                                        }]
+                                            }]
+                                }, {
+                                   
+                                    margin : '20 0 0 0',
+                                    xtype : 'container',
+                                    layout : 'column',
+                                    autoScroll : true,
+                                    items : [{
+                                                // minWidth : 300,
+                                                xtype : 'container',
+                                                defaultType : 'datefield',
+                                                defaults : {
+                                                    format : "d M Y",
+                                                    msgTarget : 'side'
+                                                },
+                                                items : [{
+                                                            fieldLabel : chinaplus.label.CPSSMS02_Label_InvoiceEtdFrom,
+                                                            labelSeparator : '',
+                                                            id : chinaplus.screen.CPSSMS02 + '_invoiceEtdFrom',
+                                                            endDateField : chinaplus.screen.CPSSMS02 + '_invoiceEtdTo',
+                                                            editable : false,
+                                                            msgTarget : 'side',
+                                                            format : 'd M Y',
+                                                            name : 'invoiceEtdFromDate',
+                                                            width : 300,
+                                                            minWidth : 300,
+                                                            forceSelection : true,
+                                                            autoFitErrors : false,
+                                                            fieldStyle : 'background:rgb(255,255,153)',
+                                                            listeners : {
+                                                                change : function() {
+                                                                    CPSSMS02.invoiceEtdFromChange();
+                                                                }
+                                                            },
+                                                            plugins : [{
+                                                                        ptype : 'datePickerClear'
+                                                                    }]
+                                                        }]
+                                            }, {
+                                                xtype : 'container',
+                                                autoHeight : true,
+                                                autoScroll : true,
+                                                defaultType : 'datefield',
+                                                defaults : {
+                                                    format : "d M Y",
+                                                    msgTarget : 'side'
+                                                },
+                                                items : [{
+                                                            fieldLabel : chinaplus.label.CPSSMS02_Label_InvoiceEtdTo,
+                                                            labelWidth : 60,
+                                                            labelSeparator : '',
+                                                            id : chinaplus.screen.CPSSMS02 + '_invoiceEtdTo',
+                                                            editable : false,
+                                                            format : "d M Y",
+                                                            name : 'invoiceEtdToDate',
+                                                            startDateField : chinaplus.screen.CPSSMS02 + '_invoiceEtdFrom',
+                                                            msgTarget : 'side',
+                                                            width : 210,
+                                                            forceSelection : true,
+                                                            autoFitErrors : false,
+                                                            fieldStyle : 'background:rgb(255,255,153)',
+                                                            listeners : {
+                                                                change : function() {
+                                                                    CPSSMS02.invoiceEtdToChange();
+                                                                }
+                                                            },
+                                                            plugins : [{
+                                                                        ptype : 'datePickerClear'
+                                                                    }]
+                                                        }]
+                                            }]
+                                }, {
+                                    
+                                    margin : '20 0 0 0',
+                                    xtype : 'container',
+                                    layout : 'column',
+                                    autoScroll : true,
+                                    items : [{
+                                                // minWidth : 300,
+                                                xtype : 'container',
+                                                defaultType : 'datefield',
+                                                defaults : {
+                                                    format : "d M Y",
+                                                    msgTarget : 'side'
+                                                },
+                                                items : [{
+                                                            fieldLabel : chinaplus.label.CPSSMS02_Label_InvoiceEtaFrom,
+                                                            labelSeparator : '',
+                                                            id : chinaplus.screen.CPSSMS02 + '_invoiceEtaFrom',
+                                                            endDateField : chinaplus.screen.CPSSMS02 + '_invoiceEtaTo',
+                                                            editable : false,
+                                                            msgTarget : 'side',
+                                                            format : 'd M Y',
+                                                            name : 'invoiceEtaFromDate',
+                                                            width : 300,
+                                                            minWidth : 300,
+                                                            forceSelection : true,
+                                                            autoFitErrors : false,
+                                                            fieldStyle : 'background:rgb(255,255,153)',
+                                                            listeners : {
+                                                                change : function() {
+                                                                    CPSSMS02.invoiceEtaFromChange();
+                                                                }
+                                                            },
+                                                            plugins : [{
+                                                                        ptype : 'datePickerClear'
+                                                                    }]
+                                                        }]
+                                            }, {
+                                                xtype : 'container',
+                                                autoHeight : true,
+                                                autoScroll : true,
+                                                defaultType : 'datefield',
+                                                defaults : {
+                                                    format : "d M Y",
+                                                    msgTarget : 'side'
+                                                },
+                                                items : [{
+                                                            fieldLabel : chinaplus.label.CPSSMS02_Label_InvoiceEtaTo,
+                                                            labelWidth : 60,
+                                                            labelSeparator : '',
+                                                            id : chinaplus.screen.CPSSMS02 + '_invoiceEtaTo',
+                                                            editable : false,
+                                                            format : "d M Y",
+                                                            name : 'invoiceEtaToDate',
+                                                            startDateField : chinaplus.screen.CPSSMS02 + '_invoiceEtaFrom',
+                                                            msgTarget : 'side',
+                                                            width : 210,
+                                                            forceSelection : true,
+                                                            autoFitErrors : false,
+                                                            fieldStyle : 'background:rgb(255,255,153)',
+                                                            listeners : {
+                                                                 change : function() {
+                                                                    CPSSMS02.invoiceEtaToChange();
+                                                                }
+                                                            },
+                                                            plugins : [{
+                                                                        ptype : 'datePickerClear'
+                                                                    }]
+                                                        }]
+                                            }]
+                                }, {
+                                    margin : '0 0 0 0',
+                                    columnWidth : 0.3,
+                                    width : 600,
+                                    xtype : 'container',
+                                    items : [{
+                                                xtype : 'fieldcontainer',
+                                                defaultType : 'checkboxfield',
+                                                items : [{
+                                                            boxLabel : chinaplus.label.CPSSMS02_Label_Doc1,
+                                                            id : chinaplus.screen.CPSSMS02 + '_doc1',
+                                                            name : 'doc1',
+                                                            checked : false,
+                                                            margin : '30 0 0 60'
+                                                        }]
+                                            }]
+                                }, {
+                                    margin : '10 0 0 0',
+                                    columnWidth : 0.3,
+                                    width : 600,
+                                    xtype : 'container',
+                                    items : [{
+                                                xtype : 'fieldcontainer',
+                                                defaultType : 'checkboxfield',
+                                                items : [{
+                                                            boxLabel : chinaplus.label.CPSSMS02_Label_Doc2,
+                                                            id : chinaplus.screen.CPSSMS02 + '_doc2',
+                                                            name : 'doc2',
+                                                            checked : false,
+                                                            margin : '0 0 0 60'
+                                                        }]
+                                            }]
+                                }, {
+                                    margin : '10 0 0 0',
+                                    columnWidth : 0.3,
+                                    width : 600,
+                                    xtype : 'container',
+                                    items : [{
+                                                xtype : 'fieldcontainer',
+                                                defaultType : 'checkboxfield',
+                                                items : [{
+                                                            boxLabel : chinaplus.label.CPSSMS02_Label_Doc3,
+                                                            id : chinaplus.screen.CPSSMS02 + '_doc3',
+                                                            name : 'doc3',
+                                                            checked : false,
+                                                            margin : '0 0 0 60'
+                                                        }]
+                                            }]
+                                },{
+                                    //columnWidth : 0.25,
+                                    minWidth : 410,
+                                    border : false,
+                                    bodyPadding : '10 10 10 10',
+                                    xtype : 'container',
+                                    autoHeight : false,
+                                    height : 600,
+                                    defaultType : 'combo',
+                                    items : [
+                                            // row  3
+                                            {
+                                        border : false,
+                                        height : 35,
+                                        xtype : 'panel',
+                                        margin : '20 0 0 20',
+                                        items : [{
+                                                    xtype : 'button',
+                                                    iconCls : 'btn-download',
+                                                    width : 180,
+                                                    height : 25,
+                                                    text : chinaplus.label.CPSSMS02_Button_DownloadShippingStatus,
+                                                    margin : '3 0 0 20',
+                                                    handler : function() {
+                                                        Ext.getCmp(chinaplus.screen.CPSSMS02).btnDownloadAction();
+                                                    }
+                                                }, {
+                                                    xtype : 'button',
+                                                    iconCls : 'btn-clear',
+                                                    width : 180,
+                                                    height : 25,
+                                                    text : chinaplus.label.CPSSMS02_Button_ClearFilter,
+                                                    margin : '3 0 0 20',
+                                                    handler : function() {
+                                                        Ext.getCmp(chinaplus.screen.CPSSMS02).clearAction();
+                                                    }
+                                                }]
+                                    }]
+                                }]
+                    },
+    
+                    //  row 1  Columns 2
+                    {
+                        bodyPadding : '0 0 0 0',
+                        border : false,
+                        margin : '0 0 0 -100px',
+                        autoHeight : false,
+                        height : 490,
+                        defaultType : 'combo',
+                        items : [{
+                            // row 1   Columns 2 
+                            border : false,
+                            xtype : 'panel',
+                            
+                            height : 235,
+                            //layout : 'column',
+                            margin : '0',
+                            bodyPadding : '10 0',
+                            autoScroll : true,
+                            autoHeight : false,
+                            items : [{
+                                        xtype : 'textfield',
+                                        fieldLabel : chinaplus.label.CPSSMS02_Label_TtcPartNo,
+                                        width : 482,
+                                        height : '20px',
+                                        id : chinaplus.screen.CPSSMS02 + '_ttcPartNo',
+                                        name : 'ttcPartNo',
+                                        labelSeparator : '',
+                                    }, {
+                                        margin : '20 0 0 0',
+                                        height : '20px',
+                                        xtype : 'checkcombo',
+                                        fieldLabel : chinaplus.label.CPSSMS02_Label_ExportCountry,
+                                        labelSeparator : '',
+                                        id : chinaplus.screen.CPSSMS02 + '_exportCountry',
+                                        name : 'exportCountry',
+                                        addAllSelector : true,
+                                        width : 500,
+                                        msgTarget : 'side',
+                                        multiSelect : true,
+                                        store : TRF.util.createStore(chinaplus.screen.CPSSMS02, 'common/loadActiveRegions', 'Combo', chinaplus.screen.CPSSMS02
+                                                        + '_exportCountry'),
+                                        dispalyField : 'text',
+                                        valueField : 'id',
+                                        queryMode : 'local',
+                                        forceSelection : true,
+                                        autoFitErrors : false,
+                                        listeners : {
+                                            change : function() {
+                                                CPSSMS02.loadExportCountryChange();
+                                            }
+                                        }
+                                    }, {
+                                        margin : '20 0 0 0',
+                                        height : '20px',
+                                        xtype : 'checkcombo',
+                                        fieldLabel : chinaplus.label.CPSSMS02_Label_TtcSupplierCode,
+                                        labelSeparator : '',
+                                        id : chinaplus.screen.CPSSMS02 + '_ttcSupplierCode',
+                                        name : 'ttcSupplierCode',
+                                        addAllSelector : true,
+                                        width : 500,
+                                        msgTarget : 'side',
+                                        multiSelect : true,
+                                        store : TRF.util.createStore(
+                                            chinaplus.screen.CPSSMS02, 'sa/CPSSMS02/loadTtcSupplierCode', 'Combo',
+                                            chinaplus.screen.CPSSMS02 + '_ttcSupplierCode'),
+                                        dispalyField : 'text',
+                                        valueField : 'id',
+                                        queryMode : 'local',
+                                        forceSelection : true,
+                                        autoFitErrors : false
+                                    }, {
+                                        margin : '24 0 0 0',
+                                        height : '20px',
+                                        xtype : 'checkcombo',
+                                        fieldLabel : chinaplus.label.CPSSMS02_Label_ImportCountry,
+                                        labelSeparator : '',
+                                        id : chinaplus.screen.CPSSMS02 + '_importCountry',
+                                        name : 'importCountry',
+                                        addAllSelector : true,
+                                        width : 500,
+                                        msgTarget : 'side',
+                                        multiSelect : true,
+                                        store : TRF.util.createStore(chinaplus.screen.CPSSMS02, 'common/loadActiveRegions', 'Combo', chinaplus.screen.CPSSMS02
+                                                        + '_importCountry'),
+                                        dispalyField : 'text',
+                                        valueField : 'id',
+                                        queryMode : 'local',
+                                        forceSelection : true,
+                                        autoFitErrors : false,
+                                        listeners : {
+                                            change : function() {
+                                                CPSSMS02.loadImportCountryChange();
+                                            }
+                                        }
+                                    },{
+                                        margin : '25 0 0 0',
+                                        height : '20px',
+                                        xtype : 'checkcombo',
+                                        fieldLabel : chinaplus.label.CPSSMS02_Label_TtcCustomerCode,
+                                        labelSeparator : '',
+                                        id : chinaplus.screen.CPSSMS02 + '_ttcCustomerCode',
+                                        name : 'ttcCustomerCode',
+                                        addAllSelector : true,
+                                        width : 500,
+                                        msgTarget : 'side',
+                                        multiSelect : true,
+                                        store : TRF.util.createStore(
+                                            chinaplus.screen.CPSSMS02, 'sa/CPSSMS02/loadCustomerCode', 'Combo',
+                                            chinaplus.screen.CPSSMS02 + '_ttcCustomerCode'),
+                                        dispalyField : 'text',
+                                        valueField : 'id',
+                                        queryMode : 'local',
+                                        forceSelection : true,
+                                        autoFitErrors : false
+                                    }]
+                        }]
+                    }
+    
+            ]
+    
+        }
+
+    ],
+
+    /**
+     * initialize
+     */
+    initialize : function() {
+        // show Page                     
+        TRF.util.addFieldTipToPanel(this);  
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPSSMS02 + '_exportCountry'));
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPSSMS02 + '_ttcSupplierCode'));
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPSSMS02 + '_importCountry'));
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPSSMS02 + '_ttcCustomerCode'));
+        
+        // Set date format
+        var dateFormat;
+        if (TRF.core.language == chinaplus.consts.code.Language.CN) {
+            dateFormat = TRF.cnst.GLOBAL_DATE_YEAR_MONTH_DAY_FORMAT;
+        } else {
+            dateFormat = TRF.cnst.GLOBAL_DATETIME_SHORT_FORMAT;
+        }
+        Ext.getCmp(chinaplus.screen.CPSSMS02 + '_jpGscmSalesOrderCreateDateFrom').format = dateFormat;
+        Ext.getCmp(chinaplus.screen.CPSSMS02 + '_jpGscmSalesOrderCreateDateTo').format = dateFormat;
+        Ext.getCmp(chinaplus.screen.CPSSMS02 + '_planEtdFrom').format = dateFormat;
+        Ext.getCmp(chinaplus.screen.CPSSMS02 + '_planEtdTo').format = dateFormat;
+        Ext.getCmp(chinaplus.screen.CPSSMS02 + '_planEtaFrom').format = dateFormat;
+        Ext.getCmp(chinaplus.screen.CPSSMS02 + '_planEtaTo').format = dateFormat;
+        Ext.getCmp(chinaplus.screen.CPSSMS02 + '_invoiceEtdFrom').format = dateFormat;
+        Ext.getCmp(chinaplus.screen.CPSSMS02 + '_invoiceEtdTo').format = dateFormat;
+        Ext.getCmp(chinaplus.screen.CPSSMS02 + '_invoiceEtaFrom').format = dateFormat;
+        Ext.getCmp(chinaplus.screen.CPSSMS02 + '_invoiceEtaTo').format = dateFormat;
+        
+        
+        this.doLayout();
+        Ext.getCmp(chinaplus.screen.CPSSMS02 + '_importOrderNo').focus(false, 100);
+    },
+    
+    /**
+     * load ExportCountry Change
+     */
+    loadExportCountryChange : function() {
+         
+        var exportCountry = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_exportCountry').getValue();   
+        Ext.getCmp(chinaplus.screen.CPSSMS02 + '_ttcSupplierCode').destroyList();  
+        Ext.getCmp(chinaplus.screen.CPSSMS02 + '_ttcSupplierCode').setValue(''); 
+        Ext.getStore(chinaplus.screen.CPSSMS02 + '_ttcSupplierCode').removeAll();
+        var params = {
+            'exportCountry' : exportCountry,
+        };
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPSSMS02 + '_ttcSupplierCode'),params);
+      
+    },
+    
+    /**
+     * load ImportCountry Change
+     */
+    loadImportCountryChange : function() {
+        
+        var importCountry = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_importCountry').getValue();
+        Ext.getCmp(chinaplus.screen.CPSSMS02 + '_ttcCustomerCode').destroyList(); 
+        Ext.getCmp(chinaplus.screen.CPSSMS02 + '_ttcCustomerCode').setValue(''); 
+        Ext.getStore(chinaplus.screen.CPSSMS02 + '_ttcCustomerCode').removeAll();
+        var params = {
+            'importCountry' : importCountry,
+        };
+        TRF.util.loadStore(Ext.getStore(chinaplus.screen.CPSSMS02 + '_ttcCustomerCode'),params);
+      
+    },
+    
+    /**
+     * form Date Change
+     */
+    jpGscmSalesOrderCreateDateFromChange : function() {
+        var dateFormat;
+        if (TRF.core.language == chinaplus.consts.code.Language.CN) {
+            dateFormat = TRF.cnst.GLOBAL_DATE_YEAR_MONTH_DAY_FORMAT;
+        } else {
+            dateFormat = TRF.cnst.GLOBAL_DATETIME_SHORT_FORMAT;
+        }
+         
+        var from = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_jpGscmSalesOrderCreateDateFrom').getValue(); 
+        var to = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_jpGscmSalesOrderCreateDateTo').getValue(); 
+        
+        var backFun = function(records) {
+            if (records != null) {
+                var toDate = records.result;
+                Ext.getCmp(chinaplus.screen.CPSSMS02 + '_jpGscmSalesOrderCreateDateTo').setValue(Ext.util.Format.date(toDate, dateFormat));
+            }
+        }
+        
+        var params = {
+            'startDate' : from,
+        }
+        if(to == null){
+            TRF.util.ajaxSubmit(backFun, chinaplus.screen.CPSSMS02, 'sa/CPSSMS02/getToTime', params, null);
+        }
+    },
+    
+    /**
+     * form Date Change
+     */
+    planEtdFromChange : function() {
+        var dateFormat;
+        if (TRF.core.language == chinaplus.consts.code.Language.CN) {
+            dateFormat = TRF.cnst.GLOBAL_DATE_YEAR_MONTH_DAY_FORMAT;
+        } else {
+            dateFormat = TRF.cnst.GLOBAL_DATETIME_SHORT_FORMAT;
+        }
+         
+        var from = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_planEtdFrom').getValue();
+        var to = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_planEtdTo').getValue();
+        var backFun = function(records) {
+            if (records != null) {
+                var toDate = records.result;
+                Ext.getCmp(chinaplus.screen.CPSSMS02 + '_planEtdTo').setValue(Ext.util.Format.date(toDate, dateFormat));
+            }
+        }
+        
+        var params = {
+            'startDate' : from,
+        }
+        if(to == null){
+            TRF.util.ajaxSubmit(backFun, chinaplus.screen.CPSSMS02, 'sa/CPSSMS02/getToTime', params, null);
+        }
+    },
+    
+    /**
+     * form Date Change
+     */
+    planEtaFromChange : function() {
+        var dateFormat;
+        if (TRF.core.language == chinaplus.consts.code.Language.CN) {
+            dateFormat = TRF.cnst.GLOBAL_DATE_YEAR_MONTH_DAY_FORMAT;
+        } else {
+            dateFormat = TRF.cnst.GLOBAL_DATETIME_SHORT_FORMAT;
+        }
+         
+        var from = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_planEtaFrom').getValue(); 
+        var to = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_planEtaTo').getValue();
+        var backFun = function(records) {
+            if (records != null) {
+                var toDate = records.result;
+                Ext.getCmp(chinaplus.screen.CPSSMS02 + '_planEtaTo').setValue(Ext.util.Format.date(toDate, dateFormat));
+            }
+        }
+        
+        var params = {
+            'startDate' : from,
+        }
+        if(to == null){
+            TRF.util.ajaxSubmit(backFun, chinaplus.screen.CPSSMS02, 'sa/CPSSMS02/getToTime', params, null);
+        }
+    },
+    
+    /**
+     * form Date Change
+     */
+    invoiceEtdFromChange : function() {
+        var dateFormat;
+        if (TRF.core.language == chinaplus.consts.code.Language.CN) {
+            dateFormat = TRF.cnst.GLOBAL_DATE_YEAR_MONTH_DAY_FORMAT;
+        } else {
+            dateFormat = TRF.cnst.GLOBAL_DATETIME_SHORT_FORMAT;
+        }
+         
+        var from = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_invoiceEtdFrom').getValue(); 
+        var to = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_invoiceEtdTo').getValue(); 
+        var backFun = function(records) {
+            if (records != null) {
+                var toDate = records.result;
+                Ext.getCmp(chinaplus.screen.CPSSMS02 + '_invoiceEtdTo').setValue(Ext.util.Format.date(toDate, dateFormat));
+            }
+        }
+        
+        var params = {
+            'startDate' : from,
+        }
+        if(to == null){
+            TRF.util.ajaxSubmit(backFun, chinaplus.screen.CPSSMS02, 'sa/CPSSMS02/getToTime', params, null);
+        }
+    },
+    
+    /**
+     * form Date Change
+     */
+    invoiceEtaFromChange : function() {
+        var dateFormat;
+        if (TRF.core.language == chinaplus.consts.code.Language.CN) {
+            dateFormat = TRF.cnst.GLOBAL_DATE_YEAR_MONTH_DAY_FORMAT;
+        } else {
+            dateFormat = TRF.cnst.GLOBAL_DATETIME_SHORT_FORMAT;
+        }
+         
+        var from = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_invoiceEtaFrom').getValue(); 
+        var to = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_invoiceEtaTo').getValue(); 
+        var backFun = function(records) {
+            if (records != null) {
+                var toDate = records.result;
+                Ext.getCmp(chinaplus.screen.CPSSMS02 + '_invoiceEtaTo').setValue(Ext.util.Format.date(toDate, dateFormat));
+            }
+        }
+        
+        var params = {
+            'startDate' : from,
+        }
+        if(to == null){
+            TRF.util.ajaxSubmit(backFun, chinaplus.screen.CPSSMS02, 'sa/CPSSMS02/getToTime', params, null);
+        }
+    },
+    
+    
+    /**
+     * to Date Change
+     */
+    jpGscmSalesOrderCreateDateToChange : function() {
+        var dateFormat;
+        if (TRF.core.language == chinaplus.consts.code.Language.CN) {
+            dateFormat = TRF.cnst.GLOBAL_DATE_YEAR_MONTH_DAY_FORMAT;
+        } else {
+            dateFormat = TRF.cnst.GLOBAL_DATETIME_SHORT_FORMAT;
+        }
+        var from = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_jpGscmSalesOrderCreateDateFrom').getValue(); 
+        var to = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_jpGscmSalesOrderCreateDateTo').getValue(); 
+        var backFun = function(records) {
+            if (records != null) {
+                var fromDate = records.result;
+                Ext.getCmp(chinaplus.screen.CPSSMS02 + '_jpGscmSalesOrderCreateDateFrom').setValue(Ext.util.Format.date(fromDate, dateFormat));
+            }
+        }
+        
+        var params = {
+            'endDate' : to,
+        }
+        if(from == null){
+            TRF.util.ajaxSubmit(backFun, chinaplus.screen.CPSSMS02, 'sa/CPSSMS02/getFromTime', params, null);
+        }
+    },
+    
+    /**
+     * to Date Change
+     */
+    planEtdToChange : function() {
+        var dateFormat;
+        if (TRF.core.language == chinaplus.consts.code.Language.CN) {
+            dateFormat = TRF.cnst.GLOBAL_DATE_YEAR_MONTH_DAY_FORMAT;
+        } else {
+            dateFormat = TRF.cnst.GLOBAL_DATETIME_SHORT_FORMAT;
+        }
+        var from = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_planEtdFrom').getValue(); 
+        var to = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_planEtdTo').getValue(); 
+        var backFun = function(records) {
+            if (records != null) {
+                var fromDate = records.result;
+                Ext.getCmp(chinaplus.screen.CPSSMS02 + '_planEtdFrom').setValue(Ext.util.Format.date(fromDate, dateFormat));
+            }
+        }
+        
+        var params = {
+            'endDate' : to,
+        }
+        if(from == null){
+            TRF.util.ajaxSubmit(backFun, chinaplus.screen.CPSSMS02, 'sa/CPSSMS02/getFromTime', params, null);
+        }
+    },
+    
+    /**
+     * to Date Change
+     */
+    planEtaToChange : function() {
+        var dateFormat;
+        if (TRF.core.language == chinaplus.consts.code.Language.CN) {
+            dateFormat = TRF.cnst.GLOBAL_DATE_YEAR_MONTH_DAY_FORMAT;
+        } else {
+            dateFormat = TRF.cnst.GLOBAL_DATETIME_SHORT_FORMAT;
+        }
+        var from = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_planEtaFrom').getValue(); 
+        var to = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_planEtaTo').getValue(); 
+        var backFun = function(records) {
+            if (records != null) {
+                var fromDate = records.result;
+                Ext.getCmp(chinaplus.screen.CPSSMS02 + '_planEtaFrom').setValue(Ext.util.Format.date(fromDate, dateFormat));
+            }
+        }
+        
+        var params = {
+            'endDate' : to,
+        }
+        if(from == null){
+            TRF.util.ajaxSubmit(backFun, chinaplus.screen.CPSSMS02, 'sa/CPSSMS02/getFromTime', params, null);
+        }
+    },
+    
+    /**
+     * to Date Change
+     */
+    invoiceEtdToChange : function() {
+        var dateFormat;
+        if (TRF.core.language == chinaplus.consts.code.Language.CN) {
+            dateFormat = TRF.cnst.GLOBAL_DATE_YEAR_MONTH_DAY_FORMAT;
+        } else {
+            dateFormat = TRF.cnst.GLOBAL_DATETIME_SHORT_FORMAT;
+        }
+        var from = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_invoiceEtdFrom').getValue(); 
+        var to = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_invoiceEtdTo').getValue(); 
+        var backFun = function(records) {
+            if (records != null) {
+                var fromDate = records.result;
+                Ext.getCmp(chinaplus.screen.CPSSMS02 + '_invoiceEtdFrom').setValue(Ext.util.Format.date(fromDate, dateFormat));
+            }
+        }
+        
+        var params = {
+            'endDate' : to,
+        }
+        if(from == null){
+            TRF.util.ajaxSubmit(backFun, chinaplus.screen.CPSSMS02, 'sa/CPSSMS02/getFromTime', params, null);
+        }
+    },
+    
+    /**
+     * to Date Change
+     */
+    invoiceEtaToChange : function() {
+        var dateFormat;
+        if (TRF.core.language == chinaplus.consts.code.Language.CN) {
+            dateFormat = TRF.cnst.GLOBAL_DATE_YEAR_MONTH_DAY_FORMAT;
+        } else {
+            dateFormat = TRF.cnst.GLOBAL_DATETIME_SHORT_FORMAT;
+        }
+        var from = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_invoiceEtaFrom').getValue();
+        var to = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_invoiceEtaTo').getValue(); 
+        var backFun = function(records) {
+            if (records != null) {
+                var fromDate = records.result;
+                Ext.getCmp(chinaplus.screen.CPSSMS02 + '_invoiceEtaFrom').setValue(Ext.util.Format.date(fromDate, dateFormat));
+            }
+        }
+        
+        var params = {
+            'endDate' : to,
+        }
+        if(from == null){
+            TRF.util.ajaxSubmit(backFun, chinaplus.screen.CPSSMS02, 'sa/CPSSMS02/getFromTime', params, null);
+        }
+    },
+    
+    
+
+    /**
+     * clearFilter
+     */
+    clearAction : function() {
+
+    TRF.util.clearFilter(Ext.getCmp(chinaplus.screen.CPSSMS02));
+ 
+    },
+    /**
+     * Download button click
+     */
+    btnDownloadAction : function(){
+        
+        var msgs = [];
+        
+        // check select doc(s) to download
+        var doc1 = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_doc1').getValue();
+        var doc2 = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_doc2').getValue();
+        var doc3 = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_doc3').getValue();
+        var docs = 'doc1';
+        var checkUrl = 'sa/CPSSMF01/downloadcheck';
+        var url = 'sa/CPSSMF01/download';
+        if (!doc1 && !doc2 && !doc3) {
+            // No doc has been selected.
+            Ext.Array.push(msgs, TRF.util.getMessage('w1025'));
+        } else {
+            // all three doc
+            if ( doc1 && doc2 && doc3 ){
+                checkUrl = 'sa/CPSSMFXX/downloadcheck';
+                url = 'sa/CPSSMFXX/download';
+                docs = 'doc1doc2doc3';
+            }
+            // doc1 and doc2
+            else if ( doc1 && doc2 && !doc3 ) {
+                checkUrl = 'sa/CPSSMFXX/downloadcheck';
+                url = 'sa/CPSSMFXX/download';
+                docs = 'doc1doc2';
+            } 
+            // doc1 and doc3
+            else if ( doc1 && !doc2 && doc3 ) {
+                checkUrl = 'sa/CPSSMFXX/downloadcheck';
+                url = 'sa/CPSSMFXX/download';
+                docs = 'doc1doc3';
+            }
+            // doc2 and doc3
+            else if ( !doc1 && doc2 && doc3 ) {
+                checkUrl = 'sa/CPSSMFXX/downloadcheck';
+                url = 'sa/CPSSMFXX/download';
+                docs = 'doc2doc3';
+            } 
+            // doc1 only
+            else if ( doc1 && !doc2 && !doc3 ) {
+                checkUrl = 'sa/CPSSMF01/downloadcheck';
+                url = 'sa/CPSSMF01/download';
+                docs = 'doc1';
+            } 
+            // doc2 only
+            else if ( !doc1 && doc2 && !doc3 ) {
+                checkUrl = 'sa/CPSSMF02/downloadcheck';
+                url = 'sa/CPSSMF02/download';
+                docs = 'doc2';
+            } 
+            // doc3 only
+            else if ( !doc1 && !doc2 && doc3 ) {
+                checkUrl = 'sa/CPSSMF03/downloadcheck';
+                url = 'sa/CPSSMF03/download';
+                docs = 'doc3';
+            }
+        }
+        
+        // get filter valus
+        var ipoOrderNo = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_importOrderNo').getValue();
+        var customerOrderNo = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_customerOrderNo').getValue();
+        var saleDateFrom = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_jpGscmSalesOrderCreateDateFrom').getValue();
+        var saleDateTo = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_jpGscmSalesOrderCreateDateTo').getValue();
+        var planEtdFrom = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_planEtdFrom').getValue();
+        var planEtdTo = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_planEtdTo').getValue();
+        var planEtaFrom = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_planEtaFrom').getValue();
+        var planEtaTo = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_planEtaTo').getValue();
+        var invoiceEtdFrom = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_invoiceEtdFrom').getValue();
+        var invoiceEtdTo = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_invoiceEtdTo').getValue();
+        var invoiceEtaFrom = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_invoiceEtaFrom').getValue();
+        var invoiceEtaTo = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_invoiceEtaTo').getValue();
+        var ttsPartsNo = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_ttcPartNo').getValue();
+        var expRegion = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_exportCountry').getValue();
+        var supplierCode = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_ttcSupplierCode').getValue();
+        var impRegion = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_importCountry').getValue();
+        var customerCode = Ext.getCmp(chinaplus.screen.CPSSMS02 + '_ttcCustomerCode').getValue();
+        
+        if( (null == saleDateFrom || null == saleDateTo)
+            && (null == planEtdFrom || null == planEtdTo)
+                && (null == planEtaFrom || null == planEtaTo)
+                    && (null == invoiceEtdFrom || null == invoiceEtdTo)
+                        && (null == invoiceEtaFrom || null == invoiceEtaTo) ) {
+            Ext.Array.push(msgs, TRF.util.getMessage('w1037'));
+        }
+        
+
+        
+        
+        
+        
+        if(msgs.length > 0){
+             var popMsgs = [];
+            Ext.Array.push(popMsgs, TRF.util.getMessage('w1003'));
+            TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, popMsgs, msgs);
+            return;
+        }
+        
+        var params = {
+            'downloadFrom' : chinaplus.screen.CPSSMS02,
+            'docs' : docs,
+            'ipoOrderNo' : ipoOrderNo,
+            'customerOrderNo' : customerOrderNo,
+            'saleDateFrom' : saleDateFrom,
+            'saleDateTo' : saleDateTo,
+            'planEtdFrom' : planEtdFrom,
+            'planEtdTo' : planEtdTo,
+            'planEtaFrom' : planEtaFrom,
+            'planEtaTo' : planEtaTo,
+            'invoiceEtdFrom' : invoiceEtdFrom,
+            'invoiceEtdTo' : invoiceEtdTo,
+            'invoiceEtaFrom' : invoiceEtaFrom,
+            'invoiceEtaTo' : invoiceEtaTo,
+            'ttsPartsNo' : ttsPartsNo,
+            'expRegion' : expRegion,
+            'supplierCode' : supplierCode,
+            'impRegion' : impRegion,
+            'customerCode' : customerCode
+            };
+        TRF.util.downloadSubmit(null, chinaplus.screen.CPSSMS02, checkUrl, params, url);
+    },
+
+}

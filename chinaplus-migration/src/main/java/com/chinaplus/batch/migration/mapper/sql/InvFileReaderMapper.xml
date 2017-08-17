@@ -1,0 +1,66 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.batch.migration.service.InvFileReaderService">
+
+     <insert id="addIntoMigrationInvoice" parameterType="com.chinaplus.batch.migration.bean.TntMgInvoiceEx">
+        INSERT INTO 
+            TNT_MG_INVOICE( 
+                MG_INVOICE_ID
+              , OFFICE_ID
+              , SEQ_NO
+              , INVOICE_NO
+              , SUPP_PARTS_NO
+              , INV_CUST_CODE
+              , SUPPLIER_CODE
+              , ISSUED_DATE
+              , DELIVERED_DATE
+              , ETD
+              , ETA
+              , PLAN_IB_DATE
+              , QTY
+              , TRANSPORT_MODE
+              , VESSEL_NAME
+              , CONTAINER_NO
+              , MODULE_NO
+              , BUYING_PRICE
+              , BUYING_CURRENCY
+              , HANDLE_FLAG
+              , CREATED_BY
+              , CREATED_DATE
+              , UPDATED_BY
+              , UPDATED_DATE
+              , VERSION
+        ) VALUES (
+                #{mgInvoiceId,jdbcType=INTEGER}
+              , #{officeId,jdbcType=INTEGER}
+              , #{seqNo,jdbcType=INTEGER}
+              , #{invoiceNo,jdbcType=VARCHAR}
+              , #{suppPartsNo,jdbcType=VARCHAR}
+              , #{invCustCode,jdbcType=VARCHAR}
+              , #{supplierCode,jdbcType=VARCHAR}
+              , #{issuedDate,jdbcType=DATE}
+              , #{deliveredDate,jdbcType=DATE}
+              , #{etd,jdbcType=DATE}
+              , #{eta,jdbcType=DATE}
+              , #{planIbDate,jdbcType=DATE}
+              , #{qty,jdbcType=DECIMAL}
+              , #{transportMode,jdbcType=INTEGER}
+              , #{vesselName,jdbcType=VARCHAR}
+              , #{containerNo,jdbcType=VARCHAR}
+              , #{moduleNo,jdbcType=VARCHAR}
+              , #{buyingPrice,jdbcType=VARCHAR}
+              , #{buyingCurrency,jdbcType=VARCHAR}
+              , #{handleFlag,jdbcType=INTEGER}
+              , #{createdBy,jdbcType=INTEGER}
+              , #{createdDate,jdbcType=TIMESTAMP}
+              , #{updatedBy,jdbcType=INTEGER}
+              , #{updatedDate,jdbcType=TIMESTAMP}
+              , #{version,jdbcType=INTEGER}
+        )
+    </insert>
+    
+    <select id="getMaxMgInvoiceId" resultType="java.lang.Integer">
+        SELECT MAX(MG_INVOICE_ID) + 1 FROM TNT_MG_INVOICE
+    </select>
+    
+</mapper>

@@ -1,0 +1,963 @@
+<!--
+@screen CPIIFB01
+@author yang_jia1
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.common.service.SsmsCommonService">
+
+    <sql id="ConstDef1">
+        <bind name="IP_STATUS_EXP_OUTBOUND" value="@com.chinaplus.common.consts.CodeConst$IpStatus@EXP_OUTBOUND" />
+        <bind name="IP_STATUS_INVOICE" value="@com.chinaplus.common.consts.CodeConst$IpStatus@INVOICE" />
+        <bind name="IP_STATUS_CANCELLED" value="@com.chinaplus.common.consts.CodeConst$IpStatus@CANCELLED" />
+    </sql>
+    
+     <update id="modInvoiceIfValidFlag" parameterType="com.chinaplus.common.entity.IFInvoiceEntity">
+        <include refid="ConstDef1"/>
+        UPDATE 
+            TNT_IF_EXP_INVOICE C
+        SET 
+            VALID_FLAG = 1
+        WHERE
+        <if test="expPartsIdList == null or expPartsIdList.size() == 0">
+            IF_DATE_TIME = #{ifDateTime,jdbcType=TIMESTAMP}
+        AND 
+        </if>
+            HANDLE_FLAG <![CDATA[<>]]> 1
+        AND
+        EXISTS 
+            (
+        SELECT 
+            * 
+        FROM 
+            TNT_IP I 
+        INNER JOIN TNM_EXP_PARTS P
+        ON
+            P.EXP_PARTS_ID = I.EXP_PARTS_ID
+        AND
+            P.SSMS_MAIN_ROUTE = C.MAIN_ROUTE
+        AND
+            P.EXP_CODE = C.EXP_CODE
+        AND
+            P.PARTS_STATUS = 2
+        WHERE 
+            I.MODULE_NO = C.MODULE_NO 
+        AND
+            I.STATUS = #{IP_STATUS_EXP_OUTBOUND}
+        <if test="expPartsIdList != null and expPartsIdList.size() > 0">
+            AND
+                I.EXP_PARTS_ID
+                IN
+                <foreach item="param" index="index" collection="expPartsIdList" open="(" separator="," close=")">  
+                #{param}  
+                </foreach>
+        </if>
+            )
+    </update>
+    
+    <select id="getInvoiceIfList" parameterType="com.chinaplus.common.entity.IFInvoiceEntity" resultType="com.chinaplus.common.entity.IFInvoiceEntity">
+        <include refid="ConstDef1"/>
+        <!-- 
+        SELECT
+                 DISTINCT(V.IF_INVOICE_ID) AS ifInvoiceId
+               , V.MAIN_ROUTE AS mainRoute
+               , V.INVOICE_NO AS invoiceNo
+               , P.OFFICE_ID AS officeId
+               , P.BUSINESS_PATTERN AS businessPattern
+               , V.VESSEL_NAME AS vesselName
+               , V.BL_DATE AS blDate
+               , V.BL_NO AS blNo
+               , V.ETD AS etdStr
+               , V.ETA AS etaStr
+               , C.REGION_CODE AS impRegionCode
+               , S.REGION_CODE AS expRegionCode
+               , S.SUPPLIER_CODE AS supplierCode
+               , V.TRANSPORT_MODE AS transportMode
+               , V.IF_DATE_TIME as ifDateTime
+               , V.CONTAINER_NO AS containerNo
+               , V.MODULE_NO AS moduleNo
+               , P.IMP_PO_NO AS impPoNo
+               , P.CUSTOMER_ORDER_NO AS customerOrderNo
+               , P.EXP_PO_NO AS expPoNo
+               , P.PARTS_ID AS partsId
+               , P.SUPPLIER_ID AS supplierId
+               , P.TOTAL_QTY AS totalQty
+               , P.EXP_PARTS_ID AS expPartsId
+        FROM
+           TNT_IF_EXP_INVOICE V
+        INNER JOIN
+           (SELECT DISTINCT
+                   IP.OFFICE_ID
+                 , IP.INVOICE_NO
+                 , IP.MODULE_NO
+                 , IP.CONTAINER_NO
+                 , IP.IMP_PO_NO
+                 , IP.CUSTOMER_ORDER_NO
+                 , IP.EXP_PO_NO
+                 , IP.PARTS_ID
+                 , IP.SUPPLIER_ID
+                 , IP.BUSINESS_PATTERN
+                 , IP.CUSTOMER_ID
+                 , IP.EXP_PARTS_ID
+                 , GP.TOTAL_QTY
+               FROM
+                 TNT_IP IP
+            INNER JOIN
+               (SELECT
+                   GIP.MODULE_NO
+                 , GIP.IMP_PO_NO
+                 , GIP.CUSTOMER_ORDER_NO
+                 , GIP.EXP_PO_NO
+                 , GIP.PARTS_ID
+                 , GIP.SUPPLIER_ID
+                 , SUM(GIP.QTY) AS TOTAL_QTY
+               FROM
+                 TNT_IP GIP
+               WHERE
+                 GIP.STATUS = #{IP_STATUS_EXP_OUTBOUND}
+               GROUP BY
+                   GIP.MODULE_NO
+                 , GIP.IMP_PO_NO
+                 , GIP.CUSTOMER_ORDER_NO
+                 , GIP.EXP_PO_NO
+                 , GIP.PARTS_ID
+                 , GIP.SUPPLIER_ID) GP
+            ON  GP.MODULE_NO = IP.MODULE_NO
+            AND GP.IMP_PO_NO = IP.IMP_PO_NO
+            AND GP.CUSTOMER_ORDER_NO = IP.CUSTOMER_ORDER_NO
+            AND GP.EXP_PO_NO = IP.EXP_PO_NO
+            AND GP.PARTS_ID = IP.PARTS_ID
+            AND GP.SUPPLIER_ID = IP.SUPPLIER_ID
+            AND IP.STATUS = #{IP_STATUS_EXP_OUTBOUND}) P
+        ON
+           V.MODULE_NO = P.MODULE_NO
+        INNER JOIN
+           TNM_CUSTOMER C
+        ON
+           C.CUSTOMER_ID = P.CUSTOMER_ID
+        INNER JOIN
+           TNM_SUPPLIER S
+        ON
+           S.SUPPLIER_ID = P.SUPPLIER_ID
+        INNER JOIN
+           TNM_EXP_PARTS EP
+        ON
+           EP.EXP_PARTS_ID = P.EXP_PARTS_ID
+        AND   
+           EP.PARTS_STATUS = 2
+        AND
+           EP.SSMS_MAIN_ROUTE = V.MAIN_ROUTE
+        WHERE
+           V.VALID_FLAG = 1
+        AND
+           V.HANDLE_FLAG 
+        IN 
+        <foreach item="param" index="index" collection="handleFlagParam" open="(" separator="," close=")">  
+                #{param}  
+        </foreach>
+        <if test="expPartsIdList == null or expPartsIdList.size() == 0">
+        AND
+           V.IF_DATE_TIME = #{ifDateTime,jdbcType=TIMESTAMP}
+        </if>
+        <if test="expPartsIdList != null and expPartsIdList.size() > 0">
+        AND 
+            P.EXP_PARTS_ID 
+            IN
+            <foreach item="param" index="index" collection="expPartsIdList" open="(" separator="," close=")">  
+            #{param}  
+            </foreach>
+        </if> 
+        ORDER BY
+           V.MAIN_ROUTE,
+           V.INVOICE_NO, 
+           P.IMP_PO_NO,           
+           P.CUSTOMER_ORDER_NO,
+           P.EXP_PO_NO,
+           P.PARTS_ID,
+           P.SUPPLIER_ID
+        -->
+        
+        SELECT
+            ifInvoiceId
+            , mainRoute
+            , invoiceNo
+            , officeId
+            , businessPattern
+            , vesselName
+            , blDate
+            , blNo
+            , etdStr
+            , etaStr
+            , impRegionCode
+            , expRegionCode
+            , supplierCode
+            , transportMode
+            , ifDateTime
+            , containerNo
+            , moduleNo
+            , impPoNo
+            , customerOrderNo
+            , expPoNo
+            , partsId
+            , supplierId
+            , totalQty
+            , expPartsId
+         FROM (
+                SELECT
+                         DISTINCT(V.IF_INVOICE_ID) AS ifInvoiceId
+                       , V.MAIN_ROUTE AS mainRoute
+                       , V.INVOICE_NO AS invoiceNo
+                       , P.OFFICE_ID AS officeId
+                       , P.BUSINESS_PATTERN AS businessPattern
+                       , V.VESSEL_NAME AS vesselName
+                       , V.BL_DATE AS blDate
+                       , V.BL_NO AS blNo
+                       , V.ETD AS etdStr
+                       , V.ETA AS etaStr
+                       , C.REGION_CODE AS impRegionCode
+                       , S.REGION_CODE AS expRegionCode
+                       , S.SUPPLIER_CODE AS supplierCode
+                       , V.TRANSPORT_MODE AS transportMode
+                       , V.IF_DATE_TIME as ifDateTime
+                       <!-- add at 2017/02/13 by cheng_xingfei start -->
+                       <!--, V.CONTAINER_NO AS containerNo -->
+                       , NVL(V.CONTAINER_NO, P.CONTAINER_NO) AS containerNo
+                       <!-- add at 2017/02/13 by cheng_xingfei end -->
+                       , V.MODULE_NO AS moduleNo
+                       , P.IMP_PO_NO AS impPoNo
+                       , P.CUSTOMER_ORDER_NO AS customerOrderNo
+                       , P.EXP_PO_NO AS expPoNo
+                       , P.PARTS_ID AS partsId
+                       , P.SUPPLIER_ID AS supplierId
+                       , P.TOTAL_QTY AS totalQty
+                       , P.EXP_PARTS_ID AS expPartsId
+                FROM
+                   TNT_IF_EXP_INVOICE V
+                INNER JOIN
+                   (SELECT DISTINCT
+                           IP.OFFICE_ID
+                         , IP.INVOICE_NO
+                         , IP.MODULE_NO
+                         , IP.CONTAINER_NO
+                         , IP.IMP_PO_NO
+                         , IP.CUSTOMER_ORDER_NO
+                         , IP.EXP_PO_NO
+                         , IP.PARTS_ID
+                         , IP.SUPPLIER_ID
+                         , IP.BUSINESS_PATTERN
+                         , IP.CUSTOMER_ID
+                         , IP.EXP_PARTS_ID
+                         , GP.TOTAL_QTY
+                       FROM
+                         TNT_IP IP
+                    INNER JOIN
+                       (SELECT
+                           GIP.MODULE_NO
+                         , GIP.IMP_PO_NO
+                         , GIP.CUSTOMER_ORDER_NO
+                         , GIP.EXP_PO_NO
+                         , GIP.PARTS_ID
+                         , GIP.SUPPLIER_ID
+                         , SUM(GIP.QTY) AS TOTAL_QTY
+                       FROM
+                         TNT_IP GIP
+                       WHERE
+                         GIP.STATUS = #{IP_STATUS_EXP_OUTBOUND}
+                       GROUP BY
+                           GIP.MODULE_NO
+                         , GIP.IMP_PO_NO
+                         , GIP.CUSTOMER_ORDER_NO
+                         , GIP.EXP_PO_NO
+                         , GIP.PARTS_ID
+                         , GIP.SUPPLIER_ID) GP
+                    ON  GP.MODULE_NO = IP.MODULE_NO
+                    AND GP.IMP_PO_NO = IP.IMP_PO_NO
+                    AND GP.CUSTOMER_ORDER_NO = IP.CUSTOMER_ORDER_NO
+                    AND GP.EXP_PO_NO = IP.EXP_PO_NO
+                    AND GP.PARTS_ID = IP.PARTS_ID
+                    AND GP.SUPPLIER_ID = IP.SUPPLIER_ID
+                    AND IP.STATUS = #{IP_STATUS_EXP_OUTBOUND}) P
+                ON
+                   V.MODULE_NO = P.MODULE_NO
+                INNER JOIN
+                   TNM_CUSTOMER C
+                ON
+                   C.CUSTOMER_ID = P.CUSTOMER_ID
+                INNER JOIN
+                   TNM_SUPPLIER S
+                ON
+                   S.SUPPLIER_ID = P.SUPPLIER_ID
+                INNER JOIN
+                   TNM_EXP_PARTS EP
+                ON
+                   EP.EXP_PARTS_ID = P.EXP_PARTS_ID
+                AND
+                   EP.PARTS_STATUS = 2
+                AND
+                   EP.SSMS_MAIN_ROUTE = V.MAIN_ROUTE
+                WHERE
+                   V.VALID_FLAG = 1
+                AND
+                   V.HANDLE_FLAG
+                IN
+                <foreach item="param" index="index" collection="handleFlagParam" open="(" separator="," close=")">
+                        #{param}
+                </foreach>
+                <if test="expPartsIdList == null or expPartsIdList.size() == 0">
+                AND
+                   V.IF_DATE_TIME = #{ifDateTime,jdbcType=TIMESTAMP}
+                </if>
+                <if test="expPartsIdList != null and expPartsIdList.size() > 0">
+                AND
+                    P.EXP_PARTS_ID
+                    IN
+                    <foreach item="param" index="index" collection="expPartsIdList" open="(" separator="," close=")">
+                    #{param}
+                    </foreach>
+                </if>
+        
+                UNION ALL
+        
+                SELECT
+                         DISTINCT(V.IF_INVOICE_ID) AS ifInvoiceId
+                       , V.MAIN_ROUTE AS mainRoute
+                       , V.INVOICE_NO AS invoiceNo
+                       , P.OFFICE_ID AS officeId
+                       , P.BUSINESS_PATTERN AS businessPattern
+                       , V.VESSEL_NAME AS vesselName
+                       , V.BL_DATE AS blDate
+                       , V.BL_NO AS blNo
+                       , V.ETD AS etdStr
+                       , V.ETA AS etaStr
+                       , C.REGION_CODE AS impRegionCode
+                       , S.REGION_CODE AS expRegionCode
+                       , S.SUPPLIER_CODE AS supplierCode
+                       , V.TRANSPORT_MODE AS transportMode
+                       , V.IF_DATE_TIME as ifDateTime
+                       <!-- add at 2017/02/13 by cheng_xingfei start -->
+                       <!--, V.CONTAINER_NO AS containerNo -->
+                       , NVL(V.CONTAINER_NO, P.CONTAINER_NO) AS containerNo
+                       <!-- add at 2017/02/13 by cheng_xingfei end -->
+                       , V.MODULE_NO AS moduleNo
+                       , P.IMP_PO_NO AS impPoNo
+                       , P.CUSTOMER_ORDER_NO AS customerOrderNo
+                       , P.EXP_PO_NO AS expPoNo
+                       , P.PARTS_ID AS partsId
+                       , P.SUPPLIER_ID AS supplierId
+                       , P.TOTAL_QTY AS totalQty
+                       , P.EXP_PARTS_ID AS expPartsId
+                FROM
+                   TNT_IF_EXP_INVOICE V
+                INNER JOIN
+                   (SELECT DISTINCT
+                           IP.OFFICE_ID
+                         , IP.INVOICE_NO
+                         , IP.MODULE_NO
+                         , IP.CONTAINER_NO
+                         , IP.IMP_PO_NO
+                         , IP.CUSTOMER_ORDER_NO
+                         , IP.EXP_PO_NO
+                         , IP.PARTS_ID
+                         , IP.SUPPLIER_ID
+                         , IP.BUSINESS_PATTERN
+                         , IP.CUSTOMER_ID
+                         , IP.EXP_PARTS_ID
+                         , GP.TOTAL_QTY
+                       FROM
+                         TNT_IP IP
+                    INNER JOIN
+                       (SELECT
+                           GIP.MODULE_NO
+                         , GIP.IMP_PO_NO
+                         , GIP.CUSTOMER_ORDER_NO
+                         , GIP.EXP_PO_NO
+                         , GIP.PARTS_ID
+                         , GIP.SUPPLIER_ID
+                         , SUM(GIP.QTY) AS TOTAL_QTY
+                       FROM
+                         TNT_IP GIP
+                       WHERE
+                         GIP.STATUS = #{IP_STATUS_EXP_OUTBOUND}
+                       AND GIP.INVOICE_NO IS NULL
+                       GROUP BY
+                           GIP.MODULE_NO
+                         , GIP.IMP_PO_NO
+                         , GIP.CUSTOMER_ORDER_NO
+                         , GIP.EXP_PO_NO
+                         , GIP.PARTS_ID
+                         , GIP.SUPPLIER_ID) GP
+                    ON  GP.MODULE_NO = IP.MODULE_NO
+                    AND GP.IMP_PO_NO = IP.IMP_PO_NO
+                    AND GP.CUSTOMER_ORDER_NO = IP.CUSTOMER_ORDER_NO
+                    AND GP.EXP_PO_NO = IP.EXP_PO_NO
+                    AND GP.PARTS_ID = IP.PARTS_ID
+                    AND GP.SUPPLIER_ID = IP.SUPPLIER_ID
+                    AND IP.STATUS = #{IP_STATUS_EXP_OUTBOUND}
+                    LEFT JOIN
+                        TNT_INVOICE_CONTAINER IVC
+                    ON  IVC.CONTAINER_NO = IP.CONTAINER_NO
+                    AND IVC.MODULE_NO = IP.MODULE_NO
+                    AND IVC.PARTS_ID = IP.PARTS_ID
+                    WHERE
+                        IVC.INVOICE_CONTAINER_ID IS NULL
+                    ) P
+                ON
+                   V.MODULE_NO = P.MODULE_NO
+                INNER JOIN
+                   TNM_CUSTOMER C
+                ON
+                   C.CUSTOMER_ID = P.CUSTOMER_ID
+                INNER JOIN
+                   TNM_SUPPLIER S
+                ON
+                   S.SUPPLIER_ID = P.SUPPLIER_ID
+                INNER JOIN
+                   TNM_EXP_PARTS EP
+                ON
+                   EP.EXP_PARTS_ID = P.EXP_PARTS_ID
+                AND
+                   EP.PARTS_STATUS = 2
+                AND
+                   EP.SSMS_MAIN_ROUTE = V.MAIN_ROUTE
+                WHERE
+                   V.VALID_FLAG = 1
+                AND
+                   V.HANDLE_FLAG = 1
+                <if test="expPartsIdList == null or expPartsIdList.size() == 0">
+                AND
+                   V.IF_DATE_TIME = #{ifDateTime,jdbcType=TIMESTAMP}
+                </if>
+                <if test="expPartsIdList != null and expPartsIdList.size() > 0">
+                AND
+                    P.EXP_PARTS_ID
+                    IN
+                    <foreach item="param" index="index" collection="expPartsIdList" open="(" separator="," close=")">
+                    #{param}
+                    </foreach>
+                </if>
+            ) IVALL
+        ORDER BY
+            IVALL.mainRoute,
+            IVALL.invoiceNo,
+            IVALL.impPoNo,
+            IVALL.customerOrderNo,
+            IVALL.expPoNo,
+            IVALL.partsId,
+            IVALL.supplierId
+           
+    </select>
+    
+    <select id="checkModuleExist" parameterType="com.chinaplus.common.entity.IFInvoiceEntity" resultType="com.chinaplus.common.entity.IFInvoiceEntity">
+        SELECT
+          MODULE_NO AS moduleNo
+        FROM
+          TNT_INVOICE_CONTAINER
+        WHERE
+          MODULE_NO = #{moduleNo,jdbcType=VARCHAR}
+          <if test="containerNo != null">
+        AND
+          CONTAINER_NO = #{containerNo,jdbcType=VARCHAR}
+          </if>
+          <if test="partsId != null">
+        AND
+          PARTS_ID = #{partsId,jdbcType=INTEGER}
+          </if>
+    </select>
+    
+    <select id="checkInvoiceSummaryExist" parameterType="com.chinaplus.common.entity.IFInvoiceEntity" resultType="com.chinaplus.common.entity.IFInvoiceEntity">
+        SELECT 
+            INVOICE_SUMMARY_ID AS invoiceSummaryId
+            , UPLOAD_ID AS uploadId
+            , INVOICE_STATUS AS invoiceStatus
+        FROM
+            TNT_INVOICE_SUMMARY 
+        WHERE
+            INVOICE_NO = #{invoiceNo,jdbcType=VARCHAR}
+    </select>
+    
+    <select id="getSupplierCode" parameterType="com.chinaplus.common.entity.IFInvoiceEntity" resultType="com.chinaplus.common.entity.IFInvoiceEntity">
+        SELECT
+          DISTINCT S.SUPPLIER_CODE AS supplierCode
+        FROM
+          TNT_IP IP
+          INNER JOIN TNM_SUPPLIER S 
+            ON S.SUPPLIER_ID = IP.SUPPLIER_ID 
+        WHERE
+          IP.INVOICE_NO = #{invoiceNo, jdbcType=VARCHAR}
+          AND IP.IMP_PO_NO = #{impPoNo, jdbcType=VARCHAR}
+          AND IP.CUSTOMER_ORDER_NO = #{customerOrderNo, jdbcType=VARCHAR}
+          AND IP.EXP_PO_NO = #{expPoNo, jdbcType=VARCHAR}
+          AND IP.PARTS_ID = #{partsId, jdbcType=INTEGER}
+    </select>
+    
+    <select id="invoiceOrderStatusSumQty" parameterType="com.chinaplus.common.entity.IFInvoiceEntity" resultType="com.chinaplus.common.entity.IFInvoiceEntity">
+        SELECT 
+            SUM(QTY) AS statusQty
+        FROM
+            TNT_IP 
+        GROUP BY
+            PARTS_ID,
+            SUPPLIER_ID,
+            IMP_PO_NO,
+            EXP_PO_NO,
+            CUSTOMER_ORDER_NO
+        HAVING
+            PARTS_ID = #{partsId,jdbcType=INTEGER}
+        AND
+            SUPPLIER_ID = #{supplierId,jdbcType=INTEGER}
+        AND
+            IMP_PO_NO = #{impPoNo,jdbcType=VARCHAR}
+        AND
+            EXP_PO_NO = #{expPoNo,jdbcType=VARCHAR}
+        AND
+            CUSTOMER_ORDER_NO = #{customerOrderNo,jdbcType=VARCHAR}
+    </select>
+    
+    <update id="modInvoiceIp" parameterType="com.chinaplus.common.entity.IFInvoiceEntity">
+        <include refid="ConstDef1"/>
+        UPDATE 
+            TNT_IP
+        SET 
+              INVOICE_NO = #{invoiceNo,jdbcType=VARCHAR}
+            , STATUS = #{IP_STATUS_INVOICE}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+        WHERE
+            MODULE_NO = #{moduleNo,jdbcType=VARCHAR}
+        <!-- add at 2017/01/16 by cheng_xingfei start -->
+        AND
+            EXP_PARTS_ID = #{expPartsId,jdbcType=INTEGER}
+        <!-- add at 2017/01/16 by cheng_xingfei end -->
+        AND 
+            STATUS = #{IP_STATUS_EXP_OUTBOUND}
+      <!-- add at 2017/03/28 by cheng_xingfei start -->
+        AND IMP_PO_NO = #{impPoNo}
+        AND CUSTOMER_ORDER_NO = #{customerOrderNo}
+        AND EXP_PO_NO = #{expPoNo}
+      <!-- add at 2017/03/28 by cheng_xingfei end -->
+    </update>
+    
+    <update id="modInvoiceSummary" parameterType="com.chinaplus.common.entity.IFInvoiceEntity">
+        UPDATE 
+            TNT_INVOICE_SUMMARY
+        SET 
+            INVOICE_QTY = INVOICE_QTY + #{totalQty,jdbcType=DECIMAL}
+            , INVOICE_STATUS = 2
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+            , VERSION = VERSION + 1
+        WHERE
+            INVOICE_SUMMARY_ID = #{invoiceSummaryId,jdbcType=INTEGER}
+    </update>
+    
+    <update id="modInvoiceSummaryByInvoiceNo" parameterType="com.chinaplus.common.entity.IFInvoiceEntity">
+        UPDATE 
+            TNT_INVOICE_SUMMARY
+        SET 
+            INVOICE_QTY = INVOICE_QTY + #{totalQty,jdbcType=DECIMAL}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+            , VERSION = VERSION + 1
+        WHERE
+            INVOICE_NO = #{invoiceNo,jdbcType=VARCHAR}
+    </update>
+    
+    <insert id="addInvoiceSummary" parameterType="com.chinaplus.common.entity.IFInvoiceEntity">
+        INSERT 
+        INTO 
+        TNT_INVOICE_SUMMARY (
+              INVOICE_SUMMARY_ID
+            , OFFICE_ID
+            , BUSINESS_PATTERN
+            , INVOICE_NO
+            , INVOICE_TYPE
+            , VESSEL_NAME
+            , BL_NO
+            , BL_DATE
+            , EXP_REGION
+            , IMP_REGION
+            , TRANSPORT_MODE
+            , SUPPLIER_CODE_SET
+            , ETD
+            , ETA
+            , VANNING_DATE
+            , INVOICE_QTY
+            , INBOUND_QTY
+            , INVOICE_STATUS
+            , UPLOADED_BY
+            , UPLOADED_DATE
+            , CREATED_BY
+            , CREATED_DATE
+            , UPDATED_BY
+            , UPDATED_DATE
+            , VERSION
+        )
+        VALUES
+        (
+            #{invoiceSummaryId,jdbcType=INTEGER},
+            #{officeId,jdbcType=INTEGER},
+            #{businessPattern,jdbcType=INTEGER},
+            #{invoiceNo,jdbcType=VARCHAR},
+            2,
+            #{vesselName,jdbcType=VARCHAR},
+            #{blNo,jdbcType=VARCHAR},
+            #{BLDateTime,jdbcType=DATE},
+            #{expRegionCode,jdbcType=VARCHAR},
+            #{impRegionCode,jdbcType=VARCHAR},
+            #{tansportMode,jdbcType=INTEGER},
+            #{supplierCode,jdbcType=VARCHAR},
+            #{etd,jdbcType=DATE},
+            #{eta,jdbcType=DATE},
+            #{vanningDate,jdbcType=DATE},
+            #{totalQty,jdbcType=DECIMAL},
+            0,
+            2,
+            #{uploadedBy,jdbcType=INTEGER},
+            #{ifDateTime, jdbcType=TIMESTAMP},
+            #{createdBy,jdbcType=INTEGER},
+            #{createdDate,jdbcType=TIMESTAMP},
+            #{updatedBy,jdbcType=INTEGER},
+            #{updatedDate,jdbcType=TIMESTAMP},
+            1
+        )
+    </insert>
+    
+    <insert id="addTntInvoiceContainer" parameterType="com.chinaplus.common.entity.TntInvoiceContainer">
+        INSERT 
+        INTO 
+        TNT_INVOICE_CONTAINER (
+              INVOICE_CONTAINER_ID
+            , INVOICE_SUMMARY_ID
+            , CONTAINER_NO
+            , SEAL_NO
+            , MODULE_NO
+            , QTY
+            , PARTS_ID
+            , STATUS
+            , CREATED_BY
+            , CREATED_DATE
+            , UPDATED_BY
+            , UPDATED_DATE
+            , VERSION
+        )
+        VALUES
+        (
+            SEQ_TNT_INVOICE_CONTAINER.NEXTVAL,
+            #{invoiceSummaryId,jdbcType=INTEGER},
+            #{containerNo,jdbcType=VARCHAR},
+            #{sealNo,jdbcType=VARCHAR},
+            #{moduleNo,jdbcType=VARCHAR},
+            #{qty,jdbcType=DECIMAL},
+            #{partsId,jdbcType=INTEGER},
+            #{status,jdbcType=INTEGER},
+            #{createdBy,jdbcType=INTEGER},
+            #{createdDate,jdbcType=TIMESTAMP},
+            #{updatedBy,jdbcType=INTEGER},
+            #{updatedDate,jdbcType=TIMESTAMP},
+            1
+        )
+    </insert>
+    
+    <update id="modTntInvoiceContainer" parameterType="com.chinaplus.common.entity.TntInvoiceContainer">
+        UPDATE 
+            TNT_INVOICE_CONTAINER
+        SET 
+            QTY = QTY + #{qty,jdbcType=DECIMAL}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+            , VERSION = VERSION + 1
+        WHERE
+            INVOICE_SUMMARY_ID = #{invoiceSummaryId,jdbcType=INTEGER}
+          AND
+            MODULE_NO = #{moduleNo,jdbcType=VARCHAR}
+          <if test="containerNo != null">
+          AND
+            CONTAINER_NO = #{containerNo,jdbcType=VARCHAR}
+          </if>
+          AND
+            PARTS_ID = #{partsId,jdbcType=INTEGER}
+    </update>
+     
+    <insert id="addTntInvoice" parameterType="com.chinaplus.common.entity.IFInvoiceEntity">
+        INSERT 
+        INTO 
+        TNT_INVOICE (
+              INVOICE_ID
+            , INVOICE_SUMMARY_ID
+            , OFFICE_ID
+            , INVOICE_NO
+            , ORIGINAL_VERSION
+            , REVISION_VERSION
+            , ETD
+            , ETA
+            , VANNING_DATE 
+            , CC_DATE
+            , IMP_INB_PLAN_DATE
+            , CREATED_BY
+            , CREATED_DATE
+            , UPDATED_BY
+            , UPDATED_DATE
+            , VERSION
+        )
+        VALUES
+        (
+            #{invoiceId,jdbcType=INTEGER},
+            #{invoiceSummaryId,jdbcType=INTEGER},
+            #{officeId,jdbcType=INTEGER},
+            #{invoiceNo,jdbcType=VARCHAR},
+            #{originalVersion,jdbcType=INTEGER},
+            #{revisionVersion,jdbcType=INTEGER},
+            #{etd,jdbcType=DATE},
+            #{eta,jdbcType=DATE},
+            #{vanningDate,jdbcType=DATE},
+            #{impPlanCustomDate,jdbcType=DATE}, 
+            #{impPlanInboundDate,jdbcType=DATE}, 
+            #{createdBy,jdbcType=INTEGER},
+            #{createdDate,jdbcType=TIMESTAMP},
+            #{updatedBy,jdbcType=INTEGER},
+            #{updatedDate,jdbcType=TIMESTAMP},
+            1
+        )
+    </insert>
+    
+    <insert id="addTntInvoiceParts" parameterType="com.chinaplus.common.entity.IFInvoiceEntity">
+        INSERT 
+        INTO 
+        TNT_INVOICE_PARTS (
+              INVOICE_DETAIL_ID
+            , INVOICE_ID
+            , PARTS_ID
+            , SUPPLIER_ID
+            , IMP_PO_NO
+            , EXP_PO_NO
+            , CUSTOMER_ORDER_NO
+            , ORIGINAL_QTY
+            , QTY 
+            , CREATED_BY
+            , CREATED_DATE
+            , UPDATED_BY
+            , UPDATED_DATE
+            , VERSION
+        )
+        VALUES
+        (
+            SEQ_TNT_INVOICE_PARTS.NEXTVAL,
+            #{invoiceId,jdbcType=INTEGER},
+            #{partsId,jdbcType=INTEGER},
+            #{supplierId,jdbcType=INTEGER},
+            #{impPoNo,jdbcType=VARCHAR},
+            #{expPoNo,jdbcType=VARCHAR},
+            #{customerOrderNo,jdbcType=VARCHAR},
+            #{originalQty,jdbcType=DECIMAL},
+            #{qty,jdbcType=DECIMAL},
+            #{createdBy,jdbcType=INTEGER},
+            #{createdDate,jdbcType=TIMESTAMP},
+            #{updatedBy,jdbcType=INTEGER},
+            #{updatedDate,jdbcType=TIMESTAMP},
+            1
+        )
+    </insert>
+    
+    <insert id="addTntInvoicePartsForOriginal" parameterType="com.chinaplus.common.entity.IFInvoiceEntity">
+        INSERT
+        INTO TNT_INVOICE_PARTS(
+          INVOICE_DETAIL_ID
+          , INVOICE_ID
+          , PARTS_ID
+          , SUPPLIER_ID
+          , IMP_PO_NO
+          , EXP_PO_NO
+          , CUSTOMER_ORDER_NO
+          , ORIGINAL_QTY
+          , QTY
+          , CREATED_BY
+          , CREATED_DATE
+          , UPDATED_BY
+          , UPDATED_DATE
+          , VERSION
+        )
+        SELECT
+          SEQ_TNT_INVOICE_PARTS.NEXTVAL
+          , #{invoiceId,jdbcType=INTEGER}
+          , PARTS_ID
+          , SUPPLIER_ID
+          , IMP_PO_NO
+          , EXP_PO_NO
+          , CUSTOMER_ORDER_NO
+          , QTY
+          , 0
+          , #{createdBy,jdbcType=INTEGER}
+          , #{createdDate,jdbcType=TIMESTAMP}
+          , #{updatedBy,jdbcType=INTEGER}
+          , #{updatedDate,jdbcType=TIMESTAMP}
+          , 1
+        FROM
+          TNT_INVOICE_PARTS IVP
+        WHERE
+          IVP.INVOICE_ID = (
+            SELECT
+              MAX(INVOICE_ID)
+            FROM
+              TNT_INVOICE
+            WHERE
+              INVOICE_SUMMARY_ID = #{invoiceSummaryId,jdbcType=INTEGER}
+          )
+    </insert>
+    
+    <select id="getAllInvoiceList" parameterType="com.chinaplus.common.entity.TntInvoice" resultType="com.chinaplus.common.entity.TntInvoice">
+    
+        SELECT 
+          INVOICE_ID AS invoiceId
+          , IMP_INB_ACTUAL_DATE AS impInbActualDate
+          , REVISION_VERSION AS revisionVersion
+        FROM
+          TNT_INVOICE 
+        WHERE
+          INVOICE_SUMMARY_ID = #{invoiceSummaryId,jdbcType=INTEGER}
+        ORDER BY
+          INVOICE_ID
+          
+    </select>
+    
+    <select id="getMaxInvoiceVersion" parameterType="com.chinaplus.common.entity.TntInvoice" resultType="com.chinaplus.common.entity.TntInvoice">
+    
+        SELECT 
+          MAX(REVISION_VERSION) AS revisionVersion
+        FROM
+          TNT_INVOICE 
+        WHERE
+          INVOICE_SUMMARY_ID = #{invoiceSummaryId,jdbcType=INTEGER}
+          
+    </select>
+    
+    <update id="modOriginalInvoice" parameterType="com.chinaplus.common.entity.TntInvoicePart">
+        UPDATE 
+            TNT_INVOICE_PARTS
+        SET 
+              ORIGINAL_QTY = QTY
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+        WHERE
+            INVOICE_ID = #{invoiceId,jdbcType=INTEGER}
+    </update>
+    
+    <update id="modInvoiceIfHandleFlag" parameterType="com.chinaplus.common.entity.IFInvoiceEntity">
+        UPDATE 
+            TNT_IF_EXP_INVOICE
+        SET 
+              HANDLE_FLAG = #{handleFlag,jdbcType=INTEGER}
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+        WHERE
+            IF_INVOICE_ID = #{ifInvoiceId,jdbcType=INTEGER}
+    </update>
+    
+    <select id="checkInvoicePartsExists" parameterType="com.chinaplus.common.entity.TntInvoicePart" resultType="com.chinaplus.common.entity.TntInvoicePart">
+    
+        SELECT
+          IVP.INVOICE_DETAIL_ID AS invoiceDetailId
+        FROM
+          TNT_INVOICE_PARTS IVP
+        WHERE
+          IVP.INVOICE_ID = #{invoiceId,jdbcType=INTEGER}
+          AND IVP.PARTS_ID = #{partsId,jdbcType=INTEGER}
+          AND IVP.SUPPLIER_ID = #{supplierId,jdbcType=INTEGER}
+          AND IVP.IMP_PO_NO = #{impPoNo}
+          AND IVP.CUSTOMER_ORDER_NO = #{customerOrderNo}
+          AND IVP.EXP_PO_NO = #{expPoNo}
+  
+    </select>
+    
+    <update id="updateTntInvoiceParts" parameterType="com.chinaplus.common.entity.IFInvoiceEntity">
+    
+        UPDATE 
+            TNT_INVOICE_PARTS
+        SET 
+              ORIGINAL_QTY = #{originalQty,jdbcType=DECIMAL}
+            , QTY = #{qty,jdbcType=DECIMAL}
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+        WHERE
+          INVOICE_ID = #{invoiceId,jdbcType=INTEGER}
+          AND PARTS_ID = #{partsId,jdbcType=INTEGER}
+          AND SUPPLIER_ID = #{supplierId,jdbcType=INTEGER}
+        <!-- Modified at 2017/03/22 by liu_yinchuan start -->
+        <!-- add at 2017/02/13 by cheng_xingfei start -->
+        <!--  AND IVP.IMP_PO_NO = #{impPoNo}
+          AND IVP.CUSTOMER_ORDER_NO = #{customerOrderNo}
+          AND IVP.EXP_PO_NO = #{expPoNo} -->
+          AND IMP_PO_NO = #{impPoNo}
+          AND CUSTOMER_ORDER_NO = #{customerOrderNo}
+          AND EXP_PO_NO = #{expPoNo}
+        <!-- add at 2017/02/13 by cheng_xingfei end -->
+        <!-- Modified at 2017/03/22 by liu_yinchuan End -->
+          
+    </update>
+    
+    <select id="checkInvoiceExists" parameterType="com.chinaplus.common.entity.TntInvoice" resultType="com.chinaplus.common.entity.TntInvoice">
+    
+        SELECT
+          IV.INVOICE_ID AS invoiceId
+        FROM
+          TNT_INVOICE IV
+        WHERE
+          IV.INVOICE_NO = #{invoiceNo,jdbcType=VARCHAR}
+          AND IV.ETD = #{etd, jdbcType=DATE}
+          AND IV.ETA = #{eta, jdbcType=DATE}
+          AND IV.IMP_INB_ACTUAL_DATE IS NULL
+          <!-- 
+          <if test="null == ccDate">
+            AND IV.CC_DATE IS NULL
+          </if>
+          <if test="null != ccDate">
+            AND IV.CC_DATE = #{ccDate, jdbcType=DATE}
+          </if>
+          <if test="null == impInbPlanDate">
+            AND IV.IMP_INB_PLAN_DATE IS NULL
+          </if>
+          <if test="null != impInbPlanDate">
+            AND IV.IMP_INB_PLAN_DATE = #{impInbPlanDate, jdbcType=DATE}
+          </if>
+          <if test="null == impInbActualDate">
+            AND IV.IMP_INB_ACTUAL_DATE IS NULL
+          </if>
+          <if test="null != impInbActualDate">
+            AND IV.IMP_INB_ACTUAL_DATE = #{impInbActualDate, jdbcType=DATE}
+          </if>
+           -->
+  
+    </select>
+    
+    <!-- add at 2017/02/13 by cheng_xingfei start -->
+    <select id="checkInvoiceDataExist" parameterType="com.chinaplus.common.entity.IFInvoiceEntity" resultType="com.chinaplus.common.entity.IFInvoiceEntity">
+        <include refid="ConstDef1"/>
+        
+        SELECT
+          DISTINCT A.MODULE_NO AS MODULENO
+        FROM
+          TNT_IP A
+        WHERE
+          A.INVOICE_NO = #{invoiceNo,jdbcType=VARCHAR}
+          <if test="containerNo != null">
+          AND A.CONTAINER_NO = #{containerNo,jdbcType=VARCHAR}
+          </if>
+          AND A.MODULE_NO = #{moduleNo,jdbcType=VARCHAR}
+          AND A.IMP_PO_NO = #{impPoNo,jdbcType=VARCHAR}
+          AND A.CUSTOMER_ORDER_NO = #{customerOrderNo,jdbcType=VARCHAR}
+          AND A.EXP_PO_NO = #{expPoNo,jdbcType=VARCHAR}
+          <if test="partsId != null">
+          AND A.PARTS_ID = #{partsId,jdbcType=INTEGER}
+          </if>
+          AND A.SUPPLIER_ID = #{supplierId,jdbcType=INTEGER}
+          AND A.EXP_PARTS_ID = #{expPartsId,jdbcType=INTEGER}
+          AND A.STATUS <![CDATA[<>]]> #{IP_STATUS_EXP_OUTBOUND}
+          
+    </select>
+    <!-- add at 2017/02/13 by cheng_xingfei end -->
+    
+</mapper>

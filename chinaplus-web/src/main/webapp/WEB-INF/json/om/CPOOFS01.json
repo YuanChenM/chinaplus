@@ -1,0 +1,223 @@
+/**
+ * @screen CPOOFS01(Role List Screen)
+ * @author shi_yuxi
+ */
+CPOOFS01 = {
+    xtype : 'gridpanel',
+    id : chinaplus.screen.CPOOFS01,
+    title : chinaplus.label.CPOOFS01_Label_PageTitle,
+    border : true,
+    closable : false,
+    enableColumnHide : false,
+    enableColumnMove : false,
+    isControl : true,
+    autoScroll : true,
+    qtip : true,
+    selType : 'cellmodel',
+    columnLines : true,
+    selModel : Ext.create('Ext.selection.CheckboxModel', {
+        checkOnly : true
+    }),
+    viewConfig : {
+        loadMask : false
+    },
+    plugins : [ {
+        ptype : 'gridheaderfilters',
+        allSingleFilter : false
+    }, {
+        ptype : 'emptystoreview'
+    }, {
+        ptype : 'headerfiltertoolbar',
+        showMore: true
+    } ],
+    header : false,
+    headerPosition : 'bottom',
+    autoScroll : true,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    columns :[{
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPOOFS01_Grid_OrderForecastNo + '</div>',
+                width : 200,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'orderForecastNo',
+                sortable : false,
+                filter : 'string'
+        },
+        {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPOOFS01_Grid_ImpCountry + '</div>',
+                width : 100,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'impRegion',
+                align : 'center',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPOOFS01, 'common/loadActiveRegions', 'Combo', chinaplus.screen.CPOOFS01 + '_regions')
+                }
+        },
+        {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPOOFS01_Grid_TTCCustomerCode + '</div>',
+                width : 150,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'customerCode',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPOOFS01, 'common/loadOfficeCustomers', 'Combo', chinaplus.screen.CPOOFS01 + '_customerCodeStore')
+                }
+        },
+        {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPOOFS01_Grid_OrderMonthInput + '</div>',
+                width : 150,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'orderMonth',
+                align : 'center',
+                sortable : false,
+                filter : 'date',
+                filterPlugins : [{
+                          ptype : 'monthPicker'
+                        }]
+        },
+        {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPOOFS01_Grid_OrderFcTargetMonth + '</div>',
+                width : 200,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'firstFcMonth',
+                align : 'center',
+                sortable : false,
+                renderer : function(value, meta, record, rIndex, cIndex, store, view) {
+                    if (value == record.get("lastFcMonth")) {
+                        return value;
+                    } else {
+                        return value + " ~ " + record.get("lastFcMonth");
+                    }
+                }
+        },
+        {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPOOFS01_Grid_Remark + '</div>',
+                width : 100,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'remark',
+                sortable : false
+        },
+        {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPOOFS01_Grid_UploadID + '</div>',
+                width : 100,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'uploadedBy',
+                sortable : false,
+                filter : {
+                    type : 'list',
+                    multiSelect : true,
+                    optionsStore : TRF.util.createStore(chinaplus.screen.CPOOFS01, 'common/loadOfficeUsers', 'Combo', chinaplus.screen.CPOOFS01 + '_loginIdStore')
+                }
+        },
+        {
+                xtype : 'gridcolumn',
+                text : '<div style="text-align:center" class="x-grid-title">' + chinaplus.label.CPOOFS01_Grid_UploadTime + '</div>',
+                width : 150,
+                items : [{
+                            xtype : 'header',
+                            hidden : true
+                        }],
+                dataIndex : 'uploadedDate',
+                align : 'center',
+                sortable : false,
+                filter : 'date',
+                filterPlugins : [{
+                           ptype : 'datePickerClear'
+                        }]
+        }
+    ],
+    tbar : [{
+        text : chinaplus.label.CPOOFS01_Button_UploadOrderFc,
+        iconCls : 'btn-upload-2',
+        id : chinaplus.screen.CPOOFS01 + '_Button_UploadOrder',
+        handler : function() {
+            //open popo
+            TRF.util.popupApplication(chinaplus.screen.CPOOFS02, chinaplus.screen.CPOOFS02, {});
+        }
+    }, {
+        text : chinaplus.label.CPOOFS01_Button_DlOrderFc,
+        iconCls : 'btn-download',
+        id : chinaplus.screen.CPOOFS01 + '_Button_DlOrder',
+        handler : function() {
+        Ext.getCmp(chinaplus.screen.CPOOFS01).download();
+        }
+    }],
+    store : TRF.util.createStore(chinaplus.screen.CPOOFS01, 'om/CPOOFS01/list', 'OrderForecast', chinaplus.screen.CPOOFS01 + '_projectStore', {
+                load : TRF.util.addEnterListenerToFocusableLink
+            }),
+    /**
+     * The initialize function.
+     * 
+     * @param params.
+     *            the parameter object passed to this screen.
+     */
+    initialize : function(params) {
+    
+        var gridStore = this.store;
+        var me = this;
+    
+        TRF.util.dataLoadStart(chinaplus.screen.CPOOFS01);
+        TRF.util.loadStore(gridStore, null, function() {
+            TRF.util.dataLoadEnd(chinaplus.screen.CPOOFS01);
+            gridStore.on('beforeload', function() {
+                TRF.core.mask(TRF.core.maskMsg.load, null, me);
+            });
+            gridStore.on('load', function() {
+                TRF.core.unmask(me);
+            });
+        }); 
+        
+        this.doLayout();
+        TRF.util.addGridTip(this);
+    },
+    download : function(){
+        // Select check
+        var selectionArray = Ext.getCmp(chinaplus.screen.CPOOFS01).getSelectionModel().getSelection();
+        if (selectionArray.length == 0) {
+            TRF.util.showMessageBoxByMsgIdAndArgs('w1011');
+            return;
+        }
+
+        var selectDatas = [];
+        selectionArray.forEach(function(record) {
+                    selectDatas.push(record.data.orderForecastNo);
+                });
+        // Download
+        var params = {};
+        params[TRF.cnst.SELECTEDDATAS] = selectDatas;
+        TRF.util.downloadSubmit(null, chinaplus.screen.CPOOFS01, "om/CPOOFF11/downloadcheck", params, "om/CPOOFF11/download");
+    
+    }
+}

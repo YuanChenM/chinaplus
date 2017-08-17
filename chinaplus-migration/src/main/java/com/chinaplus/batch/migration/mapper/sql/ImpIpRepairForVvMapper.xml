@@ -1,0 +1,567 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.batch.migration.service.ImpIpRepairForVvService">
+    <select id="getIfIpInfoBySourceIpNo" parameterType="com.chinaplus.common.entity.TntIfImpIp" resultType="com.chinaplus.common.entity.TntIfImpIp">
+         SELECT A.IF_IP_ID AS ifIpId
+              , A.ACTION_TYPE AS actionType
+              , A.PID_NO AS pidNo
+              , A.WHS_CODE AS whsCode
+              , A.WHS_CUSTOMER_CODE AS whsCustomerCode
+              , A.OUTBOUND_DATETIME AS outboundDatetime
+              , A.DELIVERY_NOTE_NO AS deliveryNoteNo
+              , A.ONHOLD_FLAG AS onholdFlag
+              , A.SA_QTY AS saQty
+              , A.FROM_IP_NO AS fromIpNo
+              , A.PROCESS_DATE AS processDate
+              , A.HANDLE_FLAG AS handleFlag
+           FROM TNT_IF_IMP_IP A
+              , TNT_IP B 
+          WHERE (B.IP_NO = A.SOURCE_IP_NO 
+             OR  (A.INVOICE_NO = B.INVOICE_NO 
+            AND    (A.CONTAINER_NO = B.CONTAINER_NO 
+             OR      B.CONTAINER_NO IS NULL)) 
+             OR  (A.DEVAN_INVOICE_NO = B.INVOICE_NO 
+            AND    A.MODULE_NO = B.MODULE_NO)) 
+            AND B.IP_NO = #{sourceIpNo}
+            ORDER BY
+                A.PROCESS_DATE
+              , A.IF_DATE_TIME
+              , A.ACTION_TYPE
+              , A.PID_NO
+    </select>
+    
+    <update id="updateInfoForIfIp" parameterType="com.chinaplus.common.entity.TntIfImpIp">
+        UPDATE 
+            TNT_IF_IMP_IP C
+        SET 
+            VALID_FLAG = 1
+          , HANDLE_FLAG = #{handleFlag}
+          , UPDATED_DATE = CURRENT TIMESTAMP
+        WHERE
+            IF_IP_ID = #{ifIpId}
+    </update>
+
+    <select id="selectInvoiceSummaryInfoList" parameterType="com.chinaplus.common.entity.TntInvoiceSummary" resultType="com.chinaplus.common.entity.TntInvoiceSummary">
+         SELECT A.INVOICE_SUMMARY_ID AS invoiceSummaryId
+              , A.INVOICE_NO AS invoiceNo
+              , A.INVOICE_QTY AS invoiceQty
+              , (A.INVOICE_QTY - NVL(B.UNINB_QTY, 0)) AS inboundQty
+           FROM TNT_INVOICE_SUMMARY A 
+           LEFT JOIN ( 
+                  SELECT INVOICE_NO
+                       , SUM(QTY) AS UNINB_QTY 
+                    FROM TNT_IP A 
+                   WHERE A.STATUS IN (2, 3) 
+                     AND A.OFFICE_ID = #{officeId} 
+                   GROUP BY
+                         INVOICE_NO) B 
+             ON B.INVOICE_NO = A.INVOICE_NO 
+          WHERE A.INVOICE_STATUS <![CDATA[<]]> 99 
+            AND (A.POST_RI_FLAG = 0 OR A.POST_RI_FLAG IS NULL)
+            AND A.BUSINESS_PATTERN = 1
+            AND A.OFFICE_ID = #{officeId} 
+            <!-- TODO --> 
+            <!--AND (A.INVOICE_QTY - NVL(B.UNINB_QTY, 0)) <![CDATA[<>]]> A.INBOUND_QTY-->
+    </select>
+            
+    <select id="selectInvoiceSummaryInfoListByInvList" parameterType="com.chinaplus.batch.migration.bean.TntInvoiceEx" resultType="com.chinaplus.common.entity.TntInvoiceSummary">
+         SELECT A.INVOICE_SUMMARY_ID AS invoiceSummaryId
+              , A.INVOICE_NO AS invoiceNo
+              , A.INVOICE_QTY AS invoiceQty
+              , (A.INVOICE_QTY - NVL(B.UNINB_QTY, 0)) AS inboundQty
+           FROM TNT_INVOICE_SUMMARY A 
+           LEFT JOIN ( 
+                  SELECT INVOICE_NO
+                       , SUM(QTY) AS UNINB_QTY 
+                    FROM TNT_IP A 
+                   WHERE A.STATUS IN (2, 3) 
+                     AND A.OFFICE_ID = #{officeId} 
+                   GROUP BY
+                         INVOICE_NO) B 
+             ON B.INVOICE_NO = A.INVOICE_NO 
+          WHERE A.INVOICE_STATUS <![CDATA[<]]> 99 
+            AND (A.POST_RI_FLAG = 0 OR A.POST_RI_FLAG IS NULL)
+            AND A.INVOICE_NO IN 
+            <foreach item="invNo" index="index" collection="invNoList" open="(" separator="," close=")">
+             #{invNo}
+            </foreach>
+    </select>
+            
+    <update id="updateInvoiceSummary" parameterType="com.chinaplus.common.entity.TntInvoiceSummary">
+        UPDATE 
+            TNT_INVOICE_SUMMARY
+        SET 
+            INBOUND_QTY = #{inboundQty}
+          , INVOICE_STATUS = #{invoiceStatus}  
+          , UPDATED_DATE = CURRENT TIMESTAMP
+        WHERE
+            INVOICE_SUMMARY_ID = #{invoiceSummaryId}
+    </update>
+        
+    <select id="selectInvoiceCc" parameterType="com.chinaplus.batch.migration.bean.TntInvoiceEx" resultType="com.chinaplus.batch.migration.bean.TntInvoiceEx">
+         SELECT A.INVOICE_ID AS invoiceId
+              , MIN(C.CUSTOMS_CLR_DATE) AS ifCcDate 
+           FROM TNT_INVOICE A 
+          INNER JOIN TNT_INVOICE_SUMMARY B 
+             ON B.INVOICE_SUMMARY_ID = A.INVOICE_SUMMARY_ID 
+          INNER JOIN TNT_IF_IMP_IP C 
+             ON C.INVOICE_NO = B.INVOICE_NO 
+            AND C.HANDLE_FLAG = 1 
+          WHERE B.INVOICE_STATUS <![CDATA[<]]> 99 
+            AND A.IMP_CC_ACTUAL_DATE IS NULL
+            AND B.OFFICE_ID = #{officeId} 
+          GROUP BY
+                A.INVOICE_ID
+    </select>
+            
+    <update id="updateInvoiceCc" parameterType="com.chinaplus.batch.migration.bean.TntInvoiceEx">
+        UPDATE 
+            TNT_INVOICE
+        SET 
+            IMP_CC_ACTUAL_DATE = #{impCcActualDate}
+          , UPDATED_DATE = CURRENT TIMESTAMP
+        WHERE
+            INVOICE_ID = #{invoiceId}
+    </update>
+    
+    <select id="selectInvoiceContainerCc" parameterType="com.chinaplus.batch.migration.bean.TntInvoiceContainerEx" resultType="com.chinaplus.batch.migration.bean.TntInvoiceContainerEx">
+         SELECT A.INVOICE_CONTAINER_ID AS invoiceContainerId
+              , C.CUSTOMS_CLR_DATE AS ifCcDate 
+           FROM TNT_INVOICE_CONTAINER A 
+          INNER JOIN TNT_INVOICE_SUMMARY B 
+             ON B.INVOICE_SUMMARY_ID = A.INVOICE_SUMMARY_ID 
+          INNER JOIN TNT_IF_IMP_IP C 
+             ON C.INVOICE_NO = B.INVOICE_NO 
+            AND (C.CONTAINER_NO = A.CONTAINER_NO OR A.CONTAINER_NO IS NULL)
+            AND C.HANDLE_FLAG = 1 
+          WHERE B.INVOICE_STATUS <![CDATA[<]]> 99 
+            AND A.CC_DATE IS NULL
+            AND B.OFFICE_ID = #{officeId} 
+    </select>
+    
+    <select id="selectInvoiceContainerDevan" parameterType="com.chinaplus.batch.migration.bean.TntInvoiceContainerEx" resultType="com.chinaplus.batch.migration.bean.TntInvoiceContainerEx">
+         SELECT A.INVOICE_CONTAINER_ID AS invoiceContainerId
+              , C.DEVANNED_DATE AS ifDevanDate 
+           FROM TNT_INVOICE_CONTAINER A 
+          INNER JOIN TNT_INVOICE_SUMMARY B 
+             ON B.INVOICE_SUMMARY_ID = A.INVOICE_SUMMARY_ID 
+          INNER JOIN TNT_IF_IMP_IP C 
+             ON C.DEVAN_INVOICE_NO = B.INVOICE_NO 
+            AND C.MODULE_NO = A.MODULE_NO 
+            AND C.HANDLE_FLAG = 1 
+          WHERE B.INVOICE_STATUS <![CDATA[<]]> 99 
+            AND A.DEVANNED_DATE IS NULL
+            AND B.OFFICE_ID = #{officeId} 
+    </select>
+        
+    <update id="updateInvoiceContainerCc" parameterType="com.chinaplus.batch.migration.bean.TntInvoiceContainerEx">
+        UPDATE 
+            TNT_INVOICE_CONTAINER
+        SET 
+            CC_DATE = #{ccDate}
+          , UPDATED_DATE = CURRENT TIMESTAMP
+        WHERE
+            INVOICE_CONTAINER_ID = #{invoiceContainerId}
+    </update>
+            
+    <update id="updateInvoiceContainerDevan" parameterType="com.chinaplus.batch.migration.bean.TntInvoiceContainerEx">
+        UPDATE 
+            TNT_INVOICE_CONTAINER
+        SET 
+            DEVANNED_DATE = #{devannedDate}
+          , UPDATED_DATE = CURRENT TIMESTAMP
+        WHERE
+            INVOICE_CONTAINER_ID = #{invoiceContainerId}
+    </update>
+                
+    <delete id="deleteInvoice" parameterType="com.chinaplus.common.entity.TntInvoice">
+        DELETE FROM TNT_INVOICE WHERE INVOICE_ID = #{invoiceId}
+    </delete>
+                
+    <delete id="deleteInvoiceParts" parameterType="com.chinaplus.common.entity.TntInvoice">
+        DELETE FROM TNT_INVOICE_PARTS WHERE INVOICE_ID = #{invoiceId}
+    </delete>
+                    
+    <delete id="deleteInvoiceHistory" parameterType="com.chinaplus.common.entity.TntInvoice">
+        DELETE FROM TNT_INVOICE_HISTORY WHERE INVOICE_ID = #{invoiceId}
+    </delete>
+    
+    <update id="reviseInvoice" parameterType="com.chinaplus.common.entity.TntInvoice">
+        UPDATE 
+            TNT_INVOICE
+        SET 
+            ORIGINAL_VERSION = 0
+          , REVISION_VERSION = 1
+          , UPDATED_DATE = CURRENT TIMESTAMP
+        WHERE
+            INVOICE_ID = #{invoiceId}
+    </update>
+        
+    <update id="reviseInvoiceParts" parameterType="com.chinaplus.common.entity.TntInvoice">
+        UPDATE 
+            TNT_INVOICE_PARTS
+        SET 
+            QTY = ORIGINAL_QTY
+          , UPDATED_DATE = CURRENT TIMESTAMP
+        WHERE
+            INVOICE_ID = #{invoiceId}
+    </update>
+                     
+    <select id="getMaxIfIpId" resultType="java.lang.Integer">
+        SELECT MAX(IF_IP_ID) + 1 FROM TNT_IF_IMP_IP
+    </select>
+    
+    <select id="selectPartialInboundInvoiceForVV" parameterType="com.chinaplus.common.entity.TntInvoiceSummary" resultType="com.chinaplus.common.bean.IfIpEntity">
+        SELECT A.INVOICE_NO AS inbInvoiceNo
+              , A.PARTS_ID AS partsId
+              , A.SUPPLIER_ID AS supplierId
+              , A.IMP_PO_NO AS impPoNo
+              , A.EXP_PO_NO AS expPoNo
+              , TI.INVOICE_ID AS invoiceId
+              , NVL(A.DEVANNED_DATE, A.IMP_INB_ACTUAL_DATE) AS impInbActualDate
+              , SUM( 
+                CASE 
+                  WHEN B.QTY IS NULL 
+                  THEN A.QTY 
+                  ELSE DECIMAL (B.QTY) 
+                  END
+              ) AS invoiceQty 
+            FROM
+              TNT_IP A 
+              INNER JOIN TNT_INVOICE TI 
+                ON TI.INVOICE_NO = A.INVOICE_NO 
+              LEFT JOIN TNT_IF_IMP_IP B 
+                ON B.PID_NO = A.PID_NO 
+                AND B.ACTION_TYPE = 3 
+                AND B.HANDLE_FLAG = 1 
+            WHERE
+              A.INVOICE_NO = #{invoiceNo}
+              AND A.OFFICE_ID = #{officeId} 
+              AND A.STATUS > 3 
+              AND (A.PID_NO IS NULL OR B.IF_IP_ID IS NOT NULL) 
+            GROUP BY
+              A.INVOICE_NO
+              , A.PARTS_ID
+              , A.SUPPLIER_ID
+              , A.IMP_PO_NO
+              , A.EXP_PO_NO
+              , TI.INVOICE_ID
+              , NVL(A.DEVANNED_DATE, A.IMP_INB_ACTUAL_DATE) 
+            ORDER BY
+              impInbActualDate
+    </select>
+    
+    <select id="selectTnfImpStock" parameterType="com.chinaplus.common.entity.TnfImpStock" resultType="com.chinaplus.common.entity.TnfImpStock">
+         SELECT B.IMP_STOCK_ID AS impStockId
+              , SUM(CASE WHEN A.STATUS = 3 THEN A.QTY ELSE 0 END) AS impInRackQty
+              , SUM(CASE WHEN A.STATUS > 3 AND A.STATUS <![CDATA[<]]> 11 THEN A.QTY ELSE 0 END) AS impStockQty
+              , SUM(CASE WHEN A.STATUS > 3 AND A.STATUS <![CDATA[<]]> 10 THEN A.QTY ELSE 0 END) AS systemStockQty
+              , SUM(CASE WHEN A.ONHOLD_FLAG = 1 THEN A.QTY ELSE 0 END) AS ngQty 
+              , SUM(CASE WHEN A.ONHOLD_FLAG = 2 THEN A.QTY ELSE 0 END) AS onholdQty 
+              , SUM(CASE WHEN A.STATUS = 11 THEN A.QTY ELSE 0 END) AS deliveredQty
+           FROM TNT_IP A 
+          INNER JOIN TNF_IMP_STOCK B 
+             ON B.WHS_ID = A.WHS_ID
+            AND B.PARTS_ID = A.PARTS_ID
+            AND B.SUPPLIER_ID = A.SUPPLIER_ID
+          WHERE A.OFFICE_ID = #{officeId}
+            AND A.BUSINESS_PATTERN = 1
+          GROUP BY
+                B.IMP_STOCK_ID
+    </select>
+    
+    <update id="updateImpStock" parameterType="com.chinaplus.common.entity.TnfImpStock">
+       UPDATE 
+              TNF_IMP_STOCK
+          SET 
+              IMP_IN_RACK_QTY = #{impInRackQty, jdbcType=DECIMAL}
+            , IMP_STOCK_QTY = #{impStockQty, jdbcType=DECIMAL}
+            , SYSTEM_STOCK_QTY = #{systemStockQty, jdbcType=DECIMAL}
+            , NG_QTY = #{ngQty, jdbcType=DECIMAL}
+            , ONHOLD_QTY = #{onholdQty, jdbcType=DECIMAL}
+            , DELIVERED_QTY = #{deliveredQty, jdbcType=DECIMAL}
+            , UPDATED_DATE = CURRENT TIMESTAMP
+        WHERE
+              IMP_STOCK_ID = #{impStockId}
+    </update>
+        
+    <select id="selectTnfOrderStatus" parameterType="com.chinaplus.common.entity.TnfImpStock" resultType="com.chinaplus.common.entity.TnfOrderStatus">
+         SELECT A.ORDER_STATUS_ID AS orderStatusId
+              , A.BUSINESS_PATTERN AS businessPattern
+              , A.IMP_PO_NO AS impPoNo
+              , A.EXP_PO_NO AS expPoNo
+              , A.CUSTOMER_ORDER_NO AS customerOrderNo
+              , A.KANBAN_PLAN_NO AS kanbanPlanNo
+              , A.PARTS_ID AS partsId
+              , A.ORDER_MONTH AS orderMonth
+              , A.SUPPLIER_ID AS supplierId
+              , A.ORDER_QTY AS orderQty
+              , (CASE WHEN B.EXP_INBOUND_QTY IS NULL THEN A.EXP_INBOUND_QTY ELSE (B.EXP_INBOUND_QTY - B.EXP_OUTBOUND_QTY - B.EXP_ONSHIPPING_QTY - B.IN_RACK_QTY- B.IMP_STOCK_QTY + B.IMP_ADJUSTED_QTY - B.IMP_DELIVERED_QTY - B.TRANSFER_OUT_QTY) END) AS expInboundQty
+              , NVL(B.EXP_OUTBOUND_QTY, A.EXP_OUTBOUND_QTY) AS expOutboundQty
+              , NVL(B.EXP_ONSHIPPING_QTY, A.EXP_ONSHIPPING_QTY) AS expOnshippingQty
+              , NVL(B.IN_RACK_QTY, A.IN_RACK_QTY) AS inRackQty
+              , NVL(B.IMP_STOCK_QTY, A.IMP_STOCK_QTY) AS impStockQty
+              , NVL(B.IMP_ADJUSTED_QTY, A.IMP_ADJUSTED_QTY) AS impAdjustedQty
+              , NVL(B.IMP_PREPARE_OB_QTY, A.IMP_PREPARE_OB_QTY) AS impPrepareObQty
+              , NVL(B.IMP_DELIVERED_QTY, A.IMP_DELIVERED_QTY) AS impDeliveredQty
+              , NVL(B.IMP_ECI_QTY, A.IMP_ECI_QTY) AS impEciQty
+              , NVL(B.IMP_NG_QTY, A.IMP_NG_QTY) AS impNgQty
+              , NVL(B.TRANSFER_OUT_QTY, A.TRANSFER_OUT_QTY) AS transferOutQty
+              , A.FORCE_COMPLETED_QTY AS forceCompletedQty
+              , A.CANCELLED_QTY AS cancelledQty
+              , A.SHIPPING_STATUS_FLAG AS shippingStatusFlag
+              , A.CREATED_BY AS createdBy
+              , A.CREATED_DATE AS createdDate
+              , A.UPDATED_BY AS updatedBy
+              , A.UPDATED_DATE AS updatedDate
+              , A.VERSION AS version
+           FROM TNF_ORDER_STATUS A
+          INNER JOIN TNM_PARTS_MASTER TM 
+             ON TM.PARTS_ID = A.PARTS_ID
+           LEFT JOIN 
+                (SELECT 
+                   IP.IMP_PO_NO
+                  , IP.EXP_PO_NO
+                  , IP.CUSTOMER_ORDER_NO
+                  , IP.PARTS_ID
+                  , IP.SUPPLIER_ID
+                  , SUM(IP.EXP_INBOUND_QTY) AS EXP_INBOUND_QTY
+                  , SUM(IP.EXP_OUTBOUND_QTY) AS EXP_OUTBOUND_QTY
+                  , SUM(IP.EXP_ONSHIPPING_QTY) AS EXP_ONSHIPPING_QTY
+                  , SUM(IP.IN_RACK_QTY) AS IN_RACK_QTY
+                  , SUM(IP.IMP_STOCK_QTY) AS IMP_STOCK_QTY
+                  , SUM(IP.IMP_ADJUSTED_QTY) AS IMP_ADJUSTED_QTY
+                  , SUM(IP.IMP_PREPARE_OB_QTY) AS IMP_PREPARE_OB_QTY
+                  , SUM(IP.IMP_DELIVERED_QTY) AS IMP_DELIVERED_QTY
+                  , SUM(IP.IMP_ECI_QTY) AS IMP_ECI_QTY
+                  , SUM(IP.IMP_NG_QTY) AS IMP_NG_QTY
+                  , SUM(IP.TRANSFER_OUT_QTY) AS TRANSFER_OUT_QTY
+                FROM (
+                SELECT
+                  A.IMP_PO_NO
+                  , A.EXP_PO_NO
+                  , D.CUSTOMER_ORDER_NO
+                  , A.PARTS_ID
+                  , B.SUPPLIER_ID
+                  , SUM(A.QTY) AS EXP_INBOUND_QTY 
+                  , 0 AS EXP_OUTBOUND_QTY
+                  , 0 AS EXP_ONSHIPPING_QTY
+                  , 0 AS IN_RACK_QTY
+                  , 0 AS IMP_STOCK_QTY 
+                  , 0 AS IMP_ADJUSTED_QTY
+                  , 0 AS IMP_PREPARE_OB_QTY 
+                  , 0 AS IMP_DELIVERED_QTY 
+                  , 0 AS IMP_ECI_QTY 
+                  , 0 AS IMP_NG_QTY 
+                  , 0 AS TRANSFER_OUT_QTY
+                FROM
+                  TNT_EXP_DT A 
+                  INNER JOIN TNM_EXP_PARTS B 
+                    ON B.EXP_PARTS_ID = A.EXP_PARTS_ID 
+                  INNER JOIN TNT_ORDER_DETAIL C 
+                    ON C.EXP_PO_NO = A.EXP_PO_NO 
+                    AND C.EXP_PO_ITEM_NO = A.EXP_PO_ITEM_NO 
+                  INNER JOIN TNT_ORDER D 
+                    ON D.ORDER_ID = C.ORDER_ID 
+                WHERE
+                  A.STATUS <![CDATA[<]]> 99 
+                  AND C.STATUS <![CDATA[<]]> 99 
+                  AND B.OFFICE_ID = #{officeId}
+                GROUP BY
+                  A.IMP_PO_NO
+                  , A.EXP_PO_NO
+                  , D.CUSTOMER_ORDER_NO
+                  , A.PARTS_ID
+                  , B.SUPPLIER_ID
+                
+                UNION ALL
+                
+                SELECT
+                  A.IMP_PO_NO
+                  , A.EXP_PO_NO
+                  , A.CUSTOMER_ORDER_NO
+                  , A.PARTS_ID
+                  , A.SUPPLIER_ID
+                  , 0 AS EXP_INBOUND_QTY
+                  , SUM(CASE WHEN STATUS = 1 THEN A.QTY ELSE 0 END) AS EXP_OUTBOUND_QTY 
+                  , SUM(CASE WHEN STATUS = 2 THEN A.QTY ELSE 0 END) AS EXP_ONSHIPPING_QTY 
+                  , SUM(CASE WHEN STATUS = 3 THEN A.QTY ELSE 0 END) AS IN_RACK_QTY 
+                  , SUM(CASE WHEN STATUS > 3 AND STATUS <![CDATA[<]]> 11 THEN A.QTY ELSE 0 END) AS IMP_STOCK_QTY 
+                  , 0 AS IMP_ADJUSTED_QTY
+                  , SUM(CASE WHEN STATUS = 10 THEN A.QTY ELSE 0 END) AS IMP_PREPARE_OB_QTY 
+                  , SUM(CASE WHEN STATUS = 11 THEN A.QTY ELSE 0 END) AS IMP_DELIVERED_QTY 
+                  , SUM(CASE WHEN ONHOLD_FLAG = 2 THEN A.QTY ELSE 0 END) AS IMP_ECI_QTY 
+                  , SUM(CASE WHEN ONHOLD_FLAG = 1 THEN A.QTY ELSE 0 END) AS IMP_NG_QTY 
+                  , 0 AS TRANSFER_OUT_QTY
+                FROM
+                  TNT_IP A 
+                LEFT JOIN TNT_INVOICE_SUMMARY B
+                 ON A.INVOICE_NO = B.INVOICE_NO
+                WHERE
+                  A.OFFICE_ID = #{officeId}
+                  AND A.BUSINESS_PATTERN = 1
+                  AND A.ORIGINAL_PARTS_ID IS NULL
+                  AND (B.POST_RI_FLAG <![CDATA[<]]> 2 OR B.POST_RI_FLAG IS NULL)
+                GROUP BY
+                  A.IMP_PO_NO
+                  , A.EXP_PO_NO
+                  , A.CUSTOMER_ORDER_NO
+                  , A.PARTS_ID
+                  , A.SUPPLIER_ID
+
+             UNION ALL
+
+              SELECT
+                  A.IMP_PO_NO
+                  , A.EXP_PO_NO
+                  , A.CUSTOMER_ORDER_NO
+                  , A.PARTS_ID
+                  , A.SUPPLIER_ID
+                  , 0 AS EXP_INBOUND_QTY
+                  , 0 AS EXP_OUTBOUND_QTY 
+                  , 0 AS EXP_ONSHIPPING_QTY 
+                  , 0 AS IN_RACK_QTY 
+                  , SUM(A.QTY) AS IMP_STOCK_QTY 
+                  , 0 AS IMP_ADJUSTED_QTY
+                  , 0 AS IMP_PREPARE_OB_QTY 
+                  , 0 AS IMP_DELIVERED_QTY 
+                  , 0 AS IMP_ECI_QTY 
+                  , 0 AS IMP_NG_QTY 
+                  , 0 AS TRANSFER_OUT_QTY
+                FROM
+                  TNT_IP A 
+                INNER JOIN TNT_INVOICE_SUMMARY B
+                ON A.INVOICE_NO = B.INVOICE_NO
+                WHERE
+                  A.OFFICE_ID = #{officeId}
+                  AND A.BUSINESS_PATTERN = 1
+                  AND B.POST_RI_FLAG = 2
+                GROUP BY
+                  A.IMP_PO_NO
+                  , A.EXP_PO_NO
+                  , A.CUSTOMER_ORDER_NO
+                  , A.PARTS_ID
+                  , A.SUPPLIER_ID
+                
+              UNION ALL
+
+              SELECT
+                  A.IMP_PO_NO
+                  , A.EXP_PO_NO
+                  , A.CUSTOMER_ORDER_NO
+                  , A.PARTS_ID
+                  , A.SUPPLIER_ID
+                  , 0 AS EXP_INBOUND_QTY
+                  , 0 AS EXP_OUTBOUND_QTY 
+                  , 0 AS EXP_ONSHIPPING_QTY 
+                  , 0 AS IN_RACK_QTY 
+                  , 0 AS IMP_STOCK_QTY 
+                  , 0 AS IMP_ADJUSTED_QTY
+                  , 0 AS IMP_PREPARE_OB_QTY 
+                  , SUM(A.QTY) AS IMP_DELIVERED_QTY 
+                  , 0 AS IMP_ECI_QTY 
+                  , 0 AS IMP_NG_QTY 
+                  , 0 AS TRANSFER_OUT_QTY
+                FROM
+                  TNT_IP A 
+                INNER JOIN TNT_INVOICE_SUMMARY B
+                ON A.INVOICE_NO = B.INVOICE_NO
+                WHERE
+                  A.OFFICE_ID = #{officeId}
+                  AND A.BUSINESS_PATTERN = 1
+                  AND B.POST_RI_FLAG = 3
+                GROUP BY
+                  A.IMP_PO_NO
+                  , A.EXP_PO_NO
+                  , A.CUSTOMER_ORDER_NO
+                  , A.PARTS_ID
+                  , A.SUPPLIER_ID
+                
+                UNION ALL
+                
+                SELECT
+                  A.IMP_PO_NO
+                  , A.EXP_PO_NO
+                  , A.CUSTOMER_ORDER_NO
+                  , A.ORIGINAL_PARTS_ID AS PARTS_ID
+                  , A.SUPPLIER_ID
+                  , 0 AS EXP_INBOUND_QTY
+                  , 0 AS EXP_OUTBOUND_QTY 
+                  , 0 AS EXP_ONSHIPPING_QTY 
+                  , 0 AS IN_RACK_QTY 
+                  , 0 AS IMP_STOCK_QTY 
+                  , 0 AS IMP_ADJUSTED_QTY
+                  , 0 AS IMP_PREPARE_OB_QTY 
+                  , 0 AS IMP_DELIVERED_QTY 
+                  , 0 AS IMP_ECI_QTY 
+                  , 0 AS IMP_NG_QTY 
+                  , SUM(DECIMAL(B.QTY)) AS TRANSFER_OUT_QTY
+                FROM
+                  TNT_IP A 
+                INNER JOIN TNT_IF_IMP_IP B
+                ON B.PID_NO = A.PID_NO
+                AND B.ACTION_TYPE = 3
+                AND B.HANDLE_FLAG = 1
+                WHERE
+                  A.OFFICE_ID = #{officeId}
+                  AND A.BUSINESS_PATTERN = 1
+                  AND A.ORIGINAL_PARTS_ID IS NOT NULL
+                GROUP BY
+                  A.IMP_PO_NO
+                  , A.EXP_PO_NO
+                  , A.CUSTOMER_ORDER_NO
+                  , A.ORIGINAL_PARTS_ID
+                  , A.SUPPLIER_ID
+                  
+                  UNION ALL
+                
+                SELECT
+                  A.IMP_PO_NO
+                  , A.EXP_PO_NO
+                  , A.CUSTOMER_ORDER_NO
+                  , A.PARTS_ID
+                  , A.SUPPLIER_ID
+                  , 0 AS EXP_INBOUND_QTY
+                  , 0 AS EXP_OUTBOUND_QTY 
+                  , 0 AS EXP_ONSHIPPING_QTY 
+                  , 0 AS IN_RACK_QTY 
+                  , 0 AS IMP_STOCK_QTY 
+                  , SUM(DECIMAL(B.SA_QTY)) AS IMP_ADJUSTED_QTY
+                  , 0 AS IMP_PREPARE_OB_QTY 
+                  , 0 AS IMP_DELIVERED_QTY 
+                  , 0 AS IMP_ECI_QTY 
+                  , 0 AS IMP_NG_QTY 
+                  , 0 AS TRANSFER_OUT_QTY
+                FROM
+                  TNT_IP A 
+                INNER JOIN TNT_IF_IMP_IP B
+                ON B.PID_NO = A.PID_NO
+                AND B.ACTION_TYPE = 8
+                AND B.HANDLE_FLAG = 1
+                WHERE
+                  A.OFFICE_ID = #{officeId}
+                  AND A.BUSINESS_PATTERN = 1
+                GROUP BY
+                  A.IMP_PO_NO
+                  , A.EXP_PO_NO
+                  , A.CUSTOMER_ORDER_NO
+                  , A.PARTS_ID
+                  , A.SUPPLIER_ID
+                  ) IP
+                  GROUP BY IP.IMP_PO_NO
+                  , IP.EXP_PO_NO
+                  , IP.CUSTOMER_ORDER_NO
+                  , IP.PARTS_ID
+                  , IP.SUPPLIER_ID
+                ) B
+                ON B.IMP_PO_NO = A.IMP_PO_NO
+                AND B.EXP_PO_NO = A.EXP_PO_NO
+                AND B.CUSTOMER_ORDER_NO = A.CUSTOMER_ORDER_NO
+                AND B.PARTS_ID = A.PARTS_ID
+                AND B.SUPPLIER_ID = A.SUPPLIER_ID
+          WHERE TM.OFFICE_ID = #{officeId}
+    </select>
+    
+</mapper>

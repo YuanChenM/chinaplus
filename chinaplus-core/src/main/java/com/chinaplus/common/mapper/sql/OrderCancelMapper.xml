@@ -1,0 +1,247 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.common.service.SsmsCommonService">
+    
+     <update id="modOrderCancelIfValidFlag" parameterType="com.chinaplus.common.entity.IFOrderCancelEntity">
+        <!--
+        UPDATE
+            TNT_IF_CANCEL_ORDER C
+        SET
+            VALID_FLAG = 1
+        WHERE
+        <if test="expPartsIdList == null or expPartsIdList.size() == 0">
+            IF_DATE_TIME = #{ifDateTime,jdbcType=TIMESTAMP}
+        AND
+        </if>
+            HANDLE_FLAG <![CDATA[<>]]> 1
+        AND
+        EXISTS
+            (
+        SELECT
+            *
+        FROM
+            TNT_ORDER_DETAIL D
+        WHERE
+            D.EXP_PO_NO = C.EXP_PO_NO
+        AND
+            D.EXP_PO_ITEM_NO = C.EXP_PO_ITEM_NO
+        <if test="expPartsIdList != null and expPartsIdList.size() > 0">
+        AND
+            D.EXP_PARTS_ID
+            IN
+            <foreach item="param" index="index" collection="expPartsIdList" open="(" separator="," close=")">
+            #{param}
+            </foreach>
+        </if>
+            )
+        -->
+
+        UPDATE
+            TNT_IF_CANCEL_ORDER C
+        SET
+            VALID_FLAG = 1
+        WHERE
+            HANDLE_FLAG <![CDATA[<>]]> 1
+        <if test = "expPartsIdList == null or expPartsIdList.size() == 0">
+          AND
+            IF_DATE_TIME = #{ifDateTime, jdbcType=TIMESTAMP}
+          AND EXISTS (
+            SELECT
+                *
+            FROM
+                TNT_ORDER_DETAIL D
+            WHERE
+                D.EXP_PO_NO = C.EXP_PO_NO
+            AND
+                D.EXP_PO_ITEM_NO = C.EXP_PO_ITEM_NO
+            )
+        </if>
+        <if test = "expPartsIdList != null and expPartsIdList.size() > 0">
+          AND EXISTS (
+              SELECT
+                  *
+              FROM
+                  TNT_IF_EXP_ORDER EO
+              INNER JOIN TNM_EXP_PARTS A
+                 ON
+                    EO.EXP_CODE = A.EXP_CODE
+                AND
+                    EO.MAIN_ROUTE = A.SSMS_MAIN_ROUTE
+                AND
+                    EO.SSMS_SUPPLIER_CODE = A.EXP_SUPP_CODE
+                AND
+                    EO.TTC_PARTS_NO = A.TTC_PARTS_NO
+                AND
+                    EO.SSMS_CUSTOMER_CODE = A.SSMS_CUST_CODE
+                AND 
+                    A.PARTS_STATUS = 2
+                AND
+                    A.EXP_PARTS_ID
+                 IN
+                <foreach item="param" index="index" collection="expPartsIdList" open="(" separator="," close=")">
+                #{param}
+                </foreach>
+              WHERE
+                    EO.EXP_PO_NO = C.EXP_PO_NO
+                AND
+                    EO.EXP_PO_ITEM_NO = C.EXP_PO_ITEM_NO
+                AND
+                    EO.IF_DATE_TIME <![CDATA[<=]]> C.IF_DATE_TIME
+            )
+        </if>
+    </update>
+    
+    <select id="getOrderCancelIfList" parameterType="com.chinaplus.common.entity.IFOrderCancelEntity" resultType="com.chinaplus.common.entity.IFOrderCancelEntity">
+        SELECT 
+            DISTINCT
+             C.DATA_ID AS dataId
+           , C.EXP_CODE AS expCode
+           , C.MAIN_ROUTE AS represetativeRoute
+           , C.IMP_PO_NO AS impPoNo
+           , C.EXP_PO_NO AS expPoNo
+           , C.EXP_PO_ITEM_NO AS expPoItemNo
+           , C.CUSTOMER_CODE AS customerCode
+           , C.PARTS_NO AS partsNo
+           , C.EXP_INB_PLAN_DATE AS expInboundPlanDate
+           , C.IF_DATE_TIME AS ifDateTime
+           , C.VALID_FLAG AS validFlag
+           , C.HANDLE_FLAG AS handleFlag
+           , C.CREATED_BY AS createdBy
+           , C.CREATED_DATE AS createdDate
+           , C.UPDATED_BY AS updatedBy
+           , C.UPDATED_DATE AS updatedDate
+           , C.VERSION AS version
+           <!-- , D.ORDER_ID AS orderId -->
+           , P.PARTS_ID AS partsId
+           , P.SUPPLIER_ID AS supplierId
+           , O.CUSTOMER_ORDER_NO AS customerOrderNo
+           , C.IF_CANCEL_ID AS ifCancelId
+        FROM
+           TNT_IF_CANCEL_ORDER C
+        <if test="expPartsIdList == null or expPartsIdList.size() == 0">
+        INNER JOIN
+           TNT_ORDER_DETAIL D
+        ON
+           C.EXP_PO_NO = D.EXP_PO_NO
+        AND    
+           C.EXP_PO_ITEM_NO = D.EXP_PO_ITEM_NO
+        AND
+           C.IF_DATE_TIME = #{ifDateTime,jdbcType=TIMESTAMP}
+        INNER JOIN
+           TNT_ORDER O
+        ON
+           O.ORDER_ID = D.ORDER_ID
+        INNER JOIN
+           TNM_EXP_PARTS P
+        ON
+           P.EXP_PARTS_ID = D.EXP_PARTS_ID
+        AND
+           P.PARTS_STATUS = 2
+        </if>
+        <if test="expPartsIdList != null and expPartsIdList.size() > 0">
+        INNER JOIN
+            TNT_IF_EXP_ORDER O
+        ON
+            O.EXP_PO_NO = C.EXP_PO_NO
+        AND
+            O.EXP_PO_ITEM_NO = C.EXP_PO_ITEM_NO
+        AND
+            O.IF_DATE_TIME <![CDATA[<=]]> C.IF_DATE_TIME
+        INNER JOIN
+            TNM_EXP_PARTS P
+        ON
+            O.EXP_CODE = P.EXP_CODE
+        AND
+            O.MAIN_ROUTE = P.SSMS_MAIN_ROUTE
+        AND
+            O.SSMS_SUPPLIER_CODE = P.EXP_SUPP_CODE
+        AND
+            O.TTC_PARTS_NO = P.TTC_PARTS_NO
+        AND
+            O.SSMS_CUSTOMER_CODE = P.SSMS_CUST_CODE
+        AND
+            P.PARTS_STATUS = 2
+        AND 
+            P.EXP_PARTS_ID 
+            IN
+            <foreach item="param" index="index" collection="expPartsIdList" open="(" separator="," close=")">  
+            #{param}  
+            </foreach>
+        </if>
+        WHERE
+           C.VALID_FLAG = 1
+        AND
+           C.HANDLE_FLAG
+        IN 
+        <foreach item="param" index="index" collection="handleFlagParam" open="(" separator="," close=")">  
+            #{param}  
+        </foreach>
+        ORDER BY
+           C.IF_CANCEL_ID
+    </select>
+    
+    <select id="checkOrderCancelDetailExist" parameterType="com.chinaplus.common.entity.IFOrderCancelEntity" resultType="com.chinaplus.common.entity.IFOrderCancelEntity">
+        SELECT 
+                ORDER_DETAIL_ID AS orderDetailId   
+              , ORDER_ID AS orderId
+              , EXP_PO_NO AS expPoNo
+              , EXP_PARTS_ID AS expPartsId
+              , PARTS_ID AS partsId
+              , EXP_PO_ITEM_NO AS expPoItemNo
+              , EXP_INB_PLAN_DATE AS expInboundPlanDate
+              , ORDER_QTY AS orderQty
+              , FORCE_COMPLETED_BY AS forceCompletedBy
+        FROM
+            TNT_ORDER_DETAIL 
+        WHERE
+            EXP_PO_NO = #{expPoNo,jdbcType=VARCHAR}
+        AND 
+            EXP_PO_ITEM_NO = #{expPoItemNo,jdbcType=VARCHAR}
+    </select>
+    
+    <select id="checkOrderCancelStatusExist" parameterType="com.chinaplus.common.entity.TnfOrderStatus" resultType="com.chinaplus.common.entity.TnfOrderStatus">
+        SELECT 
+               ORDER_STATUS_ID AS orderStatusId
+             , ORDER_QTY AS orderQty
+        FROM
+            TNF_ORDER_STATUS 
+        WHERE
+            IMP_PO_NO = #{impPoNo,jdbcType=VARCHAR}
+        AND 
+            EXP_PO_NO = #{expPoNo,jdbcType=VARCHAR}
+        AND
+            CUSTOMER_ORDER_NO = #{customerOrderNo,jdbcType=VARCHAR}
+        AND
+            PARTS_ID = #{partsId,jdbcType=INTEGER}
+        AND
+            SUPPLIER_ID = #{supplierId,jdbcType=INTEGER}
+    </select>
+    
+    <update id="modOrderCancelDetail" parameterType="com.chinaplus.common.entity.IFOrderCancelEntity">
+        UPDATE
+            TNT_ORDER_DETAIL
+        SET
+            STATUS = 99
+          , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+          , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+          , VERSION = VERSION + 1
+        WHERE
+            EXP_PO_NO = #{expPoNo,jdbcType=VARCHAR}
+        AND 
+            EXP_PO_ITEM_NO = #{expPoItemNo,jdbcType=VARCHAR}
+    </update>
+    
+    <update id="modOrderCancelIfHandleFlag" parameterType="com.chinaplus.common.entity.IFOrderCancelEntity">
+        UPDATE 
+            TNT_IF_CANCEL_ORDER
+        SET 
+              HANDLE_FLAG = #{handleFlag,jdbcType=INTEGER}
+            , UPDATED_DATE = #{updatedDate,jdbcType=TIMESTAMP}
+            , UPDATED_BY = #{updatedBy,jdbcType=INTEGER}
+            , VERSION = VERSION + 1
+        WHERE
+            IF_CANCEL_ID = #{ifCancelId,jdbcType=INTEGER}
+    </update>
+    
+</mapper>

@@ -1,0 +1,690 @@
+<!--
+@screen CPOOHS01
+@author Xiang_chao
+-->
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chinaplus.web.om.service.CPOOHS01Service">
+	<sql id="ConstDef">
+		<bind name="VV" value="@com.chinaplus.common.consts.CodeConst$BusinessPattern@V_V" />
+		<bind name="COMPLETED" value="@com.chinaplus.common.consts.CodeConst$PartsStatus@COMPLETED" />
+	<bind name="FLAG_COMPLETED" value="@com.chinaplus.common.consts.CodeConst$CompletedFlag@COMPLETED" />
+		<bind name="FLAG_NORMAL" value="@com.chinaplus.common.consts.CodeConst$CompletedFlag@NORMAL" />
+	</sql>
+	<sql id="whereSql">
+		<if test="null != filters">
+			<if test="null != filters.ttcPartsNo and '' != filters.ttcPartsNo">
+                and RLT.ttcPartsNo LIKE #{filters.ttcPartsNo} ESCAPE '!'
+			</if>
+			<if test="null != filters.impPONo and '' != filters.impPONo">
+                and RLT.impPONo LIKE #{filters.impPONo} ESCAPE '!'
+			</if>
+			<if test="null != filters.expPONo and '' != filters.expPONo">
+                and RLT.expPONo LIKE #{filters.expPONo} ESCAPE '!'
+			</if>
+			<if test="null != filters.customerOrderNo and '' != filters.customerOrderNo">
+                and RLT.customerOrderNo LIKE #{filters.customerOrderNo} ESCAPE '!'
+			</if>
+			<if test="null != filters.expSODateFrom and '' != filters.expSODateFrom">
+			and DATE(RLT.expSODate) <![CDATA[>=]]> #{filters.expSODateFrom}
+			</if>
+			<if test="null != filters.expSODateTo and '' != filters.expSODateTo">
+			and DATE (RLT.expSODate) <![CDATA[<=]]> #{filters.expSODateTo}
+			</if>
+			<if test="null != filters.expRegion and filters.expRegion.size()>0">
+                and RLT.expRegion IN 
+				<foreach item="item" index="index" collection="filters.expRegion" open="(" separator="," close=")">  
+                      #{item}
+				</foreach>
+			</if>
+			<if test="null != filters.ttcSuppCode and filters.ttcSuppCode.size()>0">
+                and RLT.ttcSuppCode IN 
+				<foreach item="item" index="index" collection="filters.ttcSuppCode" open="(" separator="," close=")">  
+                      #{item}
+				</foreach>
+			</if>
+			<if test="null != filters.ttcCusCode and filters.ttcCusCode.size()>0">
+                and RLT.customerId IN 
+				<foreach item="item" index="index" collection="filters.ttcCusCode" open="(" separator="," close=")">  
+                      #{item}
+				</foreach>
+			</if>
+			<if test="null != filters.transportMode and filters.transportMode.size()>0">
+				<if test="filters.transportMode.size() == 1">
+	                and RLT.transportMode IN
+					<foreach item="item" index="index" collection="filters.transportMode" open="(" separator="," close=")">  
+	                      #{item}
+					</foreach>
+				</if>
+				<if test="filters.transportMode.size() > 1">
+	                and RLT.transportMode = 3
+				</if>
+			</if>
+			<if test="null != filters.disOrderStatus and filters.disOrderStatus.size()>0">
+				and RLT.disOrderStatus IN 
+				<foreach item="item" index="index" collection="filters.disOrderStatus" open="(" separator="," close=")">  
+                      #{item}
+				</foreach>
+			</if>
+		</if>
+	</sql>
+	<select id="getAllList" parameterType="com.chinaplus.core.bean.BaseParam" 
+		resultType="com.chinaplus.web.om.entity.CPOOHS01Entity">
+		<include refid="ConstDef"/>
+        SELECT * FROM (
+            SELECT 
+                RLT.orderStatusId
+                , RLT.orderId
+                , RLT.ttcPartsNo
+                , RLT.impPONo
+                , RLT.expPONo
+                , RLT.customerOrderNo
+                , RLT.expSODate
+                , RLT.expRegion
+                , RLT.ttcSuppCode
+                , RLT.ttcCusCode
+                , RLT.orderQty
+                , RLT.transportMode
+                , RLT.expBalanceOrder
+                , RLT.expWHStock
+                , RLT.expOutboundQty
+                , RLT.onShippingQty
+                , RLT.inboundQty
+                , RLT.impOrderBalance
+                , RLT.customerBalance
+                , RLT.stockTransferOut
+                , RLT.cancelledQty
+                , RLT.disOrderStatus
+                , RLT.partsId
+                , RLT.partsNameEN
+                , RLT.partsNameCN
+                , RLT.custBackNo
+                , RLT.suppPartsNo
+                , RLT.impRegion
+                , RLT.custPartsNo
+                , RLT.businessType
+                , RLT.impStockQty
+                , RLT.impECIQty
+                , RLT.availableImpStock
+                , RLT.impPrepareOBQty
+                , RLT.impNGQty
+                , RLT.TotalSmBalanceQty
+                , RLT.impDeliveredQty
+                , RLT.impAdjustedQty
+                , RLT.uomCode
+                , RLT.customerId
+                , ROWNUMBER() over ( 
+                  ORDER BY
+                    RLT.expSODate DESC
+                    , RLT.impPONo
+                    , RLT.ttcPartsNo
+                    , RLT.ttcCusCode
+                    , RLT.ttcSuppCode
+                ) as rownum
+            FROM (
+            SELECT
+                E.ORDER_STATUS_ID AS orderStatusId
+                , FDS.ORDER_ID AS orderId
+                , FDS.TTC_PARTS_NO AS ttcPartsNo
+                , FDS.IMP_PO_NO AS impPONo
+                , FDS.EXP_PO_NO AS expPONo
+                , FDS.CUSTOMER_ORDER_NO AS customerOrderNo
+                , FDS.EXP_SO_DATE AS expSODate
+                , FDS.EXP_REGION AS expRegion
+                , FDS.TTC_SUPP_CODE AS ttcSuppCode
+                , FDS.CUSTOMER_CODE AS ttcCusCode
+                , COALESCE(E.ORDER_QTY, 0) AS orderQty
+                , FDS.MODE_SUM AS transportMode
+                , CASE 
+                  WHEN E.FORCE_COMPLETED_QTY <![CDATA[<>]]> 0 
+                  THEN 0 
+                  ELSE ( 
+                    COALESCE(E.ORDER_QTY, 0) - COALESCE(E.EXP_INBOUND_QTY, 0) - COALESCE(E.EXP_OUTBOUND_QTY, 0) - COALESCE
+                    (E.EXP_ONSHIPPING_QTY, 0) - COALESCE(E.IN_RACK_QTY, 0) - ( 
+                      COALESCE(E.IMP_STOCK_QTY, 0) - COALESCE(E.IMP_ADJUSTED_QTY, 0)
+                    ) - COALESCE(E.IMP_DELIVERED_QTY, 0) - COALESCE(E.TRANSFER_OUT_QTY, 0) - COALESCE(E.CANCELLED_QTY, 0)
+                  ) 
+                  END AS expBalanceOrder
+                , (COALESCE(E.EXP_INBOUND_QTY, 0) + COALESCE(E.EXP_OUTBOUND_QTY, 0)) AS expWHStock
+                , COALESCE(E.EXP_OUTBOUND_QTY, 0) AS expOutboundQty
+                , CASE 
+                  WHEN OFFICE.IMP_STOCK_FLAG = 1 
+                  THEN COALESCE(E.EXP_ONSHIPPING_QTY, 0) 
+                  ELSE COALESCE(E.EXP_ONSHIPPING_QTY, 0) + COALESCE(E.IN_RACK_QTY, 0) 
+                  END AS onShippingQty
+                , CASE 
+                  WHEN OFFICE.IMP_STOCK_FLAG = 1 
+                  THEN COALESCE(E.IN_RACK_QTY, 0) + COALESCE(E.IMP_STOCK_QTY, 0) - COALESCE(E.IMP_ADJUSTED_QTY, 0) + COALESCE
+                  (E.IMP_DELIVERED_QTY, 0) + COALESCE(E.TRANSFER_OUT_QTY, 0) 
+                  ELSE COALESCE(E.IMP_STOCK_QTY, 0) - COALESCE(E.IMP_ADJUSTED_QTY, 0) + COALESCE(E.IMP_DELIVERED_QTY, 0)
+                   + COALESCE(E.TRANSFER_OUT_QTY, 0) 
+                  END AS inboundQty
+                , CASE 
+                  WHEN OFFICE.IMP_STOCK_FLAG = 1 
+                  THEN CASE 
+                    WHEN E.FORCE_COMPLETED_QTY <![CDATA[<>]]> 0 
+                    AND ( 
+                      COALESCE(E.ORDER_QTY, 0) - COALESCE(E.IN_RACK_QTY, 0) - ( 
+                        COALESCE(E.IMP_STOCK_QTY, 0) - COALESCE(E.IMP_ADJUSTED_QTY, 0)
+                      ) - COALESCE(E.IMP_DELIVERED_QTY, 0) - COALESCE(E.TRANSFER_OUT_QTY, 0) - COALESCE(E.CANCELLED_QTY, 0)
+                    ) > 0 
+                    THEN 0 
+                    ELSE ( 
+                      COALESCE(E.ORDER_QTY, 0) - COALESCE(E.IN_RACK_QTY, 0) - ( 
+                        COALESCE(E.IMP_STOCK_QTY, 0) - COALESCE(E.IMP_ADJUSTED_QTY, 0)
+                      ) - COALESCE(E.IMP_DELIVERED_QTY, 0) - COALESCE(E.TRANSFER_OUT_QTY, 0) - COALESCE(E.CANCELLED_QTY, 0)
+                    ) 
+                    END 
+                  ELSE CASE 
+                    WHEN E.FORCE_COMPLETED_QTY <![CDATA[<>]]> 0 
+                    AND ( 
+                      COALESCE(E.ORDER_QTY, 0) - ( 
+                        COALESCE(E.IMP_STOCK_QTY, 0) - COALESCE(E.IMP_ADJUSTED_QTY, 0)
+                      ) - COALESCE(E.IMP_DELIVERED_QTY, 0) - COALESCE(E.TRANSFER_OUT_QTY, 0) - COALESCE(E.CANCELLED_QTY, 0)
+                    ) > 0 
+                    THEN 0 
+                    ELSE ( 
+                      COALESCE(E.ORDER_QTY, 0) - ( 
+                        COALESCE(E.IMP_STOCK_QTY, 0) - COALESCE(E.IMP_ADJUSTED_QTY, 0)
+                      ) - COALESCE(E.IMP_DELIVERED_QTY, 0) - COALESCE(E.TRANSFER_OUT_QTY, 0) - COALESCE(E.CANCELLED_QTY, 0)
+                    ) 
+                    END 
+                  END AS impOrderBalance
+                , ( 
+                  COALESCE(E.ORDER_QTY, 0) - COALESCE(E.IMP_DELIVERED_QTY, 0)
+                ) AS customerBalance
+                , COALESCE(E.TRANSFER_OUT_QTY, 0) AS stockTransferOut
+                , COALESCE(E.CANCELLED_QTY, 0) AS cancelledQty
+                , CASE 
+                  WHEN XX.STATUS = 0 
+                  THEN 5 
+                  WHEN E.FORCE_COMPLETED_QTY <![CDATA[<>]]> 0 
+                  THEN 4 
+                    WHEN E.ORDER_QTY + E.IMP_ADJUSTED_QTY - E.IMP_DELIVERED_QTY - E.TRANSFER_OUT_QTY - COALESCE(E.CANCELLED_QTY, 0) <![CDATA[<=]]> 0 
+                  THEN 3 
+                  WHEN ( 
+                    E.ORDER_QTY - (E.IMP_STOCK_QTY - E.IMP_ADJUSTED_QTY) - E.IMP_DELIVERED_QTY - E.TRANSFER_OUT_QTY - COALESCE
+                    (E.CANCELLED_QTY, 0)
+                  ) <![CDATA[<=]]> 0 
+                  THEN 2 
+                  ELSE 1 
+                  END AS disOrderStatus
+                , FDS.PARTS_ID AS partsId
+                , FDS.PARTS_NAME_EN AS partsNameEN
+                , FDS.PARTS_NAME_CN AS partsNameCN
+                , FDS.CUST_BACK_NO AS custBackNo
+                , FDS.SUPP_PARTS_NO AS suppPartsNo
+                , FDS.IMP_REGION AS impRegion
+                , FDS.CUST_PARTS_NO AS custPartsNo
+                , FDS.BUSINESS_TYPE AS businessType
+                , ( 
+                  COALESCE(E.IMP_STOCK_QTY, 0) - COALESCE(E.IMP_NG_QTY, 0)
+                ) AS impStockQty
+                , COALESCE(E.IMP_ECI_QTY, 0) AS impECIQty
+                , ( 
+                  COALESCE(E.IMP_STOCK_QTY, 0) - COALESCE(E.IMP_NG_QTY, 0) - COALESCE(E.IMP_ECI_QTY, 0) - COALESCE(E.IMP_PREPARE_OB_QTY, 0)
+                ) AS availableImpStock
+                , COALESCE(E.IMP_PREPARE_OB_QTY, 0) AS impPrepareOBQty
+                , COALESCE(E.IMP_NG_QTY, 0) AS impNGQty
+                , CASE 
+                  WHEN E.FORCE_COMPLETED_QTY <![CDATA[<>]]> 0 
+                  AND ( 
+                    COALESCE(E.ORDER_QTY, 0) - COALESCE(E.EXP_ONSHIPPING_QTY, 0) - COALESCE(E.IN_RACK_QTY, 0) - ( 
+                      COALESCE(E.IMP_STOCK_QTY, 0) - COALESCE(E.IMP_ADJUSTED_QTY, 0)
+                    ) - COALESCE(E.IMP_DELIVERED_QTY, 0) - COALESCE(E.TRANSFER_OUT_QTY, 0) - COALESCE(E.CANCELLED_QTY, 0)
+                  ) > 0 
+                  THEN 0 
+                  ELSE ( 
+                    COALESCE(E.ORDER_QTY, 0) - COALESCE(E.EXP_ONSHIPPING_QTY, 0) - COALESCE(E.IN_RACK_QTY, 0) - ( 
+                      COALESCE(E.IMP_STOCK_QTY, 0) - COALESCE(E.IMP_ADJUSTED_QTY, 0)
+                    ) - COALESCE(E.IMP_DELIVERED_QTY, 0) - COALESCE(E.TRANSFER_OUT_QTY, 0) - COALESCE(E.CANCELLED_QTY, 0)
+                  ) 
+                  END AS TotalSmBalanceQty
+                , COALESCE(E.IMP_DELIVERED_QTY, 0) AS impDeliveredQty
+                , COALESCE(E.IMP_ADJUSTED_QTY, 0) AS impAdjustedQty
+                , FDS.UOM_CODE AS uomCode
+                , FDS.CUSTOMER_ID AS customerId
+              FROM
+                TNF_ORDER_STATUS E 
+                INNER JOIN ( 
+                  SELECT
+                    SUM(DISTINCT QQ.TRANSPORT_MODE) AS MODE_SUM
+                    , PP.OFFICE_ID
+                    , PP.ORDER_ID
+                    , PP.IMP_PO_NO
+                    , PP.CUSTOMER_ORDER_NO
+                    , PP.EXP_SO_DATE
+                    , QQ.STATUS
+                    , QQ.PARTS_ID
+                    , QQ.EXP_PO_NO
+                    , TEP.SUPPLIER_ID
+                    , TPM.TTC_PARTS_NO
+                    , TPM.CUSTOMER_CODE
+                    , TPM.PARTS_NAME_EN
+                    , TPM.PARTS_NAME_CN
+                    , TPM.CUST_BACK_NO
+                    , TPM.IMP_REGION
+                    , TPM.CUST_PARTS_NO
+                    , TPM.BUSINESS_TYPE
+                    , TPM.UOM_CODE
+                    , TPM.CUSTOMER_ID
+                    , TEP.EXP_REGION
+                    , TEP.TTC_SUPP_CODE
+                    , TEP.SUPP_PARTS_NO 
+                  FROM
+                    TNT_ORDER PP 
+                    INNER JOIN TNT_ORDER_DETAIL QQ 
+                      ON PP.ORDER_ID = QQ.ORDER_ID 
+                    INNER JOIN TNM_EXP_PARTS TEP 
+                      ON QQ.EXP_PARTS_ID = TEP.EXP_PARTS_ID 
+                    INNER JOIN TNM_PARTS_MASTER TPM 
+                      ON TEP.PARTS_ID = TPM.PARTS_ID 
+                  WHERE
+                    PP.OFFICE_ID = #{currentOfficeId} 
+                  GROUP BY
+                    PP.OFFICE_ID
+                    , PP.ORDER_ID
+                    , PP.IMP_PO_NO
+                    , PP.CUSTOMER_ORDER_NO
+                    , PP.EXP_SO_DATE
+                    , QQ.STATUS
+                    , QQ.PARTS_ID
+                    , QQ.EXP_PO_NO
+                    , TEP.SUPPLIER_ID
+                    , TPM.TTC_PARTS_NO
+                    , TPM.CUSTOMER_CODE
+                    , TPM.PARTS_NAME_EN
+                    , TPM.PARTS_NAME_CN
+                    , TPM.CUST_BACK_NO
+                    , TPM.IMP_REGION
+                    , TPM.CUST_PARTS_NO
+                    , TPM.BUSINESS_TYPE
+                    , TPM.UOM_CODE
+                    , TPM.CUSTOMER_ID
+                    , TEP.EXP_REGION
+                    , TEP.TTC_SUPP_CODE
+                    , TEP.SUPP_PARTS_NO
+                ) FDS 
+                  ON E.IMP_PO_NO = FDS.IMP_PO_NO 
+                  AND E.EXP_PO_NO = FDS.EXP_PO_NO 
+                  AND E.CUSTOMER_ORDER_NO = FDS.CUSTOMER_ORDER_NO 
+                  AND E.PARTS_ID = FDS.PARTS_ID 
+                  AND E.SUPPLIER_ID = FDS.SUPPLIER_ID 
+                INNER JOIN ( 
+                  SELECT
+                    MOD(SUM(DISTINCT Y.STATUS), 99) AS STATUS
+                    , X.ORDER_ID 
+                  FROM
+                    TNT_ORDER X 
+                    INNER JOIN TNT_ORDER_DETAIL Y 
+                      ON X.ORDER_ID = Y.ORDER_ID 
+                  GROUP BY
+                    X.ORDER_ID
+                ) XX 
+                  ON XX.ORDER_ID = FDS.ORDER_ID 
+                INNER JOIN TNM_OFFICE OFFICE 
+                  ON FDS.OFFICE_ID = OFFICE.OFFICE_ID 
+              WHERE OFFICE.OFFICE_ID = #{currentOfficeId}
+            ) RLT
+            WHERE 1=1
+                <include refid="whereSql"/>
+            ORDER BY
+                RLT.expSODate DESC
+                , RLT.impPONo
+                , RLT.ttcPartsNo
+                , RLT.ttcCusCode
+                , RLT.ttcSuppCode
+            )
+            WHERE
+		<include refid="com.chinaplus.const.pagingCondition" />
+	</select>
+    
+	<select id="getAllListCount" parameterType="com.chinaplus.core.bean.BaseParam" 
+		resultType="int">
+		<include refid="ConstDef"/>
+            SELECT
+                count(1)
+            FROM (
+            SELECT
+                E.ORDER_STATUS_ID AS orderStatusId
+                , FDS.ORDER_ID AS orderId
+                , FDS.TTC_PARTS_NO AS ttcPartsNo
+                , FDS.IMP_PO_NO AS impPONo
+                , FDS.EXP_PO_NO AS expPONo
+                , FDS.CUSTOMER_ORDER_NO AS customerOrderNo
+                , FDS.EXP_SO_DATE AS expSODate
+                , FDS.EXP_REGION AS expRegion
+                , FDS.TTC_SUPP_CODE AS ttcSuppCode
+                , FDS.CUSTOMER_CODE AS ttcCusCode
+                , COALESCE(E.ORDER_QTY, 0) AS orderQty
+                , FDS.MODE_SUM AS transportMode
+                , CASE 
+                  WHEN E.FORCE_COMPLETED_QTY <![CDATA[<>]]> 0 
+                  THEN 0 
+                  ELSE ( 
+                    COALESCE(E.ORDER_QTY, 0) - COALESCE(E.EXP_INBOUND_QTY, 0) - COALESCE(E.EXP_OUTBOUND_QTY, 0) - COALESCE
+                    (E.EXP_ONSHIPPING_QTY, 0) - COALESCE(E.IN_RACK_QTY, 0) - ( 
+                      COALESCE(E.IMP_STOCK_QTY, 0) - COALESCE(E.IMP_ADJUSTED_QTY, 0)
+                    ) - COALESCE(E.IMP_DELIVERED_QTY, 0) - COALESCE(E.TRANSFER_OUT_QTY, 0) - COALESCE(E.CANCELLED_QTY, 0)
+                  ) 
+                  END AS expBalanceOrder
+                , (COALESCE(E.EXP_INBOUND_QTY, 0) + COALESCE(E.EXP_OUTBOUND_QTY, 0)) AS expWHStock
+                , COALESCE(E.EXP_OUTBOUND_QTY, 0) AS expOutboundQty
+                , CASE 
+                  WHEN OFFICE.IMP_STOCK_FLAG = 1 
+                  THEN COALESCE(E.EXP_ONSHIPPING_QTY, 0) 
+                  ELSE COALESCE(E.EXP_ONSHIPPING_QTY, 0) + COALESCE(E.IN_RACK_QTY, 0) 
+                  END AS onShippingQty
+                , CASE 
+                  WHEN OFFICE.IMP_STOCK_FLAG = 1 
+                  THEN COALESCE(E.IN_RACK_QTY, 0) + COALESCE(E.IMP_STOCK_QTY, 0) - COALESCE(E.IMP_ADJUSTED_QTY, 0) + COALESCE
+                  (E.IMP_DELIVERED_QTY, 0) + COALESCE(E.TRANSFER_OUT_QTY, 0) 
+                  ELSE COALESCE(E.IMP_STOCK_QTY, 0) - COALESCE(E.IMP_ADJUSTED_QTY, 0) + COALESCE(E.IMP_DELIVERED_QTY, 0)
+                   + COALESCE(E.TRANSFER_OUT_QTY, 0) 
+                  END AS inboundQty
+                , CASE 
+                  WHEN OFFICE.IMP_STOCK_FLAG = 1 
+                  THEN CASE 
+                    WHEN E.FORCE_COMPLETED_QTY <![CDATA[<>]]> 0 
+                    AND ( 
+                      COALESCE(E.ORDER_QTY, 0) - COALESCE(E.IN_RACK_QTY, 0) - ( 
+                        COALESCE(E.IMP_STOCK_QTY, 0) - COALESCE(E.IMP_ADJUSTED_QTY, 0)
+                      ) - COALESCE(E.IMP_DELIVERED_QTY, 0) - COALESCE(E.TRANSFER_OUT_QTY, 0) - COALESCE(E.CANCELLED_QTY, 0)
+                    ) > 0 
+                    THEN 0 
+                    ELSE ( 
+                      COALESCE(E.ORDER_QTY, 0) - COALESCE(E.IN_RACK_QTY, 0) - ( 
+                        COALESCE(E.IMP_STOCK_QTY, 0) - COALESCE(E.IMP_ADJUSTED_QTY, 0)
+                      ) - COALESCE(E.IMP_DELIVERED_QTY, 0) - COALESCE(E.TRANSFER_OUT_QTY, 0) - COALESCE(E.CANCELLED_QTY, 0)
+                    ) 
+                    END 
+                  ELSE CASE 
+                    WHEN E.FORCE_COMPLETED_QTY <![CDATA[<>]]> 0 
+                    AND ( 
+                      COALESCE(E.ORDER_QTY, 0) - ( 
+                        COALESCE(E.IMP_STOCK_QTY, 0) - COALESCE(E.IMP_ADJUSTED_QTY, 0)
+                      ) - COALESCE(E.IMP_DELIVERED_QTY, 0) - COALESCE(E.TRANSFER_OUT_QTY, 0) - COALESCE(E.CANCELLED_QTY, 0)
+                    ) > 0 
+                    THEN 0 
+                    ELSE ( 
+                      COALESCE(E.ORDER_QTY, 0) - ( 
+                        COALESCE(E.IMP_STOCK_QTY, 0) - COALESCE(E.IMP_ADJUSTED_QTY, 0)
+                      ) - COALESCE(E.IMP_DELIVERED_QTY, 0) - COALESCE(E.TRANSFER_OUT_QTY, 0) - COALESCE(E.CANCELLED_QTY, 0)
+                    ) 
+                    END 
+                  END AS impOrderBalance
+                , ( 
+                  COALESCE(E.ORDER_QTY, 0) - COALESCE(E.IMP_DELIVERED_QTY, 0)
+                ) AS customerBalance
+                , COALESCE(E.TRANSFER_OUT_QTY, 0) AS stockTransferOut
+                , COALESCE(E.CANCELLED_QTY, 0) AS cancelledQty
+                , CASE 
+                  WHEN XX.STATUS = 0 
+                  THEN 5 
+                  WHEN E.FORCE_COMPLETED_QTY <![CDATA[<>]]> 0 
+                  THEN 4 
+                  WHEN E.ORDER_QTY + E.IMP_ADJUSTED_QTY - E.IMP_DELIVERED_QTY - E.TRANSFER_OUT_QTY - COALESCE(E.CANCELLED_QTY, 0) <![CDATA[<=]]> 0 
+                  THEN 3 
+                  WHEN ( 
+                    E.ORDER_QTY - (E.IMP_STOCK_QTY - E.IMP_ADJUSTED_QTY) - E.IMP_DELIVERED_QTY - E.TRANSFER_OUT_QTY - COALESCE
+                    (E.CANCELLED_QTY, 0)
+                  ) <![CDATA[<=]]> 0 
+                  THEN 2 
+                  ELSE 1 
+                  END AS disOrderStatus
+                , FDS.PARTS_ID AS partsId
+                , FDS.PARTS_NAME_EN AS partsNameEN
+                , FDS.PARTS_NAME_CN AS partsNameCN
+                , FDS.CUST_BACK_NO AS custBackNo
+                , FDS.SUPP_PARTS_NO AS suppPartsNo
+                , FDS.IMP_REGION AS impRegion
+                , FDS.CUST_PARTS_NO AS custPartsNo
+                , FDS.BUSINESS_TYPE AS businessType
+                , ( 
+                  COALESCE(E.IMP_STOCK_QTY, 0) - COALESCE(E.IMP_NG_QTY, 0)
+                ) AS impStockQty
+                , COALESCE(E.IMP_ECI_QTY, 0) AS impECIQty
+                , ( 
+                  COALESCE(E.IMP_STOCK_QTY, 0) - COALESCE(E.IMP_NG_QTY, 0) - COALESCE(E.IMP_ECI_QTY, 0) - COALESCE(E.IMP_PREPARE_OB_QTY, 0)
+                ) AS availableImpStock
+                , COALESCE(E.IMP_PREPARE_OB_QTY, 0) AS impPrepareOBQty
+                , COALESCE(E.IMP_NG_QTY, 0) AS impNGQty
+                , CASE 
+                  WHEN E.FORCE_COMPLETED_QTY <![CDATA[<>]]> 0 
+                  AND ( 
+                    COALESCE(E.ORDER_QTY, 0) - COALESCE(E.EXP_ONSHIPPING_QTY, 0) - COALESCE(E.IN_RACK_QTY, 0) - ( 
+                      COALESCE(E.IMP_STOCK_QTY, 0) - COALESCE(E.IMP_ADJUSTED_QTY, 0)
+                    ) - COALESCE(E.IMP_DELIVERED_QTY, 0) - COALESCE(E.TRANSFER_OUT_QTY, 0) - COALESCE(E.CANCELLED_QTY, 0)
+                  ) > 0 
+                  THEN 0 
+                  ELSE ( 
+                    COALESCE(E.ORDER_QTY, 0) - COALESCE(E.EXP_ONSHIPPING_QTY, 0) - COALESCE(E.IN_RACK_QTY, 0) - ( 
+                      COALESCE(E.IMP_STOCK_QTY, 0) - COALESCE(E.IMP_ADJUSTED_QTY, 0)
+                    ) - COALESCE(E.IMP_DELIVERED_QTY, 0) - COALESCE(E.TRANSFER_OUT_QTY, 0) - COALESCE(E.CANCELLED_QTY, 0)
+                  ) 
+                  END AS TotalSmBalanceQty
+                , COALESCE(E.IMP_DELIVERED_QTY, 0) AS impDeliveredQty
+                , COALESCE(E.IMP_ADJUSTED_QTY, 0) AS impAdjustedQty
+                , FDS.UOM_CODE AS uomCode
+                , FDS.CUSTOMER_ID AS customerId
+                , ROWNUMBER() over ( 
+                  ORDER BY
+                    E.IMP_PO_NO
+                    , FDS.TTC_PARTS_NO
+                    , FDS.CUSTOMER_ID
+                    , FDS.SUPPLIER_ID
+                ) as rownum 
+              FROM
+                TNF_ORDER_STATUS E 
+                INNER JOIN ( 
+                  SELECT
+                    SUM(DISTINCT QQ.TRANSPORT_MODE) AS MODE_SUM
+                    , PP.OFFICE_ID
+                    , PP.ORDER_ID
+                    , PP.IMP_PO_NO
+                    , PP.CUSTOMER_ORDER_NO
+                    , PP.EXP_SO_DATE
+                    , QQ.STATUS
+                    , QQ.PARTS_ID
+                    , QQ.EXP_PO_NO
+                    , TEP.SUPPLIER_ID
+                    , TPM.TTC_PARTS_NO
+                    , TPM.CUSTOMER_CODE
+                    , TPM.PARTS_NAME_EN
+                    , TPM.PARTS_NAME_CN
+                    , TPM.CUST_BACK_NO
+                    , TPM.IMP_REGION
+                    , TPM.CUST_PARTS_NO
+                    , TPM.BUSINESS_TYPE
+                    , TPM.UOM_CODE
+                    , TPM.CUSTOMER_ID
+                    , TEP.EXP_REGION
+                    , TEP.TTC_SUPP_CODE
+                    , TEP.SUPP_PARTS_NO 
+                  FROM
+                    TNT_ORDER PP 
+                    INNER JOIN TNT_ORDER_DETAIL QQ 
+                      ON PP.ORDER_ID = QQ.ORDER_ID 
+                    INNER JOIN TNM_EXP_PARTS TEP 
+                      ON QQ.EXP_PARTS_ID = TEP.EXP_PARTS_ID 
+                    INNER JOIN TNM_PARTS_MASTER TPM 
+                      ON TEP.PARTS_ID = TPM.PARTS_ID 
+                  WHERE
+                    PP.OFFICE_ID = #{currentOfficeId} 
+                  GROUP BY
+                    PP.OFFICE_ID
+                    , PP.ORDER_ID
+                    , PP.IMP_PO_NO
+                    , PP.CUSTOMER_ORDER_NO
+                    , PP.EXP_SO_DATE
+                    , QQ.STATUS
+                    , QQ.PARTS_ID
+                    , QQ.EXP_PO_NO
+                    , TEP.SUPPLIER_ID
+                    , TPM.TTC_PARTS_NO
+                    , TPM.CUSTOMER_CODE
+                    , TPM.PARTS_NAME_EN
+                    , TPM.PARTS_NAME_CN
+                    , TPM.CUST_BACK_NO
+                    , TPM.IMP_REGION
+                    , TPM.CUST_PARTS_NO
+                    , TPM.BUSINESS_TYPE
+                    , TPM.UOM_CODE
+                    , TPM.CUSTOMER_ID
+                    , TEP.EXP_REGION
+                    , TEP.TTC_SUPP_CODE
+                    , TEP.SUPP_PARTS_NO
+                ) FDS 
+                  ON E.IMP_PO_NO = FDS.IMP_PO_NO 
+                  AND E.EXP_PO_NO = FDS.EXP_PO_NO 
+                  AND E.CUSTOMER_ORDER_NO = FDS.CUSTOMER_ORDER_NO 
+                  AND E.PARTS_ID = FDS.PARTS_ID 
+                  AND E.SUPPLIER_ID = FDS.SUPPLIER_ID 
+                INNER JOIN ( 
+                  SELECT
+                    MOD(SUM(DISTINCT Y.STATUS), 99) AS STATUS
+                    , X.ORDER_ID 
+                  FROM
+                    TNT_ORDER X 
+                    INNER JOIN TNT_ORDER_DETAIL Y 
+                      ON X.ORDER_ID = Y.ORDER_ID 
+                  GROUP BY
+                    X.ORDER_ID
+                ) XX 
+                  ON XX.ORDER_ID = FDS.ORDER_ID 
+                INNER JOIN TNM_OFFICE OFFICE 
+                  ON FDS.OFFICE_ID = OFFICE.OFFICE_ID 
+              WHERE OFFICE.OFFICE_ID = #{currentOfficeId}
+            ) RLT
+            WHERE 1=1
+            <include refid="whereSql"/>
+	</select>
+    
+    
+	<select id="getTransferInfoList" parameterType="com.chinaplus.core.bean.BaseParam" 
+		resultType="com.chinaplus.web.om.entity.CPOOHS01Entity">
+    		SELECT
+				A.ORDER_STATUS_ID AS orderStatusId
+			    , E.QTY AS transferToQty
+				, B.CUSTOMER_CODE AS transferToCode
+				, C.CUSTOMER_CODE AS transferFromCode
+				, D.UOM_CODE AS uomCode
+			FROM
+				TNF_ORDER_STATUS A
+				INNER JOIN (
+						SELECT DISTINCT
+							X.UOM_CODE
+							, Y.ORDER_STATUS_ID
+						FROM 
+							TNM_PARTS_MASTER X
+							INNER JOIN TNF_ORDER_STATUS Y ON X.PARTS_ID = Y.PARTS_ID
+						WHERE
+							Y.ORDER_STATUS_ID IN
+						<foreach item="item" index="index" collection="swapData.orderStatusIdList" open="(" separator="," close=")">  
+					           		#{item}
+						</foreach>
+					) D ON D.ORDER_STATUS_ID = A.ORDER_STATUS_ID
+				LEFT JOIN TNT_TRANSFER_OUT E ON A.IMP_PO_NO = E.IMP_PO_NO AND A.CUSTOMER_ORDER_NO = E.CUSTOMER_ORDER_NO AND A.EXP_PO_NO = E.EXP_PO_NO AND A.PARTS_ID = E.FROM_PARTS_ID AND A.SUPPLIER_ID = E.SUPPLIER_ID
+				LEFT JOIN TNM_CUSTOMER B ON E.TO_CUSTOMER_ID = B.CUSTOMER_ID
+				LEFT JOIN TNM_CUSTOMER C ON E.FROM_CUSTOMER_ID = C.CUSTOMER_ID
+			WHERE
+				A.ORDER_STATUS_ID IN
+		<foreach item="item" index="index" collection="swapData.orderStatusIdList" open="(" separator="," close=")">  
+	           		#{item}
+		</foreach>
+			ORDER BY
+				A.ORDER_STATUS_ID
+	</select>
+	
+	<select id="getOrderDetailList" parameterType="com.chinaplus.core.bean.BaseParam" 
+		resultType="com.chinaplus.web.om.entity.CPOOHS01Entity">
+    		SELECT
+				A.ORDER_STATUS_ID AS orderStatusId
+				, A.EXP_PO_NO AS expPONo
+				, A.PARTS_ID AS partsId
+				, B.ORDER_ID AS orderId
+			FROM
+				TNF_ORDER_STATUS A
+				INNER JOIN TNT_ORDER B ON A.IMP_PO_NO = B.IMP_PO_NO AND A.CUSTOMER_ORDER_NO = B.CUSTOMER_ORDER_NO
+			WHERE
+				A.ORDER_STATUS_ID IN
+		<foreach item="item" index="index" collection="swapData.orderStatusIdList" open="(" separator="," close=")">  
+	           		#{item}
+		</foreach> 
+			ORDER BY
+				A.ORDER_STATUS_ID
+	</select>
+	
+	<update id="updateForceCompletedQty" parameterType="com.chinaplus.core.bean.BaseParam">
+        	UPDATE
+        		TNF_ORDER_STATUS A
+			SET
+			  A.FORCE_COMPLETED_QTY = (COALESCE(A.ORDER_QTY,0) - COALESCE(A.IN_RACK_QTY,0) - (COALESCE(A.IMP_STOCK_QTY,0) - COALESCE(A.IMP_ADJUSTED_QTY,0)) - COALESCE(A.IMP_DELIVERED_QTY,0) - COALESCE(A.TRANSFER_OUT_QTY,0) - COALESCE(A.CANCELLED_QTY,0)),
+			  A.UPDATED_BY = #{swapData.loginUserId},
+			  A.UPDATED_DATE = #{swapData.systemTime},
+			  A.VERSION  = A.VERSION + 1
+			WHERE
+			  A.ORDER_STATUS_ID IN
+			  <foreach item="item" index="index" collection="swapData.orderStatusIdList" open="(" separator="," close=")">  
+                    #{item}
+				</foreach>
+    </update>
+    
+	<update id="updateForceCompletedUser" parameterType="com.chinaplus.core.bean.BaseParam">
+            UPDATE TNT_ORDER_DETAIL
+			SET
+				FORCE_COMPLETED_BY = #{swapData.loginUserId},																							
+				FORCE_COMPLETED_DATE = #{swapData.systemTime},
+				UPDATED_BY = #{swapData.loginUserId},
+				UPDATED_DATE = #{swapData.systemTime},
+				VERSION  = VERSION + 1
+			WHERE
+				ORDER_ID = #{swapData.orderId}
+				AND EXP_PO_NO = #{swapData.expPONO}
+				AND PARTS_ID = #{swapData.partsId}
+	</update>
+    
+	<update id="updateForceCompletedPlan" parameterType="com.chinaplus.core.bean.BaseParam">
+		<include refid="ConstDef"/>
+            UPDATE TNT_SS_PLAN
+			SET
+				COMPLETED_FLAG = ${FLAG_COMPLETED},
+				UPDATED_BY = #{swapData.loginUserId},
+				UPDATED_DATE = #{swapData.systemTime},
+				VERSION  = VERSION + 1
+			WHERE
+				COMPLETED_FLAG = ${FLAG_NORMAL}
+				AND SS_PLAN_ID IN (
+							SELECT
+							    A.SS_PLAN_ID
+							FROM
+							    TNT_SS_PARTS A
+							WHERE
+							    A.ORDER_STATUS_ID = #{swapData.orderStatusId}
+							    AND NOT EXISTS (
+							    			SELECT
+							    				AA.SS_PLAN_ID,
+							    				AA.QTY,
+							    				CC.FORCE_COMPLETED_QTY
+							    			FROM
+							    				TNT_SS_PARTS AA
+							    				INNER JOIN (
+							    						SELECT
+							    							XX.SS_PLAN_ID
+							    						FROM
+							    							TNT_SS_PARTS XX
+							    						WHERE
+							    							XX.ORDER_STATUS_ID = #{swapData.orderStatusId}
+							    				) BB ON AA.SS_PLAN_ID = BB.SS_PLAN_ID
+							    				INNER JOIN TNF_ORDER_STATUS CC ON AA.ORDER_STATUS_ID = CC.ORDER_STATUS_ID
+							    			WHERE
+							    				AA.ORDER_STATUS_ID <![CDATA[<>]]> #{swapData.orderStatusId}
+							    				AND AA.QTY > 0
+							    				AND (CC.FORCE_COMPLETED_QTY IS NULL OR CC.FORCE_COMPLETED_QTY = 0)
+							    				AND AA.SS_PLAN_ID = A.SS_PLAN_ID
+							    )
+				)
+	</update>
+</mapper>

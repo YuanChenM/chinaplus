@@ -1,0 +1,1067 @@
+/**
+ * Multiple List Screen
+ * 
+ * @screen VVPDS01
+ * @author ren_yi
+ */
+VVPDS01 = {
+    id : chinaplus.screen.VVPDS01,
+    title : 'Supplier Information',
+    xtype : 'panel',
+    frame : true,
+    autoHeight : false,
+    height : Ext.getCmp('tabpanelId').getHeight() - 30,
+    autoScroll : true,
+    items : [{
+    	xtype : 'panel',
+    	width : 1000,
+    	border: false,
+    	margin : '5 5 5 5',
+    	items : [{
+    			xtype : 'form',
+    			autoScroll : false,
+    			frame : true,
+    			fieldDefaults : {
+    				labelAlign : 'left',
+    				labelWidth : 120
+    			},
+    			items : [{
+    					xtype : 'container',
+    					layout : 'column',
+    					margin : '20 0 0 10',
+    					autoScroll : true,
+    					items : [{
+    							xtype : 'container',
+    							width : 400,
+    							items : [{
+    									xtype : 'combo',
+    									fieldLabel : chinaplus.label.VVPDS01_Label_ExportOfficeName,
+    									labelSeparator : '',
+    									id : chinaplus.screen.VVPDS01 + '_exportOffice',
+    									store : TRF.util.createStore(chinaplus.screen.VVPDS01, 'common/loadAllOffices', 'Combo', chinaplus.screen.VVPDS01 + '__exportOffice'),
+										fieldStyle : 'background:rgb(255,255,153)',
+										name : 'exportOffice',
+										displayName : 'exportOfficeCode',
+										displayField : 'text',
+										valueField : 'id',
+										allowBlank : false,
+										editable : false,
+										width : 350,
+										queryMode : 'local',
+										listeners : {
+											 afterrender : function(o) {
+												 if (TRF.util.isDetailTabMode_View()) {
+												 	 TRF.util.makeCmpReadOnly(o);
+												 }
+											 }
+										 }
+    							}, {
+									xtype : 'textfield',
+									fieldLabel : chinaplus.label.VVPDS01_Label_CreatedBy,
+									labelSeparator : '',
+									id : chinaplus.screen.VVPDS01 + '_createdBy',
+									name : 'createdBy',
+									allowBlank : false,
+									fieldStyle : 'background:rgb(255,255,153)',
+									width : 350,
+									listeners : {
+										 afterrender : function(o) {
+											if (!TRF.util.isDetailTabMode_New()) {
+                                             TRF.util.makeCmpReadOnly(o);
+                                            }
+										 }
+									 }
+							}, {
+								xtype : 'combobox',
+								fieldLabel : chinaplus.label.VVPDS01_Label_Status,
+								labelSeparator : '',
+								id : chinaplus.screen.VVPDS01 + '_supplierStatus',
+								name : 'status',
+								master : chinaplus.master.consts.TnmCodeCategory_SUPPLIER_STATUS,
+								displayField : 'text',
+								valueField : 'id',
+								msgTarget : 'side',
+								store : Ext.create('Ext.data.Store', {
+                                            id : chinaplus.screen.VVPDS01 + '_supplierStatusStore',
+                                            fields : ['id', 'text'],
+                                            data : chinaplus.master.getMasterByCategoryForCombo(chinaplus.master.consts.TnmCodeCategory_SUPPLIER_STATUS)
+                                        }),
+								editable : false,
+								queryMode : 'local',
+								forceSelection : true,
+                                labelSeparator : '',
+                                width : 350,
+							    listeners : {
+									 afterrender : function(o) {
+										 if (TRF.util.isDetailTabMode_View()) {
+										 	 TRF.util.makeCmpReadOnly(o);
+										 }
+									 }
+								 }
+							}, {
+                                xtype : 'textfield',
+                                id : chinaplus.screen.VVPDS01 + '_supplierId',
+                                name : 'supplierId',
+                                hidden : true
+                            }]
+    					}, {
+    						xtype : 'container',
+    						margin : '0 0 0 20',
+    						width : 400,
+    						items :  [{
+                                xtype : 'datefield',
+                                msgTarget : 'side',
+                                editable : false,
+                                allowBlank : true,
+                                name : 'createdDate',
+                                fieldLabel : chinaplus.label.VVPDS01_Label_CreatedDate,
+                                id : chinaplus.screen.VVPDS01 + '_createdDate',
+                                width : 350,
+                                format : 'd M Y',
+                                plugins : [{ptype : 'datePickerClear'}],
+                                listeners : {
+                                     afterrender : function(o) {
+                                         if (!TRF.util.isDetailTabMode_New()) {
+                                             TRF.util.makeCmpReadOnly(o);
+                                         }
+                                     }
+                                 }
+                
+                            },{
+                                xtype : 'datefield',
+                                msgTarget : 'side',
+                                editable : false,
+                                allowBlank : true,
+                                name : 'lastUpdatedDate',
+                                fieldLabel : chinaplus.label.VVPDS01_Label_lastUpdatedDate,
+                                id : chinaplus.screen.VVPDS01 + '_lastUpdatedDate',
+                                width : 350,
+                                format : 'd M Y',
+                                plugins : [{ptype : 'datePickerClear'}],
+                                listeners : {
+                                     afterrender : function(o) {
+                                       TRF.util.makeCmpReadOnly(o);
+                                     }
+                                 }
+                
+                            }]
+    					}]
+    			}]
+    			
+    	}]
+    }, {
+    	xtype : 'tabpanel',
+        width : 830,
+        frame : true,
+        border : false,
+        activeTab : 0,
+        margin : '20 5 5 5',
+        items : [{
+                  xtype : 'form',
+                  frame : true,
+                  title: "Basic Supplier's Information",
+                  fieldDefaults : {
+                    labelAlign : 'left',
+                    labelWidth : 120
+                  },
+                  items : [{
+                            xtype : 'container',
+                            margin : '20 0 0 10',
+                            autoScroll : true,
+                            items : [{
+                                        xtype : 'textfield',
+                                        fieldLabel : chinaplus.label.VVPDS01_Label_fullCompanyName,
+                                        labelSeparator : '',
+                                        fieldStyle : 'background:rgb(255,255,153)',
+                                        id : chinaplus.screen.VVPDS01 + '_fullCompanyName',
+                                        name : 'fullCompanyName',
+                                        allowBlank : false,
+                                        width : 770,
+                                        listeners : {
+                                             afterrender : function(o) {
+                                                 if (TRF.util.isDetailTabMode_View()) {
+                                                     TRF.util.makeCmpReadOnly(o);
+                                                 }
+                                             }
+                                         }
+                                    }, {
+                                        xtype : 'textfield',
+                                        fieldLabel : chinaplus.label.VVPDS01_Label_localAddress,
+                                        labelSeparator : '',
+                                        id : chinaplus.screen.VVPDS01 + '_localAddress',
+                                        name : 'localAddress',
+                                        width : 770,
+                                        listeners : {
+                                             afterrender : function(o) {
+                                                 if (TRF.util.isDetailTabMode_View()) {
+                                                     TRF.util.makeCmpReadOnly(o);
+                                                 }
+                                             }
+                                         }
+                                    }]
+                           }, {
+                            xtype : 'container',
+                            layout : 'column',
+                            margin : '0 0 0 10',
+                            autoScroll : true,
+                            items : [{
+                                       xtype : 'container',
+                                       width : 400,
+                                       items : [{
+                                                    xtype : 'textfield',
+                                                    fieldLabel : chinaplus.label.VVPDS01_Label_capital,
+                                                    labelSeparator : '',
+                                                    id : chinaplus.screen.VVPDS01 + '_capital',
+                                                    name : 'capital',
+                                                    width : 350,
+                                                    listeners : {
+                                                         afterrender : function(o) {
+                                                             if (TRF.util.isDetailTabMode_View()) {
+                                                                 TRF.util.makeCmpReadOnly(o);
+                                                             }
+                                                         }
+                                                     }
+                                                }, {
+                                                    xtype : 'textfield',
+                                                    fieldLabel : chinaplus.label.VVPDS01_Label_shareholder,
+                                                    labelSeparator : '',
+                                                    id : chinaplus.screen.VVPDS01 + '_shareholder',
+                                                    name : 'shareholder',
+                                                    width : 350,
+                                                    listeners : {
+                                                         afterrender : function(o) {
+                                                             if (TRF.util.isDetailTabMode_View()) {
+                                                                 TRF.util.makeCmpReadOnly(o);
+                                                             }
+                                                         }
+                                                     }
+                                                }, {
+                                                    xtype : 'textfield',
+                                                    fieldLabel : chinaplus.label.VVPDS01_Label_noOfEmployee,
+                                                    labelSeparator : '',
+                                                    id : chinaplus.screen.VVPDS01 + '_noOfEmployee',
+                                                    name : 'noOfEmployee',
+                                                    width : 350,
+                                                    listeners : {
+                                                         afterrender : function(o) {
+                                                             if (TRF.util.isDetailTabMode_View()) {
+                                                                 TRF.util.makeCmpReadOnly(o);
+                                                             }
+                                                         }
+                                                     }
+                                                }, {
+                                                    xtype : 'combo',
+                                                    fieldLabel : chinaplus.label.VVPDS01_Label_headquarterOffice,
+                                                    labelSeparator : '',
+                                                    id : chinaplus.screen.VVPDS01 + '_headquarterOffice',
+                                                    store : TRF.util.createStore(chinaplus.screen.VVPDS01, 'common/loadActiveRegionsID', 'Combo', chinaplus.screen.VVPDS01 + '_headquarterOfficeStore'),
+                                                    name : 'headquarter',
+                                                    displayName : 'headquarterCode',
+                                                    displayField : 'text',
+                                                    valueField : 'id',
+                                                    queryMode : 'local',
+                                                    editable : false,
+                                                    width : 350,
+                                                    listeners : {
+                                                         afterrender : function(o) {
+                                                             if (TRF.util.isDetailTabMode_View()) {
+                                                                 TRF.util.makeCmpReadOnly(o);
+                                                             }
+                                                         }
+                                                     }
+                                                }, {
+                                                    xtype : 'combo',
+                                                    fieldLabel : chinaplus.label.VVPDS01_Label_officeBranch,
+                                                    labelSeparator : '',
+                                                    id : chinaplus.screen.VVPDS01 + '_officeBranch',
+                                                    store : TRF.util.createStore(chinaplus.screen.VVPDS01, 'common/loadActiveRegionsID', 'Combo', chinaplus.screen.VVPDS01 + '_officeBranchStore'),
+                                                    name : 'officeBranch',
+                                                    displayName : 'officeBranchCode',
+                                                    displayField : 'text',
+                                                    valueField : 'id',
+                                                    editable : false,
+                                                    queryMode : 'local',
+                                                    width : 350,
+                                                    listeners : {
+                                                         afterrender : function(o) {
+                                                             if (TRF.util.isDetailTabMode_View()) {
+                                                                 TRF.util.makeCmpReadOnly(o);
+                                                             }
+                                                         }
+                                                     }
+                                                }]
+                                   
+                                   },{
+                                       xtype : 'container',
+                                       margin : '0 0 0 20',
+                                       width : 400,
+                                       items : [{
+                                                    xtype : 'textfield',
+                                                    fieldLabel : chinaplus.label.VVPDS01_Label_businessActivity,
+                                                    labelSeparator : '',
+                                                    id : chinaplus.screen.VVPDS01 + '_businessActivity',
+                                                    name : 'businessActivity',
+                                                    width : 350,
+                                                    listeners : {
+                                                         afterrender : function(o) {
+                                                             if (TRF.util.isDetailTabMode_View()) {
+                                                                 TRF.util.makeCmpReadOnly(o);
+                                                             }
+                                                         }
+                                                     }
+                                                }, {
+                                                    xtype : 'textfield',
+                                                    fieldLabel : chinaplus.label.VVPDS01_Label_companyWebsite,
+                                                    labelSeparator : '',
+                                                    id : chinaplus.screen.VVPDS01 + '_companyWebsite',
+                                                    name : 'companyWebsite',
+                                                    width : 350,
+                                                    listeners : {
+                                                         afterrender : function(o) {
+                                                             if (TRF.util.isDetailTabMode_View()) {
+                                                                 TRF.util.makeCmpReadOnly(o);
+                                                             }
+                                                         }
+                                                     }
+                                                }, {
+                                                    xtype : 'textfield',
+                                                    fieldLabel : chinaplus.label.VVPDS01_Label_mainCustomer,
+                                                    labelSeparator : '',
+                                                    id : chinaplus.screen.VVPDS01 + '_mainCustomer',
+                                                    name : 'mainCustomer',
+                                                    width : 350,
+                                                    listeners : {
+                                                         afterrender : function(o) {
+                                                             if (TRF.util.isDetailTabMode_View()) {
+                                                                 TRF.util.makeCmpReadOnly(o);
+                                                             }
+                                                         }
+                                                     }
+                                                }, {
+                                                    xtype : 'textfield',
+                                                    fieldLabel : chinaplus.label.VVPDS01_Label_endUserOEM,
+                                                    labelSeparator : '',
+                                                    id : chinaplus.screen.VVPDS01 + '_endUserOem',
+                                                    name : 'endUserOem',
+                                                    width : 350,
+                                                    listeners : {
+                                                         afterrender : function(o) {
+                                                             if (TRF.util.isDetailTabMode_View()) {
+                                                                 TRF.util.makeCmpReadOnly(o);
+                                                             }
+                                                         }
+                                                     }
+                                                }]
+                                   
+                                   }]
+                           }]
+                }, {
+                  xtype : 'form',
+                  frame : true,
+                  title: "Product Information",
+                  fieldDefaults : {
+                    labelAlign : 'left',
+                    labelWidth : 120
+                  },
+                  items : [{
+                            xtype : 'container',
+                            margin : '20 0 0 10',
+                            items : [{ 
+                                        xtype : 'combobox',
+                                        fieldLabel : chinaplus.label.VVPDS01_Label_productMateial,
+                                        labelSeparator : '',
+                                        id : chinaplus.screen.VVPDS01 + '_productMateial',
+                                        name : 'productMateial',
+                                        master : chinaplus.master.consts.TnmCodeCategory_PRODUCT_MATERIAL,
+                                        displayField : 'text',
+                                        valueField : 'id',
+                                        msgTarget : 'side',
+                                        store : Ext.create('Ext.data.Store', {
+                                                    id : chinaplus.screen.VVPDS01 + '_productMateialStore',
+                                                    fields : ['id', 'text'],
+                                                    data : chinaplus.master.getMasterByCategoryForCombo(chinaplus.master.consts.TnmCodeCategory_PRODUCT_MATERIAL)
+                                                }),
+                                        editable : false,
+                                        queryMode : 'local',
+                                        forceSelection : true,
+                                        labelSeparator : '',
+                                        width : 350,
+                                        listeners : {
+                                             afterrender : function(o) {
+                                                 if (TRF.util.isDetailTabMode_View()) {
+                                                     TRF.util.makeCmpReadOnly(o);
+                                                 }
+                                             }
+                                         }
+                                    
+                                    }, { 
+                                        xtype : 'combobox',
+                                        fieldLabel : chinaplus.label.VVPDS01_Label_sectionOfTheCar,
+                                        labelSeparator : '',
+                                        id : chinaplus.screen.VVPDS01 + '_sectionOfTheCar',
+                                        name : 'sectionOfTheCar',
+                                        master : chinaplus.master.consts.TnmCodeCategory_SECTION_OF_CAR,
+                                        displayField : 'text',
+                                        valueField : 'id',
+                                        msgTarget : 'side',
+                                        store : Ext.create('Ext.data.Store', {
+                                                    id : chinaplus.screen.VVPDS01 + '_sectionOfTheCarStore',
+                                                    fields : ['id', 'text'],
+                                                    data : chinaplus.master.getMasterByCategoryForCombo(chinaplus.master.consts.TnmCodeCategory_SECTION_OF_CAR)
+                                                }),
+                                        editable : false,
+                                        queryMode : 'local',
+                                        forceSelection : true,
+                                        labelSeparator : '',
+                                        width : 350,
+                                        listeners : {
+                                             afterrender : function(o) {
+                                                 if (TRF.util.isDetailTabMode_View()) {
+                                                     TRF.util.makeCmpReadOnly(o);
+                                                 }
+                                             }
+                                         }
+                                    
+                                    }, { 
+                                        xtype : 'combobox',
+                                        fieldLabel : chinaplus.label.VVPDS01_Label_productionProcess,
+                                        labelSeparator : '',
+                                        id : chinaplus.screen.VVPDS01 + '_productionProcess',
+                                        name : 'productionProcess',
+                                        master : chinaplus.master.consts.TnmCodeCategory_PRODUCTION_PROCESS,
+                                        displayField : 'text',
+                                        valueField : 'id',
+                                        msgTarget : 'side',
+                                        store : Ext.create('Ext.data.Store', {
+                                                    id : chinaplus.screen.VVPDS01 + '_productionProcessStore',
+                                                    fields : ['id', 'text'],
+                                                    data : chinaplus.master.getMasterByCategoryForCombo(chinaplus.master.consts.TnmCodeCategory_PRODUCTION_PROCESS)
+                                                }),
+                                        editable : false,
+                                        queryMode : 'local',
+                                        forceSelection : true,
+                                        labelSeparator : '',
+                                        width : 350,
+                                        listeners : {
+                                             afterrender : function(o) {
+                                                 if (TRF.util.isDetailTabMode_View()) {
+                                                     TRF.util.makeCmpReadOnly(o);
+                                                 }
+                                             }
+                                         }
+                                    
+                                    }, {
+                                        xtype : 'textareafield',
+                                        fieldLabel : chinaplus.label.VVPDS01_Label_remarks,
+                                        labelSeparator : '',
+                                        id : chinaplus.screen.VVPDS01 + '_remarks1',
+                                        name : 'remarks1',
+                                        width : 770,
+                                        listeners : {
+                                             afterrender : function(o) {
+                                                 if (TRF.util.isDetailTabMode_View()) {
+                                                     TRF.util.makeCmpReadOnly(o);
+                                                 }
+                                             }
+                                         }
+                                    }]
+                           }]
+                }, {
+                  xtype : 'form',
+                  frame : true,
+                  title: "Supplier's Strategy",
+                  fieldDefaults : {
+                    labelAlign : 'left',
+                    labelWidth : 180
+                  },
+                  items : [{
+                            xtype : 'container',
+                            margin : '20 0 0 10',
+                            items : [{ 
+                                        xtype : 'combobox',
+                                        fieldLabel : chinaplus.label.VVPDS01_Label_businessWithLocalTTC,
+                                        labelSeparator : '',
+                                        id : chinaplus.screen.VVPDS01 + '_businessWithLocalTTC',
+                                        name : 'businessWithLocalTTC',
+                                        master : chinaplus.master.consts.TnmCodeCategory_BUSINESS_WITH_TTC_FLAG,
+                                        displayField : 'text',
+                                        valueField : 'id',
+                                        msgTarget : 'side',
+                                        store : Ext.create('Ext.data.Store', {
+                                                    id : chinaplus.screen.VVPDS01 + '_businessWithLocalTTCStore',
+                                                    fields : ['id', 'text'],
+                                                    data : chinaplus.master.getMasterByCategoryForCombo(chinaplus.master.consts.TnmCodeCategory_BUSINESS_WITH_TTC_FLAG)
+                                                }),
+                                        editable : false,
+                                        queryMode : 'local',
+                                        forceSelection : true,
+                                        labelSeparator : '',
+                                        width : 400,
+                                        listeners : {
+                                             afterrender : function(o) {
+                                                 if (TRF.util.isDetailTabMode_View()) {
+                                                     TRF.util.makeCmpReadOnly(o);
+                                                 }
+                                             }
+                                         }
+                                    
+                                    }, { 
+                                        xtype : 'combobox',
+                                        fieldLabel : chinaplus.label.VVPDS01_Label_ndaAgreement,
+                                        labelSeparator : '',
+                                        id : chinaplus.screen.VVPDS01 + '_ndaAgreement',
+                                        name : 'ndaAgreement',
+                                        master : chinaplus.master.consts.TnmCodeCategory_NDA_AGREEMENT_FLAG,
+                                        displayField : 'text',
+                                        valueField : 'id',
+                                        msgTarget : 'side',
+                                        store : Ext.create('Ext.data.Store', {
+                                                    id : chinaplus.screen.VVPDS01 + '_ndaAgreementStore',
+                                                    fields : ['id', 'text'],
+                                                    data : chinaplus.master.getMasterByCategoryForCombo(chinaplus.master.consts.TnmCodeCategory_NDA_AGREEMENT_FLAG)
+                                                }),
+                                        editable : false,
+                                        queryMode : 'local',
+                                        forceSelection : true,
+                                        labelSeparator : '',
+                                        width : 400,
+                                        listeners : {
+                                             afterrender : function(o) {
+                                                 if (TRF.util.isDetailTabMode_View()) {
+                                                     TRF.util.makeCmpReadOnly(o);
+                                                 }
+                                             }
+                                         }
+                                    
+                                    }, {
+                                        xtype : 'textareafield',
+                                        fieldLabel : chinaplus.label.VVPDS01_Label_suppilerTarget,
+                                        labelSeparator : '',
+                                        id : chinaplus.screen.VVPDS01 + '_suppilerTarget',
+                                        name : 'suppilerTarget',
+                                        width : 770,
+                                        listeners : {
+                                             afterrender : function(o) {
+                                                 if (TRF.util.isDetailTabMode_View()) {
+                                                     TRF.util.makeCmpReadOnly(o);
+                                                 }
+                                             }
+                                         }
+                                    }, {
+                                        xtype : 'textareafield',
+                                        fieldLabel : chinaplus.label.VVPDS01_Label_pointProduct,
+                                        labelSeparator : '',
+                                        id : chinaplus.screen.VVPDS01 + '_appealingPoint',
+                                        name : 'appealingPoint',
+                                        width : 770,
+                                        listeners : {
+                                             afterrender : function(o) {
+                                                 if (TRF.util.isDetailTabMode_View()) {
+                                                     TRF.util.makeCmpReadOnly(o);
+                                                 }
+                                             }
+                                         }
+                                    }]
+                           }]
+                }, {
+                  xtype : 'form',
+                  frame : true,
+                  title: "Overall Evaluation of Supplier",
+                  fieldDefaults : {
+                    labelAlign : 'left',
+                    labelWidth : 120
+                  },
+                  items : [{
+                            xtype : 'container',
+                            margin : '20 0 0 10',
+                            items : [{ 
+                                        xtype : 'combobox',
+                                        fieldLabel : chinaplus.label.VVPDS01_Label_overallEvaluation,
+                                        labelSeparator : '',
+                                        id : chinaplus.screen.VVPDS01 + '_overallEvaluation',
+                                        name : 'overallEvaluation',
+                                        master : chinaplus.master.consts.TnmCodeCategory_OVERALL_EVALUATION,
+                                        displayField : 'text',
+                                        valueField : 'id',
+                                        msgTarget : 'side',
+                                        store : Ext.create('Ext.data.Store', {
+                                                    id : chinaplus.screen.VVPDS01 + '_overallEvaluationStore',
+                                                    fields : ['id', 'text'],
+                                                    data : chinaplus.master.getMasterByCategoryForCombo(chinaplus.master.consts.TnmCodeCategory_OVERALL_EVALUATION)
+                                                }),
+                                        editable : false,
+                                        queryMode : 'local',
+                                        forceSelection : true,
+                                        labelSeparator : '',
+                                        width : 350,
+                                        listeners : {
+                                             afterrender : function(o) {
+                                                 if (TRF.util.isDetailTabMode_View()) {
+                                                     TRF.util.makeCmpReadOnly(o);
+                                                 }
+                                             }
+                                         }
+                                    }, {
+                                        xtype : 'textareafield',
+                                        fieldLabel : chinaplus.label.VVPDS01_Label_riskConcern,
+                                        labelSeparator : '',
+                                        id : chinaplus.screen.VVPDS01 + '_riskConcern',
+                                        name : 'riskConcern',
+                                        width : 770,
+                                        listeners : {
+                                             afterrender : function(o) {
+                                                 if (TRF.util.isDetailTabMode_View()) {
+                                                     TRF.util.makeCmpReadOnly(o);
+                                                 }
+                                             }
+                                         }
+                                    }, {
+                                        xtype : 'textareafield',
+                                        fieldLabel : chinaplus.label.VVPDS01_Label_remarks,
+                                        labelSeparator : '',
+                                        id : chinaplus.screen.VVPDS01 + '_remarks2',
+                                        name : 'remarks2',
+                                        width : 770,
+                                        listeners : {
+                                             afterrender : function(o) {
+                                                 if (TRF.util.isDetailTabMode_View()) {
+                                                     TRF.util.makeCmpReadOnly(o);
+                                                 }
+                                             }
+                                         }
+                                    }]
+                           }]
+                }, {
+                  xtype : 'form',
+                  frame : true,
+                  title: "Supplier's Strategy",
+                  id : chinaplus.screen.VVPDS01 + '_uploadForm',
+                  fieldDefaults : {
+                    labelAlign : 'left',
+                    labelWidth : 120
+                  },
+                  items : [{
+                            xtype : 'container',
+                            margin : '20 0 0 10',
+                            items : [{
+                                        xtype : 'fileuploadfield',
+                                        fieldLabel : chinaplus.label.VVPDS01_Label_supportingDocument,
+                                        buttonText : 'Browse...',
+                                        name : 'supportDoc1',
+                                        id : chinaplus.screen.VVPDS01 + '_supportingDocument1',
+                                        width : 770,
+                                        labelSeparator : '',
+                                        editable : false,
+                                        hideLabel : false,
+                                        autoFitErrors : false,
+                                        clearOnSubmit : false,
+                                        hidden: !TRF.util.isDetailTabMode_New()
+                                    }, {
+                                        xtype: 'fieldset', 
+                                        layout: 'column',
+                                        padding:'0 0 0 0',
+                                        margin : '0 0 0 0',
+                                        height : 20, 
+                                        id : chinaplus.screen.VVPDS01 + '_supportingSet1',
+                                        border: false, 
+                                        hidden : TRF.util.isDetailTabMode_New(),
+                                        items:[{
+                                                xtype : 'textfield',
+                                                fieldLabel : chinaplus.label.VVPDS01_Label_supportingDocument,
+                                                labelSeparator : '',
+                                                id : chinaplus.screen.VVPDS01 + '_supportingDocument1Label',
+                                                name : 'supportingDocument1',
+                                                width : 770,
+                                                listeners : {
+                                                     afterrender : function(o) {
+                                                         TRF.util.makeCmpReadOnly(o);
+                                                         if(TRF.util.isDetailTabMode_Edit()) {
+                                                             if (o.getValue() == null || o.getValue() == "") {
+                                                                Ext.getCmp(chinaplus.screen.VVPDS01 + '_supportingSet1').hide();
+                                                                Ext.getCmp(chinaplus.screen.VVPDS01 + '_supportingDocument1').show();
+                                                             }
+                                                         }
+                                                     }
+                                                 }
+                                            }, {
+                                                xtype: 'button', 
+                                                text: '', 
+                                                margin : '0 0 0 2',
+                                                height : 20,
+                                                iconCls : 'btn-remove',
+                                                hidden : TRF.util.isDetailTabMode_View(),
+                                                width: 20,
+                                                handler : function() {
+                                                    Ext.getCmp(chinaplus.screen.VVPDS01 + '_supportingSet1').hide();
+                                                    Ext.getCmp(chinaplus.screen.VVPDS01 + '_supportingDocument1').show();
+                                                    Ext.getCmp(chinaplus.screen.VVPDS01 + '_supportingDocument1Label').setValue("");
+                                                }
+                                            }]
+                                    }, {
+                                        xtype : 'fileuploadfield',
+                                        fieldLabel : chinaplus.label.VVPDS01_Label_supportingDocument,
+                                        buttonText : 'Browse...',
+                                        name : 'supportDoc2',
+                                        id : chinaplus.screen.VVPDS01 + '_supportingDocument2',
+                                        width : 770,
+                                        labelSeparator : '',
+                                        editable : false,
+                                        hideLabel : false,
+                                        autoFitErrors : false,
+                                        clearOnSubmit : false,
+                                        margin : '5 0 0 0',
+                                        hidden: !TRF.util.isDetailTabMode_New()
+                                    }, {
+                                        xtype: 'fieldset', 
+                                        layout: 'column',
+                                        padding:'0 0 0 0',
+                                        margin : '5 0 0 0',
+                                        height : 20, 
+                                        border: false, 
+                                        id : chinaplus.screen.VVPDS01 + '_supportingSet2',
+                                        hidden : TRF.util.isDetailTabMode_New(),
+                                        items:[{
+                                                xtype : 'textfield',
+                                                fieldLabel : chinaplus.label.VVPDS01_Label_supportingDocument,
+                                                labelSeparator : '',
+                                                id : chinaplus.screen.VVPDS01 + '_supportingDocument2Label',
+                                                name : 'supportingDocument2',
+                                                width : 770,
+                                                listeners : {
+                                                     afterrender : function(o) {
+                                                         TRF.util.makeCmpReadOnly(o);
+                                                         if(TRF.util.isDetailTabMode_Edit()) {
+                                                             if (o.getValue() == null || o.getValue() == "") {
+                                                                Ext.getCmp(chinaplus.screen.VVPDS01 + '_supportingSet2').hide();
+                                                                Ext.getCmp(chinaplus.screen.VVPDS01 + '_supportingDocument2').show();
+                                                             }
+                                                         }
+                                                     }
+                                                 }
+                                            }, {
+                                                xtype: 'button', 
+                                                text: '', 
+                                                margin : '0 0 0 2',
+                                                height : 20,
+                                                iconCls : 'btn-remove',
+                                                hidden : TRF.util.isDetailTabMode_View(),
+                                                width: 20,
+                                                handler : function() {
+                                                    Ext.getCmp(chinaplus.screen.VVPDS01 + '_supportingSet2').hide();
+                                                    Ext.getCmp(chinaplus.screen.VVPDS01 + '_supportingDocument2').show();
+                                                    Ext.getCmp(chinaplus.screen.VVPDS01 + '_supportingDocument2Label').setValue("");
+                                                }
+                                            }]
+                                    }, {
+                                        xtype : 'fileuploadfield',
+                                        fieldLabel : chinaplus.label.VVPDS01_Label_supportingDocument,
+                                        buttonText : 'Browse...',
+                                        name : 'supportDoc3',
+                                        id : chinaplus.screen.VVPDS01 + '_supportingDocument3',
+                                        width : 770,
+                                        labelSeparator : '',
+                                        editable : false,
+                                        hideLabel : false,
+                                        autoFitErrors : false,
+                                        clearOnSubmit : false,
+                                        margin : '5 0 0 0',
+                                        hidden: !TRF.util.isDetailTabMode_New()
+                                    }, {
+                                        xtype: 'fieldset', 
+                                        layout: 'column',
+                                        padding:'0 0 0 0',
+                                        margin : '5 0 0 0',
+                                        height : 20, 
+                                        border: false, 
+                                        id : chinaplus.screen.VVPDS01 + '_supportingSet3',
+                                        hidden : TRF.util.isDetailTabMode_New(),
+                                        items:[{
+                                                xtype : 'textfield',
+                                                fieldLabel : chinaplus.label.VVPDS01_Label_supportingDocument,
+                                                labelSeparator : '',
+                                                id : chinaplus.screen.VVPDS01 + '_supportingDocument3Label',
+                                                name : 'supportingDocument3',
+                                                width : 770,
+                                                listeners : {
+                                                     afterrender : function(o) {
+                                                         TRF.util.makeCmpReadOnly(o);
+                                                         if(TRF.util.isDetailTabMode_Edit()) {
+                                                             if (o.getValue() == null || o.getValue() == "") {
+                                                                Ext.getCmp(chinaplus.screen.VVPDS01 + '_supportingSet3').hide();
+                                                                Ext.getCmp(chinaplus.screen.VVPDS01 + '_supportingDocument3').show();
+                                                             }
+                                                         }
+                                                     }
+                                                 }
+                                            }, {
+                                                xtype: 'button', 
+                                                text: '', 
+                                                margin : '0 0 0 2',
+                                                height : 20,
+                                                iconCls : 'btn-remove',
+                                                hidden : TRF.util.isDetailTabMode_View(),
+                                                width: 20,
+                                                handler : function() {
+                                                    Ext.getCmp(chinaplus.screen.VVPDS01 + '_supportingSet3').hide();
+                                                    Ext.getCmp(chinaplus.screen.VVPDS01 + '_supportingDocument3').show();
+                                                    Ext.getCmp(chinaplus.screen.VVPDS01 + '_supportingDocument3Label').setValue("");
+                                                }
+                                            }]
+                                    }, {
+                                        xtype : 'fileuploadfield',
+                                        fieldLabel : chinaplus.label.VVPDS01_Label_supportingDocument,
+                                        buttonText : 'Browse...',
+                                        name : 'supportDoc4',
+                                        id : chinaplus.screen.VVPDS01 + '_supportingDocument4',
+                                        width : 770,
+                                        labelSeparator : '',
+                                        editable : false,
+                                        hideLabel : false,
+                                        autoFitErrors : false,
+                                        clearOnSubmit : false,
+                                        margin : '5 0 0 0',
+                                        hidden: !TRF.util.isDetailTabMode_New()
+                                    }, {
+                                        xtype: 'fieldset', 
+                                        layout: 'column',
+                                        padding:'0 0 0 0',
+                                        margin : '5 0 0 0',
+                                        height : 20, 
+                                        border: false, 
+                                        id : chinaplus.screen.VVPDS01 + '_supportingSet4',
+                                        hidden : TRF.util.isDetailTabMode_New(),
+                                        items:[{
+                                                xtype : 'textfield',
+                                                fieldLabel : chinaplus.label.VVPDS01_Label_supportingDocument,
+                                                labelSeparator : '',
+                                                id : chinaplus.screen.VVPDS01 + '_supportingDocument4Label',
+                                                name : 'supportingDocument4',
+                                                width : 770,
+                                                listeners : {
+                                                     afterrender : function(o) {
+                                                         TRF.util.makeCmpReadOnly(o);
+                                                         if(TRF.util.isDetailTabMode_Edit()) {
+                                                             if (o.getValue() == null || o.getValue() == "") {
+                                                                Ext.getCmp(chinaplus.screen.VVPDS01 + '_supportingSet4').hide();
+                                                                Ext.getCmp(chinaplus.screen.VVPDS01 + '_supportingDocument4').show();
+                                                             }
+                                                         }
+                                                     }
+                                                 }
+                                            }, {
+                                                xtype: 'button', 
+                                                text: '', 
+                                                margin : '0 0 0 2',
+                                                height : 20,
+                                                iconCls : 'btn-remove',
+                                                hidden : TRF.util.isDetailTabMode_View(),
+                                                width: 20,
+                                                handler : function() {
+                                                    Ext.getCmp(chinaplus.screen.VVPDS01 + '_supportingSet4').hide();
+                                                    Ext.getCmp(chinaplus.screen.VVPDS01 + '_supportingDocument4').show();
+                                                    Ext.getCmp(chinaplus.screen.VVPDS01 + '_supportingDocument4Label').setValue("");
+                                                }
+                                            }]
+                                    }, {
+                                        xtype : 'fileuploadfield',
+                                        fieldLabel : chinaplus.label.VVPDS01_Label_supportingDocument,
+                                        buttonText : 'Browse...',
+                                        name : 'supportDoc5',
+                                        id : chinaplus.screen.VVPDS01 + '_supportingDocument5',
+                                        width : 770,
+                                        labelSeparator : '',
+                                        margin : '5 0 0 0',
+                                        editable : false,
+                                        hideLabel : false,
+                                        autoFitErrors : false,
+                                        clearOnSubmit : false,
+                                        hidden : !TRF.util.isDetailTabMode_New()
+                                    }, {
+                                        xtype: 'fieldset', 
+                                        layout: 'column',
+                                        padding:'0 0 0 0',
+                                        margin : '5 0 0 0',
+                                        height : 20, 
+                                        border: false, 
+                                        id : chinaplus.screen.VVPDS01 + '_supportingSet5',
+                                        hidden : TRF.util.isDetailTabMode_New(),
+                                        items:[{
+                                                xtype : 'textfield',
+                                                fieldLabel : chinaplus.label.VVPDS01_Label_supportingDocument,
+                                                labelSeparator : '',
+                                                id : chinaplus.screen.VVPDS01 + '_supportingDocument5Label',
+                                                name : 'supportingDocument5',
+                                                width : 770,
+                                                listeners : {
+                                                     afterrender : function(o) {
+                                                         TRF.util.makeCmpReadOnly(o);
+                                                         if(TRF.util.isDetailTabMode_Edit()) {
+                                                             if (o.getValue() == null || o.getValue() == "") {
+                                                                Ext.getCmp(chinaplus.screen.VVPDS01 + '_supportingSet5').hide();
+                                                                Ext.getCmp(chinaplus.screen.VVPDS01 + '_supportingDocument5').show();
+                                                             }
+                                                         }
+                                                     }
+                                                 }
+                                            }, {
+                                                xtype: 'button', 
+                                                text: '', 
+                                                margin : '0 0 0 2',
+                                                height : 20,
+                                                iconCls : 'btn-remove',
+                                                hidden : TRF.util.isDetailTabMode_View(),
+                                                width: 20,
+                                                handler : function() {
+                                                    Ext.getCmp(chinaplus.screen.VVPDS01 + '_supportingSet5').hide();
+                                                    Ext.getCmp(chinaplus.screen.VVPDS01 + '_supportingDocument5').show();
+                                                    Ext.getCmp(chinaplus.screen.VVPDS01 + '_supportingDocument5Label').setValue("");
+                                                }
+                                            }]
+                                    }]
+                           }]
+                }
+        ]
+    }],
+
+    tbar : [{
+                text : 'Edit',
+                iconCls : 'btn-modify',
+                id : chinaplus.screen.VVPDS01 + "_btnModify",
+                hidden : TRF.util.isDetailTabMode_View() ? false : true,
+                handler : function() {
+                    VVPDS01.modifyFunc();
+                }
+            }, {
+                text : 'Save',
+                iconCls : 'btn-save',
+                id : chinaplus.screen.VVPDS01 + "_btnSave",
+                hidden : TRF.util.isDetailTabMode_View() ? true : false,
+                handler : function() {
+                    VVPDS01.saveFunc();
+                }
+            }],
+    needConfirmChange : !TRF.util.isDetailTabMode_View(),
+        
+    /**
+     * initialize
+     */
+    initialize : function(supplierId) {
+        // current
+        var me = this;
+        // mask
+        TRF.util.dataLoadStart(chinaplus.screen.VVPDS01);
+        var exportOfficeCombo = Ext.getCmp(chinaplus.screen.VVPDS01 + '_exportOffice');
+        var headquarterCombo = Ext.getCmp(chinaplus.screen.VVPDS01 + '_headquarterOffice');
+        var officeBranchCombo = Ext.getCmp(chinaplus.screen.VVPDS01 + '_officeBranch');
+        if (supplierId != null && supplierId != "undefined") {
+            // If action is Create New
+            var param = (supplierId == null) ? {} : {
+                supplierId : supplierId
+            };
+            // do submit
+            TRF.util.detailSubmit(function(record) {
+                if(record.success) {
+                    if(!TRF.util.isDetailTabMode_View()) {
+                        // reload office
+                        TRF.util.loadStore(exportOfficeCombo.store, {}, function(records) {
+                            exportOfficeCombo.setValue(parseInt(record.result.exportOffice));
+                        });
+                   
+                        // reload headerquater
+                        TRF.util.loadStore(headquarterCombo.store, {}, function(records) {
+                            headquarterCombo.setValue(parseInt(record.result.headquarter));
+                        });
+                   
+                        // reload office branch
+                        TRF.util.loadStore(officeBranchCombo.store, {}, function(records) {
+                            officeBranchCombo.setValue(parseInt(record.result.officeBranch));
+                        });
+                    }
+                }
+            
+                TRF.util.dataLoadEnd(chinaplus.screen.VVPDS01);
+            }, me, 'vvp/VVPDS01/detail', param);
+        } else {
+            // reload office
+            TRF.util.loadStore(exportOfficeCombo.store, {}, null);
+            // reload headerquater
+            TRF.util.loadStore(headquarterCombo.store, {}, null);
+            // reload office branch
+            TRF.util.loadStore(officeBranchCombo.store, {}, null);
+            // load end
+            TRF.util.dataLoadEnd(chinaplus.screen.VVPDS01);
+        }
+
+        // do layout
+        this.doLayout();
+        // add panel
+        TRF.util.addFieldTipToPanel(this);
+    },
+    
+    /**
+     * modify
+     */
+    modifyFunc : function() {
+
+        // get user Id
+        var supplerId = Ext.getCmp(chinaplus.screen.VVPDS01 + '_supplierId').getRawValue();
+        // set as edit
+        TRF.util.setDetailTabMode_Edit();
+        // reload
+        TRF.util.addApplication(chinaplus.screen.VVPDS01, chinaplus.screen.VVPDS01, true, supplerId);
+    },
+    
+    /**
+     * save
+     */
+    saveFunc : function() {
+
+        // message
+        var popMsg = TRF.util.getMessage('w2001');
+        var lsMsgs = [TRF.util.getMessage('w2001')];
+
+        // get detail information
+        var detailInfo = TRF.util.getDetailInfo(Ext.getCmp(chinaplus.screen.VVPDS01));
+        
+        // check office / create by / Full Company Name
+        var expOffice = detailInfo['exportOffice'];
+        var createBy = detailInfo['createdBy'];
+        var fullCompanyName = detailInfo['fullCompanyName'];
+        
+        if(expOffice == "" || createBy == "" || fullCompanyName == "") {
+            // Ext.Array.push(lsMsgs,popMsg);
+            TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_WARN, popMsg,
+                    lsMsgs);
+            return;
+        }
+        
+        // back function
+        var backFun = function(applicationData) {
+            if (applicationData.success || (applicationData.messageCodes != null && applicationData.messageCodes.length == 0)) {
+            
+                // show message
+                var message = TRF.util.getMessage('i1002');
+                TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_INFO, message, [message]);
+                
+                // get user Id
+                var supplerId = applicationData.result;
+                // set as edit
+                TRF.util.setDetailTabMode_View();
+                Ext.getCmp(chinaplus.screen.VVPDS01).isEdited = false;
+                Ext.getCmp(chinaplus.screen.VVPLS01).refreshData();
+                // reload
+                TRF.util.addApplication(chinaplus.screen.VVPDS01, chinaplus.screen.VVPDS01, true, supplerId);
+                
+            }
+        }
+        // comfirm
+        var conMsg = TRF.util.getMessage('c1001', ['Save']);
+        TRF.util.showMessageBoxL(TRF.cnst.MESSAGEBOX_TYPE_QUESTION, conMsg, [conMsg], function(btn) {
+            if (btn == 'yes') {
+                // save
+                var form = Ext.getCmp(chinaplus.screen.VVPDS01 + '_uploadForm').getForm();
+                TRF.util.uploadSubmit(form, backFun, chinaplus.screen.VVPDS01, 'vvp/VVPDS01/updateDetail', detailInfo);
+            }
+        });
+    }
+}
